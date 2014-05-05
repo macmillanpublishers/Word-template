@@ -39,8 +39,8 @@ Sub RmWhiteSpace()
 Dim activeRng As Range
 Set activeRng = ActiveDocument.Range
 
-Dim wsFindArray(7) As String              'number of items in array should be declared here
-Dim wsReplaceArray(7) As String       'and here
+Dim wsFindArray(9) As String              'number of items in array should be declared here
+Dim wsReplaceArray(9) As String       'and here
 Dim i As Long
 
 wsFindArray(1) = "^t{1,}"             'tabs
@@ -50,6 +50,9 @@ wsFindArray(4) = " {2,}"               '2 or more spaces
 wsFindArray(5) = "^13 "               'paragraph, space
 wsFindArray(6) = " ^13"               'space, paragraph
 wsFindArray(7) = "^13{2,}"          '2 or more paragraphs
+wsFindArray(8) = "---"                   '3 hyphens
+wsFindArray(9) = "--"                   '2 hyphens
+
 
 wsReplaceArray(1) = ""
 wsReplaceArray(2) = "^p"
@@ -58,6 +61,10 @@ wsReplaceArray(4) = " "
 wsReplaceArray(5) = "^p"
 wsReplaceArray(6) = "^p"
 wsReplaceArray(7) = "^p"
+wsReplaceArray(8) = "^+"            'emdash
+wsReplaceArray(9) = "^="            'endash
+
+
 
 Application.ScreenUpdating = False
 
