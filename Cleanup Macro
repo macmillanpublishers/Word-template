@@ -23,12 +23,12 @@ Call RmWhiteSpace
 Call ClearFindReplace
 
 '-----------Replace Local Styles-----------
-Call ReplaceLocalStyles
+Call StripOrReplaceLocalStyles
 'Clear Find & Replace Objects
 Call ClearFindReplace
 
-'-----------Remove other Local Styles-----------
-Call RmBadStyles
+'------Remove highlights
+Call RmHighlights
 'Clear Find & Replace Objects
 Call ClearFindReplace
 
@@ -86,57 +86,96 @@ Application.ScreenRefresh
 
 End Sub
 
-Sub ReplaceLocalStyles()
+Sub StripOrReplaceLocalStyles()
 
 Dim activeRng As Range
 Set activeRng = ActiveDocument.Range
 
-Dim styleFindArray(4) As Boolean              ' number of items in array should be declared here
-Dim styleReplaceArray(4) As String         'and here
-Dim j As Long
-
-styleFindArray(1) = False        'Bold
-styleFindArray(2) = False        'Italic
-styleFindArray(3) = False        'Underline
-styleFindArray(4) = False        'Smallcaps
-
-styleReplaceArray(1) = ActiveDocument.Styles("boldface characters (bf)")
-styleReplaceArray(2) = ActiveDocument.Styles("italic characters (ital)")
-styleReplaceArray(3) = ActiveDocument.Styles("underscore characters (us)")
-styleReplaceArray(4) = ActiveDocument.Styles("SMALL CAPS CHARACTERS (SC)")
-
 Application.ScreenUpdating = False
 
-For j = 1 To UBound(styleFindArray())
+'------------tag key styles
 
-styleFindArray(j) = True
+Dim tagStyleFindArray(4) As Boolean              ' number of items in array should be declared here
+Dim tagStyleReplaceArray(4) As String         'and here
+Dim g As Long
+
+tagStyleFindArray(1) = False        'Bold
+tagStyleFindArray(2) = False        'Italic
+tagStyleFindArray(3) = False        'Underline
+tagStyleFindArray(4) = False        'Smallcaps
+
+tagStyleReplaceArray(1) = "`b`^&`b`"
+tagStyleReplaceArray(2) = "`i`^&`i`"
+tagStyleReplaceArray(3) = "`u`^&`u`"
+tagStyleReplaceArray(4) = "`s`^&`s`"
+
+For g = 1 To UBound(tagStyleFindArray())
+tagStyleFindArray(g) = True
 
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ""
+  .Replacement.Text = tagStyleReplaceArray(g)
   .Forward = True
   .Wrap = wdFindContinue
   .Format = True
-  .Font.Bold = styleFindArray(1)
-  .Font.Italic = styleFindArray(2)
-  .Font.Underline = styleFindArray(3)
-  .Font.SmallCaps = styleFindArray(4)
-  .Replacement.Style = styleReplaceArray(j)
-  .Replacement.Font.Bold = False
-  .Replacement.Font.Italic = False
-  .Replacement.Font.Underline = False
-  .Replacement.Font.SmallCaps = False
+  .Font.Bold = tagStyleFindArray(1)
+  .Font.Italic = tagStyleFindArray(2)
+  .Font.Underline = tagStyleFindArray(3)
+  .Font.SmallCaps = tagStyleFindArray(4)
   .MatchCase = False
   .MatchWholeWord = False
-  .MatchWildcards = False
+  .MatchWildcards = True
   .MatchSoundsLike = False
   .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
 End With
 
-styleFindArray(j) = False
+tagStyleFindArray(g) = False
+Next
 
+'-------------Reset everything
+activeRng.Font.Reset
+
+'Clear Find & Replace Objects
+Call ClearFindReplace
+
+'-------------apply styles to tags
+
+Dim tagFindArray(4) As String              ' number of items in array should be declared here
+Dim tagReplaceArray(4) As String         'and here
+Dim h As Long
+
+tagFindArray(1) = "`b`(*)`b`"
+tagFindArray(2) = "`i`(*)`i`"
+tagFindArray(3) = "`u`(*)`u`"
+tagFindArray(4) = "`s`(*)`s`"
+
+tagReplaceArray(1) = ActiveDocument.Styles("boldface characters (bf)")
+tagReplaceArray(2) = ActiveDocument.Styles("italic characters (ital)")
+tagReplaceArray(3) = ActiveDocument.Styles("underscore characters (us)")
+tagReplaceArray(4) = ActiveDocument.Styles("SMALL CAPS CHARACTERS (SC)")
+
+Application.ScreenUpdating = False
+
+For h = 1 To UBound(tagFindArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = tagFindArray(h)
+  .Replacement.Text = "\1"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = True
+  .Replacement.Style = tagReplaceArray(h)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
 Next
 
 Application.ScreenUpdating = True
@@ -144,54 +183,23 @@ Application.ScreenRefresh
 
 End Sub
 
-Sub RmBadStyles()
+Sub RmHighlights()
 
 Dim activeRng As Range
 Set activeRng = ActiveDocument.Range
 
-Dim badStyleArray(5) As Boolean              ' number of items in array should be declared here
-Dim k As Long
-                                                                            'notes = font colr doesn;t work, all caps doesn't matter
-badStyleArray(1) = False        'Highlights
-badStyleArray(2) = False        'Doublestrikethrough
-badStyleArray(3) = False        'Strikethrough - double needed?
-badStyleArray(4) = False        'Superscript
-badStyleArray(5) = False        'Subscript
-
 Application.ScreenUpdating = False
-
-For k = 1 To UBound(badStyleArray())
-
-badStyleArray(k) = True
 
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ""
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = True
-  .Highlight = badStyleArray(1)
+  .Highlight = True
   .Replacement.Highlight = False
-  .Font.DoubleStrikeThrough = badStyleArray(2)
-  .Replacement.Font.DoubleStrikeThrough = False
-  .Font.StrikeThrough = badStyleArray(3)
-  .Replacement.Font.StrikeThrough = False
-  .Font.Superscript = badStyleArray(4)
-  .Replacement.Font.Superscript = False
-  .Font.Subscript = badStyleArray(5)
-  .Replacement.Font.Subscript = False
-  .MatchCase = False
-  .MatchWholeWord = False
-  .MatchWildcards = False
-  .MatchSoundsLike = False
-  .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
 End With
-
-badStyleArray(k) = False
-
-Next
 
 Application.ScreenUpdating = True
 Application.ScreenRefresh
