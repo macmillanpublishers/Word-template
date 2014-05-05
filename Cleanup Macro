@@ -1,21 +1,36 @@
 Option Explicit
 Option Base 1
 
-Sub CleanupMacro()
+Sub MacmillanManuscriptCleanup()
 
-'--------Remove White Space------------
+'-----make sure Style template is attached
+Dim keyStyle As Word.Style
+Dim styleCheck As Boolean
+On Error Resume Next
+Set keyStyle = ActiveDocument.Styles("boldface characters (bf)")                '''Style from template to check against
+styleCheck = keyStyle Is Nothing
+If styleCheck Then
+MsgBox "Requred style template 'macmillan.dotx' is not attached", , "Error"
+Exit Sub
+End If
 
+'Clear Find & Replace Objects
+Call ClearFindReplace
+
+'-----------Remove White Space------------
 Call RmWhiteSpace
+'Clear Find & Replace Objects
+Call ClearFindReplace
 
-'-----Clear Find & Replace Objects
-Call clearFindReplace
+'-----------Replace Local Styles-----------
+Call ReplaceLocalStyles
+'Clear Find & Replace Objects
+Call ClearFindReplace
 
-'--------Remove Local Styles-----------
-
-Call RemoveLocalStyles
-
-'-----Clear Find & Replace Objects
-Call clearFindReplace
+'-----------Remove other Local Styles-----------
+Call RmBadStyles
+'Clear Find & Replace Objects
+Call ClearFindReplace
 
 End Sub
 
@@ -71,7 +86,7 @@ Application.ScreenRefresh
 
 End Sub
 
-Sub RemoveLocalStyles()
+Sub ReplaceLocalStyles()
 
 Dim activeRng As Range
 Set activeRng = ActiveDocument.Range
@@ -129,7 +144,61 @@ Application.ScreenRefresh
 
 End Sub
 
-Sub clearFindReplace()
+Sub RmBadStyles()
+
+Dim activeRng As Range
+Set activeRng = ActiveDocument.Range
+
+Dim badStyleArray(5) As Boolean              ' number of items in array should be declared here
+Dim k As Long
+                                                                            'notes = font colr doesn;t work, all caps doesn't matter
+badStyleArray(1) = False        'Highlights
+badStyleArray(2) = False        'Doublestrikethrough
+badStyleArray(3) = False        'Strikethrough - double needed?
+badStyleArray(4) = False        'Superscript
+badStyleArray(5) = False        'Subscript
+
+Application.ScreenUpdating = False
+
+For k = 1 To UBound(badStyleArray())
+
+badStyleArray(k) = True
+
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = True
+  .Highlight = badStyleArray(1)
+  .Replacement.Highlight = False
+  .Font.DoubleStrikeThrough = badStyleArray(2)
+  .Replacement.Font.DoubleStrikeThrough = False
+  .Font.StrikeThrough = badStyleArray(3)
+  .Replacement.Font.StrikeThrough = False
+  .Font.Superscript = badStyleArray(4)
+  .Replacement.Font.Superscript = False
+  .Font.Subscript = badStyleArray(5)
+  .Replacement.Font.Subscript = False
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+badStyleArray(k) = False
+
+Next
+
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+
+End Sub
+
+Sub ClearFindReplace()
 
 Dim clearRng As Range
 Set clearRng = ActiveDocument.Words.First
@@ -151,5 +220,3 @@ With clearRng.Find
 End With
 
 End Sub
-
-
