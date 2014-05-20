@@ -1,0 +1,29 @@
+Sub zz_AttachStyleTemplate()
+
+
+''''''''''''''''''''''''''''''''
+'''created by Matt Retzer  - matthew.retzer@macmillan.com
+'''version 2.0
+'''last updated 5/20/14
+
+Dim TheOS As String
+Dim myFile As String
+Dim myFilePC As String
+Dim myFileMac As String
+TheOS = System.OperatingSystem
+myFilePC = "C:\ProgramData\MacmillanStyleTemplate\macmillan.dotm"
+myFileMac = "Macintosh HD:Users:Shared:MacmillanStyleTemplate:macmillan.dotm"
+
+'Set template path according to OS
+If Not TheOS Like "*Mac*" Then
+    myFile = myFilePC                               'I am Windows
+Else
+    myFile = myFileMac                              'I am a Mac
+End If
+
+'Apply template with Styles
+With ActiveDocument
+    .UpdateStylesOnOpen = True
+    .AttachedTemplate = myFile
+End With
+End Sub
