@@ -34,11 +34,7 @@ Deployment
   - 2) Make sure the 'Save In' selected is MacmillanGT.dotm.  Select 'Commands' tab, Category 'Macros'
   - 3) Drag the Macro to the Quick menu toolbar.  If desired also drag "Macros..." from 'Tools' category to Quick menu bar as well.
   - 4) Save the document
-- For Windows:
-  - 1) With the MacmillanGT.dotm still open, goto File-> Options-> Quick Access Toolbar
-  - 2) Under 'Choose Commands from:' select 'Macros' and 'Add' desired one.
-  - 3) Under 'Choose Commands from:' select 'Popular' and 'Add' 'View Macros'.
-  - 4) Save the document
+- For Windows:  this is set in the Application, not loaded automatically by a global template.  So refer to directions in Word-Template repo
 
 Stakeholders
 --------------
