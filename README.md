@@ -32,6 +32,8 @@ $ git pull origin master
 
 Quick menu items ('Attach template' and 'View Macros' buttons) load along with the Global template at startup
 
+Can also deploy to a Mac via Self Service, "Macmillan Style Templates & Macros" in Digital Workflow category, or via standalone .pkg from repo: MacmillanStyle+MacroTemplate_052714.pkg
+
 **Client installation: PC**
 
 *macmillan.dotm* goes here:  C:\ProgramData\MacmillanStyleTemplate\macmillan.dotm  
