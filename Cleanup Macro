@@ -6,35 +6,31 @@ Sub MacmillanManuscriptCleanup()
 
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
-'''version 2.0
-'''last updated 5/20/14
+'''version 2.1
+'''last updated 5/27/14:
+''' - added 7 styles for preserving white space,
+''' - preserving superscript & subscript - converting to char styles.
+''' - added prelim checks for protected documents, incidental pre-existing backtick tags
+''' - consolidated all preliminary error checks into one function
+''' - updating char styles to match new prefixes, in style replacements, hyperlink finds, and errorcheck1
+''' - fixed field object hyperlink bug
+''' - add find/replace for any extra hyperlink tags `H`
+''' - removed .Forward = True from all Find/Replaces as it is redundant when wrap = Continue
+''' - made all Subs Private except for the Main one
 
-Dim mainDoc As Document
-Set mainDoc = ActiveDocument
 
-'-----make sure Style template is attached
-Dim keyStyle As Word.Style
-Dim styleCheck As Boolean
-On Error Resume Next
-Set keyStyle = mainDoc.Styles("boldface characters (bf)")                '''Style from template to check against
-styleCheck = keyStyle Is Nothing
-If styleCheck Then
-MsgBox "Requred style template 'macmillan.dotx' is not attached", , "Error"
+'-----------run preliminary error checks------------
+Dim exitOnError As Boolean
+exitOnError = zz_errorChecks()
+
+If exitOnError <> False Then
 Exit Sub
 End If
-
-'-----make sure document is saved
-Dim docSaved As Boolean
-docSaved = mainDoc.Saved
-If docSaved = False Then
-MsgBox "Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & "Please save, then run the Macro again", , "Alert"
-Exit Sub
-End If
-
-Application.ScreenUpdating = False
-Call zz_clearFind                          'Clear find object
 
 '-----------Remove White Space------------
+Application.ScreenUpdating = False
+
+Call zz_clearFind                          'Clear find object
 Call RmSectionBreakandUnicode                     'has to be alone b/c MAtch Wildcards hasto be disabled
 Call zz_clearFind
 Call PreserveWhiteSpaceinBrkStylesA     'Part A tags paragraphs in 3 styles so consecutive ones don't get wiped
@@ -46,11 +42,10 @@ Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies t
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 
-
-Application.ScreenUpdating = False
-Call zz_clearFind                          'Clear find object
-
 '-----------Replace Local Styles-----------
+Application.ScreenUpdating = False
+
+Call zz_clearFind                          'Clear find object
 Call TagHyperlinks            'replace hyperlink styles, style unstyled hyperlinks
 Call zz_clearFind
 Call StripOrReplaceLocalStyles          'tag local styling;  reset all font properties, reapply local styling through char styles
@@ -65,7 +60,7 @@ Application.ScreenRefresh
 
 End Sub
 
-Sub RmSectionBreakandUnicode()
+Private Sub RmSectionBreakandUnicode()
 Set activeRng = ActiveDocument.Range
 With activeRng.Find
   .ClearFormatting
@@ -85,19 +80,33 @@ With activeRng.Find
 End With
 End Sub
 
-Sub PreserveWhiteSpaceinBrkStylesA()
+Private Sub PreserveWhiteSpaceinBrkStylesA()
 Set activeRng = ActiveDocument.Range
 
-Dim tagArray(3) As String                                   ' number of items in array should be declared here
-Dim StylePreserveArray(3) As String              ' number of items in array should be declared here
+Dim tagArray(10) As String                                   ' number of items in array should be declared here
+Dim StylePreserveArray(10) As String              ' number of items in array should be declared here
 Dim e As Long
 
-tagArray(1) = "`X`^&`X`"
-tagArray(2) = "`Y`^&`Y`"
-tagArray(3) = "`Z`^&`Z`"
-StylePreserveArray(1) = "Section Break (sbr)"
-StylePreserveArray(2) = "Part Start (pts)"
-StylePreserveArray(3) = "Part End (pte)"
+StylePreserveArray(1) = "Space/Stanza Break (#)"
+StylePreserveArray(2) = "Space Break + Ornament (orn)"
+StylePreserveArray(3) = "Space Break + ALT Ornament (orn2)"
+StylePreserveArray(4) = "Section Break (sbr)"
+StylePreserveArray(5) = "Part Start (pts)"
+StylePreserveArray(6) = "Part End (pte)"
+StylePreserveArray(7) = "Page Break (pb)"
+StylePreserveArray(8) = "Space Break - 1-Line (ls1)"
+StylePreserveArray(9) = "Space Break - 2-Line (ls2)"
+StylePreserveArray(10) = "Space Break - 3-Line (ls3)"
+tagArray(1) = "`1`^&`1`"
+tagArray(2) = "`2`^&`2`"
+tagArray(3) = "`3`^&`3`"
+tagArray(4) = "`4`^&`4`"
+tagArray(5) = "`5`^&`5`"
+tagArray(6) = "`6`^&`6`"
+tagArray(7) = "`7`^&`7`"
+tagArray(8) = "`8`^&`8`"
+tagArray(9) = "`9`^&`9`"
+tagArray(10) = "`0`^&`0`"
 
 For e = 1 To UBound(StylePreserveArray())
 With activeRng.Find
@@ -105,7 +114,6 @@ With activeRng.Find
   .Replacement.ClearFormatting
   .Text = "^13"
   .Replacement.Text = tagArray(e)
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = True
   .Style = StylePreserveArray(e)
@@ -119,7 +127,7 @@ End With
 Next
 End Sub
 
-Sub RmWhiteSpaceB()
+Private Sub RmWhiteSpaceB()
 Set activeRng = ActiveDocument.Range
 
 Dim wsFindArray(19) As String              'number of items in array should be declared here
@@ -172,7 +180,6 @@ With activeRng.Find
   .Replacement.ClearFormatting
   .Text = wsFindArray(i)
   .Replacement.Text = wsReplaceArray(i)
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = False
   .MatchCase = False
@@ -185,27 +192,29 @@ End With
 Next
 End Sub
 
-Sub PreserveWhiteSpaceinBrkStylesB()
+Private Sub PreserveWhiteSpaceinBrkStylesB()
 Set activeRng = ActiveDocument.Range
 
-Dim tagArrayB(3) As String                                   ' number of items in array should be declared here
-Dim StylePreserveArrayB(3) As String              ' number of items in array should be declared here
+Dim tagArrayB(10) As String                                   ' number of items in array should be declared here
 Dim f As Long
 
-StylePreserveArrayB(1) = "Section Break (sbr)"
-StylePreserveArrayB(2) = "Part Start (pts)"
-StylePreserveArrayB(3) = "Part End (pte)"
-tagArrayB(1) = "`X`(^13)`X`"
-tagArrayB(2) = "`Y`(^13)`Y`"
-tagArrayB(3) = "`Z`(^13)`Z`"
+tagArrayB(1) = "`1`(^13)`1`"
+tagArrayB(2) = "`2`(^13)`2`"
+tagArrayB(3) = "`3`(^13)`3`"
+tagArrayB(4) = "`4`(^13)`4`"
+tagArrayB(5) = "`5`(^13)`5`"
+tagArrayB(6) = "`6`(^13)`6`"
+tagArrayB(7) = "`7`(^13)`7`"
+tagArrayB(8) = "`8`(^13)`8`"
+tagArrayB(9) = "`9`(^13)`9`"
+tagArrayB(10) = "`0`(^13)`0`"
 
-For f = 1 To UBound(StylePreserveArrayB())
+For f = 1 To UBound(tagArrayB())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = tagArrayB(f)
   .Replacement.Text = "\1"
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = False
   .MatchCase = False
@@ -218,7 +227,7 @@ End With
 Next
 End Sub
 
-Sub TagHyperlinks()
+Private Sub TagHyperlinks()
 Set activeRng = ActiveDocument.Range
 
 With activeRng.Find
@@ -226,7 +235,6 @@ With activeRng.Find
   .Replacement.ClearFormatting
   .Text = ""
   .Replacement.Text = "`H`^&`H`"
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = True
   .Style = "Hyperlink"
@@ -238,7 +246,6 @@ With activeRng.Find
   .Replacement.ClearFormatting
   .Text = ""
   .Replacement.Text = "`H`^&`H`"
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = True
   .Style = "FollowedHyperlink"
@@ -250,42 +257,44 @@ With activeRng.Find
   .Replacement.ClearFormatting
   .Text = ""
   .Replacement.Text = "`H`^&`H`"
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = True
-  .Style = "hyperlink (url)"
+  .Style = "span hyperlink (url)"
   .Execute Replace:=wdReplaceAll
 End With
 
-ActiveWindow.View.ShowFieldCodes = True             'to show Hyperlink objects and make them Findable
-With activeRng.Find
+Application.ActiveWindow.View.ShowFieldCodes = True             'to show Hyperlink objects and make them Findable-----Is this necessary, once you've caught styles? maybe even undesirable?
+With activeRng.Find                                                                     'if we do kill this, then we can kill the remove extra hyperlink tags foind below as well.
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "^d HYPERLINK"
   .Replacement.Text = "`H`^&`H`"
-  .Forward = True
   .Wrap = wdFindContinue                            '"hyperlink (url)"
   .Execute Replace:=wdReplaceAll                            're-hide Hyperlink objects
 End With
-ActiveWindow.View.ShowFieldCodes = False
+Application.ActiveWindow.View.ShowFieldCodes = False
 End Sub
 
-Sub StripOrReplaceLocalStyles()
+Private Sub StripOrReplaceLocalStyles()
 Set activeRng = ActiveDocument.Range
 
 '------------tag key styles
-Dim tagStyleFindArray(4) As Boolean              ' number of items in array should be declared here
-Dim tagStyleReplaceArray(4) As String         'and here
+Dim tagStyleFindArray(6) As Boolean              ' number of items in array should be declared here
+Dim tagStyleReplaceArray(6) As String         'and here
 Dim g As Long
 
 tagStyleFindArray(1) = False        'Bold
 tagStyleFindArray(2) = False        'Italic
 tagStyleFindArray(3) = False        'Underline
 tagStyleFindArray(4) = False        'Smallcaps
+tagStyleFindArray(5) = False        'Subscript
+tagStyleFindArray(6) = False        'Superscript
 tagStyleReplaceArray(1) = "`B`^&`B`"
 tagStyleReplaceArray(2) = "`I`^&`I`"
 tagStyleReplaceArray(3) = "`U`^&`U`"
-tagStyleReplaceArray(4) = "`S`^&`S`"
+tagStyleReplaceArray(4) = "`M`^&`M`"
+tagStyleReplaceArray(5) = "`S`^&`S`"
+tagStyleReplaceArray(6) = "`P`^&`P`"
 
 For g = 1 To UBound(tagStyleFindArray())
 tagStyleFindArray(g) = True
@@ -294,13 +303,14 @@ With activeRng.Find
   .Replacement.ClearFormatting
   .Text = ""
   .Replacement.Text = tagStyleReplaceArray(g)
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = True
   .Font.Bold = tagStyleFindArray(1)
   .Font.Italic = tagStyleFindArray(2)
   .Font.Underline = tagStyleFindArray(3)
   .Font.SmallCaps = tagStyleFindArray(4)
+  .Font.Subscript = tagStyleFindArray(5)
+  .Font.Superscript = tagStyleFindArray(6)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -317,20 +327,24 @@ activeRng.Font.Reset
 Call zz_clearFind
 
 '-------------apply styles to tags
-Dim tagFindArray(5) As String              ' number of items in array should be declared here
-Dim tagReplaceArray(5) As String         'and here
+Dim tagFindArray(7) As String              ' number of items in array should be declared here
+Dim tagReplaceArray(7) As String         'and here
 Dim h As Long
 
 tagFindArray(1) = "`B`(*)`B`"
 tagFindArray(2) = "`I`(*)`I`"
 tagFindArray(3) = "`U`(*)`U`"
-tagFindArray(4) = "`S`(*)`S`"
+tagFindArray(4) = "`M`(*)`M`"
 tagFindArray(5) = "`H`(*)`H`"
-tagReplaceArray(1) = ActiveDocument.Styles("boldface characters (bf)")
-tagReplaceArray(2) = ActiveDocument.Styles("italic characters (ital)")
-tagReplaceArray(3) = ActiveDocument.Styles("underscore characters (us)")
-tagReplaceArray(4) = ActiveDocument.Styles("SMALL CAPS CHARACTERS (SC)")
-tagReplaceArray(5) = ActiveDocument.Styles("hyperlink (url)")
+tagFindArray(6) = "`S`(*)`S`"
+tagFindArray(7) = "`P`(*)`P`"
+tagReplaceArray(1) = ActiveDocument.Styles("span boldface characters (bf)")
+tagReplaceArray(2) = ActiveDocument.Styles("span italic characters (ital)")
+tagReplaceArray(3) = ActiveDocument.Styles("span underscore characters (us)")
+tagReplaceArray(4) = ActiveDocument.Styles("span small caps characters (sc)")
+tagReplaceArray(5) = ActiveDocument.Styles("span hyperlink (url)")
+tagReplaceArray(6) = ActiveDocument.Styles("span subscript characters (sub)")
+tagReplaceArray(7) = ActiveDocument.Styles("span superscript characters (sup)")
 
 For h = 1 To UBound(tagFindArray())
 With activeRng.Find
@@ -338,7 +352,6 @@ With activeRng.Find
   .Replacement.ClearFormatting
   .Text = tagFindArray(h)
   .Replacement.Text = "\1"
-  .Forward = True
   .Wrap = wdFindContinue
   .Format = True
   .Replacement.Style = tagReplaceArray(h)
@@ -350,9 +363,20 @@ With activeRng.Find
   .Execute Replace:=wdReplaceAll
 End With
 Next
+
+'---remove any extra Hyperlink tags
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "`H`"
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
 End Sub
 
-Sub RmHighlights()
+Private Sub RmHighlights()
 Set activeRng = ActiveDocument.Range
 
 With activeRng.Find
@@ -367,7 +391,7 @@ With activeRng.Find
 End With
 End Sub
 
-Sub StraightQuotestoSmartQuotes()
+Private Sub StraightQuotestoSmartQuotes()
 Set activeRng = ActiveDocument.Range
 
 Application.Options.AutoFormatAsYouTypeReplaceQuotes = True
@@ -382,7 +406,7 @@ ActiveDocument.Content.Find.Execute FindText:="""", MatchCase:=False, _
 'Application.Options.AutoFormatAsYouTypeReplaceQuotes = False
 End Sub
 
-Sub zz_clearFind()
+Private Sub zz_clearFind()
 
 Dim clearRng As Range
 Set clearRng = ActiveDocument.Words.First
@@ -392,7 +416,6 @@ With clearRng.Find
   .Replacement.ClearFormatting
   .Text = ""
   .Replacement.Text = ""
-  .Forward = True
   .Wrap = wdFindStop
   .Format = False
   .MatchCase = False
@@ -403,3 +426,54 @@ With clearRng.Find
   .Execute
 End With
 End Sub
+
+Function zz_errorChecks()
+
+zz_errorChecks = False
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+
+'-----make sure Style template is attached
+Dim keyStyle As Word.Style
+Dim styleCheck As Boolean
+On Error Resume Next
+Set keyStyle = mainDoc.Styles("span boldface characters (bf)")                '''Style from template to check against
+styleCheck = keyStyle Is Nothing
+If styleCheck Then
+MsgBox "Requred style template 'macmillan.dotx' is not attached", , "Error"
+zz_errorChecks = True
+Exit Function
+End If
+
+'-----make sure document is saved
+Dim docSaved As Boolean
+docSaved = mainDoc.Saved
+If docSaved = False Then
+MsgBox "Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & "Please save, then run the Macro again", , "Alert"
+zz_errorChecks = True
+Exit Function
+End If
+
+'-----test protection
+If ActiveDocument.ProtectionType <> wdNoProtection Then
+MsgBox "Protection is enabled on document '" & mainDoc & "'." & vbNewLine & "Please unprotect the document and run the Macro again" & vbNewLine & vbNewLine & "TIP: If you don't know the protection password, try pasting contents of this file into a new file, and run the macro on that.", , "Error 2"
+zz_errorChecks = True
+Exit Function
+End If
+
+'-----test if backtick style tag already exists
+Set activeRng = ActiveDocument.Range
+Application.ScreenUpdating = False
+With activeRng.Find
+        .ClearFormatting
+        .Text = "`[A-Z0-9]`"
+        .MatchWildcards = True
+        .Wrap = wdFindContinue
+End With
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+If activeRng.Find.Execute Then
+MsgBox "The Cleanup Macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & "'" & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support", , "Error Code: 1"
+zz_errorChecks = True
+End If
+End Function
