@@ -7,7 +7,7 @@ This is a stub.
 
 ## Dependencies
 
-Word-macros
+https://github.com/macmillanpublishers/Word-macros - This repo stores the code for the macros that are incorporated into our template. These macros are maintained and updated independently, and then changes are added to this template.
 
 ## Distribution End Points
 
@@ -16,15 +16,20 @@ Also available for client install on Macs via Casper 'Self Service' in Digital W
 
 ## Deployment
 
-**For Development**
+The two .dotm files need to be deployed on the server, and the pkg also needs to be updated with the newest changes and deployed to Self Service.
 
-On the server, cd into the directory and run:
+To deploy the .dotm files on the server:
 
-```
-$ git pull origin master
-```
+1. Navigate to the _NYFILE23/Word Template_ directory 
+1. Download the two .dotm files from this repo, and save them in the above directory, **replacing** the existing files.
 
-**Client installation: Mac**
+To update the self-service package and deploy:
+
+TKTK (Matt)
+
+## Client installation
+
+**Mac**
 
 *macmillan.dotm* goes here:  /Macintosh HD/Users/Shared/MacmillanStyleTemplate/
 
@@ -34,7 +39,7 @@ Quick menu items ('Attach template' and 'View Macros' buttons) load along with t
 
 Can also deploy to a Mac via Self Service, "Macmillan Style Templates & Macros" in Digital Workflow category, or via standalone .pkg from repo: MacmillanStyle+MacroTemplate_052714.pkg
 
-**Client installation: PC**
+**PC**
 
 *macmillan.dotm* goes here:  C:\ProgramData\MacmillanStyleTemplate\macmillan.dotm  
 
@@ -56,4 +61,4 @@ Editorial Production, Design
 
 ## Usage
 
-See confluence page.
+See https://macmillan.atlassian.net/wiki/display/EDIT/Word+Template+Quick+Start+Guide
