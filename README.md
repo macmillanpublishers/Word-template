@@ -21,11 +21,11 @@ The two .dotm files need to be deployed on the server, and the pkg also needs to
 To deploy the .dotm files on the server:
 
 1. Navigate to the _NYFILE23/Word Template_ directory 
-1. Download the two .dotm files from this repo, and save them in the above directory, **replacing** the existing files.
+2. Download the two .dotm files from this repo, and save them in the above directory, **replacing** the existing files.
 
 To update the self-service package and deploy:
 
-TKTK (Matt)
+1. Contact MacSupport group (x6111) with location of the updated .dotm files on NYFILE23, and name of the Self-Service policy (Macmillan Style Templates & Macros). They will update the pkg and policy. 
 
 ## Client installation
 
