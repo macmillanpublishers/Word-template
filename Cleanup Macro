@@ -1,4 +1,4 @@
-Option Explicit
+  Option Explicit
 Option Base 1
 Dim activeRng As Range
 
@@ -6,8 +6,11 @@ Sub MacmillanManuscriptCleanup()
 
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
-'''version 2.1
-'''last updated 5/27/14:
+'''version 3.0
+'''last updated 6/10/14:
+''' - added Style Report Macro Sub
+''' - added srErrorCheck Function
+'''version2.1 - 5/27/14:
 ''' - added 7 styles for preserving white space,
 ''' - preserving superscript & subscript - converting to char styles.
 ''' - added prelim checks for protected documents, incidental pre-existing backtick tags
@@ -476,4 +479,185 @@ If activeRng.Find.Execute Then
 MsgBox "The Cleanup Macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & "'" & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support", , "Error Code: 1"
 zz_errorChecks = True
 End If
+End Function
+
+
+Sub MacmillanStyleReport()
+
+'-----------run preliminary error checks------------
+Dim exitOnError As Boolean
+exitOnError = srErrorCheck()
+
+If exitOnError <> False Then
+Exit Sub
+End If
+
+''''''''''''''''''''''
+''Timer opening
+'Dim aTime As Double, bTime As Double
+'aTime = Timer
+
+'''''''''''''''''''''
+Dim activeDoc As Document
+Set activeDoc = ActiveDocument
+Dim stylesGood() As String
+Dim stylesGoodLong As Long
+stylesGoodLong = 400                                    'could maybe reduce this number
+ReDim stylesGood(stylesGoodLong)
+Dim stylesBad(100) As String                            'could maybe reduce this number too
+Dim styleGoodCount As Integer
+Dim styleBadCount As Integer
+Dim styleBadOverflow As Boolean
+Dim activeParaCount As Integer
+Dim J As Integer, K As Integer, L As Integer
+Dim paraStyle As String
+'''''''''''''''''''''
+Dim activeParaRange As Range
+Dim pageNumber As Integer
+Dim activeDocName As String
+Dim activeDocPath As String
+Dim styleReportDoc As String
+Dim fnum As Integer
+Dim TheOS As String
+TheOS = System.OperatingSystem
+activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".doc") - 1)
+activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
+
+Application.DisplayStatusBar = True
+Application.ScreenUpdating = False
+
+'Alter built-in Normal (Web) style temporarily (later, maybe forever?)
+ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
+
+' Collect all styles being used
+styleGoodCount = 0
+styleBadCount = 0
+styleBadOverflow = False
+activeParaCount = activeDoc.Paragraphs.Count
+For J = 1 To activeParaCount
+    'Next two lines are for the status bar
+    Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
+    If J Mod 100 = 0 Then DoEvents
+    paraStyle = activeDoc.Paragraphs(J).Style
+        'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
+    If Right(paraStyle, 1) = ")" Then
+        For K = 1 To styleGoodCount
+            If paraStyle = stylesGood(K) Then Exit For
+        Next K
+        If K = styleGoodCount + 1 Then
+            styleGoodCount = K
+            stylesGood(styleGoodCount) = paraStyle
+        End If
+    Else
+        For L = 1 To styleBadCount
+            'If paraStyle = stylesBad(L) Then Exit For                  'Not needed, since we want EVERY instance of bad style
+        Next L
+        If L > 100 Then
+                styleBadOverflow = True
+            Exit For
+        End If
+        If L = styleBadCount + 1 Then
+            styleBadCount = L
+            Set activeParaRange = ActiveDocument.Paragraphs(J).Range
+            pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
+            stylesBad(styleBadCount) = "Page " & pageNumber & " (Paragraph " & J & "): " & vbTab & paraStyle
+        End If
+    End If
+Next J
+   
+'Change Normal (Web) back (if you want to)
+ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
+
+'Sort good styles
+If K <> 0 Then
+ReDim Preserve stylesGood(K)
+WordBasic.SortArray stylesGood()
+End If
+
+'create text file
+styleReportDoc = activeDocPath & activeDocName & "_StyleReport.txt"
+
+''''for 32 char Mc OS bug- could check if this is Mac OS too< PART 1
+If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
+    styleReportDoc = activeDocPath & "\" & activeDocName & "_StyleReport.txt"
+Else
+    Dim styleReportDocAlt As String
+    Dim placeholdDocName As String
+    placeholdDocName = "filenamePlacehold_Styleport.txt"
+    styleReportDocAlt = styleReportDoc
+    styleReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
+End If
+
+'set and open file for output
+fnum = FreeFile()
+Open styleReportDoc For Output As fnum
+Print #fnum, "-----" & styleGoodCount & " Macmillan Styles In Use: -----"   '"----- Good Styles In Use: -----"
+    For J = 1 To styleGoodCount
+        Print #fnum, stylesGood(J)
+    Next J
+Print #fnum, vbCr
+Print #fnum, vbCr
+If styleBadCount <> 0 Then
+    Print #fnum, "----- " & styleBadCount & " PARAGRAPHS WITH BAD STYLES FOUND: ----- " & vbCr
+    Print #fnum, "(Please apply Macmillan styles to the following paragraphs:)",
+    Print #fnum, vbCr
+    For J = 1 To styleBadCount
+        Print #fnum, stylesBad(J)
+    Next J
+Else
+    Print #fnum, "----- no bad paragraph styles found ----- "
+End If
+Close #fnum
+
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+
+''''for 32 char Mc OS bug-<PART 2
+If styleReportDocAlt <> "" Then
+Name styleReportDoc As styleReportDocAlt
+End If
+
+If styleBadOverflow = True Then
+MsgBox "More than 100 paragraphs were found with non-MacMillan styles." & vbCr & "Only the first 100 are shown in the Style report", , "Alert"
+End If
+
+''Timer closing
+'bTime = Timer
+'MsgBox "CreateStyleListEBranch: " & Format(Round(bTime - aTime, 2), "00:00:00") & " for " & activeParaCount & " paragraphs"
+End Sub
+
+
+Function srErrorCheck()
+
+srErrorCheck = False
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
+
+'-----make sure Style template is attached
+Dim keyStyle As Word.Style
+Dim styleCheck As Boolean
+On Error Resume Next
+Set keyStyle = mainDoc.Styles("span boldface characters (bf)")                '''Style from template to check against
+styleCheck = keyStyle Is Nothing
+If styleCheck Then
+MsgBox "Requred style template 'macmillan.dotx' is not attached", , "Error"
+srErrorCheck = True
+Exit Function
+End If
+
+'-----make sure document is saved
+Dim docSaved As Boolean
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK to Save Document & Run Style Report." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
+        srErrorCheck = True
+        Exit Function
+    End If
+End If
+
 End Function
