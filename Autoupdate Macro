@@ -1,0 +1,173 @@
+Option Explicit
+Option Base 1
+
+'''created by Matt Retzer  - matthew.retzer@macmillan.com
+'''version 1.0
+'''last updated 6/19/14:
+'''will eventually be combined with attach template macro
+'''this works on a Mac, halfway there on a PC
+
+Sub updateCheckTest()
+
+Dim dirNamePC As String
+Dim dirNameBash As String
+Dim dirNameMac As String
+Dim logFileName As String
+Dim logFilePC As String
+Dim logFileMac As String
+Dim currentUser As String                   'could set for MAc & PC   Does pre-binding matter?
+Dim updateCheck As Boolean
+Dim updateFrequency As Integer
+Dim logString As String                         'could  set a few values for this up front
+Dim lastModDate As Date
+Dim cvUrl As String
+Dim currentVersionST As String              'ST=StyleTemplate
+Dim installedVersionST As String
+Dim downloadLinkST As String
+
+logFileName = "macmillan_macros.log"
+updateCheck = True
+updateFrequency = 1                                     'number of days between update checks
+logString = "created logfile: " & Date
+cvUrl = "https://macmillan.atlassian.net/wiki/display/PBL/Test"
+installedVersionST = "(none installed)"         'default
+
+If Not System.OperatingSystem Like "*Mac*" Then                                                                         ''''''PCs
+            '''set PC vars
+            currentUser = Environ("USERNAME")
+            dirNamePC = "D:\User Data\My Documents\Macmillan Style template\test"
+            logFilePC = dirNamePC & "\" & logFileName                      'if we need to do this on C we can use currentUser
+            '''check if logfile exists
+            If Dir(logFilePC) <> vbNullString Then                         '''file exists
+                        '''get date modified of logfile
+                        lastModDate = FileDateTime(logFilePC)
+                        '''compare with current date - if not today
+                        If DateDiff("d", lastModDate, Date) < updateFrequency Then
+                                updateCheck = False
+                        End If
+                        logString = Date & " -- updateCheck = " & updateCheck
+            Else                                                                                                                         '''file does not exist
+                        '''create directory if no exist
+                        If Dir(dirNamePC, vbDirectory) = vbNullString Then MkDir (dirNamePC)
+           End If
+            '''run log setup sub
+            LogInformation logFilePC, logString
+''''''''''''''''''''''''''''''''''works up to here on a PC ---need to re-buld commented are abelow to work for the PC (below is Mac code)
+'            If updateCheck = False Then                         'toggle this to -True- to test further business
+'                        Exit Sub
+'            Else                                                                                                                        'check the network, compare versions.  Skipping domain since we are ooking at confluence, but would test ping hbpub.net
+'                        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then
+'                                LogInformation logFileMac, Date & " -- tried update; unable to connect to internet"
+'                                Exit Sub
+'                        Else
+'                                If ShellAndWaitMac("[ -e " & dirNameBash & "/macmillan.dotm ] ; echo $?") = 0 Then
+'                                        currentVersionST = ShellAndWaitMac("curl -s " & cvUrl & " | grep -m 1 macmillan.dotm | awk -F'Version' '{print$2}' | awk '{print$1}'")
+'                                        installedVersionST = ShellAndWaitMac("cp -rfp " & dirNameBash & "/macmillan.dotm /private/tmp/macmillan.zip ; unzip -qu /private/tmp/macmillan.zip -d /private/tmp ; cat /private/tmp/docProps/custom.xml | awk -F'vt:lpwstr' '{print $2}' | tr -d '<>/\\n'")
+'                                        'MsgBox currentVersionST & ", " & installedVersionST
+'                                        If currentVersionST = installedVersionST Then
+'                                                LogInformation logFileMac, Date & " -- current & installed versions match (" & currentVersionST & ").  Style Template already up to date"
+'                                                updateCheck = False
+'                                                Exit Sub
+'                                        End If
+'                                Else
+'                                        LogInformation logFileMac, Date & " -- Style Template not present, updateCheck = " & updateCheck
+'                                End If
+'                        End If
+'            End If
+'
+'            '''download file to tmp
+'            downloadLinkST = ShellAndWaitMac("curl -s " & cvUrl & " | grep -m 1 macmillan.dotm | awk '{print$2}' | sed -e 's/^.*wiki/wiki/' -e 's/?.*//'")
+'            ShellAndWaitMac ("rm -f /private/tmp/macmillanNew.dotm ; curl -o /private/tmp/macmillanNew.dotm https://macmillan.atlassian.net/" & downloadLinkST)
+'            LogInformation logFileMac, Date & " -- Downloaded new Style Template version: " & currentVersionST & ".  (installed version was " & installedVersionST & ")"
+'
+'            'remove existing file:  could Kill dirNameMac & "macmillan.dotm"  But Using rm for one liner
+'            ShellAndWaitMac ("rm -f " & dirNameBash & "/macmillan.dotm &>/dev/null")
+'
+'            '''replace existing file
+'            Name "Macintosh HD:private:tmp:macmillanNew.dotm" As dirNameMac & "macmillan.dotm"
+'            LogInformation logFileMac, "Replaced existing Style Template.  Telling user to relaunch Word."
+'
+'            MsgBox "The Macmillan Style Template has been upgraded on your Mac." & vbNewLine & vbNewLine & "Please RE-LAUNCH WORD for the updated Style Template to take effect!", , "ACTION REQUIRED"
+'
+
+Else                                                                                                                                            ''''''Macs
+            '''set Mac vars
+                                        'could do currentUSer via shell but OSA is a cleaner command
+            currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
+            dirNameBash = "/Users/" & currentUser & "/MacmillanStyleTemplate/test"
+            dirNameMac = "Macintosh HD:Users:" & currentUser & ":MacmillanStyleTemplate:test:"
+            logFileMac = dirNameMac & logFileName
+            '''check if logfile exists
+            If ShellAndWaitMac("[ -e " & dirNameBash & "/" & logFileName & " ] ; echo $?") = 0 Then                         '''file exists
+                        '''get date modified of logfile
+                        lastModDate = FileDateTime(logFileMac)
+                        '''compare with current date - if not today
+                        If DateDiff("d", lastModDate, Date) < updateFrequency Then
+                                updateCheck = False
+                        End If
+                        logString = Date & " -- updateCheck = " & updateCheck
+            Else                                                                                                                         '''file does not exist
+                        '''create directory if no exist
+                        ShellAndWaitMac ("[ -e " & dirNameBash & " ] &>/dev/null || mkdir -p " & dirNameBash)
+            End If
+            '''run log setup sub
+            LogInformation logFileMac, logString
+            
+            If updateCheck = False Then                         'toggle this to -True- to test further business
+                        Exit Sub
+            Else                                                                                                                        'check the network, compare versions.  Skipping domain since we are ooking at confluence, but would test ping hbpub.net
+                        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then
+                                LogInformation logFileMac, Date & " -- tried update; unable to connect to internet"
+                                Exit Sub
+                        Else
+                                If ShellAndWaitMac("[ -e " & dirNameBash & "/macmillan.dotm ] ; echo $?") = 0 Then
+                                        currentVersionST = ShellAndWaitMac("curl -s " & cvUrl & " | grep -m 1 macmillan.dotm | awk -F'Version' '{print$2}' | awk '{print$1}'")
+                                        installedVersionST = ShellAndWaitMac("cp -rfp " & dirNameBash & "/macmillan.dotm /private/tmp/macmillan.zip ; unzip -qu /private/tmp/macmillan.zip -d /private/tmp ; cat /private/tmp/docProps/custom.xml | awk -F'vt:lpwstr' '{print $2}' | tr -d '<>/\\n'")
+                                        'MsgBox currentVersionST & ", " & installedVersionST
+                                        If currentVersionST = installedVersionST Then
+                                                LogInformation logFileMac, Date & " -- current & installed versions match (" & currentVersionST & ").  Style Template already up to date"
+                                                updateCheck = False
+                                                Exit Sub
+                                        End If
+                                Else
+                                        LogInformation logFileMac, Date & " -- Style Template not present, updateCheck = " & updateCheck
+                                End If
+                        End If
+            End If
+            
+            '''download file to tmp
+            downloadLinkST = ShellAndWaitMac("curl -s " & cvUrl & " | grep -m 1 macmillan.dotm | awk '{print$2}' | sed -e 's/^.*wiki/wiki/' -e 's/?.*//'")
+            ShellAndWaitMac ("rm -f /private/tmp/macmillanNew.dotm ; curl -o /private/tmp/macmillanNew.dotm https://macmillan.atlassian.net/" & downloadLinkST)
+            LogInformation logFileMac, Date & " -- Downloaded new Style Template version: " & currentVersionST & ".  (installed version was " & installedVersionST & ")"
+            
+            'remove existing file:  could Kill dirNameMac & "macmillan.dotm"  But Using rm for one liner
+            ShellAndWaitMac ("rm -f " & dirNameBash & "/macmillan.dotm &>/dev/null")
+            
+            '''replace existing file
+            Name "Macintosh HD:private:tmp:macmillanNew.dotm" As dirNameMac & "macmillan.dotm"
+            LogInformation logFileMac, "Replaced existing Style Template.  Telling user to relaunch Word."
+            
+            MsgBox "The Macmillan Style Template has been upgraded on your Mac." & vbNewLine & vbNewLine & "Please RE-LAUNCH WORD for the updated Style Template to take effect!", , "ACTION REQUIRED"
+End If
+
+End Sub
+
+Sub LogInformation(logFile As String, LogMessage As String)
+
+Dim FileNum As Integer
+    FileNum = FreeFile ' next file number
+    Open logFile For Append As #FileNum ' creates the file if it doesn't exist
+    Print #FileNum, LogMessage ' write information at the end of the text file
+    Close #FileNum ' close the file
+End Sub
+
+Function ShellAndWaitMac(cmd As String) As String
+
+Dim result As String
+Dim scriptCmd As String ' Macscript command
+'
+scriptCmd = "do shell script """ & cmd & """"
+result = MacScript(scriptCmd) ' result contains stdout, should you care
+ShellAndWaitMac = result
+End Function
+
