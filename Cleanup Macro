@@ -9,6 +9,15 @@ Sub MacmillanManuscriptCleanup()
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 ''''''''''''''''''''''''''''''
+
+'version 3.4.3
+'last updated 2014-10-20 by Erica Warren
+''' - moved StylesHyperlink sub after PreserveWhiteSpaceinBrkStylesA sub to prevent styled blank paragraphs from being removed
+
+'''''''''''''''''''''''''''''''''''''''
+'version 3.4.2: template style updates only, not macro updates
+
+''''''''''''''''''''''''''''''''''''''
 'version 3.4.1
 'last updated 2014-10-08 by Erica Warren
 ''' - added new Column Break (cbr) style to preserve white space macro
@@ -90,13 +99,13 @@ Application.DisplayStatusBar = True
 Application.ScreenUpdating = False
 
 Call zz_clearFind                          'Clear find object
-Call StyleHyperlinks
-Call zz_clearFind
 Application.StatusBar = "Fixing quotes, unicode, section breaks": DoEvents
 Call RmNonWildcardItems                     'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
 Call zz_clearFind
 Application.StatusBar = "Preserving styled white-space pt. 1": DoEvents
 Call PreserveWhiteSpaceinBrkStylesA     'Part A tags paragraphs in 3 styles so consecutive ones don't get wiped
+Call zz_clearFind
+Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
 Call zz_clearFind
 Call PreserveStyledCharactersA              ' EW added v. 3.2, tags styled page breaks, tabs
 Call zz_clearFind
@@ -117,8 +126,7 @@ Application.ScreenUpdating = False
 
 Call RemoveBookmarks
 Call zz_clearFind                          'Clear find object
-Call StyleHyperlinks
-Call zz_clearFind
+
 Application.StatusBar = "Tagging character styles and hyperlinks": DoEvents
 Call TagExistingCharStyles            'tag existing styled items + hyperlinks,  style unstyled hyperlinks
 Call zz_clearFind
@@ -153,7 +161,7 @@ Private Sub StyleHyperlinks()
 ' we want to remove these from urls AND text; will add back to just urls later
 
 Set activeRng = ActiveDocument.Range
-
+' remove all embedded hyperlinks regardless of character style style
 With activeRng
 While .Hyperlinks.Count > 0
 .Hyperlinks(1).Delete
@@ -164,9 +172,9 @@ End With
 Dim HyperlinkStyleArray(3) As String
 Dim p As Long
 
-HyperlinkStyleArray(1) = "Hyperlink"
-HyperlinkStyleArray(2) = "FollowedHyperlink"
-HyperlinkStyleArray(3) = "span hyperlink (url)"
+HyperlinkStyleArray(1) = "Hyperlink"        'built-in style applied automatically to links
+HyperlinkStyleArray(2) = "FollowedHyperlink"    'built-in style applied automatically
+HyperlinkStyleArray(3) = "span hyperlink (url)" 'Macmillan template style for links
 
 For p = 1 To UBound(HyperlinkStyleArray())
     With activeRng.Find
@@ -191,6 +199,8 @@ For p = 1 To UBound(HyperlinkStyleArray())
 '--------------------------------------------------
 ' converts all URLs to hyperlinks with Hyperlink style
 ' because some show up as plain text
+' Note this also removes all blank paragraphs regardless of style, so needs to come after sub PreserveWhiteSpaceinBrkA
+
 
   Dim f1 As Boolean, f2 As Boolean, f3 As Boolean
   Dim f4 As Boolean, f5 As Boolean, f6 As Boolean
@@ -256,7 +266,7 @@ For p = 1 To UBound(HyperlinkStyleArray())
     End With
 
 ' -----------------------------------------------
-' Removes all hyperlinks from the document:
+' Removes all hyperlinks from the document (that were added with AutoFormat)
 ' Text to display is left intact, macmillan style is left intact
 With activeRng
 While .Hyperlinks.Count > 0
@@ -360,22 +370,25 @@ Private Sub PreserveStyledCharactersA()
 ' replaces correctly styled characters with placeholder so they don't get removed
 Set activeRng = ActiveDocument.Range
 
-Dim preserveCharFindArray(3) As String  ' declare number of items in array
-Dim preserveCharReplaceArray(3) As String   'delcare number of items in array
-Dim preserveCharStyleArray(3) As String ' ditto
+Dim preserveCharFindArray(4) As String  ' declare number of items in array
+Dim preserveCharReplaceArray(4) As String   'delcare number of items in array
+Dim preserveCharStyleArray(4) As String ' ditto
 Dim m As Long
 
 preserveCharFindArray(1) = "^m" 'page breaks
 preserveCharFindArray(2) = "^t" 'tabs
 preserveCharFindArray(3) = "  "  ' two spaces
+preserveCharFindArray(4) = "   "    'three spaces
 
 preserveCharReplaceArray(1) = "`R|"
 preserveCharReplaceArray(2) = "`E|"
 preserveCharReplaceArray(3) = "`G|"
+preserveCharReplaceArray(4) = "`J|"
 
 preserveCharStyleArray(1) = "Page Break (pb)"
 preserveCharStyleArray(2) = "span preserve characters (pre)"
 preserveCharStyleArray(3) = "span preserve characters (pre)"
+preserveCharStyleArray(4) = "span preserve characters (pre)"
 
 For m = 1 To UBound(preserveCharFindArray())
 With activeRng.Find
@@ -489,22 +502,25 @@ Private Sub PreserveStyledCharactersB()
 ' replaces placeholders with original characters
 Set activeRng = ActiveDocument.Range
 
-Dim preserveCharFindArray(3) As String  ' declare number of items in array
-Dim preserveCharReplaceArray(3) As String   'declare number of items in array
-Dim preserveCharStyleArray(3) As String ' ditto
+Dim preserveCharFindArray(4) As String  ' declare number of items in array
+Dim preserveCharReplaceArray(4) As String   'declare number of items in array
+Dim preserveCharStyleArray(4) As String ' ditto
 Dim n As Long
 
 preserveCharFindArray(1) = "`R|" 'page breaks
 preserveCharFindArray(2) = "`E|" 'tabs
 preserveCharFindArray(3) = "`G|"    ' two spaces
+preserveCharFindArray(4) = "`J|`"   'three spaces
 
 preserveCharReplaceArray(1) = "^m"
 preserveCharReplaceArray(2) = "^t"
 preserveCharReplaceArray(3) = "  "
+preserveCharReplaceArray(3) = "   "
 
 preserveCharStyleArray(1) = "Page Break (pb)"
 preserveCharStyleArray(2) = "span preserve characters (pre)"
 preserveCharStyleArray(3) = "span preserve characters (pre)"
+preserveCharStyleArray(4) = "span preserve characters (pre)"
 
 For n = 1 To UBound(preserveCharFindArray())
 With activeRng.Find
@@ -527,7 +543,7 @@ End Sub
 Private Sub PreserveWhiteSpaceinBrkStylesB()
 Set activeRng = ActiveDocument.Range
 
-Dim tagArrayB(10) As String                                   ' number of items in array should be declared here
+Dim tagArrayB(11) As String                                   ' number of items in array should be declared here
 Dim f As Long
 
 tagArrayB(1) = "`1`(^13)`1``"                             'v. 3.1 patch  added extra backtick on trailing tag for all of these.
@@ -540,7 +556,7 @@ tagArrayB(7) = "`7`(^13)`7``"
 tagArrayB(8) = "`8`(^13)`8``"
 tagArrayB(9) = "`9`(^13)`9``"
 tagArrayB(10) = "`0`(^13)`0``"
-tagArrayB(10) = "`L`(^13)`L``"              ' for new column break, added v. 3.4.1
+tagArrayB(11) = "`L`(^13)`L``"              ' for new column break, added v. 3.4.1
 
 For f = 1 To UBound(tagArrayB())
 With activeRng.Find
@@ -692,9 +708,9 @@ tagFindArray(10) = "`X|(*)|X`"
 tagFindArray(11) = "`W|(*)|W`"
 tagFindArray(12) = "`V|(*)|V`"
 tagFindArray(13) = "`T|(*)|T`"
-tagFindArray(14) = "`A|(*)|A`"                                                                                                 'v. 3.1 patch
-tagFindArray(15) = "`C|(*)|C`"                                                                                                 'v. 3.1 patch
-tagFindArray(16) = "`D|(*)|D`"                                                                                                 'v. 3.1 patch
+tagFindArray(14) = "`A|(*)|A`"                'v. 3.1 patch
+tagFindArray(15) = "`C|(*)|C`"                 'v. 3.1 patch
+tagFindArray(16) = "`D|(*)|D`"                       'v. 3.1 patch
 tagFindArray(17) = "`F|(*)|F`"
 tagReplaceArray(1) = ActiveDocument.Styles("span boldface characters (bf)")
 tagReplaceArray(2) = ActiveDocument.Styles("span italic characters (ital)")
@@ -703,13 +719,13 @@ tagReplaceArray(4) = ActiveDocument.Styles("span small caps characters (sc)")
 tagReplaceArray(5) = ActiveDocument.Styles("span hyperlink (url)")
 tagReplaceArray(6) = ActiveDocument.Styles("span subscript characters (sub)")
 tagReplaceArray(7) = ActiveDocument.Styles("span superscript characters (sup)")
-tagReplaceArray(8) = ActiveDocument.Styles("span symbols (sym)")                                                    ' the last 9 items here are of course v. 3.1 patches
+tagReplaceArray(8) = ActiveDocument.Styles("span symbols (sym)")           
+' the last 9 items here are of course v. 3.1 patches
 tagReplaceArray(9) = ActiveDocument.Styles("span accent characters (acc)")
 tagReplaceArray(10) = ActiveDocument.Styles("span cross-reference (xref)")
 tagReplaceArray(11) = ActiveDocument.Styles("span material to come (tk)")
 tagReplaceArray(12) = ActiveDocument.Styles("span carry query (cq)")
 tagReplaceArray(13) = ActiveDocument.Styles("span key phrase (kp)")
-
 tagReplaceArray(14) = ActiveDocument.Styles("span bold ital (bem)")
 tagReplaceArray(15) = ActiveDocument.Styles("span smcap bold (scbold)")
 tagReplaceArray(16) = ActiveDocument.Styles("span smcap ital (scital)")
@@ -969,7 +985,7 @@ End If
 If styleBadOverflow = True Then
 MsgBox "Macmillan Style Report has finished running." & vbCr & "PLEASE NOTE: more than 100 paragraphs have non-Macmillan styles." & vbCr & "Only the first 100 are shown in the Style report.", , "Alert"
 Else
-MsgBox "The Macmillan Style Report macro has finished running. Lets go take a look at the results!"
+MsgBox "The Macmillan Style Report macro has finished running. Go take a look at the results!"
 End If
 
 ''Timer closing
@@ -1053,3 +1069,8 @@ ActiveDocument.ActiveWindow.View.ShowAll = True                         'Shows n
 ActiveDocument.ActiveWindow.View.Type = wdNormalView                'Switches to Normal/Draft view
 ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5)                           'Sets Styles margin area in draft view to 1.5 in.
 End Sub
+
+
+
+
+
