@@ -27,3 +27,30 @@ With ActiveDocument
     .AttachedTemplate = myFile
 End With
 End Sub
+
+Sub zz_AttachBoundMSTemplate()
+
+'''copy of Sub zz_AttachStyleTemplate()
+'''but to attach a template without color guides
+
+Dim TheOS As String
+Dim myFile As String
+Dim myFilePC As String
+Dim myFileMac As String
+TheOS = System.OperatingSystem
+myFilePC = "C:\ProgramData\MacmillanStyleTemplate\macmillan_NoColor.dotm"
+myFileMac = "Macintosh HD:Users:Shared:MacmillanStyleTemplate:macmillan_NoColor.dotm"
+
+'Set template path according to OS
+If Not TheOS Like "*Mac*" Then
+    myFile = myFilePC                               'I am Windows
+Else
+    myFile = myFileMac                              'I am a Mac
+End If
+
+'Apply template with Styles
+With ActiveDocument
+    .UpdateStylesOnOpen = True
+    .AttachedTemplate = myFile
+End With
+End Sub
