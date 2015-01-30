@@ -37,10 +37,11 @@ Sub zz_AttachBoundMSTemplate()
 
 '''copy of Sub zz_AttachStyleTemplate()
 '''but to attach a template without color guides
-'''updated 1/31/2015 by Erica Warren: added PCupdateCheck but it's giving an error.
+'''updated 1/30/2015 by Erica Warren: added PCupdateCheck.
 
 Dim TheOS As String
 Dim myFile As String
+Dim template As String
 Dim myFilePC As String
 Dim myFileMac As String
 TheOS = System.OperatingSystem
@@ -67,8 +68,7 @@ End Sub
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 '''update by Erica Warren - erica.warren@macmillan.com
 '''version 1.0
-'''last updated 1/30/2015: PC version works with macmillan.dotm
-'''doesn't work with macmillan_NoColor.dotm
+'''last updated 1/30/2015: PC version works with macmillan.dotm & macmillan_NoColor.dotm
 
 Private Sub PCupdateCheck(templateFile As String)
 
@@ -137,7 +137,7 @@ End If
 '''run log setup sub
 LogInformation logFilePC, logString
 
-If updateCheck = False Then       'toggle this to -True- to test further business
+If updateCheck = True Then       'toggle this to -True- to test further business
     Exit Sub
     
 Else ' updateCheck is still True
@@ -253,12 +253,3 @@ Private Function ImportVariable(strFile As String) As String
     Close #1
  
 End Function
-
-
-
-
-
-
-
-
-
