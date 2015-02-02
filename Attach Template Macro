@@ -4,9 +4,11 @@ Sub zz_AttachStyleTemplate()
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 '''version 3.0
-'''last updated 1/30/15
+'''last updated 2/2/15
+'''updated 2/2/15 by Erica Warren: Update Checks download both template files now
 '''updated 1/30 by Erica Warren: added PCupdateCheck sub
 '''updated 1/30 by Matt Retzer: added MacupdateCheck sub & shell and wait function, updated Mac template file path
+
 
 Dim TheOS As String
 Dim myFile As String
@@ -34,6 +36,7 @@ With ActiveDocument
     .UpdateStylesOnOpen = True
     .AttachedTemplate = myFile
 End With
+   
 End Sub
 
 Sub zz_AttachBoundMSTemplate()
@@ -41,6 +44,7 @@ Sub zz_AttachBoundMSTemplate()
 '''copy of Sub zz_AttachStyleTemplate()
 '''but to attach a template without color guides
 '''updated 1/30/2015 by Erica Warren: added PCupdateCheck.
+
 
 Dim TheOS As String
 Dim myFile As String
@@ -67,6 +71,7 @@ With ActiveDocument
     .UpdateStylesOnOpen = True
     .AttachedTemplate = myFile
 End With
+
 End Sub
 
 
@@ -75,7 +80,7 @@ End Sub
 '''version 1.0
 '''last updated 1/30/2015: PC version works with macmillan.dotm & macmillan_NoColor.dotm
 
-Private Sub PCupdateCheck(templateFile As String)
+Sub PCupdateCheck(templateFile As String)
 
 Dim dirNamePC As String
 Dim dirNameBash As String
@@ -93,7 +98,6 @@ Dim currentVersionST As String              'ST=StyleTemplate
 Dim installedVersionST As String
 Dim downloadLinkST As String
 Dim localDrive As String
-
 
 logFileName = "macmillan_macros.log"
 updateCheck = True
@@ -142,7 +146,7 @@ End If
 '''run log setup sub
 LogInformation logFilePC, logString
 
-If updateCheck = True Then       'toggle this to -True- to test further business
+If updateCheck = False Then       'toggle this to -True- to test further business
     Exit Sub
     
 Else ' updateCheck is still True
@@ -159,7 +163,7 @@ Else ' updateCheck is still True
         Documents(pcTemplatePath).Close
     End If
     
-    'try to download current versions text file
+    'try to download current version's text file
     Dim myURL As String
     Dim WinHttpReq As Object
     Dim oStream As Object
@@ -176,6 +180,7 @@ Else ' updateCheck is still True
             LogInformation logFilePC, Now & " -- tried update; unable to connect to website"
             Exit Sub
         End If
+        On Error GoTo 0
 
     If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
     
@@ -202,7 +207,11 @@ If installedVersionST >= currentVersionST Then
     LogInformation logFilePC, Now & " -- current & installed versions match (current version is " & currentVersionST & "). "
     Exit Sub
 Else
-    'download the templates files
+    If MsgBox("Your Macmillan template it out of date. Click OK to automatically update.", vbOKCancel, "UPDATE REQUIRED") = vbCancel Then
+        Exit Sub
+    End If
+    
+    'download the template file
     myURL = "https://macmillan.atlassian.net/wiki/download/attachments/9044274/" & templateFile
     Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
     WinHttpReq.Open "GET", myURL, False
@@ -222,19 +231,51 @@ Else
     
     'log the download.
     LogInformation logFilePC, Now & " -- Downloaded new " & templateFile & " Style Template version: " & currentVersionST & "  (Installed version was " & installedVersionST & ")"
+
+    Dim templateFile2 As String
     
-    'remove existing template file
-        'Check that file exists
-        If Dir(localDrive & "\" & templateFile) <> "" Then
+    If templateFile = "macmillan.dotm" Then
+        templateFile2 = "macmillan_NoColor.dotm"
+    Else
+        templateFile2 = "macmillan.dotm"
+    End If
+        
+    'download the other template file
+    myURL = "https://macmillan.atlassian.net/wiki/download/attachments/9044274/" & templateFile2
+    Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
+    WinHttpReq.Open "GET", myURL, False
+    WinHttpReq.Send
+    
+    If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
+        myURL = WinHttpReq.responseBody
+        Set oStream = CreateObject("ADODB.Stream")
+        oStream.Open
+        oStream.Type = 1
+        oStream.Write WinHttpReq.responseBody
+        oStream.SaveToFile dirNamePC & "\macmillanNew2.dotm", 2 ' 1 = no overwrite, 2 = overwrite
+        oStream.Close
+        Set oStream = Nothing
+        Set WinHttpReq = Nothing
+    End If
+
+    'remove existing template files
+    If Dir(localDrive & "\" & templateFile) <> vbNullString Then 'File exists
         Kill localDrive & "\" & templateFile
-        End If
-
-    'replace existing file
-    Name dirNamePC & "\macmillanNew.dotm" As localDrive & "\" & templateFile
-    LogInformation logFilePC, Now & " -- Replaced existing " & templateFile & " Style Template.  Telling user to relaunch Word."
-
-    MsgBox "The Macmillan Style Template has been upgraded on your computer." & vbNewLine & vbNewLine & "Please RE-LAUNCH WORD for the updated Style Template to take effect!", , "ACTION REQUIRED"
+    End If
     
+    'Move new file to correct location
+    Name dirNamePC & "\macmillanNew.dotm" As localDrive & "\" & templateFile
+    
+    
+    'remove other existing template file
+    If Dir(localDrive & "\" & templateFile2) <> vbNullString Then 'File exists
+        Kill localDrive & "\" & templateFile2
+    End If
+    
+    'Move other new file to correct location
+    Name dirNamePC & "\macmillanNew2.dotm" As localDrive & "\" & templateFile2
+                
+        
 End If
 End Sub
 
@@ -297,7 +338,7 @@ logFileMac = dirNameMac & logFileName
 '''run log setup sub
 LogInformation logFileMac, logString
 
-'updateCheck = True '*******  for DEBUG ONLY
+updateCheck = True '*******  for DEBUG ONLY
 
 '''Here begins the updating
     If updateCheck = False Then
@@ -328,15 +369,36 @@ LogInformation logFileMac, logString
             End If
     End If
 
-'''download file to tmp
-    ShellAndWaitMac ("rm -f /private/tmp/macmillanNew.dotm ; curl -o /private/tmp/macmillanNew.dotm " & dlUrl & "/" & templateFile)
-    LogInformation logFileMac, Now & " -- Downloaded new Style Template version: " & currentVersionST & ".  (installed version was " & installedVersionST & ")"
+    Dim templateFile2 As String
+    
+    If templateFile = "macmillan.dotm" Then
+        templateFile2 = "macmillan_NoColor.dotm"
+    Else
+        templateFile2 = "macmillan.dotm"
+    End If
+        
+    'download the other template file
 
-'''remove existing file:  could Kill dirNameMac & "macmillan.dotm"  But Using rm for one liner
+'''download template file to tmp
+    ShellAndWaitMac ("rm -f /private/tmp/macmillanNew.dotm ; curl -o /private/tmp/macmillanNew.dotm " & dlUrl & "/" & templateFile)
+    LogInformation logFileMac, Now & " -- Downloaded new " & templateFile & " version: " & currentVersionST & ".  (installed version was " & installedVersionST & ")"
+
+'''download other template file to tmp
+    ShellAndWaitMac ("rm -f /private/tmp/macmillanNew2.dotm ; curl -o /private/tmp/macmillanNew2.dotm " & dlUrl & "/" & templateFile2)
+    LogInformation logFileMac, Now & " -- Downloaded new " & templateFile2 & " version: " & currentVersionST & ".  (installed version was " & installedVersionST & ")"
+
+'''remove existing template file:  could Kill dirNameMac & "macmillan.dotm"  But Using rm for one liner
     ShellAndWaitMac ("rm -f " & dirNameBash & "/" & templateFile & " &>/dev/null")
 
-'''replace existing file
+'''remove other existing file:
+    ShellAndWaitMac ("rm -f " & dirNameBash & "/" & templateFile2 & " &>/dev/null")
+
+'''replace existing template file
     Name "Macintosh HD:private:tmp:macmillanNew.dotm" As dirNameMac & templateFile
+
+'''replace existing file
+    Name "Macintosh HD:private:tmp:macmillanNew2.dotm" As dirNameMac & templateFile2
+
     'download Versions file so version is readily visible from client Mac
     ShellAndWaitMac ("rm -f  " & dirNameBash & "/Version-* ; curl -o " & dirNameBash & "/Version-" & templateFile & ".txt " & dlUrl & "/Versions")
     LogInformation logFileMac, Now & " -- Replaced existing Style Template.  Telling user to relaunch Word."
@@ -376,3 +438,10 @@ scriptCmd = "do shell script """ & cmd & """"
 result = MacScript(scriptCmd) ' result contains stdout, should you care
 ShellAndWaitMac = result
 End Function
+
+
+        
+
+
+
+
