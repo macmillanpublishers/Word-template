@@ -5,25 +5,28 @@ Sub zz_AttachStyleTemplate()
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 '''version 3.0
 '''last updated 1/30/15
-'''updated by Erica Warren: added PCupdateCheck sub
+'''updated 1/30 by Erica Warren: added PCupdateCheck sub
+'''updated 1/30 by Matt Retzer: added MacupdateCheck sub & shell and wait function, updated Mac template file path
 
 Dim TheOS As String
 Dim myFile As String
 Dim template As String
 Dim myFilePC As String
+Dim currentUser As String
 Dim myFileMac As String
 TheOS = System.OperatingSystem
 template = "macmillan.dotm"
 myFilePC = "C:\ProgramData\MacmillanStyleTemplate\" & template
-myFileMac = "Macintosh HD:Users:Shared:MacmillanStyleTemplate:" & template
 
 'Set template path according to OS
 If Not TheOS Like "*Mac*" Then
                                    'I am Windows
     Call PCupdateCheck(template)
     myFile = myFilePC
-Else
-    myFile = myFileMac                              'I am a Mac
+Else                             'I am a Mac
+    Call MacUpdateCheck(template)
+    currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
+    myFile = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:" & template
 End If
 
 'Apply template with Styles
@@ -43,18 +46,20 @@ Dim TheOS As String
 Dim myFile As String
 Dim template As String
 Dim myFilePC As String
+Dim currentUser As String
 Dim myFileMac As String
 TheOS = System.OperatingSystem
 template = "macmillan_NoColor.dotm"
 myFilePC = "C:\ProgramData\MacmillanStyleTemplate\" & template
-myFileMac = "Macintosh HD:Users:Shared:MacmillanStyleTemplate:" & template
 
 'Set template path according to OS
 If Not TheOS Like "*Mac*" Then              'I am Windows
     Call PCupdateCheck(template)
     myFile = myFilePC
-Else
-    myFile = myFileMac                              'I am a Mac
+Else                                                    'I am a Mac
+    Call MacUpdateCheck(template)
+    currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
+    myFile = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:" & template
 End If
 
 'Apply template with Styles
@@ -149,7 +154,7 @@ Else ' updateCheck is still True
         installedVersionST = 0
     Else
         pcTemplatePath = localDrive & "\" & templateFile
-        Documents.Open FileName:=pcTemplatePath, ReadOnly:=True, Visible:=False
+        Documents.Open fileName:=pcTemplatePath, ReadOnly:=True, Visible:=False
         installedVersionST = Documents(pcTemplatePath).CustomDocumentProperties("version")
         Documents(pcTemplatePath).Close
     End If
@@ -233,6 +238,113 @@ Else
 End If
 End Sub
 
+Sub MacUpdateCheck(templateFile As String)
+                                                                    
+''for standalone testing use:
+'Sub MacUpdateCheck()                                                                   '
+'Dim templateFile As String
+'templateFile = "macmillan.dotm"
+           
+Dim dirNamePC As String
+Dim dirNameBash As String
+Dim dirNameMac As String
+Dim logFileName As String
+Dim logFilePC As String
+Dim logFileMac As String
+Dim currentUser As String                   'could set for MAc & PC   Does pre-binding matter?
+Dim updateCheck As Boolean
+Dim updateFrequency As Integer
+Dim logString As String                         'could  set a few values for this up front
+Dim lastModDate As Date
+Dim cvUrl As String                                 'cvUrl = currentVersionUrl
+Dim dlUrl As String                                  'download Url
+Dim currentVersionST As String              'ST=StyleTemplate
+Dim installedVersionST As String
+Dim localDrive As String
+
+'''set update variables
+updateCheck = True                                      'default
+updateFrequency = 1                                     'number of days between update checks
+logString = "created logfile: " & Now               'for first run ; any other outcome results in this string being reset
+cvUrl = "https://macmillan.atlassian.net/wiki/display/PBL/Test"
+dlUrl = "https://macmillan.atlassian.net/wiki/download/attachments/9044274"
+installedVersionST = "(none installed)"         'default
+
+'''set Mac vars
+'could do currentUSer via shell but OSA is a cleaner command
+currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
+dirNameBash = "/Users/" & currentUser & "/Documents/MacmillanStyleTemplate"
+dirNameMac = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:"
+logFileName = "macmillan_macros_update.log"
+logFileMac = dirNameMac & logFileName
+            
+'''see when last checked for updates
+'''check if logfile exists
+    If ShellAndWaitMac("[ -e " & dirNameBash & "/" & logFileName & " ] ; echo $?") = 0 Then                         '''file exists
+            '''get date modified of logfile
+            lastModDate = FileDateTime(logFileMac)
+            '''compare with current date - if not today
+            If DateDiff("d", lastModDate, Date) < updateFrequency Then
+                   updateCheck = False
+                   logString = Now & " -- updateCheck = " & updateCheck & ". Already checked in the last " & updateFrequency & " day(s)."
+            Else
+                   logString = Now & " -- updateCheck = " & updateCheck
+            End If
+'''This is either first update or first run ; verify/create directories & create logfile
+    Else                                                                                                                         '''file does not exist
+            ShellAndWaitMac ("[ -e " & dirNameBash & " ] &>/dev/null || mkdir -p " & dirNameBash)
+    End If
+'''run log setup sub
+LogInformation logFileMac, logString
+
+'updateCheck = True '*******  for DEBUG ONLY
+
+'''Here begins the updating
+    If updateCheck = False Then
+            Exit Sub
+    Else
+            'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
+            If ShellAndWaitMac("ping -o macmillan.atlassian.net &> /dev/null ; echo $?") <> 0 Then
+                    LogInformation logFileMac, Now & " -- tried update; unable to connect to atlassian website (check network connectivity)"
+                    Exit Sub
+            Else
+                    'check current Version if it exists, exit if it matches
+                    If ShellAndWaitMac("[ -e " & dirNameBash & "/" & templateFile & " ] ; echo $?") = 0 Then
+                            currentVersionST = ShellAndWaitMac("curl -s " & cvUrl & " | grep -m 1 macmillan.dotm | awk -F'Version' '{print$2}' | awk '{print$1}'")
+                            installedVersionST = ShellAndWaitMac("cp -rfp " & dirNameBash & "/" & templateFile & " /private/tmp/macmillan.zip ; unzip -qu /private/tmp/macmillan.zip -d /private/tmp ; cat /private/tmp/docProps/custom.xml | awk -F'vt:lpwstr' '{print $2}' | tr -d '<>/\\n'")
+                            'MsgBox currentVersionST & ", " & installedVersionST     '<-for debug
+                            'cleanup tmp
+                            ShellAndWaitMac ("rm -f /private/tmp/Macmillan* /private/tmp/macmillan*")
+                            If currentVersionST = installedVersionST Then
+                                    LogInformation logFileMac, Now & " -- current & installed versions match (" & currentVersionST & ").  Style Template already up to date"
+                                    updateCheck = False
+                                    Exit Sub
+                            End If
+                    Else
+                            'No template present, proceeding with download - gettign current version for log
+                            currentVersionST = ShellAndWaitMac("curl -s " & cvUrl & " | grep -m 1 macmillan.dotm | awk -F'Version' '{print$2}' | awk '{print$1}'")
+                            LogInformation logFileMac, Now & " -- Style Template not present, updateCheck = " & updateCheck & ".  Downloading"
+                    End If
+            End If
+    End If
+
+'''download file to tmp
+    ShellAndWaitMac ("rm -f /private/tmp/macmillanNew.dotm ; curl -o /private/tmp/macmillanNew.dotm " & dlUrl & "/" & templateFile)
+    LogInformation logFileMac, Now & " -- Downloaded new Style Template version: " & currentVersionST & ".  (installed version was " & installedVersionST & ")"
+
+'''remove existing file:  could Kill dirNameMac & "macmillan.dotm"  But Using rm for one liner
+    ShellAndWaitMac ("rm -f " & dirNameBash & "/" & templateFile & " &>/dev/null")
+
+'''replace existing file
+    Name "Macintosh HD:private:tmp:macmillanNew.dotm" As dirNameMac & templateFile
+    'download Versions file so version is readily visible from client Mac
+    ShellAndWaitMac ("rm -f  " & dirNameBash & "/Version-* ; curl -o " & dirNameBash & "/Version-" & templateFile & ".txt " & dlUrl & "/Versions")
+    LogInformation logFileMac, Now & " -- Replaced existing Style Template.  Telling user to relaunch Word."
+    
+    MsgBox "The Macmillan Style Template " & templateFile & " has been upgraded on your Mac." & vbNewLine & vbNewLine & "Please RE-LAUNCH WORD for the updated Style Template to take effect!", , "ACTION REQUIRED"
+
+End Sub
+
 
 
 Private Sub LogInformation(logFile As String, LogMessage As String)
@@ -252,4 +364,15 @@ Private Function ImportVariable(strFile As String) As String
     Line Input #1, ImportVariable
     Close #1
  
+End Function
+
+
+Private Function ShellAndWaitMac(cmd As String) As String
+
+Dim result As String
+Dim scriptCmd As String ' Macscript command
+'
+scriptCmd = "do shell script """ & cmd & """"
+result = MacScript(scriptCmd) ' result contains stdout, should you care
+ShellAndWaitMac = result
 End Function
