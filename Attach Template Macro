@@ -4,7 +4,7 @@ Sub zz_AttachStyleTemplate()
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 '''version 3.0
-'''last updated 1/30/15
+'''updated 2/3/15 by Erica Warren: Changed PCupdateCheck and MacUpdateCheck to functions that return false if the template should NOT be attached.
 '''updated 1/30 by Erica Warren: added PCupdateCheck sub
 '''updated 1/30 by Matt Retzer: added MacupdateCheck sub & shell and wait function, updated Mac template file path
 
@@ -15,34 +15,36 @@ Dim template As String
 Dim myFilePC As String
 Dim currentUser As String
 Dim myFileMac As String
-Dim attachTemplate As Boolean
 
-attachTemplate = True
+
 TheOS = System.OperatingSystem
 template = "macmillan.dotm"
-myFilePC = "C:\ProgramData\MacmillanStyleTemplate\" & template
+myFilePC = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & template
 
 'Set template path according to OS
 If Not TheOS Like "*Mac*" Then
                                    'I am Windows
-    Call PCupdateCheck(template)
-    myFile = myFilePC
+    If PCupdateCheck(template) = False Then
+        Exit Sub
+    Else
+        myFile = myFilePC
+    End If
+    
 Else                             'I am a Mac
-    Call MacUpdateCheck(template)
-    currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
-    myFile = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:" & template
+    If MacUpdateCheck(template) = False Then
+        Exit Sub
+    Else
+        currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
+        myFile = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:" & template
+    End If
 End If
 
-If attachTemplate = False Then
-    Exit Sub
-Else
-
-'Apply template with Styles
-With ActiveDocument
-    .UpdateStylesOnOpen = True
-    .AttachedTemplate = myFile
-End With
-End If
+    'Apply template with Styles
+    With ActiveDocument
+        .UpdateStylesOnOpen = True
+        .AttachedTemplate = myFile
+    End With
+    
 End Sub
 Sub zz_AttachBoundMSTemplate()
 
@@ -59,73 +61,80 @@ Dim currentUser As String
 Dim myFileMac As String
 TheOS = System.OperatingSystem
 template = "macmillan_NoColor.dotm"
-myFilePC = "C:\ProgramData\MacmillanStyleTemplate\" & template
+myFilePC = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & template
 
 'Set template path according to OS
-If Not TheOS Like "*Mac*" Then              'I am Windows
-    Call PCupdateCheck(template)
-    myFile = myFilePC
-Else                                                    'I am a Mac
-    Call MacUpdateCheck(template)
-    currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
-    myFile = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:" & template
+If Not TheOS Like "*Mac*" Then
+                                   'I am Windows
+    If PCupdateCheck(template) = False Then
+        Exit Sub
+    Else
+        myFile = myFilePC
+    End If
+    
+Else                             'I am a Mac
+    If MacUpdateCheck(template) = False Then
+        Exit Sub
+    Else
+        currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
+        myFile = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:" & template
+    End If
 End If
 
-If attachTemplate = False Then
-    Exit Sub
-Else
-
-'Apply template with Styles
-With ActiveDocument
-    .UpdateStylesOnOpen = True
-    .AttachedTemplate = myFile
-End With
-End If
+    'Apply template with Styles
+    With ActiveDocument
+        .UpdateStylesOnOpen = True
+        .AttachedTemplate = myFile
+    End With
+    
 End Sub
 
 
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 '''update by Erica Warren - erica.warren@macmillan.com
 '''version 1.0
+'''updated 2/3/15 by Erica Warren: added more error handling, message prompt to update, more events logged'
 ''' updated 2/2/2015:   PC version downloads both templates
 '''                     error handling for when template is open (changed PC Sub to Function)
 ''' updated 1/30/2015: PC version works with macmillan.dotm & macmillan_NoColor.dotm
 
 Function PCupdateCheck(templateFile As String)
 
+'***********************************
+'''For DEBUGGING ONLY
+'Sub PCupdateCheck()
+'Dim templateFile As String
+'templateFile = "macmillan.dotm"
+'************************************
+
 Dim dirNamePC As String
-Dim dirNameBash As String
-Dim dirNameMac As String
 Dim logFileName As String
 Dim logFilePC As String
-Dim logFileMac As String
 Dim currentUser As String                   'could set for MAc & PC   Does pre-binding matter?
 Dim updateCheck As Boolean
 Dim updateFrequency As Integer
 Dim logString As String                         'could  set a few values for this up front
 Dim lastModDate As Date
-Dim cvUrl As String
 Dim currentVersionST As String              'ST=StyleTemplate
 Dim installedVersionST As String
-Dim downloadLinkST As String
 Dim localDrive As String
-Dim attachTemplate As Boolean
+Dim templateFile2 As String
+    
+    If templateFile = "macmillan.dotm" Then
+        templateFile2 = "macmillan_NoColor.dotm"
+    Else
+        templateFile2 = "macmillan.dotm"
+    End If
 
-attachTemplate = True
-
+PCupdateCheck = True
 logFileName = "macmillan_macros.log"
 updateCheck = True
 updateFrequency = 1         'number of days between update checks
 logString = ""
-cvUrl = "https://macmillan.atlassian.net/wiki/display/PBL/Test"
 installedVersionST = "(none installed)"         'default
-
-                                                                         ''''''PCs
-'''set PC vars
-currentUser = Environ("USERNAME")
 localDrive = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"             'use variable because not everyone has local drive set as C:
 dirNamePC = localDrive & "\log"
-logFilePC = dirNamePC & "\" & logFileName                      'if we need to do this on C we can use currentUser
+logFilePC = dirNamePC & "\" & logFileName
     
     
 '''check if logfile exists
@@ -133,20 +142,20 @@ If Dir(logFilePC) <> vbNullString Then        '''file exists
     ''get date modified of logfile
     lastModDate = FileDateTime(logFilePC)
         
-        '''compare with current date - if not today
+        '''compare with current date
         If DateDiff("d", lastModDate, Date) < updateFrequency Then
-            updateCheck = False
-            logString = Now & " -- updateCheck = " & updateCheck & ". Already checked today."
+            updateCheck = False                 'has already been checked in "updateFrequency" days
+            logString = Now & " -- updateCheck = " & updateCheck & ". Already checked less than " & updateFrequency & " day(s) ago."
         End If
             
-Else   ''''create directory if no exist                                                                                                                      '''file does not exist
+Else     '''file does not exist
     
     '''Check if MacmillanStyleTemplate folder exists
     If Dir(localDrive, vbDirectory) = vbNullString Then
-        MkDir (localDrive)
-        MkDir (dirNamePC)
+        MkDir (localDrive)                  ''create MacmillanStyleTemplate folder
+        MkDir (dirNamePC)                   ''create log subfolder because MkDir can't create both at the same time in VBA
         logString = Now & " -- created MacmillanStyleTemplate directory"
-    Else ' Just create log folder
+    Else ' MacmillanStyleTemplate folder already exists, so just create log folder
         If Dir(dirNamePC, vbDirectory) = vbNullString Then
             MkDir (dirNamePC)
         End If
@@ -156,11 +165,16 @@ Else   ''''create directory if no exist                                         
     
 End If
 
+If Dir(localDrive & "\" & templateFile) = vbNullString Then 'template file doesn't exist
+    updateCheck = True
+End If
     
 '''run log setup sub
 LogInformation logFilePC, logString
 
-updateCheck = True      'For testing and debugging only
+'**********************************************************
+'updateCheck = True          'For testing and debugging only
+'**********************************************************
 
 If updateCheck = False Then
     Exit Function
@@ -170,16 +184,16 @@ Else ' updateCheck is still True
     'Get version number of installed style template
     Dim pcTemplatePath As String
     
-    If Dir(localDrive & "\" & templateFile) = vbNullString Then
+    If Dir(localDrive & "\" & templateFile) = vbNullString Then  ' template file does not exist
         installedVersionST = 0
     Else
         pcTemplatePath = localDrive & "\" & templateFile
-        Documents.Open fileName:=pcTemplatePath, ReadOnly:=True, Visible:=False
+        Documents.Open FileName:=pcTemplatePath, ReadOnly:=True, Visible:=False
         installedVersionST = Documents(pcTemplatePath).CustomDocumentProperties("version")
         Documents(pcTemplatePath).Close
     End If
     
-    'try to download current versions text file
+    'try to download current version's text file
     Dim myURL As String
     Dim WinHttpReq As Object
     Dim oStream As Object
@@ -192,8 +206,9 @@ Else ' updateCheck is still True
 
         ' Exit sub if error in connecting to website
         
-        If Err.Number <> 0 Then 'request is not OK
-            LogInformation logFilePC, Now & " -- tried update; unable to connect to website"
+        If Err.Number <> 0 Then 'HTTP request is not OK
+            LogInformation logFilePC, Now & " -- tried update; unable to connect to atlassian website (check network connectivity)"
+            PCupdateCheck = True ''still attach old template if can't download new one
             Exit Function
         End If
     On Error GoTo 0
@@ -220,14 +235,16 @@ currentVersionST = g_strVar
     
 'If installed = current
 If installedVersionST >= currentVersionST Then
-    LogInformation logFilePC, Now & " -- current & installed versions match (current version is " & currentVersionST & "). "
+    LogInformation logFilePC, Now & " -- current & installed versions match (current version is " & currentVersionST & ")."
     Exit Function
-Else
-    If MsgBox("Your Macmillan template it out of date." & vbNewLine & "Click OK to automatically update.", vbOKCancel, "UPDATE REQUIRED") = vbCancel Then
+Else 'installed template is less than current template
+    If MsgBox("Your Macmillan Style Template it out of date." & vbNewLine & vbNewLine & "Click OK to update it automatically." & vbNewLine & vbNewLine & "The update should take less than 1 minute.", vbOKCancel, "UPDATE REQUIRED") = vbCancel Then
+        LogInformation logFilePC, Now & " -- New " & templateFile & " is available but user canceled update (installed version is " & installedVersionST & "/current version is " & currentVersionST & ")"
+        PCupdateCheck = True  ''old template will still attach if user cancels update.
         Exit Function
     End If
     
-    'download the template file
+    'download the template file to log directory
     myURL = "https://macmillan.atlassian.net/wiki/download/attachments/9044274/" & templateFile
     Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
     WinHttpReq.Open "GET", myURL, False
@@ -247,16 +264,8 @@ Else
     
     'log the download.
     LogInformation logFilePC, Now & " -- Downloaded new " & templateFile & " Style Template version: " & currentVersionST & "  (Installed version was " & installedVersionST & ")"
-
-    Dim templateFile2 As String
-    
-    If templateFile = "macmillan.dotm" Then
-        templateFile2 = "macmillan_NoColor.dotm"
-    Else
-        templateFile2 = "macmillan.dotm"
-    End If
         
-    'download the other template file
+    'download the other template file to log directory
     myURL = "https://macmillan.atlassian.net/wiki/download/attachments/9044274/" & templateFile2
     Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
     WinHttpReq.Open "GET", myURL, False
@@ -274,30 +283,33 @@ Else
         Set WinHttpReq = Nothing
     End If
 
-    'Check if template file is already in use
-    If FileLocked(localDrive & "\" & templateFile) = True Then
-       If MsgBox("The update cannot be completed because the Macmillan template is in use by another file. Please close ALL open Word files then restart Word and attach the template again.", vbOKOnly, "ACTION REQUIRED") = vbOK Then
-            attachTemplate = False
+    'log the download.
+    LogInformation logFilePC, Now & " -- Downloaded new " & templateFile2 & " Style Template version: " & currentVersionST & "  (Installed version was " & installedVersionST & ")"
+    
+    'Check if template file is already open/in use
+    If FileLocked(localDrive & "\" & templateFile) = True Then 'FileLocked function (below) tries to open file and returns True if error
+       If MsgBox("The update cannot be completed because the Macmillan template is in use by another file." & vbNewLine & vbNewLine & "Please close ALL open Word files, then restart Word and attach the template to a new document.", vbOKOnly, "ACTION REQUIRED") = vbOK Then
+            PCupdateCheck = False
+            LogInformation logFilePC, Now & " -- old template file is locked for editing and can't be deleted. Telling user to close all open Word files and try again."
             Exit Function
         End If
-    Else
-        attachTemplate = True
     End If
 
-    'remove existing template files
+    'remove existing template file
     If Dir(localDrive & "\" & templateFile) <> vbNullString Then 'File exists
         Kill localDrive & "\" & templateFile
     End If
     
-    'Move new file to correct location
+    'Move new file to correct location and rename
     Name dirNamePC & "\macmillanNew.dotm" As localDrive & "\" & templateFile
     
         'Error checking: make sure downloaded file was deleted when renamed
-        If Dir(dirNamePC & "\macmillanNew.dotm") <> vbNullString Then 'New file was downloaded but couldn't be moved/renamed
+        If Dir(dirNamePC & "\macmillanNew.dotm") <> vbNullString Then 'New file was downloaded but couldn't be moved/renamed. Probably because original template file is open or in use.
             Kill dirNamePC & "\macmillanNew.dotm"
-            MsgBox "macmillanNew.dotm still exists"
+            LogInformation logFilePC, Now & " -- temp downloaded file couldn't be renamed. Update failed."
+            MsgBox "There was an error upgrading your template." & vbNewLine & vbNewLine & "Please close ALL open Word files, then restart Word and attach the template to a new document." & vbNewLine & vbNewLine & "If the problem persists, please contact workflows@macmillan.dotm help.", , "ACTION REQUIRED"
             Exit Function
-        Else
+        Else 'file was moved correctly, we're OK
             LogInformation logFilePC, Now & " -- Replaced existing " & templateFile & " Style Template."
         End If
     
@@ -312,7 +324,8 @@ Else
         'Error checking: make sure downloaded file was deleted when renamed
         If Dir(dirNamePC & "\macmillanNew2.dotm") <> vbNullString Then 'New file was downloaded but couldn't be moved/renamed
             Kill dirNamePC & "\macmillanNew2.dotm"
-            MsgBox "macmillanNew2.dotm still exists"
+            LogInformation logFilePC, Now & " -- temp downloaded file couldn't be renamed. Update failed."
+            MsgBox "There was an error upgrading your template." & vbNewLine & vbNewLine & "Please close ALL open Word files, then restart Word and attach the template to a new document." & vbNewLine & vbNewLine & "If the problem persists, please contact workflows@macmillan.dotm help.", , "ACTION REQUIRED"
             Exit Function
         Else
             LogInformation logFilePC, Now & " -- Replaced existing " & templateFile2 & " Style Template."
@@ -320,22 +333,25 @@ Else
         End If
         
 End If
+
 End Function
 
 Function MacUpdateCheck(templateFile As String)
-                                                                    
+                                                                   
+'updated 2/3/15 by Erica Warren: added more error handling, message prompt to update, more events logged'
+                                                                   
+                                                                   
+'**********************************************************************************
 ''for standalone testing use:
 'Sub MacUpdateCheck()                                                                   '
 'Dim templateFile As String
 'templateFile = "macmillan.dotm"
-'updated 2/3/15 by Erica Warren: added more error handling, message prompt to update, more events logged'
+'************************************************************************************
 
            
-Dim dirNamePC As String
 Dim dirNameBash As String
 Dim dirNameMac As String
 Dim logFileName As String
-Dim logFilePC As String
 Dim logFileMac As String
 Dim currentUser As String                   'could set for MAc & PC   Does pre-binding matter?
 Dim updateCheck As Boolean
@@ -347,11 +363,11 @@ Dim dlUrl As String                                  'download Url
 Dim currentVersionST As String              'ST=StyleTemplate
 Dim installedVersionST As String
 Dim localDrive As String
-Dim attachTemplate As Boolean  'returns False if old template is open and can't be updated
+
 
 
 '''set update variables
-attachTemplate = True
+MacUpdateCheck = True
 updateCheck = True                                      'default
 updateFrequency = 1                                     'number of days between update checks
 logString = "created logfile: " & Now               'for first run ; any other outcome results in this string being reset
@@ -386,7 +402,9 @@ logFileMac = dirNameMac & logFileName
 '''run log setup sub
 LogInformation logFileMac, logString
 
-updateCheck = True '*******  for DEBUG ONLY
+'*******************************************
+'updateCheck = True '*******  for DEBUG ONLY
+'********************************************
 
 '''Here begins the updating
     If updateCheck = False Then
@@ -417,8 +435,9 @@ updateCheck = True '*******  for DEBUG ONLY
             End If
     End If
 
-If MsgBox("Your Macmillan Style Template is out of date." & vbNewLine & "Click OK to automatically update. The update should take less than 1 minute.", vbOKCancel, "UPDATE REQUIRED") = vbCancel Then
+If MsgBox("Your Macmillan Style Template is out of date." & vbNewLine & vbNewLine & "Click OK to update it automatically." & vbNewLine & vbNewLine & "The update should take less than 1 minute.", vbOKCancel, "UPDATE REQUIRED") = vbCancel Then
     LogInformation logFileMac, Now & " -- New " & templateFile & " is available but user canceled update (installed version is " & installedVersionST & "/current version is " & currentVersionST & ")"
+    MacUpdateCheck = True  ''old template will still attach if user cancels update.
     Exit Function
 Else
     
@@ -444,12 +463,12 @@ Else
     If ShellAndWaitMac("[ -e " & dirNameBash & "/" & templateFile & " ] ; echo $?") = 0 Then ' file exists
         If FileLocked(dirNameMac & ":" & templateFile) = True Then
             If MsgBox("The update cannot be completed because the Macmillan template is in use by another file. Please close ALL open Word files then restart Word and attach the template again.", vbOKOnly, "ACTION REQUIRED") = vbOK Then
-                attachTemplate = False
+                MacUpdateCheck = False
                 LogInformation logFileMac, Now & " -- old template file is locked for editing and can't be deleted. Telling user to close all open Word files."
                 Exit Function
             End If
         Else
-            attachTemplate = True
+            MacUpdateCheck = True
         End If
     End If
 
@@ -462,7 +481,7 @@ Else
             'Error checking: make sure downloaded file was deleted when renamed
             If ShellAndWaitMac("[ -e " & dirNameBash & "/macmillanNew.dotm" & " ] ; echo $?") = 0 Then ' file exists
                 LogInformation logFileMac, Now & " -- temp downloaded file couldn't be renamed. Update failed."
-                MsgBox "There was an error upgrading your template." & vbNewLine & "Please close ALL open Word files, then restart Word and attach the template to a new document." & vbNewLine & "If the problem persists, please contact workflows@macmillan.dotm help.", , "ACTION REQUIRED"
+                MsgBox "There was an error upgrading your template." & vbNewLine & vbNewLine & "Please close ALL open Word files, then restart Word and attach the template to a new document." & vbNewLine & "If the problem persists, please contact workflows@macmillan.dotm help.", , "ACTION REQUIRED"
                 Exit Function
             Else 'file doesn't exist, we're OK
                 LogInformation logFileMac, Now & " -- Replaced existing " & templateFile & " Style Template."
@@ -477,10 +496,10 @@ Else
    'Error checking: make sure downloaded file was deleted when renamed
             If ShellAndWaitMac("[ -e " & dirNameBash & "/macmillanNew2.dotm" & " ] ; echo $?") = 0 Then ' file exists
                 LogInformation logFileMac, Now & " -- temp downloaded file couldn't be renamed. Update failed."
-                MsgBox "There was an error upgrading your template." & vbNewLine & "Please close ALL open Word files, then restart Word and attach the template to a new document." & vbNewLine & "If the problem persists, please contact workflows@macmillan.dotm help.", , "ACTION REQUIRED"
+                MsgBox "There was an error upgrading your template." & vbNewLine & vbNewLine & "Please close ALL open Word files, then restart Word and attach the template to a new document." & vbNewLine & "If the problem persists, please contact workflows@macmillan.dotm help.", , "ACTION REQUIRED"
                 Exit Function
             Else 'file doesn't exist, we're OK
-                LogInformation logFileMac, Now & " -- Replaced existing " & templateFile & " Style Template."
+                LogInformation logFileMac, Now & " -- Replaced existing " & templateFile2 & " Style Template."
             End If
 
     'download Versions file so version is readily visible from client Mac
@@ -525,7 +544,7 @@ ShellAndWaitMac = result
 End Function
 
 Function FileLocked(strFileName As String) As Boolean
-   
+   On Error Resume Next
    ' If the file is already opened by another process,
    ' and the specified type of access is not allowed,
    ' the operation fails and an error occurs.
