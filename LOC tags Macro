@@ -1,0 +1,328 @@
+Option Explicit
+Option Base 1
+Dim activeRng As Range
+
+Private Sub LibraryOfCongressTags()
+
+Set activeRng = ActiveDocument.Range
+
+Call tagCopyrightPage
+
+Call zz_clearFind
+
+Call tagTitlePage
+
+Call zz_clearFind
+
+Call tagTOC
+
+Call zz_clearFind
+
+End Sub
+Private Sub tagTitlePage()
+
+'to update this for a different tag, replace all in procedure for the two char tag, eg: TP->CH ; this will update array variables too
+'update styles array manually, and Dim'd stylesarray length,
+'update the LOC tags to match LOC:  http://www.loc.gov/publish/cip/techinfo/formattingecip.html#tags
+''' NOTE:  if you are tagging something only at the beginning or end (eg chapter heads), obviously you need to touch up the second loop
+
+Set activeRng = ActiveDocument.Range                        
+Dim TPstylesArray(10) As String                                   ' number of items in array should be declared here
+Dim i As Long
+
+TPstylesArray(1) = "Titlepage Author Name (au)"
+TPstylesArray(2) = "Titlepage Book Subtitle (stit)"
+TPstylesArray(3) = "Titlepage Book Title (tit)"
+TPstylesArray(4) = "Titlepage Cities (cit)"
+TPstylesArray(5) = "Titlepage Contributor Name (con)"
+TPstylesArray(6) = "Titlepage Imprint Line (imp)"
+TPstylesArray(7) = "Titlepage Publisher Name (pub)"
+TPstylesArray(8) = "Titlepage Reading Line (rl)"
+TPstylesArray(9) = "Titlepage Series Title (ser)"
+TPstylesArray(10) = "Titlepage Translator Name (tran)"
+
+For i = 1 To UBound(TPstylesArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = "`TP|^&|TP`"
+  .Wrap = wdFindContinue
+  .Format = True
+  .Style = TPstylesArray(i)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFind
+
+Dim TPfauxTags(3) As String
+Dim TPLOCtags(3) As String
+Dim directionBool(3) As Boolean
+
+TPfauxTags(1) = "`TP|"
+TPfauxTags(2) = "|TP`"
+TPfauxTags(3) = "^p</tp>"          'this bit is to make sure tagging is inline with last styled paragraph,
+                                                    'instead of the tag falling into the following style eblock
+TPLOCtags(1) = "<tp>"
+TPLOCtags(2) = "</tp>"
+TPLOCtags(3) = "</tp>^p"
+
+directionBool(1) = True
+directionBool(2) = False
+directionBool(3) = False
+
+For i = 1 To UBound(TPfauxTags())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = TPfauxTags(i)
+  .Replacement.Text = TPLOCtags(i)
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = directionBool(i)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceOne
+End With
+Next
+
+For i = 1 To 2
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = TPfauxTags(i)
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFind
+
+End Sub
+
+Private Sub tagCopyrightPage()
+
+'to update this for a different tag, replace all in procedure for the two char tag, eg: TP->CH ; this will update array variables too
+'update styles array manually, and Dim'd stylesarray length,
+'update the LOC tags to match LOC:  http://www.loc.gov/publish/cip/techinfo/formattingecip.html#tags
+''' NOTE:  if you are tagging something only at the beginning or end (eg chapter heads), obviously you need to touch up the second loop
+
+Set activeRng = ActiveDocument.Range
+Dim CPstylesArray(2) As String                                   ' number of items in array should be declared here
+Dim i As Long
+
+CPstylesArray(1) = "Copyright Text double space (crtxd)"
+CPstylesArray(2) = "Copyright Text single space (crtx)"
+
+For i = 1 To UBound(CPstylesArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = "`CP|^&|CP`"
+  .Wrap = wdFindContinue
+  .Format = True
+  .Style = CPstylesArray(i)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFind
+
+Dim CPfauxTags(3) As String
+Dim CPLOCtags(3) As String
+Dim directionBool(3) As Boolean
+
+CPfauxTags(1) = "`CP|"
+CPfauxTags(2) = "|CP`"
+CPfauxTags(3) = "^p</cp>"          'this bit is to make sure tagging is inline with last styled paragraph,
+                                                    'instead of the tag falling into the following style eblock
+CPLOCtags(1) = "<cp>"
+CPLOCtags(2) = "</cp>"
+CPLOCtags(3) = "</cp>^p"
+
+directionBool(1) = True
+directionBool(2) = False
+directionBool(3) = False
+
+For i = 1 To UBound(CPfauxTags())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = CPfauxTags(i)
+  .Replacement.Text = CPLOCtags(i)
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = directionBool(i)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceOne
+End With
+Next
+
+For i = 1 To 2
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = CPfauxTags(i)
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFind
+
+End Sub
+
+Private Sub tagTOC()
+
+'to update this for a different tag, replace all in procedure for the two char tag, eg: TP->CH ; this will update array variables too
+'update styles array manually, and Dim'd stylesarray length,
+'update the LOC tags to match LOC:  http://www.loc.gov/publish/cip/techinfo/formattingecip.html#tags
+''' NOTE:  if you are tagging something only at the beginning or end (eg chapter heads), obviously you need to touch up the second loop
+
+Set activeRng = ActiveDocument.Range
+Dim TOCstylesArray(10) As String                                   ' number of items in array should be declared here
+Dim i As Long
+
+TOCstylesArray(1) = "TOC Frontmatter Head (cfmh)"
+TOCstylesArray(2) = "TOC Author (cau)"
+TOCstylesArray(3) = "TOC Part Number  (cpn)"
+TOCstylesArray(4) = "TOC Part Title (cpt)"
+TOCstylesArray(5) = "TOC Chapter Number (ccn)"
+TOCstylesArray(6) = "TOC Chapter Title (cct)"
+TOCstylesArray(7) = "TOC Chapter Subtitle (ccst)"
+TOCstylesArray(8) = "TOC Level-1 Chapter Head (ch1)"
+TOCstylesArray(9) = "TOC Backmatter Head (cbmh)"
+TOCstylesArray(10) = "TOC Page Number (cnum)"
+
+For i = 1 To UBound(TOCstylesArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = "`TOC|^&|TOC`"
+  .Wrap = wdFindContinue
+  .Format = True
+  .Style = TOCstylesArray(i)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFind
+
+Dim TOCfauxTags(3) As String
+Dim TOCLOCtags(3) As String
+Dim directionBool(3) As Boolean
+
+TOCfauxTags(1) = "`TOC|"
+TOCfauxTags(2) = "|TOC`"
+TOCfauxTags(3) = "^p</toc>"          'this bit is to make sure tagging is inline with last styled paragraph,
+                                                    'instead of the tag falling into the following style eblock
+TOCLOCtags(1) = "<toc>"
+TOCLOCtags(2) = "</toc>"
+TOCLOCtags(3) = "</toc>^p"
+
+directionBool(1) = True
+directionBool(2) = False
+directionBool(3) = False
+
+For i = 1 To UBound(TOCfauxTags())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = TOCfauxTags(i)
+  .Replacement.Text = TOCLOCtags(i)
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = directionBool(i)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceOne
+End With
+Next
+
+For i = 1 To 2
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = TOCfauxTags(i)
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFind
+
+End Sub
+
+
+Private Sub zz_clearFind()
+
+Dim clearRng As Range
+Set clearRng = ActiveDocument.Words.First
+
+With clearRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = ""
+  .Wrap = wdFindStop
+  .Format = False
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute
+End With
+End Sub
