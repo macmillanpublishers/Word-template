@@ -719,7 +719,7 @@ tagReplaceArray(4) = ActiveDocument.Styles("span small caps characters (sc)")
 tagReplaceArray(5) = ActiveDocument.Styles("span hyperlink (url)")
 tagReplaceArray(6) = ActiveDocument.Styles("span subscript characters (sub)")
 tagReplaceArray(7) = ActiveDocument.Styles("span superscript characters (sup)")
-tagReplaceArray(8) = ActiveDocument.Styles("span symbols (sym)")           
+tagReplaceArray(8) = ActiveDocument.Styles("span symbols (sym)")
 ' the last 9 items here are of course v. 3.1 patches
 tagReplaceArray(9) = ActiveDocument.Styles("span accent characters (acc)")
 tagReplaceArray(10) = ActiveDocument.Styles("span cross-reference (xref)")
@@ -988,6 +988,19 @@ Else
 MsgBox "The Macmillan Style Report macro has finished running. Go take a look at the results!"
 End If
 
+'open Style Report for user once it is complete.
+Dim Shex As Object
+
+If Not TheOS Like "*Mac*" Then
+   Set Shex = CreateObject("Shell.Application")
+   Shex.Open (styleReportDoc)
+Else
+    MacScript ("tell application ""Finder"" " & vbCr & _
+    "open document file " & """" & styleReportDocAlt & """" & vbCr & _
+    "activate" & vbCr & _
+    "end tell" & vbCr)
+End If
+
 ''Timer closing
 'bTime = Timer
 'MsgBox "CreateStyleListEBranch: " & Format(Round(bTime - aTime, 2), "00:00:00") & " for " & activeParaCount & " paragraphs"
@@ -1069,6 +1082,10 @@ ActiveDocument.ActiveWindow.View.ShowAll = True                         'Shows n
 ActiveDocument.ActiveWindow.View.Type = wdNormalView                'Switches to Normal/Draft view
 ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5)                           'Sets Styles margin area in draft view to 1.5 in.
 End Sub
+
+
+
+
 
 
 
