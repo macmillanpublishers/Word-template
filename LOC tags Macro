@@ -2,23 +2,147 @@ Option Explicit
 Option Base 1
 Dim activeRng As Range
 
-Private Sub LibraryOfCongressTags()
+Sub LibraryOfCongressTags()
 
-Set activeRng = ActiveDocument.Range
+'''''''''''''''''''''''''''''''''
+'''created by Matt Retzer  - matthew.retzer@macmillan.com
+'''2/25/15
+'''Version 1.0
+''''''''''''''''''''''''''''''
 
-Call tagCopyrightPage
+'-----------run preliminary error checks------------
+Dim exitOnError As Boolean
+Dim skipChapterTags As Boolean
+exitOnError = zz_errorChecksB()
+skipChapterTags = volumestylecheck()
 
-Call zz_clearFind
+If exitOnError <> False Then
+Call zz_clearFindB
+Exit Sub
+End If
 
+'-----------the rest of the macro------------
+Application.DisplayStatusBar = True
+Application.ScreenUpdating = False
+
+Application.StatusBar = "Adding tags for Title page": DoEvents
 Call tagTitlePage
+Call zz_clearFindB
 
-Call zz_clearFind
+Application.StatusBar = "Adding tags for Copyright page": DoEvents
+Call tagCopyrightPage
+Call zz_clearFindB
 
+Application.StatusBar = "Adding tags for Series page": DoEvents
+Call tagSeriesPage
+Call zz_clearFindB
+
+Application.StatusBar = "Adding tags for Table of Contents": DoEvents
 Call tagTOC
+Call zz_clearFindB
 
-Call zz_clearFind
+If skipChapterTags = False Then
+    Application.StatusBar = "Adding tags for Chapter beginnings": DoEvents
+    Call tagChapterHeads
+    Call zz_clearFindB
+    
+    Application.StatusBar = "Adding tag for end last chapter": DoEvents
+    Call tagEndLastChapter
+    Call zz_clearFindB
+End If
+
+Application.StatusBar = "Running tag check & generating report": DoEvents
+Call zz_TagReport
+
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+
+'If skipChapterTags = True Then
+'    MsgBox "Library of Congress tagging is complete except for Chapter tags." & vbNewLine & vbNewLine & "Chapter tags will need to be manually applied."
+'End If
 
 End Sub
+
+Private Sub tagChapterHeads()
+
+Set activeRng = ActiveDocument.Range
+Dim CHstylesArray(3) As String                                   ' number of items in array should be declared here
+Dim I As Long
+Dim chapNum As Integer
+Dim chapNumString As String
+
+CHstylesArray(1) = "Chap Number (cn)"
+CHstylesArray(2) = "Chap Title (ct)"
+CHstylesArray(3) = "Chap Number Nonprinting (cnp)"
+
+For I = 1 To UBound(CHstylesArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = "`CH|^&|CH`"
+  .Wrap = wdFindContinue
+  .Format = True
+  .Style = CHstylesArray(I)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFindB
+
+Dim CHfauxTags(4) As String         ' number of items in arrays should be declared here
+Dim CHLOCtags(4) As String
+
+CHfauxTags(1) = "`CH||CH`"
+CHfauxTags(2) = "|CH``CH|"
+CHfauxTags(3) = "|CH`"
+CHfauxTags(4) = "`CH|"
+                                                   
+CHLOCtags(1) = ""
+CHLOCtags(2) = ""
+CHLOCtags(3) = ""
+CHLOCtags(4) = "<ch>"
+
+For I = 1 To UBound(CHfauxTags())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = CHfauxTags(I)
+  .Replacement.Text = CHLOCtags(I)
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+chapNum = 1
+chapNumString = "<ch" & chapNum & ">"
+
+'this is borrowed form here:  http://stackoverflow.com/questions/11234358/word-2007-macro-to-automatically-number-items-in-a-document
+
+Do While InStr(ActiveDocument.Content, "<ch>") > 0
+    chapNumString = "<ch" & chapNum & ">"
+    With ActiveDocument.Content.Find
+        .ClearFormatting
+        .Text = "<ch>"
+        .Execute Replace:=wdReplaceOne, ReplaceWith:=chapNumString, Forward:=True
+    End With
+    chapNum = chapNum + 1
+Loop
+
+End Sub
+
 Private Sub tagTitlePage()
 
 'to update this for a different tag, replace all in procedure for the two char tag, eg: TP->CH ; this will update array variables too
@@ -26,9 +150,9 @@ Private Sub tagTitlePage()
 'update the LOC tags to match LOC:  http://www.loc.gov/publish/cip/techinfo/formattingecip.html#tags
 ''' NOTE:  if you are tagging something only at the beginning or end (eg chapter heads), obviously you need to touch up the second loop
 
-Set activeRng = ActiveDocument.Range                        
+Set activeRng = ActiveDocument.Range
 Dim TPstylesArray(10) As String                                   ' number of items in array should be declared here
-Dim i As Long
+Dim I As Long
 
 TPstylesArray(1) = "Titlepage Author Name (au)"
 TPstylesArray(2) = "Titlepage Book Subtitle (stit)"
@@ -41,7 +165,7 @@ TPstylesArray(8) = "Titlepage Reading Line (rl)"
 TPstylesArray(9) = "Titlepage Series Title (ser)"
 TPstylesArray(10) = "Titlepage Translator Name (tran)"
 
-For i = 1 To UBound(TPstylesArray())
+For I = 1 To UBound(TPstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -49,7 +173,7 @@ With activeRng.Find
   .Replacement.Text = "`TP|^&|TP`"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = TPstylesArray(i)
+  .Style = TPstylesArray(I)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -59,7 +183,7 @@ With activeRng.Find
 End With
 Next
 
-Call zz_clearFind
+Call zz_clearFindB
 
 Dim TPfauxTags(3) As String
 Dim TPLOCtags(3) As String
@@ -77,15 +201,15 @@ directionBool(1) = True
 directionBool(2) = False
 directionBool(3) = False
 
-For i = 1 To UBound(TPfauxTags())
+For I = 1 To UBound(TPfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = TPfauxTags(i)
-  .Replacement.Text = TPLOCtags(i)
+  .Text = TPfauxTags(I)
+  .Replacement.Text = TPLOCtags(I)
   .Wrap = wdFindContinue
   .Format = False
-  .Forward = directionBool(i)
+  .Forward = directionBool(I)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = False
@@ -95,11 +219,11 @@ With activeRng.Find
 End With
 Next
 
-For i = 1 To 2
+For I = 1 To 2
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = TPfauxTags(i)
+  .Text = TPfauxTags(I)
   .Replacement.Text = ""
   .Wrap = wdFindContinue
   .Format = False
@@ -113,25 +237,23 @@ With activeRng.Find
 End With
 Next
 
-Call zz_clearFind
+Call zz_clearFindB
 
 End Sub
 
 Private Sub tagCopyrightPage()
 
-'to update this for a different tag, replace all in procedure for the two char tag, eg: TP->CH ; this will update array variables too
-'update styles array manually, and Dim'd stylesarray length,
-'update the LOC tags to match LOC:  http://www.loc.gov/publish/cip/techinfo/formattingecip.html#tags
-''' NOTE:  if you are tagging something only at the beginning or end (eg chapter heads), obviously you need to touch up the second loop
+'to update this for a different tag, replace all in procedure two char code, eg: TP->CP
+'update styles array manually, and Dim'd stylesarray length, & that's it
 
 Set activeRng = ActiveDocument.Range
 Dim CPstylesArray(2) As String                                   ' number of items in array should be declared here
-Dim i As Long
+Dim I As Long
 
 CPstylesArray(1) = "Copyright Text double space (crtxd)"
 CPstylesArray(2) = "Copyright Text single space (crtx)"
 
-For i = 1 To UBound(CPstylesArray())
+For I = 1 To UBound(CPstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -139,7 +261,7 @@ With activeRng.Find
   .Replacement.Text = "`CP|^&|CP`"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = CPstylesArray(i)
+  .Style = CPstylesArray(I)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -149,7 +271,7 @@ With activeRng.Find
 End With
 Next
 
-Call zz_clearFind
+Call zz_clearFindB
 
 Dim CPfauxTags(3) As String
 Dim CPLOCtags(3) As String
@@ -167,15 +289,15 @@ directionBool(1) = True
 directionBool(2) = False
 directionBool(3) = False
 
-For i = 1 To UBound(CPfauxTags())
+For I = 1 To UBound(CPfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = CPfauxTags(i)
-  .Replacement.Text = CPLOCtags(i)
+  .Text = CPfauxTags(I)
+  .Replacement.Text = CPLOCtags(I)
   .Wrap = wdFindContinue
   .Format = False
-  .Forward = directionBool(i)
+  .Forward = directionBool(I)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = False
@@ -185,11 +307,11 @@ With activeRng.Find
 End With
 Next
 
-For i = 1 To 2
+For I = 1 To 2
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = CPfauxTags(i)
+  .Text = CPfauxTags(I)
   .Replacement.Text = ""
   .Wrap = wdFindContinue
   .Format = False
@@ -203,20 +325,18 @@ With activeRng.Find
 End With
 Next
 
-Call zz_clearFind
+Call zz_clearFindB
 
 End Sub
 
 Private Sub tagTOC()
 
-'to update this for a different tag, replace all in procedure for the two char tag, eg: TP->CH ; this will update array variables too
-'update styles array manually, and Dim'd stylesarray length,
-'update the LOC tags to match LOC:  http://www.loc.gov/publish/cip/techinfo/formattingecip.html#tags
-''' NOTE:  if you are tagging something only at the beginning or end (eg chapter heads), obviously you need to touch up the second loop
+'to update this for a different tag, replace all in procedure two char code, eg: TP->TOC
+'update styles array manually, and Dim'd stylesarray length, & that's it
 
 Set activeRng = ActiveDocument.Range
 Dim TOCstylesArray(10) As String                                   ' number of items in array should be declared here
-Dim i As Long
+Dim I As Long
 
 TOCstylesArray(1) = "TOC Frontmatter Head (cfmh)"
 TOCstylesArray(2) = "TOC Author (cau)"
@@ -229,7 +349,7 @@ TOCstylesArray(8) = "TOC Level-1 Chapter Head (ch1)"
 TOCstylesArray(9) = "TOC Backmatter Head (cbmh)"
 TOCstylesArray(10) = "TOC Page Number (cnum)"
 
-For i = 1 To UBound(TOCstylesArray())
+For I = 1 To UBound(TOCstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -237,7 +357,7 @@ With activeRng.Find
   .Replacement.Text = "`TOC|^&|TOC`"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = TOCstylesArray(i)
+  .Style = TOCstylesArray(I)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -247,7 +367,7 @@ With activeRng.Find
 End With
 Next
 
-Call zz_clearFind
+Call zz_clearFindB
 
 Dim TOCfauxTags(3) As String
 Dim TOCLOCtags(3) As String
@@ -265,15 +385,15 @@ directionBool(1) = True
 directionBool(2) = False
 directionBool(3) = False
 
-For i = 1 To UBound(TOCfauxTags())
+For I = 1 To UBound(TOCfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = TOCfauxTags(i)
-  .Replacement.Text = TOCLOCtags(i)
+  .Text = TOCfauxTags(I)
+  .Replacement.Text = TOCLOCtags(I)
   .Wrap = wdFindContinue
   .Format = False
-  .Forward = directionBool(i)
+  .Forward = directionBool(I)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = False
@@ -283,11 +403,11 @@ With activeRng.Find
 End With
 Next
 
-For i = 1 To 2
+For I = 1 To 2
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = TOCfauxTags(i)
+  .Text = TOCfauxTags(I)
   .Replacement.Text = ""
   .Wrap = wdFindContinue
   .Format = False
@@ -301,12 +421,258 @@ With activeRng.Find
 End With
 Next
 
-Call zz_clearFind
+Call zz_clearFindB
 
 End Sub
 
+Private Sub tagSeriesPage()
 
-Private Sub zz_clearFind()
+'to update this for a different tag, replace all in procedure two char code, eg: TP->SP
+'update styles array manually, and Dim'd stylesarray length, & that's it
+
+Set activeRng = ActiveDocument.Range
+Dim SPstylesArray(8) As String                                   ' number of items in array should be declared here
+Dim I As Long
+
+SPstylesArray(1) = "Series Page Heading (sh)"
+SPstylesArray(2) = "Series Page Text (stx)"
+SPstylesArray(3) = "Series Page Text No-Indent (stx1)"
+SPstylesArray(4) = "Series Page List of Titles (slt)"
+SPstylesArray(5) = "Series Page Author (sau)"
+SPstylesArray(6) = "Series Page Subhead 1 (sh1)"
+SPstylesArray(7) = "Series Page Subhead 2 (sh2)"
+SPstylesArray(8) = "Series Page Subhead 3 (sh3)"
+
+For I = 1 To UBound(SPstylesArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = "`SP|^&|SP`"
+  .Wrap = wdFindContinue
+  .Format = True
+  .Style = SPstylesArray(I)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFindB
+
+Dim SPfauxTags(3) As String
+Dim SPLOCtags(3) As String
+Dim directionBool(3) As Boolean
+
+SPfauxTags(1) = "`SP|"
+SPfauxTags(2) = "|SP`"
+SPfauxTags(3) = "^p</sp>"          'this bit is to make sure tagging is inline with last styled paragraph,
+                                                    'instead of the tag falling into the following style eblock
+SPLOCtags(1) = "<sp>"
+SPLOCtags(2) = "</sp>"
+SPLOCtags(3) = "</sp>^p"
+
+directionBool(1) = True
+directionBool(2) = False
+directionBool(3) = False
+
+For I = 1 To UBound(SPfauxTags())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = SPfauxTags(I)
+  .Replacement.Text = SPLOCtags(I)
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = directionBool(I)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceOne
+End With
+Next
+
+For I = 1 To 2
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = SPfauxTags(I)
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFindB
+
+End Sub
+
+Private Sub tagEndLastChapter()
+
+Set activeRng = ActiveDocument.Range
+Dim ELCstylesArray(28) As String                                   ' number of items in array should be declared here
+Dim I As Long
+
+'GLOSSARY or DICTIONARY-STYLE ENTRIES (in case we need to add)
+'Glossary Term (glt)
+'Glossary Text (gltx)
+'Entry (en)
+'Definition (def)
+'Definition Source (defs)
+'Definition -Numbered (ndef)
+'Example (exa)
+'Example -Verse (vexa)
+'Reference (see)
+'Example e.g. (eg)
+'Example in dialog form (exad)
+
+ELCstylesArray(1) = "BM Head (bmh)"
+ELCstylesArray(2) = "BM Title (bmt)"
+ELCstylesArray(3) = "BM Subhead (bmsh)"
+ELCstylesArray(4) = "BM Head ALT (abmh)"
+ELCstylesArray(5) = "BM Text (bmtx)"
+ELCstylesArray(6) = "BM Text Space Before (#bmtx)"
+ELCstylesArray(7) = "BM Text Space Around (#bmtx#)"
+ELCstylesArray(8) = "BM Text Space After (bmtx#)"
+ELCstylesArray(9) = "BM Text No-Indent (bmtx1)"
+ELCstylesArray(10) = "BM Text No-Indent Space Before (#bmtx1)"
+ELCstylesArray(11) = "BM Text No-Indent Space Around (#bmtx1#)"
+ELCstylesArray(12) = "BM Text No-Indent Space After (bmtx1#)"
+ELCstylesArray(13) = "BM Text ALT (abmtx)"
+ELCstylesArray(14) = "BM Text ALT No-Indent (abmtx1)"
+ELCstylesArray(15) = "Appendix Head (aph)"
+ELCstylesArray(16) = "Appendix Subhead (apsh)"
+ELCstylesArray(17) = "Appendix Level-1 Subhead (aph1)"
+ELCstylesArray(18) = "Appendix Level-2 Subhead (aph2)"
+ELCstylesArray(19) = "Appendix Level-3 Subhead (aph3)"
+ELCstylesArray(20) = "Appendix Level-4 Subhead (aph4)"
+ELCstylesArray(21) = "Appendix Level-5 Subhead (aph5)"
+ELCstylesArray(22) = "Appendix Text (aptx)"
+ELCstylesArray(23) = "Appendix Text No-Indent (aptx1)"
+ELCstylesArray(24) = "Appendix List Num (apnl)"
+ELCstylesArray(25) = "Appendix List Unnum (apul)"
+ELCstylesArray(26) = "Appendix List Bullet (apbl)"
+ELCstylesArray(27) = "Appendix Source Note (apsn)"
+ELCstylesArray(28) = "Appendix Footnote (apfn)"
+
+For I = 1 To UBound(ELCstylesArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = "`ELC|^&"
+  .Wrap = wdFindContinue
+  .Format = True
+  .Style = ELCstylesArray(I)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+Call zz_clearFindB
+
+'Change the tag for the first found ELC tag to </ch>, switch places with preceding para to be inline with last chapter paragraph
+
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p`ELC|"
+  .Replacement.Text = "</ch>^p"
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceOne
+End With
+
+Call zz_clearFindB
+
+'Get rid of rest of ELC tags
+
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "`ELC|"
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+End Sub
+Private Function volumestylecheck()
+
+Set activeRng = ActiveDocument.Range
+volumestylecheck = False
+Dim VOLstylesArray(2) As String                                   ' number of items in array should be declared here
+Dim I As Long
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
+
+VOLstylesArray(1) = "Volume Number (voln)"
+VOLstylesArray(2) = "Volume Title (volt)"
+
+For I = 1 To UBound(VOLstylesArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindContinue
+  .Format = True
+  .Style = VOLstylesArray(I)
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  If .Execute Then                          'Returns true if text was found.
+     iReply = MsgBox(mainDoc & "' contains a 'Volume' paragraph style." & vbNewLine & vbNewLine & _
+        "To continue submitting this for Library of Congress ingestion as a single volume (standard tags), click 'YES'." & vbNewLine & vbNewLine & _
+        "If submitting as a 'single application for multiple volumes': click 'NO' to proceed with auto-tagging exempting chapter tags (<ch></ch>)." & vbNewLine & _
+        "Chapter tags wil unfortunately need to be manually applied in this case." & vbNewLine & vbNewLine & _
+        "For further guidance please email macsupport@macmillanusa.com", vbYesNoCancel, "Alert")
+    If iReply = vbYes Then
+        Exit Function
+    ElseIf iReply = vbNo Then
+        volumestylecheck = True
+        Exit Function
+    Else
+        End
+    End If
+  End If
+End With
+Next
+
+End Function
+
+Private Sub zz_clearFindB()
 
 Dim clearRng As Range
 Set clearRng = ActiveDocument.Words.First
@@ -326,3 +692,275 @@ With clearRng.Find
   .Execute
 End With
 End Sub
+
+
+Private Function zz_errorChecksB()                       'kidnapped this whole function from macmillan.dotm
+                                                                'adding tag checking to include LOC stuff
+zz_errorChecksB = False
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
+
+'-----make sure Style template is attached
+Dim keyStyle As Word.Style
+Dim styleCheck As Boolean
+On Error Resume Next
+Set keyStyle = mainDoc.Styles("span boldface characters (bf)")                '''Style from template to check against
+styleCheck = keyStyle Is Nothing
+If styleCheck Then
+MsgBox "Oops! Required Macmillan style template is not attached.", , "Error"
+zz_errorChecksB = True
+Exit Function
+End If
+
+'-----make sure document is saved
+Dim docSaved As Boolean                                                                                                 'v. 3.1 update
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK and I will save the document and run the Cleanup macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
+        zz_errorChecksB = True
+        Exit Function
+    End If
+End If
+
+'-----test protection
+If ActiveDocument.ProtectionType <> wdNoProtection Then
+MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & "TIP: If you don't know the protection password, try pasting contents of this file into a new file, and run the macro on that.", , "Error 2"
+zz_errorChecksB = True
+Exit Function
+End If
+
+'-----test if backtick style tag already exists
+Set activeRng = ActiveDocument.Range
+Application.ScreenUpdating = False
+
+Dim existingTagArray(6) As String                                   ' number of items in array should be declared here
+Dim b As Long
+Dim foundBad As Boolean
+foundBad = False
+
+existingTagArray(1) = "[`|]CH[|`]"
+existingTagArray(2) = "`ELC|"
+existingTagArray(3) = "[`|]CP[|`]"
+existingTagArray(4) = "[`|]TP[|`]"
+existingTagArray(5) = "[`|]TOC[|`]"
+existingTagArray(6) = "[`|]SP[|`]"
+
+For b = 1 To UBound(existingTagArray())
+With activeRng.Find
+  .ClearFormatting
+  .Text = existingTagArray(b)
+  .Wrap = wdFindContinue
+  .MatchWildcards = True
+End With
+If activeRng.Find.Execute Then foundBad = True: Exit For
+Next
+
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+If foundBad = True Then                'If activeRng.Find.Execute Then
+    MsgBox "Something went wrong! The LOC tags Macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & "'" _
+    & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support, I am sure they will be happy to help.", , "Error Code: 1"
+    zz_errorChecksB = True
+    Exit Function
+End If
+
+'-----test if LOC tags already exists
+
+Dim existingLOCArray(9) As String
+Dim c As Long
+Dim foundLOC As Boolean
+Dim foundLOCitem As String
+foundLOC = False
+Dim iReplyB As Integer
+
+existingLOCArray(1) = "<sp>"
+existingLOCArray(2) = "</sp>"
+existingLOCArray(3) = "</ch>"
+existingLOCArray(4) = "<cp>"
+existingLOCArray(5) = "</cp>"
+existingLOCArray(6) = "<toc>"
+existingLOCArray(7) = "</toc>"
+existingLOCArray(8) = "<tp>"
+existingLOCArray(9) = "</tp>"
+'existingLOCArray(10) = "<ch[0-9]{1,}>"
+
+For c = 1 To UBound(existingLOCArray())
+With activeRng.Find
+  .ClearFormatting
+  .Text = existingLOCArray(c)
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+End With
+If activeRng.Find.Execute Then
+    foundLOC = True
+    foundLOCitem = existingLOCArray(c)
+    Exit For
+End If
+Next
+
+'doing it again with wildcards=True, to catch numbered chapters
+With activeRng.Find
+  .ClearFormatting
+  .Text = "<ch[0-9]{1,}>"
+  .Wrap = wdFindContinue
+  .MatchWildcards = True
+End With
+If activeRng.Find.Execute Then
+    foundLOC = True
+    foundLOCitem = "(chapter heading tag, e.g. <ch1>, <ch2>, ... )"
+End If
+
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+If foundLOC = True Then
+    MsgBox "Your document: '" & mainDoc & "' already contains at least one Library of Congress tag:" & vbNewLine & vbNewLine & foundLOCitem & vbNewLine & vbNewLine & _
+    "This macro may have already been run on this document. To run this macro, you MUST find and remove all existing LOC tags first.", , "Alert"
+    zz_errorChecksB = True
+    Exit Function
+End If
+
+End Function
+
+Private Sub zz_TagReport()
+
+Application.ScreenUpdating = False
+
+Dim activeDoc As Document
+Set activeDoc = ActiveDocument
+Set activeRng = ActiveDocument.Range
+Dim activeDocName As String
+Dim activeDocPath As String
+Dim LOCreportDoc As String
+Dim LOCreportDocAlt As String
+Dim TheOS As String
+TheOS = System.OperatingSystem
+Dim fnum As Integer
+activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".doc") - 1)
+activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
+
+'count occurences of all but Chapter Heads
+Dim MyDoc As String, txt As String, t As String
+Dim LOCtagArray(9) As String
+Dim LOCtagCount(9) As Integer
+Dim d As Long
+MyDoc = ActiveDocument.Range.Text
+
+LOCtagArray(1) = "<tp>"
+LOCtagArray(2) = "</tp>"
+LOCtagArray(3) = "<cp>"
+LOCtagArray(4) = "</cp>"
+LOCtagArray(5) = "<sp>"
+LOCtagArray(6) = "</sp>"
+LOCtagArray(7) = "<toc>"
+LOCtagArray(8) = "</toc>"
+LOCtagArray(9) = "</ch>"
+
+For d = 1 To UBound(LOCtagArray())
+    txt = LOCtagArray(d)
+    t = Replace(MyDoc, txt, "")
+    LOCtagCount(d) = ((Len(MyDoc) - Len(t)) / Len(txt))
+Next
+
+Call zz_clearFindB
+
+Dim chTagCount As Long
+
+'Count occurences of Chapter Heads
+With activeRng.Find
+  .ClearFormatting
+  .Text = "<ch[0-9]{1,}>"
+  .MatchWildcards = True
+Do While .Execute(Forward:=True) = True
+chTagCount = chTagCount + 1
+Loop
+End With
+
+Call zz_clearFindB
+
+'Prepare error message
+Dim errorList As String
+errorList = ""
+If LOCtagCount(1) = 0 And LOCtagCount(2) = 0 Then errorList = errorList & "ERROR: No Title Page tags found. Title page tags are REQUIRED for LOC submission." & vbNewLine
+If LOCtagCount(3) = 0 And LOCtagCount(4) = 0 Then errorList = errorList & "ERROR: No Copyright Page tags found. Copyright page tags are REQUIRED for LOC submission." & vbNewLine
+If LOCtagCount(1) > 1 Or LOCtagCount(1) <> LOCtagCount(2) Then errorList = errorList & "ERROR: Problem with Title Page tags: either too many were found or one is missing" & vbNewLine
+If LOCtagCount(3) > 1 Or LOCtagCount(3) <> LOCtagCount(4) Then errorList = errorList & "ERROR: Problem with Copyright Page tags: either too many were found or one is missing" & vbNewLine
+If LOCtagCount(5) > 1 Or LOCtagCount(5) <> LOCtagCount(6) Then errorList = errorList & "ERROR: Problem with Series Page tags: either too many were found or one is missing" & vbNewLine
+If LOCtagCount(7) > 1 Or LOCtagCount(7) <> LOCtagCount(8) Then errorList = errorList & "ERROR: Problem with Table of Contents tags: either too many were found or one is missing" & vbNewLine
+If chTagCount = 0 Then errorList = errorList & "WARNING: No Chapter Heading tags were found." & vbNewLine
+If LOCtagCount(9) = 0 Then errorList = errorList & "WARNING: No 'End of Last Chapter' tag was found." & vbNewLine
+
+'create text file
+LOCreportDoc = activeDocPath & activeDocName & "_LOCtagReport.txt"
+
+''''for 32 char Mc OS bug- could check if this is Mac OS too< PART 1
+If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
+    LOCreportDoc = activeDocPath & "\" & activeDocName & "_LOCtagReport.txt"
+Else
+    Dim placeholdDocName As String
+    placeholdDocName = "filenamePlacehold_LOCreport.txt"
+    LOCreportDocAlt = LOCreportDoc
+    LOCreportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
+End If
+'''end ''''for 32 char Mc OS bug part 1
+
+'set and open file for output
+fnum = FreeFile()
+Open LOCreportDoc For Output As fnum
+If errorList = "" Then
+    Print #fnum, "Congratulations!" & vbCr
+    Print #fnum, "LOC Tags look good for " & activeDoc.Name & vbCr
+    Print #fnum, "See summary below:" & vbCr
+    Print #fnum, vbCr
+Else
+    Print #fnum, "BAD NEWS:" & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "Problems were found with LOC tags in your document '" & activeDoc.Name & "':" & vbCr
+    Print #fnum, vbCr
+    Print #fnum, vbCr
+    Print #fnum, "------------------------- ERRORS -------------------------" & vbCr
+    Print #fnum, errorList
+    Print #fnum, vbCr
+    Print #fnum, vbCr
+End If
+    Print #fnum, "------------------------- Tag Summary -------------------------" & vbCr
+    Print #fnum, LOCtagCount(1) & "  Title page open tag(s) found <tp>"
+    Print #fnum, LOCtagCount(2) & "  Title page close tag(s) found </tp>"
+    Print #fnum, LOCtagCount(3) & "  Copyright page open tag(s) found <cp>"
+    Print #fnum, LOCtagCount(4) & "  Copyright page close tag(s) found </cp>"
+    Print #fnum, LOCtagCount(5) & "  Series page open tag(s) found <sp>"
+    Print #fnum, LOCtagCount(6) & "  Series page close tag(s) found </sp>"
+    Print #fnum, LOCtagCount(7) & "  Table of Contents open tag(s) found <toc>"
+    Print #fnum, LOCtagCount(8) & "  Table of Contents close tag(s) found </toc>"
+    Print #fnum, chTagCount & "  Chapter beginning tag(s) found (<ch1>, <ch2>, etc)"
+    Print #fnum, LOCtagCount(9) & "  End of last chapter tag(s) found </ch>"
+Close #fnum
+
+''''for 32 char Mc OS bug-<PART 2
+If LOCreportDocAlt <> "" Then
+Name LOCreportDoc As LOCreportDocAlt
+End If
+''''END for 32 char Mc OS bug-<PART 2
+
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+
+'open LOC tags Report for user once it is complete.
+Dim Shex As Object
+
+If Not TheOS Like "*Mac*" Then
+   Set Shex = CreateObject("Shell.Application")
+   Shex.Open (LOCreportDoc)
+Else
+    MacScript ("tell application ""TextEdit"" " & vbCr & _
+    "open " & """" & LOCreportDocAlt & """" & " as alias" & vbCr & _
+    "activate" & vbCr & _
+    "end tell" & vbCr)
+End If
+
+End Sub
+
