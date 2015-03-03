@@ -425,25 +425,22 @@ Private Sub PreserveStyledCharactersA()
 ' replaces correctly styled characters with placeholder so they don't get removed
 Set activeRng = ActiveDocument.Range
 
-Dim preserveCharFindArray(4) As String  ' declare number of items in array
-Dim preserveCharReplaceArray(4) As String   'delcare number of items in array
-Dim preserveCharStyleArray(4) As String ' ditto
+Dim preserveCharFindArray(3) As String  ' declare number of items in array
+Dim preserveCharReplaceArray(3) As String   'delcare number of items in array
+Dim preserveCharStyleArray(3) As String ' ditto
 Dim m As Long
 
-preserveCharFindArray(1) = "^m" 'page breaks
-preserveCharFindArray(2) = "^t" 'tabs
-preserveCharFindArray(3) = "  "  ' two spaces
-preserveCharFindArray(4) = "   "    'three spaces
+preserveCharFindArray(1) = "^t" 'tabs
+preserveCharFindArray(2) = "  "  ' two spaces
+preserveCharFindArray(3) = "   "    'three spaces
 
-preserveCharReplaceArray(1) = "`R|"
-preserveCharReplaceArray(2) = "`E|"
-preserveCharReplaceArray(3) = "`G|"
-preserveCharReplaceArray(4) = "`J|"
+preserveCharReplaceArray(1) = "`E|"
+preserveCharReplaceArray(2) = "`G|"
+preserveCharReplaceArray(3) = "`J|"
 
-preserveCharStyleArray(1) = "Page Break (pb)"
+preserveCharStyleArray(1) = "span preserve characters (pre)"
 preserveCharStyleArray(2) = "span preserve characters (pre)"
 preserveCharStyleArray(3) = "span preserve characters (pre)"
-preserveCharStyleArray(4) = "span preserve characters (pre)"
 
 For m = 1 To UBound(preserveCharFindArray())
 With activeRng.Find
@@ -498,12 +495,20 @@ With activeRng.Find
 End With
 Next
 
+''' the bit below to remove the last paragraph if it's blank
+Dim MyRange As Range
+Set MyRange = ActiveDocument.Paragraphs(1).Range
+If MyRange.Text = vbCr Then MyRange.Delete
+
+Set MyRange = ActiveDocument.Paragraphs.Last.Range
+If MyRange.Text = vbCr Then MyRange.Delete
+
 End Sub
 Private Sub RmWhiteSpaceB()
 Set activeRng = ActiveDocument.Range
 
-Dim wsFindArray(28) As String              'number of items in array should be declared here
-Dim wsReplaceArray(28) As String       'and here
+Dim wsFindArray(31) As String              'number of items in array should be declared here
+Dim wsReplaceArray(31) As String       'and here
 Dim i As Long
 
 wsFindArray(1) = ".{4,}"             '4 or more consecutive periods, into proper 4 dot ellipse
@@ -511,7 +516,7 @@ wsFindArray(2) = "..."                  '3 consecutive periods, into 3 dot ellip
 wsFindArray(3) = "^s"                  'non-breaking space replaecd with space                                 v. 3.1 patch
 wsFindArray(4) = "([! ]). . ."          'add leading space for ellipse if not present
 wsFindArray(5) = ". . .([! ])"          'add trailing space for ellipse if not present
-wsFindArray(6) = "^t{1,}"             'tabs deleted
+wsFindArray(6) = "^t{1,}"             'tabs replace with spaces between words, deleted preceding paragraph
 wsFindArray(7) = "^l{1,}"               'manual line breaks
 wsFindArray(8) = " {2,}"               '2 or more spaces
 wsFindArray(9) = "^13 "               'paragraph, space
@@ -527,20 +532,23 @@ wsFindArray(18) = " ^+"                  'emdash leading space-remove
 wsFindArray(19) = "^+ "                  'emdash trailing space-remove
 wsFindArray(20) = " ^="                  'endash leading space-remove
 wsFindArray(21) = "^= "                  'endash trailing space-remove
-wsFindArray(22) = "\( "                     ' space after open parens                                                           v. 3.3
-wsFindArray(23) = " \)"                     'space before closing parens                                                       v. 3.3
-wsFindArray(24) = "\[ "                     'space after opening bracket                                                    v. 3.3
-wsFindArray(25) = " \]"                    'space before closing bracket                                                   v. 3.3
-wsFindArray(26) = "\{ "                     'space after opening curly bracket                                          v. 3.3
-wsFindArray(27) = " \}"                     'space before closing curly bracket                                         v. 3.3
-wsFindArray(28) = "$ "                      'space after dollar sign                                                                v. 3.3
+wsFindArray(22) = "\( "                     ' remove space after open parens                                                           v. 3.3
+wsFindArray(23) = " \)"                     ' removespace before closing parens                                                       v. 3.3
+wsFindArray(24) = "\[ "                     ' removespace after opening bracket                                                    v. 3.3
+wsFindArray(25) = " \]"                    ' removespace before closing bracket                                                   v. 3.3
+wsFindArray(26) = "\{ "                     ' removespace after opening curly bracket                                          v. 3.3
+wsFindArray(27) = " \}"                     ' removespace before closing curly bracket                                         v. 3.3
+wsFindArray(28) = "$ "                      ' removespace after dollar sign                                                                v. 3.3
+wsFindArray(29) = " . . . . "                ' remove space before 4-dot ellipsis (because it's a period)       v 3.7
+wsFindArray(30) = " . . . " & Chr(148)                 ' remove space between ellipsis and closing double quote          v. 3.7
+wsFindArray(31) = " . . . " & Chr(146)                  ' remove space between ellipsis and closing single quote
 
 wsReplaceArray(1) = ". . . . "      ' v. 3.2 EW removed leading space--not needed, 1st dot is a period
 wsReplaceArray(2) = " . . . "
 wsReplaceArray(3) = " "
 wsReplaceArray(4) = "\1 . . ."
 wsReplaceArray(5) = ". . . \1"
-wsReplaceArray(6) = ""
+wsReplaceArray(6) = " "
 wsReplaceArray(7) = "^p"
 wsReplaceArray(8) = " "
 wsReplaceArray(9) = "^p"
@@ -563,6 +571,9 @@ wsReplaceArray(25) = "]"
 wsReplaceArray(26) = "{"
 wsReplaceArray(27) = "}"
 wsReplaceArray(28) = "$"
+wsReplaceArray(29) = ". . . . "
+wsReplaceArray(30) = " . . ." & Chr(148)
+wsReplaceArray(31) = " . . ." & Chr(146)
 
 For i = 1 To UBound(wsFindArray())
 With activeRng.Find
@@ -580,31 +591,30 @@ With activeRng.Find
   .Execute Replace:=wdReplaceAll
 End With
 Next
+
+
 End Sub
 Private Sub PreserveStyledCharactersB()
 ' added by EW v. 3.2
 ' replaces placeholders with original characters
 Set activeRng = ActiveDocument.Range
 
-Dim preserveCharFindArray(4) As String  ' declare number of items in array
-Dim preserveCharReplaceArray(4) As String   'declare number of items in array
-Dim preserveCharStyleArray(4) As String ' ditto
+Dim preserveCharFindArray(3) As String  ' declare number of items in array
+Dim preserveCharReplaceArray(3) As String   'declare number of items in array
+Dim preserveCharStyleArray(3) As String ' ditto
 Dim n As Long
 
-preserveCharFindArray(1) = "`R|" 'page breaks
-preserveCharFindArray(2) = "`E|" 'tabs
-preserveCharFindArray(3) = "`G|"    ' two spaces
-preserveCharFindArray(4) = "`J|"   'three spaces
+preserveCharFindArray(1) = "`E|" 'tabs
+preserveCharFindArray(2) = "`G|"    ' two spaces
+preserveCharFindArray(3) = "`J|"   'three spaces
 
-preserveCharReplaceArray(1) = "^m"
-preserveCharReplaceArray(2) = "^t"
-preserveCharReplaceArray(3) = "  "
-preserveCharReplaceArray(4) = "   "
+preserveCharReplaceArray(1) = "^t"
+preserveCharReplaceArray(2) = "  "
+preserveCharReplaceArray(3) = "   "
 
-preserveCharStyleArray(1) = "Page Break (pb)"
+preserveCharStyleArray(1) = "span preserve characters (pre)"
 preserveCharStyleArray(2) = "span preserve characters (pre)"
 preserveCharStyleArray(3) = "span preserve characters (pre)"
-preserveCharStyleArray(4) = "span preserve characters (pre)"
 
 For n = 1 To UBound(preserveCharFindArray())
 With activeRng.Find
