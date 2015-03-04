@@ -9,7 +9,20 @@ Sub MacmillanManuscriptCleanup()
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 ''''''''''''''''''''''''''''''
+'version 3.7
+'updated 2015-02-25, Erica Warren
+' split Cleanup macro into two macros: cleanup and character styles
+' add new character styles (from v. 3.5) to new styles macro
 
+'''''''''''''''''''''''''''''''''''
+' version 3.6 : style updates only, no macro updates
+
+''''''''''''''''''''''''''''''''''''''''''''''''''
+'version 3.5
+'updated Erica Warren 2015-02-18
+''style report opens when complete
+
+'''''''''''''''''''''''''''''''''''''''''''''''''
 'version 3.4.3
 'last updated 2014-10-20 by Erica Warren
 ''' - moved StylesHyperlink sub after PreserveWhiteSpaceinBrkStylesA sub to prevent styled blank paragraphs from being removed
@@ -88,8 +101,8 @@ Sub MacmillanManuscriptCleanup()
 
 '-----------run preliminary error checks------------
 Dim exitOnError As Boolean
-exitOnError = zz_errorChecks()
 
+exitOnError = zz_errorChecks()      ''Doc is unsaved, protected, or uses backtick character?
 If exitOnError <> False Then
 Exit Sub
 End If
@@ -99,42 +112,25 @@ Application.DisplayStatusBar = True
 Application.ScreenUpdating = False
 
 Call zz_clearFind                          'Clear find object
+
 Application.StatusBar = "Fixing quotes, unicode, section breaks": DoEvents
 Call RmNonWildcardItems                     'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
 Call zz_clearFind
-Application.StatusBar = "Preserving styled white-space pt. 1": DoEvents
-Call PreserveWhiteSpaceinBrkStylesA     'Part A tags paragraphs in 3 styles so consecutive ones don't get wiped
-Call zz_clearFind
-Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
-Call zz_clearFind
+
+Application.StatusBar = "Preserving styled characters": DoEvents
 Call PreserveStyledCharactersA              ' EW added v. 3.2, tags styled page breaks, tabs
 Call zz_clearFind
+
 Application.StatusBar = "Removing whitespace, fixing ellipses and dashes": DoEvents
-Call RmWhiteSpaceB                      'also does ellipses, section breaks
+Call RmWhiteSpaceB                      'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
 Call zz_clearFind
 
-Application.StatusBar = "Preserving styled white-space pt. 1": DoEvents
-Call PreserveStyledCharactersB              ' EW added v. 3.2, replaces aracter tags with actual character
+Application.StatusBar = "Preserving styled white-space": DoEvents
+Call PreserveStyledCharactersB              ' EW added v. 3.2, replaces character tags with actual character
 Call zz_clearFind
-Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies the styles
 
-Application.ScreenUpdating = True
-Application.ScreenRefresh
-
-'-----------Replace Local Styles-----------
-Application.ScreenUpdating = False
-
-Call RemoveBookmarks
-Call zz_clearFind                          'Clear find object
-
-Application.StatusBar = "Tagging character styles and hyperlinks": DoEvents
-Call TagExistingCharStyles            'tag existing styled items + hyperlinks,  style unstyled hyperlinks
-Call zz_clearFind
-Application.StatusBar = "Tagging and clearing local styles": DoEvents
-Call LocalStyleTag                 'tag local styling, reset local styling, remove text highlights
-Call zz_clearFind
-Application.StatusBar = "Applying Macmillan styles": DoEvents
-Call LocalStyleReplace            'reapply local styling through char styles
+Application.StatusBar = "Removing bookmarks": DoEvents
+Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
 Call zz_clearFind
 
 Application.ScreenUpdating = True
@@ -143,6 +139,65 @@ Application.ScreenRefresh
 MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
 
 End Sub
+Sub MacmillanCharStyles()
+
+''-----------------Error checks---------------
+Dim exitOnError As Boolean
+
+exitOnError = zz_templateCheck()   '' template is attached?
+If exitOnError <> False Then
+Exit Sub
+End If
+
+exitOnError = zz_errorChecks()   ''Doc is unsaved, protected, or uses backtick character?
+If exitOnError <> False Then
+Exit Sub
+End If
+
+'-----------Replace Local Styles-----------
+Application.DisplayStatusBar = True
+Application.ScreenUpdating = False
+
+Call zz_clearFind                          'Clear find object
+
+Application.StatusBar = "Removing bookmarks": DoEvents
+Call RemoveBookmarks                    ' repeated in Cleanup macro
+Call zz_clearFind
+
+Application.StatusBar = "Preserving styled whitespace": DoEvents
+Call PreserveWhiteSpaceinBrkStylesA     'Part A tags styled blank paragraphs so they don't get deleted
+Call zz_clearFind
+
+Application.StatusBar = "Applying styles to hyperlinks": DoEvents
+Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+Call zz_clearFind
+
+Application.StatusBar = "Removing unstyled breaks": DoEvents
+Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
+Call zz_clearFind
+
+Application.StatusBar = "Tagging character styles": DoEvents
+Call TagExistingCharStyles            'tag existing styled items
+Call zz_clearFind
+
+Application.StatusBar = "Tagging and clearing local styles": DoEvents
+Call LocalStyleTag                 'tag local styling, reset local styling, remove text highlights
+Call zz_clearFind
+
+Application.StatusBar = "Applying Macmillan styles": DoEvents
+Call LocalStyleReplace            'reapply local styling through char styles
+Call zz_clearFind
+
+Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies the styles
+Call zz_clearFind
+
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+
+MsgBox "Macmillan character styles have been applied throughout your manuscript."
+
+End Sub
+
 
 Private Sub RemoveBookmarks()
 Dim bkm As Bookmark
@@ -161,7 +216,7 @@ Private Sub StyleHyperlinks()
 ' we want to remove these from urls AND text; will add back to just urls later
 
 Set activeRng = ActiveDocument.Range
-' remove all embedded hyperlinks regardless of character style style
+' remove all embedded hyperlinks regardless of character style
 With activeRng
 While .Hyperlinks.Count > 0
 .Hyperlinks(1).Delete
@@ -247,7 +302,7 @@ For p = 1 To UBound(HyperlinkStyleArray())
 '--------------------------------------------------
 ' apply macmillan URL style to hyperlinks we just tagged
 
-    With ActiveDocument.Range.Find
+    With activeRng.Find
         .ClearFormatting
         .Replacement.ClearFormatting
         .Style = "Hyperlink"
@@ -370,25 +425,22 @@ Private Sub PreserveStyledCharactersA()
 ' replaces correctly styled characters with placeholder so they don't get removed
 Set activeRng = ActiveDocument.Range
 
-Dim preserveCharFindArray(4) As String  ' declare number of items in array
-Dim preserveCharReplaceArray(4) As String   'delcare number of items in array
-Dim preserveCharStyleArray(4) As String ' ditto
+Dim preserveCharFindArray(3) As String  ' declare number of items in array
+Dim preserveCharReplaceArray(3) As String   'delcare number of items in array
+Dim preserveCharStyleArray(3) As String ' ditto
 Dim m As Long
 
-preserveCharFindArray(1) = "^m" 'page breaks
-preserveCharFindArray(2) = "^t" 'tabs
-preserveCharFindArray(3) = "  "  ' two spaces
-preserveCharFindArray(4) = "   "    'three spaces
+preserveCharFindArray(1) = "^t" 'tabs
+preserveCharFindArray(2) = "  "  ' two spaces
+preserveCharFindArray(3) = "   "    'three spaces
 
-preserveCharReplaceArray(1) = "`R|"
-preserveCharReplaceArray(2) = "`E|"
-preserveCharReplaceArray(3) = "`G|"
-preserveCharReplaceArray(4) = "`J|"
+preserveCharReplaceArray(1) = "`E|"
+preserveCharReplaceArray(2) = "`G|"
+preserveCharReplaceArray(3) = "`J|"
 
-preserveCharStyleArray(1) = "Page Break (pb)"
+preserveCharStyleArray(1) = "span preserve characters (pre)"
 preserveCharStyleArray(2) = "span preserve characters (pre)"
 preserveCharStyleArray(3) = "span preserve characters (pre)"
-preserveCharStyleArray(4) = "span preserve characters (pre)"
 
 For m = 1 To UBound(preserveCharFindArray())
 With activeRng.Find
@@ -408,7 +460,50 @@ With activeRng.Find
 End With
 Next
 End Sub
+Private Sub RemoveBreaks()
+'Created v. 3.7
 
+Set activeRng = ActiveDocument.Range
+
+Dim wsFindArray(3) As String              'number of items in array should be declared here
+Dim wsReplaceArray(3) As String       'and here
+Dim q As Long
+
+wsFindArray(1) = "^m{1,}"              'manual page breaks
+wsFindArray(2) = "^13{2,}"          '2 or more paragraphs
+wsFindArray(3) = "(`[0-9]``)^13"    'remove para following a preserved break style                     v. 3.1 patch
+
+wsReplaceArray(1) = "^p"
+wsReplaceArray(2) = "^p"
+wsReplaceArray(3) = "\1"
+
+
+For q = 1 To UBound(wsFindArray())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = wsFindArray(q)
+  .Replacement.Text = wsReplaceArray(q)
+  .Wrap = wdFindContinue
+  .Format = False
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+''' the bit below to remove the last paragraph if it's blank
+Dim MyRange As Range
+Set MyRange = ActiveDocument.Paragraphs(1).Range
+If MyRange.Text = vbCr Then MyRange.Delete
+
+Set MyRange = ActiveDocument.Paragraphs.Last.Range
+If MyRange.Text = vbCr Then MyRange.Delete
+
+End Sub
 Private Sub RmWhiteSpaceB()
 Set activeRng = ActiveDocument.Range
 
@@ -421,64 +516,64 @@ wsFindArray(2) = "..."                  '3 consecutive periods, into 3 dot ellip
 wsFindArray(3) = "^s"                  'non-breaking space replaecd with space                                 v. 3.1 patch
 wsFindArray(4) = "([! ]). . ."          'add leading space for ellipse if not present
 wsFindArray(5) = ". . .([! ])"          'add trailing space for ellipse if not present
-wsFindArray(6) = "^t{1,}"             'tabs deleted
+wsFindArray(6) = "^t{1,}"             'tabs replace with spaces between words, deleted preceding paragraph
 wsFindArray(7) = "^l{1,}"               'manual line breaks
-wsFindArray(8) = "^m{1,}"              'manual page breaks
-wsFindArray(9) = " {2,}"               '2 or more spaces
-wsFindArray(10) = "^13 "               'paragraph, space
-wsFindArray(11) = " ^13"               'space, paragraph
-wsFindArray(12) = "^13{2,}"          '2 or more paragraphs
-wsFindArray(13) = "^-"                     'optional hyphen deleted                                                    v. 3.1 patch
-wsFindArray(14) = "^~"                      'non-breaking hyphen replaced with reg hyphen               v. 3.1 patch
-wsFindArray(15) = " ^= "                    'endash w/ spaces convert to emdash (no spaces)                                v. 3.1 patch
-wsFindArray(16) = "---"                   '3 hyphens to emdash
-wsFindArray(17) = "--"                   '2 hyphens to endash
-wsFindArray(18) = " -"                  'hyphen leading space-remove
-wsFindArray(19) = "- "                  'hyphen trailing space-remove
-wsFindArray(20) = " ^+"                  'emdash leading space-remove
-wsFindArray(21) = "^+ "                  'emdash trailing space-remove
-wsFindArray(22) = " ^="                  'endash leading space-remove
-wsFindArray(23) = "^= "                  'endash trailing space-remove
-wsFindArray(24) = "(`[0-9]``)^13"    'remove para following a preserved break style                     v. 3.1 patch
-wsFindArray(25) = "\( "                     ' space after open parens                                                           v. 3.3
-wsFindArray(26) = " \)"                     'space before closing parens                                                       v. 3.3
-wsFindArray(27) = "\[ "                     'space after opening bracket                                                    v. 3.3
-wsFindArray(28) = " \]"                    'space before closing bracket                                                   v. 3.3
-wsFindArray(29) = "\{ "                     'space after opening curly bracket                                          v. 3.3
-wsFindArray(30) = " \}"                     'space before closing curly bracket                                         v. 3.3
-wsFindArray(31) = "$ "                      'space after dollar sign                                                                v. 3.3
+wsFindArray(8) = " {2,}"               '2 or more spaces
+wsFindArray(9) = "^13 "               'paragraph, space
+wsFindArray(10) = " ^13"               'space, paragraph
+wsFindArray(11) = "^-"                     'optional hyphen deleted                                                    v. 3.1 patch
+wsFindArray(12) = "^~"                      'non-breaking hyphen replaced with reg hyphen               v. 3.1 patch
+wsFindArray(13) = " ^= "                    'endash w/ spaces convert to emdash (no spaces)                                v. 3.1 patch
+wsFindArray(14) = "---"                   '3 hyphens to emdash
+wsFindArray(15) = "--"                   '2 hyphens to emdash                           v. 3.7 changed from en-dash to em-dash, per usual usage.
+wsFindArray(16) = " -"                  'hyphen leading space-remove
+wsFindArray(17) = "- "                  'hyphen trailing space-remove
+wsFindArray(18) = " ^+"                  'emdash leading space-remove
+wsFindArray(19) = "^+ "                  'emdash trailing space-remove
+wsFindArray(20) = " ^="                  'endash leading space-remove
+wsFindArray(21) = "^= "                  'endash trailing space-remove
+wsFindArray(22) = "\( "                     ' remove space after open parens                                                           v. 3.3
+wsFindArray(23) = " \)"                     ' removespace before closing parens                                                       v. 3.3
+wsFindArray(24) = "\[ "                     ' removespace after opening bracket                                                    v. 3.3
+wsFindArray(25) = " \]"                    ' removespace before closing bracket                                                   v. 3.3
+wsFindArray(26) = "\{ "                     ' removespace after opening curly bracket                                          v. 3.3
+wsFindArray(27) = " \}"                     ' removespace before closing curly bracket                                         v. 3.3
+wsFindArray(28) = "$ "                      ' removespace after dollar sign                                                                v. 3.3
+wsFindArray(29) = " . . . . "                ' remove space before 4-dot ellipsis (because it's a period)       v 3.7
+wsFindArray(30) = " . . . " & Chr(148)                 ' remove space between ellipsis and closing double quote          v. 3.7
+wsFindArray(31) = " . . . " & Chr(146)                  ' remove space between ellipsis and closing single quote
 
 wsReplaceArray(1) = ". . . . "      ' v. 3.2 EW removed leading space--not needed, 1st dot is a period
 wsReplaceArray(2) = " . . . "
 wsReplaceArray(3) = " "
 wsReplaceArray(4) = "\1 . . ."
 wsReplaceArray(5) = ". . . \1"
-wsReplaceArray(6) = ""
+wsReplaceArray(6) = " "
 wsReplaceArray(7) = "^p"
-wsReplaceArray(8) = "^p"
-wsReplaceArray(9) = " "
+wsReplaceArray(8) = " "
+wsReplaceArray(9) = "^p"
 wsReplaceArray(10) = "^p"
-wsReplaceArray(11) = "^p"
-wsReplaceArray(12) = "^p"
-wsReplaceArray(13) = ""
-wsReplaceArray(14) = "-"
-wsReplaceArray(15) = "^+"
-wsReplaceArray(16) = "^+"
-wsReplaceArray(17) = "^="
-wsReplaceArray(18) = "-"
-wsReplaceArray(19) = "-"
-wsReplaceArray(20) = "^+"
-wsReplaceArray(21) = "^+"
-wsReplaceArray(22) = "^="
-wsReplaceArray(23) = "^="
-wsReplaceArray(24) = "\1"
-wsReplaceArray(25) = "("
-wsReplaceArray(26) = ")"
-wsReplaceArray(27) = "["
-wsReplaceArray(28) = "]"
-wsReplaceArray(29) = "{"
-wsReplaceArray(30) = "}"
-wsReplaceArray(31) = "$"
+wsReplaceArray(11) = ""
+wsReplaceArray(12) = "-"
+wsReplaceArray(13) = "^+"
+wsReplaceArray(14) = "^+"
+wsReplaceArray(15) = "^+"       'v. 3.7 changed to em-dash per common usage
+wsReplaceArray(16) = "-"
+wsReplaceArray(17) = "-"
+wsReplaceArray(18) = "^+"
+wsReplaceArray(19) = "^+"
+wsReplaceArray(20) = "^="
+wsReplaceArray(21) = "^="
+wsReplaceArray(22) = "("
+wsReplaceArray(23) = ")"
+wsReplaceArray(24) = "["
+wsReplaceArray(25) = "]"
+wsReplaceArray(26) = "{"
+wsReplaceArray(27) = "}"
+wsReplaceArray(28) = "$"
+wsReplaceArray(29) = ". . . . "
+wsReplaceArray(30) = " . . ." & Chr(148)
+wsReplaceArray(31) = " . . ." & Chr(146)
 
 For i = 1 To UBound(wsFindArray())
 With activeRng.Find
@@ -496,31 +591,30 @@ With activeRng.Find
   .Execute Replace:=wdReplaceAll
 End With
 Next
+
+
 End Sub
 Private Sub PreserveStyledCharactersB()
 ' added by EW v. 3.2
 ' replaces placeholders with original characters
 Set activeRng = ActiveDocument.Range
 
-Dim preserveCharFindArray(4) As String  ' declare number of items in array
-Dim preserveCharReplaceArray(4) As String   'declare number of items in array
-Dim preserveCharStyleArray(4) As String ' ditto
+Dim preserveCharFindArray(3) As String  ' declare number of items in array
+Dim preserveCharReplaceArray(3) As String   'declare number of items in array
+Dim preserveCharStyleArray(3) As String ' ditto
 Dim n As Long
 
-preserveCharFindArray(1) = "`R|" 'page breaks
-preserveCharFindArray(2) = "`E|" 'tabs
-preserveCharFindArray(3) = "`G|"    ' two spaces
-preserveCharFindArray(4) = "`J|`"   'three spaces
+preserveCharFindArray(1) = "`E|" 'tabs
+preserveCharFindArray(2) = "`G|"    ' two spaces
+preserveCharFindArray(3) = "`J|"   'three spaces
 
-preserveCharReplaceArray(1) = "^m"
-preserveCharReplaceArray(2) = "^t"
-preserveCharReplaceArray(3) = "  "
+preserveCharReplaceArray(1) = "^t"
+preserveCharReplaceArray(2) = "  "
 preserveCharReplaceArray(3) = "   "
 
-preserveCharStyleArray(1) = "Page Break (pb)"
+preserveCharStyleArray(1) = "span preserve characters (pre)"
 preserveCharStyleArray(2) = "span preserve characters (pre)"
 preserveCharStyleArray(3) = "span preserve characters (pre)"
-preserveCharStyleArray(4) = "span preserve characters (pre)"
 
 For n = 1 To UBound(preserveCharFindArray())
 With activeRng.Find
@@ -579,8 +673,8 @@ End Sub
 Private Sub TagExistingCharStyles()
 Set activeRng = ActiveDocument.Range                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
 
-Dim tagCharStylesArray(8) As String                                   ' number of items in array should be declared here
-Dim CharStylePreserveArray(8) As String              ' number of items in array should be declared here
+Dim tagCharStylesArray(11) As String                                   ' number of items in array should be declared here
+Dim CharStylePreserveArray(11) As String              ' number of items in array should be declared here
 Dim d As Long
 
 
@@ -592,6 +686,10 @@ CharStylePreserveArray(5) = "span material to come (tk)"
 CharStylePreserveArray(6) = "span carry query (cq)"
 CharStylePreserveArray(7) = "span key phrase (kp)"
 CharStylePreserveArray(8) = "span preserve characters (pre)"  'added v. 3.2
+CharStylePreserveArray(9) = "bookmaker keep together (kt)"  'added v. 3.7
+CharStylePreserveArray(10) = "bookmaker force page break (br)"  'added v. 3.7
+CharStylePreserveArray(11) = "span ISBN (isbn)"  'added v. 3.7
+
 
 tagCharStylesArray(1) = "`H|^&|H`"
 tagCharStylesArray(2) = "`Z|^&|Z`"
@@ -601,6 +699,9 @@ tagCharStylesArray(5) = "`W|^&|W`"
 tagCharStylesArray(6) = "`V|^&|V`"
 tagCharStylesArray(7) = "`T|^&|T`"
 tagCharStylesArray(8) = "`F|^&|F`"
+tagCharStylesArray(9) = "`K|^&|K`"
+tagCharStylesArray(10) = "`N|^&|N`"
+tagCharStylesArray(11) = "`Q|^&|Q`"
 
 
 For d = 1 To UBound(CharStylePreserveArray())
@@ -691,8 +792,8 @@ Private Sub LocalStyleReplace()
 Set activeRng = ActiveDocument.Range
 
 '-------------apply styles to tags
-Dim tagFindArray(17) As String              ' number of items in array should be declared here
-Dim tagReplaceArray(17) As String         'and here
+Dim tagFindArray(20) As String              ' number of items in array should be declared here
+Dim tagReplaceArray(20) As String         'and here
 Dim h As Long
 
 tagFindArray(1) = "`B|(*)|B`"
@@ -712,6 +813,10 @@ tagFindArray(14) = "`A|(*)|A`"                'v. 3.1 patch
 tagFindArray(15) = "`C|(*)|C`"                 'v. 3.1 patch
 tagFindArray(16) = "`D|(*)|D`"                       'v. 3.1 patch
 tagFindArray(17) = "`F|(*)|F`"
+tagFindArray(18) = "`K|(*)|K`"          'v. 3.7 added
+tagFindArray(19) = "`N|(*)|N`"          'v. 3.7 added
+tagFindArray(20) = "`Q|(*)|Q`"          'v. 3.7 added
+
 tagReplaceArray(1) = ActiveDocument.Styles("span boldface characters (bf)")
 tagReplaceArray(2) = ActiveDocument.Styles("span italic characters (ital)")
 tagReplaceArray(3) = ActiveDocument.Styles("span underscore characters (us)")
@@ -719,7 +824,7 @@ tagReplaceArray(4) = ActiveDocument.Styles("span small caps characters (sc)")
 tagReplaceArray(5) = ActiveDocument.Styles("span hyperlink (url)")
 tagReplaceArray(6) = ActiveDocument.Styles("span subscript characters (sub)")
 tagReplaceArray(7) = ActiveDocument.Styles("span superscript characters (sup)")
-tagReplaceArray(8) = ActiveDocument.Styles("span symbols (sym)")           
+tagReplaceArray(8) = ActiveDocument.Styles("span symbols (sym)")
 ' the last 9 items here are of course v. 3.1 patches
 tagReplaceArray(9) = ActiveDocument.Styles("span accent characters (acc)")
 tagReplaceArray(10) = ActiveDocument.Styles("span cross-reference (xref)")
@@ -730,6 +835,10 @@ tagReplaceArray(14) = ActiveDocument.Styles("span bold ital (bem)")
 tagReplaceArray(15) = ActiveDocument.Styles("span smcap bold (scbold)")
 tagReplaceArray(16) = ActiveDocument.Styles("span smcap ital (scital)")
 tagReplaceArray(17) = ActiveDocument.Styles("span preserve characters (pre)")
+tagReplaceArray(18) = ActiveDocument.Styles("bookmaker keep together (kt)")          'v. 3.7 added
+tagReplaceArray(19) = ActiveDocument.Styles("bookmaker force page break (br)")          'v. 3.7 added
+tagReplaceArray(20) = ActiveDocument.Styles("span ISBN (isbn)")          'v. 3.7 added
+
 
 For h = 1 To UBound(tagFindArray())
 With activeRng.Find
@@ -773,12 +882,11 @@ With clearRng.Find
 End With
 End Sub
 
-Function zz_errorChecks()
+Function zz_templateCheck()
 
-zz_errorChecks = False
+zz_templateCheck = False
 Dim mainDoc As Document
 Set mainDoc = ActiveDocument
-Dim iReply As Integer
 
 '-----make sure Style template is attached
 Dim keyStyle As Word.Style
@@ -787,17 +895,26 @@ On Error Resume Next
 Set keyStyle = mainDoc.Styles("span boldface characters (bf)")                '''Style from template to check against
 styleCheck = keyStyle Is Nothing
 If styleCheck Then
-MsgBox "Oops! Required style template 'macmillan.dotx' is not attached.", , "Error"
-zz_errorChecks = True
+MsgBox "Oops! Required style template 'macmillan.dotm' is not attached.", , "Error"
+zz_templateCheck = True
 Exit Function
 End If
+
+End Function
+
+Function zz_errorChecks()
+
+zz_errorChecks = False
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
 
 '-----make sure document is saved
 Dim docSaved As Boolean                                                                                                 'v. 3.1 update
 docSaved = mainDoc.Saved
 If docSaved = False Then
     iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-        "Click OK and I will save the document and run the Cleanup macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+        "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
     If iReply = vbOK Then
         mainDoc.Save
     Else
@@ -839,7 +956,7 @@ Next
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 If foundBad = True Then                'If activeRng.Find.Execute Then
-MsgBox "Something went wrong! The Cleanup Macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & "'" & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support, I am sure they will be happy to help.", , "Error Code: 1"
+MsgBox "Something went wrong! The macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & "'" & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support, I am sure they will be happy to help.", , "Error Code: 1"
 zz_errorChecks = True
 End If
 End Function
@@ -988,6 +1105,19 @@ Else
 MsgBox "The Macmillan Style Report macro has finished running. Go take a look at the results!"
 End If
 
+'open Style Report for user once it is complete.
+Dim Shex As Object
+
+If Not TheOS Like "*Mac*" Then
+   Set Shex = CreateObject("Shell.Application")
+   Shex.Open (styleReportDoc)
+Else
+    MacScript ("tell application ""Finder"" " & vbCr & _
+    "open document file " & """" & styleReportDocAlt & """" & vbCr & _
+    "activate" & vbCr & _
+    "end tell" & vbCr)
+End If
+
 ''Timer closing
 'bTime = Timer
 'MsgBox "CreateStyleListEBranch: " & Format(Round(bTime - aTime, 2), "00:00:00") & " for " & activeParaCount & " paragraphs"
@@ -1069,8 +1199,3 @@ ActiveDocument.ActiveWindow.View.ShowAll = True                         'Shows n
 ActiveDocument.ActiveWindow.View.Type = wdNormalView                'Switches to Normal/Draft view
 ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5)                           'Sets Styles margin area in draft view to 1.5 in.
 End Sub
-
-
-
-
-
