@@ -7,7 +7,8 @@ Sub LibraryOfCongressTags()
 '''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 '''2/25/15
-'''Version 1.0
+'''Version 1.1
+'''Updated: 3/4/15 : revised chapter numbering loop for performance, edited ELC styles and added tag for ELC with no end styles
 ''''''''''''''''''''''''''''''
 
 '-----------run preliminary error checks------------
@@ -67,15 +68,14 @@ Private Sub tagChapterHeads()
 
 Set activeRng = ActiveDocument.Range
 Dim CHstylesArray(3) As String                                   ' number of items in array should be declared here
-Dim I As Long
-Dim chapNum As Integer
-Dim chapNumString As String
+Dim i As Long
+Dim chTag As Integer
 
 CHstylesArray(1) = "Chap Number (cn)"
 CHstylesArray(2) = "Chap Title (ct)"
 CHstylesArray(3) = "Chap Number Nonprinting (cnp)"
 
-For I = 1 To UBound(CHstylesArray())
+For i = 1 To UBound(CHstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -83,7 +83,7 @@ With activeRng.Find
   .Replacement.Text = "`CH|^&|CH`"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = CHstylesArray(I)
+  .Style = CHstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -108,12 +108,12 @@ CHLOCtags(2) = ""
 CHLOCtags(3) = ""
 CHLOCtags(4) = "<ch>"
 
-For I = 1 To UBound(CHfauxTags())
+For i = 1 To UBound(CHfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = CHfauxTags(I)
-  .Replacement.Text = CHLOCtags(I)
+  .Text = CHfauxTags(i)
+  .Replacement.Text = CHLOCtags(i)
   .Wrap = wdFindContinue
   .Format = False
   .Forward = True
@@ -126,22 +126,42 @@ With activeRng.Find
 End With
 Next
 
-chapNum = 1
-chapNumString = "<ch" & chapNum & ">"
+'adapted from fumei's Range find here: http://www.vbaexpress.com/forum/showthread.php?41244-Loop-until-not-found
+chTag = 1
 
-'this is borrowed form here:  http://stackoverflow.com/questions/11234358/word-2007-macro-to-automatically-number-items-in-a-document
-
-Do While InStr(ActiveDocument.Content, "<ch>") > 0
-    chapNumString = "<ch" & chapNum & ">"
-    With ActiveDocument.Content.Find
-        .ClearFormatting
-        .Text = "<ch>"
-        .Execute Replace:=wdReplaceOne, ReplaceWith:=chapNumString, Forward:=True
-    End With
-    chapNum = chapNum + 1
+With activeRng.Find
+.Text = "<ch>"
+Do While .Execute(Forward:=True) = True
+With activeRng
+.MoveEnd unit:=wdCharacter, Count:=-1
+.InsertAfter (chTag)
+.Collapse direction:=wdCollapseEnd
+.Move unit:=wdCharacter, Count:=1
+End With
+chTag = chTag + 1
 Loop
+End With
+
+'previous chapter number tag method (too slow)
+'Dim chapNum As Integer
+'Dim chapNumString As String
+'chapNum = 1
+'chapNumString = "<ch" & chapNum & ">"
+'
+''this is borrowed form here:  http://stackoverflow.com/questions/11234358/word-2007-macro-to-automatically-number-items-in-a-document
+'Do While InStr(ActiveDocument.Content, "<ch>") > 0
+'    chapNumString = "<ch" & chapNum & ">"
+'    With ActiveDocument.Content.Find
+'        .ClearFormatting
+'        .Text = "<ch>"
+'        .Execute Replace:=wdReplaceOne, ReplaceWith:=chapNumString, Forward:=True
+'    End With
+'    chapNum = chapNum + 1
+'Loop
 
 End Sub
+
+
 
 Private Sub tagTitlePage()
 
@@ -152,7 +172,7 @@ Private Sub tagTitlePage()
 
 Set activeRng = ActiveDocument.Range
 Dim TPstylesArray(10) As String                                   ' number of items in array should be declared here
-Dim I As Long
+Dim i As Long
 
 TPstylesArray(1) = "Titlepage Author Name (au)"
 TPstylesArray(2) = "Titlepage Book Subtitle (stit)"
@@ -165,7 +185,7 @@ TPstylesArray(8) = "Titlepage Reading Line (rl)"
 TPstylesArray(9) = "Titlepage Series Title (ser)"
 TPstylesArray(10) = "Titlepage Translator Name (tran)"
 
-For I = 1 To UBound(TPstylesArray())
+For i = 1 To UBound(TPstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -173,7 +193,7 @@ With activeRng.Find
   .Replacement.Text = "`TP|^&|TP`"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = TPstylesArray(I)
+  .Style = TPstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -201,15 +221,15 @@ directionBool(1) = True
 directionBool(2) = False
 directionBool(3) = False
 
-For I = 1 To UBound(TPfauxTags())
+For i = 1 To UBound(TPfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = TPfauxTags(I)
-  .Replacement.Text = TPLOCtags(I)
+  .Text = TPfauxTags(i)
+  .Replacement.Text = TPLOCtags(i)
   .Wrap = wdFindContinue
   .Format = False
-  .Forward = directionBool(I)
+  .Forward = directionBool(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = False
@@ -219,11 +239,11 @@ With activeRng.Find
 End With
 Next
 
-For I = 1 To 2
+For i = 1 To 2
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = TPfauxTags(I)
+  .Text = TPfauxTags(i)
   .Replacement.Text = ""
   .Wrap = wdFindContinue
   .Format = False
@@ -248,12 +268,12 @@ Private Sub tagCopyrightPage()
 
 Set activeRng = ActiveDocument.Range
 Dim CPstylesArray(2) As String                                   ' number of items in array should be declared here
-Dim I As Long
+Dim i As Long
 
 CPstylesArray(1) = "Copyright Text double space (crtxd)"
 CPstylesArray(2) = "Copyright Text single space (crtx)"
 
-For I = 1 To UBound(CPstylesArray())
+For i = 1 To UBound(CPstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -261,7 +281,7 @@ With activeRng.Find
   .Replacement.Text = "`CP|^&|CP`"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = CPstylesArray(I)
+  .Style = CPstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -289,15 +309,15 @@ directionBool(1) = True
 directionBool(2) = False
 directionBool(3) = False
 
-For I = 1 To UBound(CPfauxTags())
+For i = 1 To UBound(CPfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = CPfauxTags(I)
-  .Replacement.Text = CPLOCtags(I)
+  .Text = CPfauxTags(i)
+  .Replacement.Text = CPLOCtags(i)
   .Wrap = wdFindContinue
   .Format = False
-  .Forward = directionBool(I)
+  .Forward = directionBool(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = False
@@ -307,11 +327,11 @@ With activeRng.Find
 End With
 Next
 
-For I = 1 To 2
+For i = 1 To 2
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = CPfauxTags(I)
+  .Text = CPfauxTags(i)
   .Replacement.Text = ""
   .Wrap = wdFindContinue
   .Format = False
@@ -336,7 +356,7 @@ Private Sub tagTOC()
 
 Set activeRng = ActiveDocument.Range
 Dim TOCstylesArray(10) As String                                   ' number of items in array should be declared here
-Dim I As Long
+Dim i As Long
 
 TOCstylesArray(1) = "TOC Frontmatter Head (cfmh)"
 TOCstylesArray(2) = "TOC Author (cau)"
@@ -349,7 +369,7 @@ TOCstylesArray(8) = "TOC Level-1 Chapter Head (ch1)"
 TOCstylesArray(9) = "TOC Backmatter Head (cbmh)"
 TOCstylesArray(10) = "TOC Page Number (cnum)"
 
-For I = 1 To UBound(TOCstylesArray())
+For i = 1 To UBound(TOCstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -357,7 +377,7 @@ With activeRng.Find
   .Replacement.Text = "`TOC|^&|TOC`"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = TOCstylesArray(I)
+  .Style = TOCstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -385,15 +405,15 @@ directionBool(1) = True
 directionBool(2) = False
 directionBool(3) = False
 
-For I = 1 To UBound(TOCfauxTags())
+For i = 1 To UBound(TOCfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = TOCfauxTags(I)
-  .Replacement.Text = TOCLOCtags(I)
+  .Text = TOCfauxTags(i)
+  .Replacement.Text = TOCLOCtags(i)
   .Wrap = wdFindContinue
   .Format = False
-  .Forward = directionBool(I)
+  .Forward = directionBool(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = False
@@ -403,11 +423,11 @@ With activeRng.Find
 End With
 Next
 
-For I = 1 To 2
+For i = 1 To 2
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = TOCfauxTags(I)
+  .Text = TOCfauxTags(i)
   .Replacement.Text = ""
   .Wrap = wdFindContinue
   .Format = False
@@ -432,7 +452,7 @@ Private Sub tagSeriesPage()
 
 Set activeRng = ActiveDocument.Range
 Dim SPstylesArray(8) As String                                   ' number of items in array should be declared here
-Dim I As Long
+Dim i As Long
 
 SPstylesArray(1) = "Series Page Heading (sh)"
 SPstylesArray(2) = "Series Page Text (stx)"
@@ -443,7 +463,7 @@ SPstylesArray(6) = "Series Page Subhead 1 (sh1)"
 SPstylesArray(7) = "Series Page Subhead 2 (sh2)"
 SPstylesArray(8) = "Series Page Subhead 3 (sh3)"
 
-For I = 1 To UBound(SPstylesArray())
+For i = 1 To UBound(SPstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -451,7 +471,7 @@ With activeRng.Find
   .Replacement.Text = "`SP|^&|SP`"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = SPstylesArray(I)
+  .Style = SPstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -479,15 +499,15 @@ directionBool(1) = True
 directionBool(2) = False
 directionBool(3) = False
 
-For I = 1 To UBound(SPfauxTags())
+For i = 1 To UBound(SPfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = SPfauxTags(I)
-  .Replacement.Text = SPLOCtags(I)
+  .Text = SPfauxTags(i)
+  .Replacement.Text = SPLOCtags(i)
   .Wrap = wdFindContinue
   .Format = False
-  .Forward = directionBool(I)
+  .Forward = directionBool(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = False
@@ -497,11 +517,11 @@ With activeRng.Find
 End With
 Next
 
-For I = 1 To 2
+For i = 1 To 2
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = SPfauxTags(I)
+  .Text = SPfauxTags(i)
   .Replacement.Text = ""
   .Wrap = wdFindContinue
   .Format = False
@@ -522,52 +542,20 @@ End Sub
 Private Sub tagEndLastChapter()
 
 Set activeRng = ActiveDocument.Range
-Dim ELCstylesArray(28) As String                                   ' number of items in array should be declared here
-Dim I As Long
-
-'GLOSSARY or DICTIONARY-STYLE ENTRIES (in case we need to add)
-'Glossary Term (glt)
-'Glossary Text (gltx)
-'Entry (en)
-'Definition (def)
-'Definition Source (defs)
-'Definition -Numbered (ndef)
-'Example (exa)
-'Example -Verse (vexa)
-'Reference (see)
-'Example e.g. (eg)
-'Example in dialog form (exad)
+Dim ELCstylesArray(9) As String                                   ' number of items in array should be declared here
+Dim i As Long
 
 ELCstylesArray(1) = "BM Head (bmh)"
 ELCstylesArray(2) = "BM Title (bmt)"
-ELCstylesArray(3) = "BM Subhead (bmsh)"
-ELCstylesArray(4) = "BM Head ALT (abmh)"
-ELCstylesArray(5) = "BM Text (bmtx)"
-ELCstylesArray(6) = "BM Text Space Before (#bmtx)"
-ELCstylesArray(7) = "BM Text Space Around (#bmtx#)"
-ELCstylesArray(8) = "BM Text Space After (bmtx#)"
-ELCstylesArray(9) = "BM Text No-Indent (bmtx1)"
-ELCstylesArray(10) = "BM Text No-Indent Space Before (#bmtx1)"
-ELCstylesArray(11) = "BM Text No-Indent Space Around (#bmtx1#)"
-ELCstylesArray(12) = "BM Text No-Indent Space After (bmtx1#)"
-ELCstylesArray(13) = "BM Text ALT (abmtx)"
-ELCstylesArray(14) = "BM Text ALT No-Indent (abmtx1)"
-ELCstylesArray(15) = "Appendix Head (aph)"
-ELCstylesArray(16) = "Appendix Subhead (apsh)"
-ELCstylesArray(17) = "Appendix Level-1 Subhead (aph1)"
-ELCstylesArray(18) = "Appendix Level-2 Subhead (aph2)"
-ELCstylesArray(19) = "Appendix Level-3 Subhead (aph3)"
-ELCstylesArray(20) = "Appendix Level-4 Subhead (aph4)"
-ELCstylesArray(21) = "Appendix Level-5 Subhead (aph5)"
-ELCstylesArray(22) = "Appendix Text (aptx)"
-ELCstylesArray(23) = "Appendix Text No-Indent (aptx1)"
-ELCstylesArray(24) = "Appendix List Num (apnl)"
-ELCstylesArray(25) = "Appendix List Unnum (apul)"
-ELCstylesArray(26) = "Appendix List Bullet (apbl)"
-ELCstylesArray(27) = "Appendix Source Note (apsn)"
-ELCstylesArray(28) = "Appendix Footnote (apfn)"
+ELCstylesArray(3) = "Appendix Head (aph)"
+ELCstylesArray(4) = "Appendix Subhead (apsh)"
+ELCstylesArray(5) = "Note Level-1 Subhead (n1)"
+ELCstylesArray(6) = "Biblio Level-1 Subhead (b1)"
+ELCstylesArray(7) = "About Author Text (atatx)"
+ELCstylesArray(8) = "About Author Text No-Indent (atatx1)"
+ELCstylesArray(9) = "About Author Text Head (atah)"
 
-For I = 1 To UBound(ELCstylesArray())
+For i = 1 To UBound(ELCstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -575,7 +563,7 @@ With activeRng.Find
   .Replacement.Text = "`ELC|^&"
   .Wrap = wdFindContinue
   .Format = True
-  .Style = ELCstylesArray(I)
+  .Style = ELCstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = True
@@ -625,13 +613,34 @@ With activeRng.Find
   .Execute Replace:=wdReplaceAll
 End With
 
+'If no </ch> tags exist, add </ch> to the end of the doc
+
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "</ch>"
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+End With
+
+If activeRng.Find.Execute = False Then
+    activeRng.InsertAfter "</ch>"
+End If
+
 End Sub
+
 Private Function volumestylecheck()
 
 Set activeRng = ActiveDocument.Range
 volumestylecheck = False
 Dim VOLstylesArray(2) As String                                   ' number of items in array should be declared here
-Dim I As Long
+Dim i As Long
 Dim mainDoc As Document
 Set mainDoc = ActiveDocument
 Dim iReply As Integer
@@ -639,14 +648,14 @@ Dim iReply As Integer
 VOLstylesArray(1) = "Volume Number (voln)"
 VOLstylesArray(2) = "Volume Title (volt)"
 
-For I = 1 To UBound(VOLstylesArray())
+For i = 1 To UBound(VOLstylesArray())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ""
   .Wrap = wdFindContinue
   .Format = True
-  .Style = VOLstylesArray(I)
+  .Style = VOLstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
   .MatchWildcards = False
@@ -963,4 +972,3 @@ Else
 End If
 
 End Sub
-
