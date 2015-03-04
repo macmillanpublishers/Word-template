@@ -10,9 +10,11 @@ Sub MacmillanManuscriptCleanup()
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 ''''''''''''''''''''''''''''''
 'version 3.7
-'updated 2015-02-25, Erica Warren
+'updated 2015-03-04, by Erica Warren
 ' split Cleanup macro into two macros: cleanup and character styles
 ' add new character styles (from v. 3.5) to new styles macro
+' cleanup now removes space between ellipsis and double or single quote
+' cleanup now removes blank paragraph at end of document
 
 '''''''''''''''''''''''''''''''''''
 ' version 3.6 : style updates only, no macro updates
@@ -540,8 +542,31 @@ wsFindArray(26) = "\{ "                     ' removespace after opening curly br
 wsFindArray(27) = " \}"                     ' removespace before closing curly bracket                                         v. 3.3
 wsFindArray(28) = "$ "                      ' removespace after dollar sign                                                                v. 3.3
 wsFindArray(29) = " . . . . "                ' remove space before 4-dot ellipsis (because it's a period)       v 3.7
-wsFindArray(30) = " . . . " & Chr(148)                 ' remove space between ellipsis and closing double quote          v. 3.7
-wsFindArray(31) = " . . . " & Chr(146)                  ' remove space between ellipsis and closing single quote
+
+'Test if Mac or PC because character code for closing quotes is different on different platforms            v 3.7
+#If Mac Then
+    'I am a Mac and will test if it is Word 2011 or higher
+    If Val(Application.Version) > 14 Then
+            'remove space between ellipsis and closing double quote on Mac
+            wsFindArray(30) = ". . . " & Chr(211)
+    End If
+#Else
+    'I am Windows
+    ' remove space between ellipsis and closing double quote on Windows
+    wsFindArray(30) = ". . . " & Chr(148)
+#End If
+        
+#If Mac Then
+    'I am a Mac and will test if it is Word 2011 or higher
+    If Val(Application.Version) > 14 Then
+            'remove space between ellipsis and closing single quote on Mac
+            wsFindArray(31) = ". . . " & Chr(213)
+    End If
+#Else
+    'I am Windows
+    ' remove space between ellipsis and closing single quote on Windows
+    wsFindArray(31) = ". . . " & Chr(146)
+#End If
 
 wsReplaceArray(1) = ". . . . "      ' v. 3.2 EW removed leading space--not needed, 1st dot is a period
 wsReplaceArray(2) = " . . . "
@@ -572,8 +597,22 @@ wsReplaceArray(26) = "{"
 wsReplaceArray(27) = "}"
 wsReplaceArray(28) = "$"
 wsReplaceArray(29) = ". . . . "
-wsReplaceArray(30) = " . . ." & Chr(148)
-wsReplaceArray(31) = " . . ." & Chr(146)
+
+#If Mac Then
+    If Val(Application.Version) > 14 Then
+            wsReplaceArray(30) = ". . ." & Chr(211)
+    End If
+#Else
+    wsReplaceArray(30) = ". . ." & Chr(148)
+#End If
+
+#If Mac Then
+    If Val(Application.Version) > 14 Then
+            wsReplaceArray(31) = ". . ." & Chr(213)
+    End If
+#Else
+    wsReplaceArray(31) = ". . ." & Chr(146)
+#End If
 
 For i = 1 To UBound(wsFindArray())
 With activeRng.Find
@@ -1199,3 +1238,5 @@ ActiveDocument.ActiveWindow.View.ShowAll = True                         'Shows n
 ActiveDocument.ActiveWindow.View.Type = wdNormalView                'Switches to Normal/Draft view
 ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5)                           'Sets Styles margin area in draft view to 1.5 in.
 End Sub
+
+
