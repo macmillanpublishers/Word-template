@@ -7,8 +7,12 @@ Sub LibraryOfCongressTags()
 '''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 '''2/25/15
-'''Version 1.1
+'''Version 1.4
 '''Updated: 3/4/15 : revised chapter numbering loop for performance, edited ELC styles and added tag for ELC with no end styles
+'''Updated: 3/8/15 : switching to Whole word searches for the 4 items with closing tags
+'''                           : & allowing for ^m Page Break check/fix to get </ch> inline with final chapter text
+'''         3/10/15 : revamped ELC </ch> again to make it inline.
+'''					: used same method to make cp, tp, toc and sp closing tags inline-- match whole words broke with hyperlinks		
 ''''''''''''''''''''''''''''''
 
 '-----------run preliminary error checks------------
@@ -196,7 +200,7 @@ With activeRng.Find
   .Style = TPstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
-  .MatchWildcards = True
+  .MatchWildcards = False
   .MatchSoundsLike = False
   .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
@@ -206,22 +210,20 @@ Next
 Call zz_clearFindB
 
 Dim TPfauxTags(3) As String
-Dim TPLOCtags(3) As String
-Dim directionBool(3) As Boolean
+Dim TPLOCtags(2) As String
+Dim directionBool(2) As Boolean
 
 TPfauxTags(1) = "`TP|"
 TPfauxTags(2) = "|TP`"
-TPfauxTags(3) = "^p</tp>"          'this bit is to make sure tagging is inline with last styled paragraph,
+TPfauxTags(3) = "``````"          'this bit is to make sure tagging is inline with last styled paragraph,
                                                     'instead of the tag falling into the following style eblock
 TPLOCtags(1) = "<tp>"
-TPLOCtags(2) = "</tp>"
-TPLOCtags(3) = "</tp>^p"
+TPLOCtags(2) = "``````"
 
 directionBool(1) = True
 directionBool(2) = False
-directionBool(3) = False
 
-For i = 1 To UBound(TPfauxTags())
+For i = 1 To UBound(TPLOCtags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -239,7 +241,40 @@ With activeRng.Find
 End With
 Next
 
-For i = 1 To 2
+Call zz_clearFindB
+
+With activeRng.Find
+    .Text = "``````"
+    .Replacement.Text = ""
+    .Forward = True
+    .Wrap = wdFindContinue
+    .Format = False
+    .MatchCase = False
+    .MatchWholeWord = False
+    .MatchWildcards = False
+    .MatchSoundsLike = False
+    .MatchAllWordForms = False
+End With
+
+If activeRng.Find.Execute = True Then
+    With activeRng.Find
+        .Text = "[!^13^m`]"
+        .Replacement.Text = "^&</tp>"
+        .Forward = False
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = True
+        .MatchWildcards = True
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute Replace:=wdReplaceOne
+    End With
+End If
+
+Call zz_clearFindB
+
+For i = 1 To UBound(TPfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -256,8 +291,6 @@ With activeRng.Find
   .Execute Replace:=wdReplaceAll
 End With
 Next
-
-Call zz_clearFindB
 
 End Sub
 
@@ -284,7 +317,7 @@ With activeRng.Find
   .Style = CPstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
-  .MatchWildcards = True
+  .MatchWildcards = False
   .MatchSoundsLike = False
   .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
@@ -294,22 +327,20 @@ Next
 Call zz_clearFindB
 
 Dim CPfauxTags(3) As String
-Dim CPLOCtags(3) As String
-Dim directionBool(3) As Boolean
+Dim CPLOCtags(2) As String
+Dim directionBool(2) As Boolean
 
 CPfauxTags(1) = "`CP|"
 CPfauxTags(2) = "|CP`"
-CPfauxTags(3) = "^p</cp>"          'this bit is to make sure tagging is inline with last styled paragraph,
+CPfauxTags(3) = "``````"          'this bit is to make sure tagging is inline with last styled paragraph,
                                                     'instead of the tag falling into the following style eblock
 CPLOCtags(1) = "<cp>"
-CPLOCtags(2) = "</cp>"
-CPLOCtags(3) = "</cp>^p"
+CPLOCtags(2) = "``````"
 
 directionBool(1) = True
 directionBool(2) = False
-directionBool(3) = False
 
-For i = 1 To UBound(CPfauxTags())
+For i = 1 To UBound(CPLOCtags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -327,7 +358,40 @@ With activeRng.Find
 End With
 Next
 
-For i = 1 To 2
+Call zz_clearFindB
+
+With activeRng.Find
+    .Text = "``````"
+    .Replacement.Text = ""
+    .Forward = True
+    .Wrap = wdFindContinue
+    .Format = False
+    .MatchCase = False
+    .MatchWholeWord = False
+    .MatchWildcards = False
+    .MatchSoundsLike = False
+    .MatchAllWordForms = False
+End With
+
+If activeRng.Find.Execute = True Then
+    With activeRng.Find
+        .Text = "[!^13^m`]"
+        .Replacement.Text = "^&</cp>"
+        .Forward = False
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = True
+        .MatchWildcards = True
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute Replace:=wdReplaceOne
+    End With
+End If
+
+Call zz_clearFindB
+
+For i = 1 To UBound(CPfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -348,6 +412,7 @@ Next
 Call zz_clearFindB
 
 End Sub
+
 
 Private Sub tagTOC()
 
@@ -380,7 +445,7 @@ With activeRng.Find
   .Style = TOCstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
-  .MatchWildcards = True
+  .MatchWildcards = False
   .MatchSoundsLike = False
   .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
@@ -390,22 +455,20 @@ Next
 Call zz_clearFindB
 
 Dim TOCfauxTags(3) As String
-Dim TOCLOCtags(3) As String
-Dim directionBool(3) As Boolean
+Dim TOCLOCtags(2) As String
+Dim directionBool(2) As Boolean
 
 TOCfauxTags(1) = "`TOC|"
 TOCfauxTags(2) = "|TOC`"
-TOCfauxTags(3) = "^p</toc>"          'this bit is to make sure tagging is inline with last styled paragraph,
+TOCfauxTags(3) = "``````"          'this bit is to make sure tagging is inline with last styled paragraph,
                                                     'instead of the tag falling into the following style eblock
 TOCLOCtags(1) = "<toc>"
-TOCLOCtags(2) = "</toc>"
-TOCLOCtags(3) = "</toc>^p"
+TOCLOCtags(2) = "``````"
 
 directionBool(1) = True
 directionBool(2) = False
-directionBool(3) = False
 
-For i = 1 To UBound(TOCfauxTags())
+For i = 1 To UBound(TOCLOCtags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -423,7 +486,40 @@ With activeRng.Find
 End With
 Next
 
-For i = 1 To 2
+Call zz_clearFindB
+
+With activeRng.Find
+    .Text = "``````"
+    .Replacement.Text = ""
+    .Forward = True
+    .Wrap = wdFindContinue
+    .Format = False
+    .MatchCase = False
+    .MatchWholeWord = False
+    .MatchWildcards = False
+    .MatchSoundsLike = False
+    .MatchAllWordForms = False
+End With
+
+If activeRng.Find.Execute = True Then
+    With activeRng.Find
+        .Text = "[!^13^m`]"
+        .Replacement.Text = "^&</toc>"
+        .Forward = False
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = True
+        .MatchWildcards = True
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute Replace:=wdReplaceOne
+    End With
+End If
+
+Call zz_clearFindB
+
+For i = 1 To UBound(TOCfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -440,8 +536,6 @@ With activeRng.Find
   .Execute Replace:=wdReplaceAll
 End With
 Next
-
-Call zz_clearFindB
 
 End Sub
 
@@ -474,7 +568,7 @@ With activeRng.Find
   .Style = SPstylesArray(i)
   .MatchCase = False
   .MatchWholeWord = False
-  .MatchWildcards = True
+  .MatchWildcards = False
   .MatchSoundsLike = False
   .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
@@ -484,22 +578,20 @@ Next
 Call zz_clearFindB
 
 Dim SPfauxTags(3) As String
-Dim SPLOCtags(3) As String
-Dim directionBool(3) As Boolean
+Dim SPLOCtags(2) As String
+Dim directionBool(2) As Boolean
 
 SPfauxTags(1) = "`SP|"
 SPfauxTags(2) = "|SP`"
-SPfauxTags(3) = "^p</sp>"          'this bit is to make sure tagging is inline with last styled paragraph,
+SPfauxTags(3) = "``````"          'this bit is to make sure tagging is inline with last styled paragraph,
                                                     'instead of the tag falling into the following style eblock
 SPLOCtags(1) = "<sp>"
-SPLOCtags(2) = "</sp>"
-SPLOCtags(3) = "</sp>^p"
+SPLOCtags(2) = "``````"
 
 directionBool(1) = True
 directionBool(2) = False
-directionBool(3) = False
 
-For i = 1 To UBound(SPfauxTags())
+For i = 1 To UBound(SPLOCtags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -517,7 +609,40 @@ With activeRng.Find
 End With
 Next
 
-For i = 1 To 2
+Call zz_clearFindB
+
+With activeRng.Find
+    .Text = "``````"
+    .Replacement.Text = ""
+    .Forward = True
+    .Wrap = wdFindContinue
+    .Format = False
+    .MatchCase = False
+    .MatchWholeWord = False
+    .MatchWildcards = False
+    .MatchSoundsLike = False
+    .MatchAllWordForms = False
+End With
+
+If activeRng.Find.Execute = True Then
+    With activeRng.Find
+        .Text = "[!^13^m`]"
+        .Replacement.Text = "^&</sp>"
+        .Forward = False
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = True
+        .MatchWildcards = True
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute Replace:=wdReplaceOne
+    End With
+End If
+
+Call zz_clearFindB
+
+For i = 1 To UBound(SPfauxTags())
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -534,8 +659,6 @@ With activeRng.Find
   .Execute Replace:=wdReplaceAll
 End With
 Next
-
-Call zz_clearFindB
 
 End Sub
 
@@ -560,7 +683,7 @@ With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ""
-  .Replacement.Text = "`ELC|^&"
+  .Replacement.Text = "``````^&"
   .Wrap = wdFindContinue
   .Format = True
   .Style = ELCstylesArray(i)
@@ -575,23 +698,68 @@ Next
 
 Call zz_clearFindB
 
-'Change the tag for the first found ELC tag to </ch>, switch places with preceding para to be inline with last chapter paragraph
-
 With activeRng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "^p`ELC|"
-  .Replacement.Text = "</ch>^p"
-  .Wrap = wdFindContinue
-  .Format = False
-  .Forward = True
-  .MatchCase = False
-  .MatchWholeWord = False
-  .MatchWildcards = False
-  .MatchSoundsLike = False
-  .MatchAllWordForms = False
-  .Execute Replace:=wdReplaceOne
+    .Text = "``````"
+    .Replacement.Text = ""
+    .Forward = True
+    .Wrap = wdFindContinue
+    .Format = False
+    .MatchCase = False
+    .MatchWholeWord = False
+    .MatchWildcards = False
+    .MatchSoundsLike = False
+    .MatchAllWordForms = False
 End With
+
+If activeRng.Find.Execute = True Then
+    With activeRng.Find
+        .Text = "[!^13^m`]"
+        .Replacement.Text = "^&</ch>"
+        .Forward = False
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = True
+        .MatchWildcards = True
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute Replace:=wdReplaceOne
+    End With
+End If
+
+'Change the tag for the first found ELC tag to </ch>, switch places with preceding para to be inline with last chapter paragraph
+'his should've worked, convinced Word from Mac has phantom chars that are pasting :(
+'Dim ELCfauxTags(4) As String
+'Dim ELC_LOCtags(4) As String
+'Dim z As Long
+'
+'ELCfauxTags(1) = "^p`ELC|"              'doing these replacements in two steps (1-2, 1-3 respectively) and renameing the tag ..
+'ELCfauxTags(2) = "^p^m`ELC2|"       '..allows the tag to cross two styles without stripping the style or otherwise messing up
+'ELCfauxTags(3) = "^p`ELC2|"
+'ELCfauxTags(4) = "`ELC2|"        'iteration 4 is to make sure in some weird case we don't leave a stranded `ElC2| tag out there
+'
+'ELC_LOCtags(1) = "`ELC2|^p"
+'ELC_LOCtags(2) = "</ch>^p^m"
+'ELC_LOCtags(3) = "</ch>^p"
+'ELC_LOCtags(3) = ""
+'
+'For z = 1 To UBound(ELCfauxTags())
+'With activeRng.Find
+'  .ClearFormatting
+'  .Replacement.ClearFormatting
+'  .Text = ELCfauxTags(z)
+'  .Replacement.Text = ELC_LOCtags(z)
+'  .Wrap = wdFindContinue
+'  .Format = False
+'  .Forward = True
+'  .MatchCase = False
+'  .MatchWholeWord = False
+'  .MatchWildcards = False
+'  .MatchSoundsLike = False
+'  .MatchAllWordForms = False
+'  .Execute Replace:=wdReplaceOne
+'End With
+'Next
 
 Call zz_clearFindB
 
@@ -600,7 +768,7 @@ Call zz_clearFindB
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "`ELC|"
+  .Text = "``````"
   .Replacement.Text = ""
   .Wrap = wdFindContinue
   .Format = False
@@ -747,7 +915,7 @@ End If
 Set activeRng = ActiveDocument.Range
 Application.ScreenUpdating = False
 
-Dim existingTagArray(6) As String                                   ' number of items in array should be declared here
+Dim existingTagArray(7) As String                                   ' number of items in array should be declared here
 Dim b As Long
 Dim foundBad As Boolean
 foundBad = False
@@ -758,6 +926,7 @@ existingTagArray(3) = "[`|]CP[|`]"
 existingTagArray(4) = "[`|]TP[|`]"
 existingTagArray(5) = "[`|]TOC[|`]"
 existingTagArray(6) = "[`|]SP[|`]"
+existingTagArray(7) = "``````"
 
 For b = 1 To UBound(existingTagArray())
 With activeRng.Find
@@ -972,3 +1141,4 @@ Else
 End If
 
 End Sub
+
