@@ -815,28 +815,62 @@ Private Sub SaveAsTextFile()
     Dim strDocName As String
     Dim docPath As String
     Dim intPos As Integer
+    Dim encodingFmt As String
+    Dim lineBreak As Boolean
 
 Application.ScreenUpdating = False
+
+'Separate code by OS because ActiveDocument.Path returns file name too
+' on Mac but doesn't for PC
+
+#If Mac Then        'For Mac
+    If Val(Application.Version) > 14 Then
+        
+        'Find position of extension in filename
+        strDocName = ActiveDocument.Path
+        intPos = InStrRev(strDocName, ".")
+        
+            'Strip off extension and add ".txt" extension
+            strDocName = Left(strDocName, intPos - 1)
+            strDocName = strDocName & "_CIP.txt"
+        
+    End If
+    
+#Else                           'For Windows
 
     'Find position of extension in filename
     strDocName = ActiveDocument.Name
     docPath = ActiveDocument.Path
     intPos = InStrRev(strDocName, ".")
     
-        'Strip off extension and add ".txt" extension
-        strDocName = Left(strDocName, intPos - 1)
-        strDocName = docPath & "\" & strDocName & "_CIP.txt"
+            'Strip off extension and add ".txt" extension
+            strDocName = Left(strDocName, intPos - 1)
+            strDocName = docPath & "\" & strDocName & "_CIP.txt"
         
+#End If
+
     'Copy text of active document and paste into a new document
     ActiveDocument.Select
     Selection.Copy
     Documents.Add.Content.Paste
     
+' Set different text encoding based on OS
+' And Mac can't create file with line breaks
+#If Mac Then
+    If Val(Application.Version) > 14 Then
+        encodingFmt = msoEncodingMacRoman
+        lineBreak = False
+    End If
+#Else               'For Windows
+    encodingFmt = msoEncodingUSASCII
+    lineBreak = True
+#End If
+
     'Save new document as a text file. Encoding/Line Breaks/Substitutions per LOC info
-    ActiveDocument.SaveAs FileName:=strDocName, _
+    ActiveDocument.SaveAs fileName:=strDocName, _
         FileFormat:=wdFormatEncodedText, _
-        Encoding:=msoEncodingUSASCII, _
-        InsertLineBreaks:=True, _
+        Encoding:=encodingFmt, _
+        InsertLineBreaks:=lineBreak, _
         AllowSubstitutions:=True
         
     Documents(strDocName).Close
@@ -844,6 +878,8 @@ Application.ScreenUpdating = False
 Application.ScreenUpdating = True
     
 End Sub
+
+
 
 Private Sub cleanFile()
 Set activeRng = ActiveDocument.Range
@@ -1218,4 +1254,3 @@ Else
 End If
 
 End Sub
-
