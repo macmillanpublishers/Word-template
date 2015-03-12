@@ -1,0 +1,123 @@
+Option Explicit
+
+Sub BookmakerReqs()
+
+'Count number of occurences of each required style
+Dim styleName(6) As String                      ' Declare number of items in array
+Dim styleCount(6) As Integer                    ' ditto
+Dim a As Long
+
+styleName(1) = "Titlepage Book Title (tit)"
+styleName(2) = "Titlepage Author Name (au)"
+styleName(3) = "span ISBN (isbn)"
+styleName(4) = "Chap Number (cn)"
+styleName(5) = "Chap Title (ct)"
+styleName(6) = "Chap Number Nonprinting (cnp)"
+
+For a = 1 To UBound(styleName())
+    With ActiveDocument.Range.Find
+        .ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles(styleName(a))
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    Do While .Execute(Forward:=True) = True
+        styleCount(a) = styleCount(a) + 1
+    Loop
+    End With
+Next
+
+Debug.Print styleName(1) & ": " & styleCount(1) & vbNewLine _
+            ; styleName(2) & ": " & styleCount(2) & vbNewLine _
+            ; styleName(3) & ": " & styleCount(3) & vbNewLine _
+            ; styleName(4) & ": " & styleCount(4) & vbNewLine _
+            ; styleName(5) & ": " & styleCount(5) & vbNewLine _
+            ; styleName(6) & ": " & styleCount(6) & vbNewLine
+
+
+'Prepare error message
+Dim errorList As String
+errorList = ""
+If styleCount(1) = 0 Then errorList = errorList & "ERROR: No tagged title detected." & vbNewLine
+If styleCount(2) = 0 Then errorList = errorList & "ERROR: No tagged author name detected." & vbNewLine
+If styleCount(3) = 0 Then errorList = errorList & "ERROR: No tagged ISBN detected." & vbNewLine
+If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged chapter openers detected." & vbNewLine
+
+Debug.Print errorList
+
+'Create report file
+Dim activeDoc As Document
+Dim activeRng As Range
+Set activeDoc = ActiveDocument
+Set activeRng = ActiveDocument.Range
+Dim activeDocName As String
+Dim activeDocPath As String
+Dim reqReportDoc As String
+Dim reqReportDocAlt As String
+Dim TheOS As String
+TheOS = System.OperatingSystem
+Dim fnum As Integer
+
+'------------------------------------------------------------------------------------
+'-----------------------next line not working for some reason------------------------
+activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do*") - 1)
+activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
+
+'create text file
+reqReportDoc = activeDocPath & activeDocName & "_BookmakerReport.txt"
+
+''''for 32 char Mc OS bug- could check if this is Mac OS too < PART 1
+If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
+    reqReportDoc = activeDocPath & "\" & activeDocName & "_BookmakerReport.txt"
+Else
+    Dim placeholdDocName As String
+    placeholdDocName = "filenamePlacehold_bookmakerReport.txt"
+    reqReportDocAlt = reqReportDoc
+    reqReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
+End If
+'''end ''''for 32 char Mc OS bug part 1
+
+'set and open file for output
+fnum = FreeFile()
+Open reqReportDoc For Output As fnum
+If errorList = "" Then
+    Print #fnum, "Congratulations!" & vbCr
+    Print #fnum, "Bookmaker requirements have been met for " & activeDoc.Name & vbCr
+    Print #fnum, "See summary below:" & vbCr
+    Print #fnum, vbCr
+Else
+    Print #fnum, "BAD NEWS:" & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "Problems were found with the tags in your document '" & activeDoc.Name & "':" & vbCr
+    Print #fnum, vbCr
+    Print #fnum, vbCr
+    Print #fnum, "------------------------- ERRORS -------------------------" & vbCr
+    Print #fnum, errorList
+    Print #fnum, vbCr
+    Print #fnum, vbCr
+End If
+    Print #fnum, "------------------------- Tag Summary -------------------------" & vbCr
+    Print #fnum, styleCount(1) & "  Titlepage Book Title (tit) styles found."
+    Print #fnum, styleCount(2) & "  Titlepage Author Name (au) styles found."
+    Print #fnum, styleCount(3) & "  span ISBN (isbn) styles found."
+    Print #fnum, styleCount(4) & "  Chap Number (cn) styles found."
+    Print #fnum, styleCount(5) & "  Chap Title (ct) styles found."
+    Print #fnum, styleCount(6) & "  Chap Number Nonprinting (cnp) styles found."
+Close #fnum
+
+''''for 32 char Mc OS bug-<PART 2
+If reqReportDocAlt <> "" Then
+Name reqReportDoc As reqReportDocAlt
+End If
+''''END for 32 char Mc OS bug-<PART 2
+
+''Then open the report document.
+
+End Sub
