@@ -12,7 +12,7 @@ Sub LibraryOfCongressTags()
 '''Updated: 3/8/15 : switching to Whole word searches for the 4 items with closing tags
 '''                           : & allowing for ^m Page Break check/fix to get </ch> inline with final chapter text
 '''         3/10/15 : revamped ELC </ch> again to make it inline.
-'''					: used same method to make cp, tp, toc and sp closing tags inline-- match whole words broke with hyperlinks		
+'''                 : used same method to make cp, tp, toc and sp closing tags inline-- match whole words broke with hyperlinks
 ''''''''''''''''''''''''''''''
 
 '-----------run preliminary error checks------------
@@ -56,8 +56,15 @@ If skipChapterTags = False Then
     Call zz_clearFindB
 End If
 
+Application.StatusBar = "Saving as text document": DoEvents
+Call SaveAsTextFile
+
 Application.StatusBar = "Running tag check & generating report": DoEvents
 Call zz_TagReport
+
+Application.StatusBar = "Cleaning up file": DoEvents
+Call cleanFile
+Call zz_clearFindB
 
 Application.ScreenUpdating = True
 Application.ScreenRefresh
@@ -802,7 +809,113 @@ If activeRng.Find.Execute = False Then
 End If
 
 End Sub
+Private Sub SaveAsTextFile()
+ 
+ ' Saves a copy of the document as a text file in the same path as the parent document
+    Dim strDocName As String
+    Dim docPath As String
+    Dim intPos As Integer
+    Dim encodingFmt As String
+    Dim lineBreak As Boolean
 
+Application.ScreenUpdating = False
+
+'Separate code by OS because ActiveDocument.Path returns file name too
+' on Mac but doesn't for PC
+
+#If Mac Then        'For Mac
+    If Val(Application.Version) > 14 Then
+        
+        'Find position of extension in filename
+        strDocName = ActiveDocument.Path
+        intPos = InStrRev(strDocName, ".")
+        
+            'Strip off extension and add ".txt" extension
+            strDocName = Left(strDocName, intPos - 1)
+            strDocName = strDocName & "_CIP.txt"
+        
+    End If
+    
+#Else                           'For Windows
+
+    'Find position of extension in filename
+    strDocName = ActiveDocument.Name
+    docPath = ActiveDocument.Path
+    intPos = InStrRev(strDocName, ".")
+    
+            'Strip off extension and add ".txt" extension
+            strDocName = Left(strDocName, intPos - 1)
+            strDocName = docPath & "\" & strDocName & "_CIP.txt"
+        
+#End If
+
+    'Copy text of active document and paste into a new document
+    ActiveDocument.Select
+    Selection.Copy
+    Documents.Add.Content.Paste
+    
+' Set different text encoding based on OS
+' And Mac can't create file with line breaks
+#If Mac Then
+    If Val(Application.Version) > 14 Then
+        encodingFmt = msoEncodingMacRoman
+        lineBreak = False
+    End If
+#Else               'For Windows
+    encodingFmt = msoEncodingUSASCII
+    lineBreak = True
+#End If
+
+    'Save new document as a text file. Encoding/Line Breaks/Substitutions per LOC info
+    ActiveDocument.SaveAs fileName:=strDocName, _
+        FileFormat:=wdFormatEncodedText, _
+        Encoding:=encodingFmt, _
+        InsertLineBreaks:=lineBreak, _
+        AllowSubstitutions:=True
+        
+    Documents(strDocName).Close
+    
+Application.ScreenUpdating = True
+    
+End Sub
+
+
+
+Private Sub cleanFile()
+Set activeRng = ActiveDocument.Range
+Dim tagsFind(10) As String         ' number of items in arrays should be declared here
+Dim a As Long
+
+tagsFind(1) = "\<tp\>"
+tagsFind(2) = "\<\/tp\>"
+tagsFind(3) = "\<cp\>"
+tagsFind(4) = "\<\/cp\>"
+tagsFind(5) = "\<sp\>"
+tagsFind(6) = "\<\/sp\>"
+tagsFind(7) = "\<toc\>"
+tagsFind(8) = "\<\/toc\>"
+tagsFind(9) = "\<ch*\>"
+tagsFind(10) = "\<\/ch\>"
+
+For a = 1 To UBound(tagsFind())
+With activeRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = tagsFind(a)
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Format = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = True
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute Replace:=wdReplaceAll
+End With
+Next
+
+End Sub
 Private Function volumestylecheck()
 
 Set activeRng = ActiveDocument.Range
@@ -895,7 +1008,7 @@ Dim docSaved As Boolean                                                         
 docSaved = mainDoc.Saved
 If docSaved = False Then
     iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-        "Click OK and I will save the document and run the Cleanup macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+        "Click OK and I will save the document and run the CIP macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
     If iReply = vbOK Then
         mainDoc.Save
     Else
@@ -1141,4 +1254,3 @@ Else
 End If
 
 End Sub
-
