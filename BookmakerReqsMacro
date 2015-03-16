@@ -1,3 +1,5 @@
+Option Explicit
+
 Sub BookmakerReqs()
 
 '''Created by Erica Warren - erica.warren@macmillan.com
@@ -81,7 +83,10 @@ Set MyData = New DataObject
 MyData.GetFromClipboard
 bString(b) = MyData.GetText
 Next
-    
+
+'Move selection back to start of document
+ActiveDocument.Characters(1).Select
+
 'Clear the clipboard when finished
 Set ClearData = New DataObject
 ClearData.SetText ""
@@ -93,12 +98,16 @@ Debug.Print "Title: " & bString(1) & vbNewLine & _
             
 
 '-------------------Create error report----------------------------
+
 ' Prepare error message
 Dim errorList As String
 errorList = ""
 If styleCount(1) = 0 Then errorList = errorList & "ERROR: No tagged title detected." & vbNewLine
+If styleCount(1) > 1 Then errorList = errorList & "ERROR: Too many title paragraphs detected." & vbNewLine
 If styleCount(2) = 0 Then errorList = errorList & "ERROR: No tagged author name detected." & vbNewLine
+If styleCount(2) > 1 Then errorList = errorList & "ERROR: Too many author name paragraphs detected." & vbNewLine
 If styleCount(3) = 0 Then errorList = errorList & "ERROR: No tagged ISBN detected." & vbNewLine
+'If styleCount(3) > 1 Then errorList = errorList & "ERROR: Too many ISBNs detected." & vbNewLine
 If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged chapter openers detected." & vbNewLine
 
 Debug.Print errorList
@@ -138,14 +147,20 @@ End If
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
 If errorList = "" Then
-    Print #fnum, "Congratulations!" & vbCr
+    Print #fnum, "CONGRATULATIONS! YOU PASSED!" & vbCr
     Print #fnum, vbCr
-    Print #fnum, "This file, " & activeDoc.Name & ", has passed the requirements" & vbCr
-    Print #fnum, "for the bookmaker tool. Please verify the following:"
+    Print #fnum, "------------------------------------------" & vbCr
     Print #fnum, vbCr
     Print #fnum, "Title: " & bString(1) & vbCr
+    Print #fnum, vbCr
     Print #fnum, "Author: " & bString(2) & vbCr
+    Print #fnum, vbCr
     Print #fnum, "ISBN: " & bString(3) & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "------------------------------------------" & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "This file, " & activeDoc.Name & ", has passed the requirements" & vbCr
+    Print #fnum, "for the bookmaker tool. Please verify the info listed above."
     Print #fnum, vbCr
     Print #fnum, "If any of these are incorrect, please fix the appropriate styles" & vbCr
     Print #fnum, "in the manuscript." & vbCr
@@ -193,3 +208,4 @@ Else
 End If
 
 End Sub
+
