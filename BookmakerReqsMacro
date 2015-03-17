@@ -2,7 +2,13 @@ Option Explicit
 
 Sub BookmakerReqs()
 
-'Count number of occurences of each required style
+'''Created by Erica Warren - erica.warren@macmillan.com
+'Updated 3/16/2014: Fixed error creating text file, added title/author/isbn confirmation
+
+'------------------------------------------------------------
+
+'-------Count number of occurences of each required style----
+
 Dim styleName(6) As String                      ' Declare number of items in array
 Dim styleCount(6) As Integer                    ' ditto
 Dim a As Long
@@ -40,14 +46,68 @@ Debug.Print styleName(1) & ": " & styleCount(1) & vbNewLine _
             ; styleName(4) & ": " & styleCount(4) & vbNewLine _
             ; styleName(5) & ": " & styleCount(5) & vbNewLine _
             ; styleName(6) & ": " & styleCount(6) & vbNewLine
+            
+'------------Get title/author/isbn text from document-----------
 
+Dim styleNameB(3) As String         ' must declare number of items in array here
+Dim bString(3) As String            ' and here
+Dim MyData As DataObject
+Dim ClearData As DataObject
+Dim b As Long
 
-'Prepare error message
+styleNameB(1) = "Titlepage Book Title (tit)"
+styleNameB(2) = "Titlepage Author Name (au)"
+styleNameB(3) = "span ISBN (isbn)"
+
+'Search for required style, select, and copy
+For b = 1 To UBound(styleNameB())
+    Selection.Find.ClearFormatting
+    Selection.Find.Style = ActiveDocument.Styles(styleNameB(b))
+    With Selection.Find
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindContinue
+        .Format = True
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+    Selection.Find.Execute
+    Selection.Copy
+
+' Assign text on clipboard to a variable
+Set MyData = New DataObject
+MyData.GetFromClipboard
+bString(b) = MyData.GetText
+Next
+
+'Move selection back to start of document
+ActiveDocument.Characters(1).Select
+
+'Clear the clipboard when finished
+Set ClearData = New DataObject
+ClearData.SetText ""
+ClearData.PutInClipboard
+
+Debug.Print "Title: " & bString(1) & vbNewLine & _
+            "Author: " & bString(2) & vbNewLine & _
+            "ISBN: " & bString(3) & vbNewLine
+            
+
+'-------------------Create error report----------------------------
+
+' Prepare error message
 Dim errorList As String
 errorList = ""
 If styleCount(1) = 0 Then errorList = errorList & "ERROR: No tagged title detected." & vbNewLine
+If styleCount(1) > 1 Then errorList = errorList & "ERROR: Too many title paragraphs detected." & vbNewLine
 If styleCount(2) = 0 Then errorList = errorList & "ERROR: No tagged author name detected." & vbNewLine
+If styleCount(2) > 1 Then errorList = errorList & "ERROR: Too many author name paragraphs detected." & vbNewLine
 If styleCount(3) = 0 Then errorList = errorList & "ERROR: No tagged ISBN detected." & vbNewLine
+'If styleCount(3) > 1 Then errorList = errorList & "ERROR: Too many ISBNs detected." & vbNewLine
 If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged chapter openers detected." & vbNewLine
 
 Debug.Print errorList
@@ -65,9 +125,8 @@ Dim TheOS As String
 TheOS = System.OperatingSystem
 Dim fnum As Integer
 
-'------------------------------------------------------------------------------------
-'-----------------------next line not working for some reason------------------------
-activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do*") - 1)
+'activeDocName below works for .doc and .docx
+activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".doc") - 1)
 activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
 
 'create text file
@@ -88,9 +147,26 @@ End If
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
 If errorList = "" Then
-    Print #fnum, "Congratulations!" & vbCr
-    Print #fnum, "Bookmaker requirements have been met for " & activeDoc.Name & vbCr
-    Print #fnum, "See summary below:" & vbCr
+    Print #fnum, "CONGRATULATIONS! YOU PASSED!" & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "------------------------------------------" & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "Title: " & bString(1) & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "Author: " & bString(2) & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "ISBN: " & bString(3) & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "------------------------------------------" & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "This file, " & activeDoc.Name & ", has passed the requirements" & vbCr
+    Print #fnum, "for the bookmaker tool. Please verify the info listed above."
+    Print #fnum, vbCr
+    Print #fnum, "If any of these are incorrect, please fix the appropriate styles" & vbCr
+    Print #fnum, "in the manuscript." & vbCr
+    Print #fnum, vbCr
+    Print #fnum, vbCr
+    Print #fnum, "See summary of required tags below:" & vbCr
     Print #fnum, vbCr
 Else
     Print #fnum, "BAD NEWS:" & vbCr
@@ -118,6 +194,18 @@ Name reqReportDoc As reqReportDocAlt
 End If
 ''''END for 32 char Mc OS bug-<PART 2
 
-''Then open the report document.
+'open Bookmaker Report for user once it is complete.
+Dim Shex As Object
+
+If Not TheOS Like "*Mac*" Then
+   Set Shex = CreateObject("Shell.Application")
+   Shex.Open (reqReportDoc)
+Else
+    MacScript ("tell application ""TextEdit"" " & vbCr & _
+    "open " & """" & reqReportDocAlt & """" & " as alias" & vbCr & _
+    "activate" & vbCr & _
+    "end tell" & vbCr)
+End If
 
 End Sub
+
