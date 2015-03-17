@@ -145,6 +145,8 @@ If cString = "" Then
     cString = "no illustrations detected"
 End If
 
+Debug.Print cString
+
 '-------------------Create error report----------------------------
 
 ' Prepare error message
@@ -185,7 +187,7 @@ If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 
     reqReportDoc = activeDocPath & "\" & activeDocName & "_BookmakerReport.txt"
 Else
     Dim placeholdDocName As String
-    placeholdDocName = "filenamePlacehold_bookmakerReport.txt"
+    placeholdDocName = "filenamePlacehold_Report.txt"
     reqReportDocAlt = reqReportDoc
     reqReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
 End If
@@ -195,7 +197,9 @@ End If
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
 If errorList = "" Then
+    Print #fnum, vbCr
     Print #fnum, "CONGRATULATIONS! YOU PASSED!" & vbCr
+    Print #fnum, "But you're not done yet. Please check the info listed below." & vbCr
     Print #fnum, vbCr
     Print #fnum, "------------------------------------------" & vbCr
     Print #fnum, vbCr
@@ -206,9 +210,6 @@ If errorList = "" Then
     Print #fnum, "ISBN: " & bString(3) & vbCr
     Print #fnum, vbCr
     Print #fnum, "------------------------------------------" & vbCr
-    Print #fnum, vbCr
-    Print #fnum, "This file, " & activeDoc.Name & ", has passed the requirements" & vbCr
-    Print #fnum, "for the bookmaker tool. Please verify the info listed above."
     Print #fnum, vbCr
     Print #fnum, "If any of these are incorrect, please fix the associated styles" & vbCr
     Print #fnum, "in the manuscript." & vbCr
@@ -245,7 +246,7 @@ Close #fnum
 If reqReportDocAlt <> "" Then
 Name reqReportDoc As reqReportDocAlt
 End If
-''''END for 32 char Mc OS bug-<PART 2
+''''END for 32 char Mac OS bug-<PART 2
 
 'open Bookmaker Report for user once it is complete.
 Dim Shex As Object
@@ -263,3 +264,4 @@ End If
 Application.ScreenUpdating = True
 
 End Sub
+
