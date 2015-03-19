@@ -157,9 +157,7 @@ errorList = ""
 If styleCount(1) = 0 Then errorList = errorList & "ERROR: No tagged title detected." & vbNewLine
 If styleCount(1) > 1 Then errorList = errorList & "ERROR: Too many title paragraphs detected." & vbNewLine
 If styleCount(2) = 0 Then errorList = errorList & "ERROR: No tagged author name detected." & vbNewLine
-If styleCount(2) > 1 Then errorList = errorList & "ERROR: Too many author name paragraphs detected." & vbNewLine
 If styleCount(3) = 0 Then errorList = errorList & "ERROR: No tagged ISBN detected." & vbNewLine
-'If styleCount(3) > 1 Then errorList = errorList & "ERROR: Too many ISBNs detected." & vbNewLine
 If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged chapter openers detected." & vbNewLine
 
 Debug.Print errorList
@@ -264,6 +262,3 @@ End If
 Application.ScreenUpdating = True
 
 End Sub
-
-
-
