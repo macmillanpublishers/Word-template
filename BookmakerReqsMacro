@@ -24,11 +24,30 @@ currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
 ourTemplate1 = "macmillan.dotm"
 ourTemplate2 = "macmillan_NoColor.dotm"
 
-Debug.Print "Current template is " & currentTemplate
+Debug.Print "Current template is " & currentTemplate & vbNewLine
 
 If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
         MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+        Exit Sub
+    End If
+End If
+
+
+'-----make sure document is saved--------------------------
+
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
+Dim docSaved As Boolean
+
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
         Exit Sub
     End If
 End If
@@ -77,8 +96,6 @@ Debug.Print styleName(1) & ": " & styleCount(1) & vbNewLine _
 
 Dim styleNameB(3) As String         ' must declare number of items in array here
 Dim bString(3) As String            ' and here
-Dim MyDataB As DataObject
-Dim ClearDataB As DataObject
 Dim b As Long
 
 styleNameB(1) = "Titlepage Book Title (tit)"
@@ -103,17 +120,7 @@ For b = 1 To UBound(styleNameB())
     End With
     Selection.Find.Execute
     bString(b) = Selection.Text
-
-' Assign text on clipboard to a variable
-'Set MyDataB = New DataObject
-'MyDataB.GetFromClipboard
-'bString(b) = MyDataB.GetText
 Next
-
-'Clear the clipboard when finished
-Set ClearDataB = New DataObject
-ClearDataB.SetText ""
-ClearDataB.PutInClipboard
 
 Debug.Print "Title: " & bString(1) & vbNewLine & _
             "Author: " & bString(2) & vbNewLine & _
@@ -121,8 +128,6 @@ Debug.Print "Title: " & bString(1) & vbNewLine & _
             
 '-------------------Get Illustrations List from Document-----------
 
-Dim MyDataC As DataObject
-Dim ClearDataC As DataObject
 Dim cString As String
 Dim iCount As Integer
 
@@ -147,22 +152,10 @@ Selection.HomeKey Unit:=wdStory
 Do While Selection.Find.Execute = True And iCount < 1000            'iCount so we don't get an infinite loop
     iCount = iCount + 1
     cString = cString & Selection.Text & vbCrLf
-    
-    
-    
-    ' Assign text on clipboard to a variable
- '   Set MyDataC = New DataObject                                 'Requires Microsoft Forms 2.0 Object Library be checked in Tools > References
- '   MyDataC.GetFromClipboard
- '   cString = cString + MyDataC.GetText + vbNewLine
 Loop
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
-
-'Clear the clipboard when finished
-Set ClearDataC = New DataObject
-ClearDataC.SetText ""
-ClearDataC.PutInClipboard
 
 If cString = "" Then
     cString = "no illustrations detected"
@@ -236,11 +229,15 @@ If errorList = "" Then
     Print #fnum, vbCr
     Print #fnum, cString & vbCr
     Print #fnum, vbCr
-    Print #fnum, "Verify that the list of illustrations includes the correct file names" & vbCr
-    Print #fnum, "and ONLY the file names for your illustrations. Place these files in" & vbCr
-    Print #fnum, "the Submitted Images folder before you run the bookmaker tool." & vbCr
-    Print #fnum, vbCr
-    Print #fnum, vbCr
+    
+    If cString <> "no illustrations detected" Then
+        Print #fnum, "Verify that the list of illustrations includes the correct file names" & vbCr
+        Print #fnum, "and ONLY the file names for your illustrations. Place these files in" & vbCr
+        Print #fnum, "the Submitted Images folder before you run the bookmaker tool." & vbCr
+        Print #fnum, vbCr
+        Print #fnum, vbCr
+    End If
+
 Else
     Print #fnum, "BAD NEWS:" & vbCr
     Print #fnum, vbCr
