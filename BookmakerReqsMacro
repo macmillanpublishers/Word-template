@@ -4,6 +4,8 @@ Sub BookmakerReqs()
 '-----------------------------------------------------------
 
 'Created by Erica Warren - erica.warren@macmillan.com
+'3/20/2015: Added check if template is attached
+
 '3/17/2015: Added Illustrations List
 '3/16/2015: Fixed error creating text file, added title/author/isbn confirmation
 
@@ -11,6 +13,25 @@ Sub BookmakerReqs()
 
 
 Application.ScreenUpdating = False
+
+'-------Check if Macmillan template is attached--------------
+
+Dim currentTemplate As String
+Dim ourTemplate1 As String
+Dim ourTemplate2 As String
+
+currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
+ourTemplate1 = "macmillan.dotm"
+ourTemplate2 = "macmillan_NoColor.dotm"
+
+Debug.Print "Current template is " & currentTemplate
+
+If currentTemplate <> ourTemplate1 Then
+    If currentTemplate <> ourTemplate2 Then
+        MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+        Exit Sub
+    End If
+End If
 
 '-------Count number of occurences of each required style----
 
