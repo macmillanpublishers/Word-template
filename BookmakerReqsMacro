@@ -4,6 +4,8 @@ Sub BookmakerReqs()
 '-----------------------------------------------------------
 
 'Created by Erica Warren - erica.warren@macmillan.com
+'3/20/2015: Added check if template is attached
+
 '3/17/2015: Added Illustrations List
 '3/16/2015: Fixed error creating text file, added title/author/isbn confirmation
 
@@ -12,11 +14,155 @@ Sub BookmakerReqs()
 
 Application.ScreenUpdating = False
 
+'-------Check if Macmillan template is attached--------------
+
+Dim currentTemplate As String
+Dim ourTemplate1 As String
+Dim ourTemplate2 As String
+
+currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
+ourTemplate1 = "macmillan.dotm"
+ourTemplate2 = "macmillan_NoColor.dotm"
+
+Debug.Print "Current template is " & currentTemplate & vbNewLine
+
+If currentTemplate <> ourTemplate1 Then
+    If currentTemplate <> ourTemplate2 Then
+        MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+        Exit Sub
+    End If
+End If
+
+
+'-----make sure document is saved--------------------------
+
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
+Dim docSaved As Boolean
+
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
+        Exit Sub
+    End If
+End If
+
+'-------Check that only approved tor.com styles are used-----
+Dim paraStyle As String
+Dim activeParaCount As Integer
+Dim badStyles(100) As String
+Dim badCount As Integer
+Dim activeParaRange As Range
+Dim pageNumber As Integer
+Dim D As Integer
+
+badCount = 0
+activeParaCount = ActiveDocument.Paragraphs.Count
+
+For D = 1 To activeParaCount
+    paraStyle = ActiveDocument.Paragraphs(D).Style
+    
+    'Debug.Print ActiveDocument.Paragraphs(A).Style & vbNewLine
+    
+     'Broken down into multiple statements because max 24 line continuation characters in a statement
+     'And also most common styles listed in first IF-THEN so it won't have to search all most of the time
+    If paraStyle <> "Text - Standard (tx)" And _
+        paraStyle <> "Text - Standard Space After (tx#)" And _
+        paraStyle <> "Text - Standard Space Before (#tx)" And _
+        paraStyle <> "Text - Standard Space Around (#tx#)" And _
+        paraStyle <> "Text - Std No-Indent (tx1)" And _
+        paraStyle <> "Text - Std No-Indent Space Before (#tx1)" And _
+        paraStyle <> "Text - Std No-Indent Space After (tx1#)" And _
+        paraStyle <> "Text - Std No-Indent Space Around (#tx1#)" And _
+        paraStyle <> "Chap Number (cn)" And _
+        paraStyle <> "Chap Title (ct)" And _
+        paraStyle <> "Chap Opening Text No-Indent (cotx1)" And _
+        paraStyle <> "Chap Opening Text No-Indent Space After (cotx1#)" And _
+        paraStyle <> "Space Break (#)" And _
+        paraStyle <> "Page Break (pb)" And _
+        paraStyle <> "Halftitle Book Title (htit)" And _
+        paraStyle <> "Titlepage Book Title (tit)" And _
+        paraStyle <> "Titlepage Book Subtitle (stit)" And _
+        paraStyle <> "Titlepage Author Name (au)" And _
+        paraStyle <> "Titlepage Imprint Line (imp)" And _
+        paraStyle <> "Titlepage Cities (cit)" And _
+        paraStyle <> "Copyright Text single space (crtx)" And _
+        paraStyle <> "Copyright Text double space (crtxd)" And _
+        paraStyle <> "Space Break with Ornament (orn)" And _
+        paraStyle <> "Dedication (ded)" And _
+        paraStyle <> "Dedication Author (dedau)" Then
+            If paraStyle <> "Ad Card Main Head (acmh)" And _
+                paraStyle <> "Ad Card Subhead (acsh)" And _
+                paraStyle <> "Ad Card List of Titles (acl)" And _
+                paraStyle <> "Extract Head (exth)" And _
+                paraStyle <> "Extract-No Indent (ext1)" And _
+                paraStyle <> "Extract (ext)" And _
+                paraStyle <> "Illustration holder (ill)" And _
+                paraStyle <> "Caption (cap)" And _
+                paraStyle <> "Illustration Source (is)" And _
+                paraStyle <> "Part Number (pn)" And _
+                paraStyle <> "Part Title (pt)" And _
+                paraStyle <> "Front Sales Title (fst)" And _
+                paraStyle <> "Front Sales Quote NoIndent (fsq1)" And _
+                paraStyle <> "Front Sales Quote (fsq)" And _
+                paraStyle <> "Front Sales Quote Source (fsqs)" And _
+                paraStyle <> "Epigraph – non-verse (epi)" And _
+                paraStyle <> "Epigraph – verse (epiv)" And _
+                paraStyle <> "Epigraph Source (eps)" And _
+                paraStyle <> "Chap Epigraph – non-verse (cepi)" And _
+                paraStyle <> "Chap Epigraph – verse (cepiv)" And _
+                paraStyle <> "Chap Epigraph Source (ceps)" And _
+                paraStyle <> "Text - Standard ALT (atx)" And _
+                paraStyle <> "Text - Std No-Indent ALT (atx1)" And _
+                paraStyle <> "Text - Computer Type No-Indent (com1)" And _
+                paraStyle <> "Text - Computer Type (com)" Then
+                    If paraStyle <> "Titlepage Contributor Name (con)" And _
+                        paraStyle <> "Titlepage Translator Name (tran)" And _
+                        paraStyle <> "FM Head (fmh)" And _
+                        paraStyle <> "FM Subhead (fmsh)" And _
+                        paraStyle <> "FM Epigraph – non-verse (fmepi)" And _
+                        paraStyle <> "FM Epigraph – verse (fmepiv)" And _
+                        paraStyle <> "FM Epigraph Source (fmeps)" And _
+                        paraStyle <> "FM Text (fmtx)" And _
+                        paraStyle <> "FM Text Space After (fmtx#)" And _
+                        paraStyle <> "FM Text Space Before (#fmtx)" And _
+                        paraStyle <> "FM Text Space Around (#fmtx#)" And _
+                        paraStyle <> "FM Text No-Indent (fmtx1)" And _
+                        paraStyle <> "FM Text No-Indent Space Before (#fmtx1)" And _
+                        paraStyle <> "FM Text No-Indent Space After (fmtx1#)" And _
+                        paraStyle <> "FM Text No-Indent Space Around (#fmtx1#)" And _
+                        paraStyle <> "Chap Ornament (corn)" And _
+                        paraStyle <> "Chap Ornament ALT (corn2)" And _
+                        paraStyle <> "Space Break - 3-Line (ls3)" And _
+                        paraStyle <> "Space Break - 2-Line (ls2)" And _
+                        paraStyle <> "Space Break - 1-Line (ls1)" And _
+                        paraStyle <> "Space Break with ALT Ornament (orn2)" And _
+                        paraStyle <> "Chap Number Nonprinting (cnp)" And _
+                        paraStyle <> "Front Sales Text (fstx)" And _
+                        paraStyle <> "Chap Opening Text Space After (cotx#)" And _
+                        paraStyle <> "Chap Opening Text (cotx)" Then
+                            
+                            badCount = badCount + 1
+                            Set activeParaRange = ActiveDocument.Paragraphs(D).Range
+                            pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
+                            badStyles(badCount) = "Bad style on page " & pageNumber & " (Paragraph " & D & "): " & vbTab & paraStyle
+                    End If
+            End If
+    End If
+Next
+
+
+
 '-------Count number of occurences of each required style----
 
 Dim styleName(6) As String                      ' Declare number of items in array
 Dim styleCount(6) As Integer                    ' ditto
-Dim a As Long
+Dim A As Long
 
 styleName(1) = "Titlepage Book Title (tit)"
 styleName(2) = "Titlepage Author Name (au)"
@@ -25,7 +171,7 @@ styleName(4) = "Chap Number (cn)"
 styleName(5) = "Chap Title (ct)"
 styleName(6) = "Chap Number Nonprinting (cnp)"
 
-For a = 1 To UBound(styleName())
+For A = 1 To UBound(styleName())
     With ActiveDocument.Range.Find
         .ClearFormatting
         .Text = ""
@@ -33,14 +179,14 @@ For a = 1 To UBound(styleName())
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles(styleName(a))
+        .Style = ActiveDocument.Styles(styleName(A))
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
     Do While .Execute(Forward:=True) = True
-        styleCount(a) = styleCount(a) + 1
+        styleCount(A) = styleCount(A) + 1
     Loop
     End With
 Next
@@ -56,8 +202,6 @@ Debug.Print styleName(1) & ": " & styleCount(1) & vbNewLine _
 
 Dim styleNameB(3) As String         ' must declare number of items in array here
 Dim bString(3) As String            ' and here
-Dim MyDataB As DataObject
-Dim ClearDataB As DataObject
 Dim b As Long
 
 styleNameB(1) = "Titlepage Book Title (tit)"
@@ -82,17 +226,7 @@ For b = 1 To UBound(styleNameB())
     End With
     Selection.Find.Execute
     bString(b) = Selection.Text
-
-' Assign text on clipboard to a variable
-'Set MyDataB = New DataObject
-'MyDataB.GetFromClipboard
-'bString(b) = MyDataB.GetText
 Next
-
-'Clear the clipboard when finished
-Set ClearDataB = New DataObject
-ClearDataB.SetText ""
-ClearDataB.PutInClipboard
 
 Debug.Print "Title: " & bString(1) & vbNewLine & _
             "Author: " & bString(2) & vbNewLine & _
@@ -100,8 +234,6 @@ Debug.Print "Title: " & bString(1) & vbNewLine & _
             
 '-------------------Get Illustrations List from Document-----------
 
-Dim MyDataC As DataObject
-Dim ClearDataC As DataObject
 Dim cString As String
 Dim iCount As Integer
 
@@ -126,22 +258,10 @@ Selection.HomeKey Unit:=wdStory
 Do While Selection.Find.Execute = True And iCount < 1000            'iCount so we don't get an infinite loop
     iCount = iCount + 1
     cString = cString & Selection.Text & vbCrLf
-    
-    
-    
-    ' Assign text on clipboard to a variable
- '   Set MyDataC = New DataObject                                 'Requires Microsoft Forms 2.0 Object Library be checked in Tools > References
- '   MyDataC.GetFromClipboard
- '   cString = cString + MyDataC.GetText + vbNewLine
 Loop
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
-
-'Clear the clipboard when finished
-Set ClearDataC = New DataObject
-ClearDataC.SetText ""
-ClearDataC.PutInClipboard
 
 If cString = "" Then
     cString = "no illustrations detected"
@@ -157,9 +277,7 @@ errorList = ""
 If styleCount(1) = 0 Then errorList = errorList & "ERROR: No tagged title detected." & vbNewLine
 If styleCount(1) > 1 Then errorList = errorList & "ERROR: Too many title paragraphs detected." & vbNewLine
 If styleCount(2) = 0 Then errorList = errorList & "ERROR: No tagged author name detected." & vbNewLine
-If styleCount(2) > 1 Then errorList = errorList & "ERROR: Too many author name paragraphs detected." & vbNewLine
 If styleCount(3) = 0 Then errorList = errorList & "ERROR: No tagged ISBN detected." & vbNewLine
-'If styleCount(3) > 1 Then errorList = errorList & "ERROR: Too many ISBNs detected." & vbNewLine
 If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged chapter openers detected." & vbNewLine
 
 Debug.Print errorList
@@ -198,7 +316,7 @@ End If
 'set and open file for output
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
-If errorList = "" Then
+If errorList = "" And badCount = 0 Then
     Print #fnum, vbCr
     Print #fnum, "CONGRATULATIONS! YOU PASSED!" & vbCr
     Print #fnum, "But you're not done yet. Please check the info listed below." & vbCr
@@ -217,11 +335,15 @@ If errorList = "" Then
     Print #fnum, vbCr
     Print #fnum, cString & vbCr
     Print #fnum, vbCr
-    Print #fnum, "Verify that the list of illustrations includes the correct file names" & vbCr
-    Print #fnum, "and ONLY the file names for your illustrations. Place these files in" & vbCr
-    Print #fnum, "the Submitted Images folder before you run the bookmaker tool." & vbCr
-    Print #fnum, vbCr
-    Print #fnum, vbCr
+    
+    If cString <> "no illustrations detected" Then
+        Print #fnum, "Verify that the list of illustrations includes the correct file names" & vbCr
+        Print #fnum, "and ONLY the file names for your illustrations. Place these files in" & vbCr
+        Print #fnum, "the Submitted Images folder before you run the bookmaker tool." & vbCr
+        Print #fnum, vbCr
+        Print #fnum, vbCr
+    End If
+
 Else
     Print #fnum, "BAD NEWS:" & vbCr
     Print #fnum, vbCr
@@ -230,6 +352,11 @@ Else
     Print #fnum, vbCr
     Print #fnum, "--------------------------- ERRORS ---------------------------" & vbCr
     Print #fnum, errorList
+    
+    For D = 1 To badCount
+        Print #fnum, badStyles(D)
+    Next D
+        
     Print #fnum, vbCr
     Print #fnum, vbCr
 End If
@@ -264,6 +391,3 @@ End If
 Application.ScreenUpdating = True
 
 End Sub
-
-
-
