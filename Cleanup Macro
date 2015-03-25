@@ -7,6 +7,13 @@ Sub MacmillanManuscriptCleanup()
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 ''''''''''''''''''''''''''''''
+'version 3.8:
+'updated 2015-03-25 by Erica Warren
+' Design Note can now contain blank characters
+' new char styles "span symbols ital (symi)" and "span symbols bold (symb)" added to existing character styles to tag
+'changed way error checks verify that template is attached
+'
+
 'version 3.7
 'updated 2015-03-04, by Erica Warren
 ' split Cleanup macro into two macros: cleanup and character styles
@@ -371,11 +378,13 @@ End With
 Next
 End Sub
 
+
+
 Private Sub PreserveWhiteSpaceinBrkStylesA()
 Set activeRng = ActiveDocument.Range
 
-Dim tagArray(11) As String                                   ' number of items in array should be declared here
-Dim StylePreserveArray(11) As String              ' number of items in array should be declared here
+Dim tagArray(12) As String                                   ' number of items in array should be declared here
+Dim StylePreserveArray(12) As String              ' number of items in array should be declared here
 Dim e As Long
 
 StylePreserveArray(1) = "Space Break (#)"
@@ -389,6 +398,7 @@ StylePreserveArray(8) = "Space Break - 1-Line (ls1)"
 StylePreserveArray(9) = "Space Break - 2-Line (ls2)"
 StylePreserveArray(10) = "Space Break - 3-Line (ls3)"
 StylePreserveArray(11) = "Column Break (cbr)"
+StylePreserveArray(12) = "Design Note (dn)"
 
 tagArray(1) = "`1`^&`1``"                                       'v. 3.1 patch  added extra backtick on trailing tag for all of these.
 tagArray(2) = "`2`^&`2``"
@@ -401,6 +411,7 @@ tagArray(8) = "`8`^&`8``"
 tagArray(9) = "`9`^&`9``"
 tagArray(10) = "`0`^&`0``"
 tagArray(11) = "`L`^&`L``"
+tagArray(12) = "`R`^&`R``"
 
 
 For e = 1 To UBound(StylePreserveArray())
@@ -680,7 +691,7 @@ End Sub
 Private Sub PreserveWhiteSpaceinBrkStylesB()
 Set activeRng = ActiveDocument.Range
 
-Dim tagArrayB(11) As String                                   ' number of items in array should be declared here
+Dim tagArrayB(12) As String                                   ' number of items in array should be declared here
 Dim f As Long
 
 tagArrayB(1) = "`1`(^13)`1``"                             'v. 3.1 patch  added extra backtick on trailing tag for all of these.
@@ -694,6 +705,7 @@ tagArrayB(8) = "`8`(^13)`8``"
 tagArrayB(9) = "`9`(^13)`9``"
 tagArrayB(10) = "`0`(^13)`0``"
 tagArrayB(11) = "`L`(^13)`L``"              ' for new column break, added v. 3.4.1
+tagArrayB(12) = "`R`(^13)`R``"
 
 For f = 1 To UBound(tagArrayB())
 With activeRng.Find
@@ -716,8 +728,8 @@ End Sub
 Private Sub TagExistingCharStyles()
 Set activeRng = ActiveDocument.Range                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
 
-Dim tagCharStylesArray(11) As String                                   ' number of items in array should be declared here
-Dim CharStylePreserveArray(11) As String              ' number of items in array should be declared here
+Dim tagCharStylesArray(13) As String                                   ' number of items in array should be declared here
+Dim CharStylePreserveArray(13) As String              ' number of items in array should be declared here
 Dim d As Long
 
 
@@ -732,6 +744,8 @@ CharStylePreserveArray(8) = "span preserve characters (pre)"  'added v. 3.2
 CharStylePreserveArray(9) = "bookmaker keep together (kt)"  'added v. 3.7
 CharStylePreserveArray(10) = "bookmaker force page break (br)"  'added v. 3.7
 CharStylePreserveArray(11) = "span ISBN (isbn)"  'added v. 3.7
+CharStylePreserveArray(12) = "span symbols ital (symi)"     'added v. 3.8
+CharStylePreserveArray(13) = "span symbols bold (symb)"
 
 
 tagCharStylesArray(1) = "`H|^&|H`"
@@ -745,6 +759,8 @@ tagCharStylesArray(8) = "`F|^&|F`"
 tagCharStylesArray(9) = "`K|^&|K`"
 tagCharStylesArray(10) = "`N|^&|N`"
 tagCharStylesArray(11) = "`Q|^&|Q`"
+tagCharStylesArray(12) = "`E|^&|E`"
+tagCharStylesArray(13) = "`G|^&|G`"
 
 
 For d = 1 To UBound(CharStylePreserveArray())
@@ -835,8 +851,8 @@ Private Sub LocalStyleReplace()
 Set activeRng = ActiveDocument.Range
 
 '-------------apply styles to tags
-Dim tagFindArray(20) As String              ' number of items in array should be declared here
-Dim tagReplaceArray(20) As String         'and here
+Dim tagFindArray(22) As String              ' number of items in array should be declared here
+Dim tagReplaceArray(22) As String         'and here
 Dim h As Long
 
 tagFindArray(1) = "`B|(*)|B`"
@@ -859,6 +875,8 @@ tagFindArray(17) = "`F|(*)|F`"
 tagFindArray(18) = "`K|(*)|K`"          'v. 3.7 added
 tagFindArray(19) = "`N|(*)|N`"          'v. 3.7 added
 tagFindArray(20) = "`Q|(*)|Q`"          'v. 3.7 added
+tagFindArray(21) = "`E|(*)|E`"
+tagFindArray(22) = "`G|(*)|G`"          'v. 3.8 added
 
 tagReplaceArray(1) = ActiveDocument.Styles("span boldface characters (bf)")
 tagReplaceArray(2) = ActiveDocument.Styles("span italic characters (ital)")
@@ -881,6 +899,8 @@ tagReplaceArray(17) = ActiveDocument.Styles("span preserve characters (pre)")
 tagReplaceArray(18) = ActiveDocument.Styles("bookmaker keep together (kt)")          'v. 3.7 added
 tagReplaceArray(19) = ActiveDocument.Styles("bookmaker force page break (br)")          'v. 3.7 added
 tagReplaceArray(20) = ActiveDocument.Styles("span ISBN (isbn)")          'v. 3.7 added
+tagReplaceArray(21) = ActiveDocument.Styles("span symbols ital (symi)")         ' v. 3.8 added
+tagReplaceArray(22) = ActiveDocument.Styles("span symbols bold (symb)")         ' v. 3.8 added
 
 
 For h = 1 To UBound(tagFindArray())
@@ -931,16 +951,23 @@ zz_templateCheck = False
 Dim mainDoc As Document
 Set mainDoc = ActiveDocument
 
-'-----make sure Style template is attached
-Dim keyStyle As Word.Style
-Dim styleCheck As Boolean
-On Error Resume Next
-Set keyStyle = mainDoc.Styles("span boldface characters (bf)")                '''Style from template to check against
-styleCheck = keyStyle Is Nothing
-If styleCheck Then
-MsgBox "Oops! Required style template 'macmillan.dotm' is not attached.", , "Error"
-zz_templateCheck = True
-Exit Function
+'-------Check if Macmillan template is attached--------------
+
+Dim currentTemplate As String
+Dim ourTemplate1 As String
+Dim ourTemplate2 As String
+
+currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
+ourTemplate1 = "macmillan.dotm"
+ourTemplate2 = "macmillan_NoColor.dotm"
+
+Debug.Print "Current template is " & currentTemplate & vbNewLine
+
+If currentTemplate <> ourTemplate1 Then
+    If currentTemplate <> ourTemplate2 Then
+        MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+        Exit Function
+    End If
 End If
 
 End Function
@@ -1173,16 +1200,22 @@ Dim mainDoc As Document
 Set mainDoc = ActiveDocument
 Dim iReply As Integer
 
-'-----make sure Style template is attached
-Dim keyStyle As Word.Style
-Dim styleCheck As Boolean
-On Error Resume Next
-Set keyStyle = mainDoc.Styles("span boldface characters (bf)")                '''Style from template to check against
-styleCheck = keyStyle Is Nothing
-If styleCheck Then
-MsgBox "Oops! Required style template 'macmillan.dotx' is not attached.", , "Error"
-srErrorCheck = True
-Exit Function
+'-------Check if Macmillan template is attached--------------
+Dim currentTemplate As String
+Dim ourTemplate1 As String
+Dim ourTemplate2 As String
+
+currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
+ourTemplate1 = "macmillan.dotm"
+ourTemplate2 = "macmillan_NoColor.dotm"
+
+Debug.Print "Current template is " & currentTemplate & vbNewLine
+
+If currentTemplate <> ourTemplate1 Then
+    If currentTemplate <> ourTemplate2 Then
+        MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+        Exit Function
+    End If
 End If
 
 '-----make sure document is saved
