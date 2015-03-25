@@ -7,12 +7,14 @@ Sub LibraryOfCongressTags()
 '''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 '''2/25/15
-'''Version 1.4
+'''Version 1.5
 '''Updated: 3/4/15 : revised chapter numbering loop for performance, edited ELC styles and added tag for ELC with no end styles
 '''Updated: 3/8/15 : switching to Whole word searches for the 4 items with closing tags
 '''                           : & allowing for ^m Page Break check/fix to get </ch> inline with final chapter text
 '''         3/10/15 : revamped ELC </ch> again to make it inline.
 '''                 : used same method to make cp, tp, toc and sp closing tags inline-- match whole words broke with hyperlinks
+'''         3/24/15 : re-did ELC in case of atax or other styles present early in manuscript ; uses while loop to scan for first backmatter style that
+'''                 is not eventually followed by <ch#> or <tp> tag
 ''''''''''''''''''''''''''''''
 
 '-----------run preliminary error checks------------
@@ -705,73 +707,149 @@ Next
 
 Call zz_clearFindB
 
+' Declare vars related to part 2 (loop etc)
+Dim testvar As Boolean
+Dim testtag As String
+Dim q As Long
+Dim bookmarkRng As Range
+Dim dontTag As Boolean
+Dim activeRngB As Range
+Set activeRngB = ActiveDocument.Range
+dontTag = False
+testvar = False
+testtag = "\<ch[0-9]{1,}\>"
+q = 0
+
+''if <ch> not found, testtag= <tp>
 With activeRng.Find
-    .Text = "``````"
-    .Replacement.Text = ""
+    .Text = testtag
     .Forward = True
     .Wrap = wdFindContinue
     .Format = False
     .MatchCase = False
     .MatchWholeWord = False
-    .MatchWildcards = False
+    .MatchWildcards = True
     .MatchSoundsLike = False
     .MatchAllWordForms = False
 End With
-
-If activeRng.Find.Execute = True Then
-    With activeRng.Find
-        .Text = "[!^13^m`]"
-        .Replacement.Text = "^&</ch>"
-        .Forward = False
+If activeRng.Find.Execute = False Then
+    testtag = "\<tp\>"
+    With activeRngB.Find
+        .Text = testtag
+        .Forward = True
         .Wrap = wdFindContinue
         .Format = False
         .MatchCase = False
-        .MatchWholeWord = True
+        .MatchWholeWord = False
         .MatchWildcards = True
         .MatchSoundsLike = False
         .MatchAllWordForms = False
-        .Execute Replace:=wdReplaceOne
     End With
+    If activeRngB.Find.Execute = False Then
+        dontTag = True
+    End If
 End If
 
-'Change the tag for the first found ELC tag to </ch>, switch places with preceding para to be inline with last chapter paragraph
-'his should've worked, convinced Word from Mac has phantom chars that are pasting :(
-'Dim ELCfauxTags(4) As String
-'Dim ELC_LOCtags(4) As String
-'Dim z As Long
-'
-'ELCfauxTags(1) = "^p`ELC|"              'doing these replacements in two steps (1-2, 1-3 respectively) and renameing the tag ..
-'ELCfauxTags(2) = "^p^m`ELC2|"       '..allows the tag to cross two styles without stripping the style or otherwise messing up
-'ELCfauxTags(3) = "^p`ELC2|"
-'ELCfauxTags(4) = "`ELC2|"        'iteration 4 is to make sure in some weird case we don't leave a stranded `ElC2| tag out there
-'
-'ELC_LOCtags(1) = "`ELC2|^p"
-'ELC_LOCtags(2) = "</ch>^p^m"
-'ELC_LOCtags(3) = "</ch>^p"
-'ELC_LOCtags(3) = ""
-'
-'For z = 1 To UBound(ELCfauxTags())
-'With activeRng.Find
-'  .ClearFormatting
-'  .Replacement.ClearFormatting
-'  .Text = ELCfauxTags(z)
-'  .Replacement.Text = ELC_LOCtags(z)
-'  .Wrap = wdFindContinue
-'  .Format = False
-'  .Forward = True
-'  .MatchCase = False
-'  .MatchWholeWord = False
-'  .MatchWildcards = False
-'  .MatchSoundsLike = False
-'  .MatchAllWordForms = False
-'  .Execute Replace:=wdReplaceOne
-'End With
-'Next
+'start loop
+Do While testvar = False
+        
+    With activeRng.Find
+        .Text = "``````"
+        .Forward = True
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+    ''set range with bookmarks, only search after init tag
+    If activeRng.Find.Execute = True Then
+        ActiveDocument.Bookmarks.Add Name:="elcBookmark", Range:=activeRng
+        Set bookmarkRng = ActiveDocument.Range(Start:=ActiveDocument.Bookmarks("elcBookmark").Range.Start, End:=ActiveDocument.Bookmarks("\EndOfDoc").Range.End)
+    Else
+        Exit Do
+    End If
+    
+    Set activeRng = ActiveDocument.Range
+    
+    Call zz_clearFindB
+    
+    'check for <ch> tags afer potential </ch> tag
+    With bookmarkRng.Find
+        .ClearFormatting
+        .Text = testtag
+        .Forward = True
+        .Wrap = wdFindStop
+        .MatchWildcards = True
+    End With
+    
+    If bookmarkRng.Find.Execute = True Then
+            'Found one. This one's not it.
+            ''Remove first tagged paragraph's tag, will loop
+            With activeRng.Find
+                .Text = "``````"
+                .Replacement.Text = ""
+                .Forward = True
+                .Wrap = wdFindStop
+                .Format = False
+                .MatchCase = False
+                .MatchWholeWord = False
+                .MatchWildcards = False
+                .MatchSoundsLike = False
+                .MatchAllWordForms = False
+                .Execute Replace:=wdReplaceOne
+            End With
+            q = q + 1
+    Else
+            ''This one's good, tag it right, set var to exit loop
+            With activeRng.Find
+                .Text = "``````"
+                .Replacement.Text = ""
+                .Forward = True
+                .Wrap = wdFindContinue
+                .Format = False
+                .MatchCase = False
+                .MatchWholeWord = False
+                .MatchWildcards = False
+                .MatchSoundsLike = False
+                .MatchAllWordForms = False
+            End With
+            If activeRng.Find.Execute = True Then
+                If dontTag = False Then
+                    With activeRng.Find
+                        .Text = "[!^13^m`]"
+                        .Replacement.Text = "^&</ch>"
+                        .Forward = False
+                        .Wrap = wdFindContinue
+                        .Format = False
+                        .MatchCase = False
+                        .MatchWholeWord = True
+                        .MatchWildcards = True
+                        .MatchSoundsLike = False
+                        .MatchAllWordForms = False
+                        .Execute Replace:=wdReplaceOne
+                    End With
+                End If
+            End If
+            testvar = True
+    End If
+        
+    If ActiveDocument.Bookmarks.Exists("elcBookmark") = True Then
+        ActiveDocument.Bookmarks("elcBookmark").Delete
+    End If
+    
+    If q = 20 Then      'prevent endless loops
+        testvar = True
+        dontTag = True
+    End If
+
+Loop
 
 Call zz_clearFindB
 
 'Get rid of rest of ELC tags
-
 With activeRng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -789,23 +867,24 @@ With activeRng.Find
 End With
 
 'If no </ch> tags exist, add </ch> to the end of the doc
-
-With activeRng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "</ch>"
-  .Wrap = wdFindContinue
-  .Format = False
-  .Forward = True
-  .MatchCase = False
-  .MatchWholeWord = False
-  .MatchWildcards = False
-  .MatchSoundsLike = False
-  .MatchAllWordForms = False
-End With
-
-If activeRng.Find.Execute = False Then
-    activeRng.InsertAfter "</ch>"
+If dontTag = False Then
+    With activeRng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "</ch>"
+      .Wrap = wdFindContinue
+      .Format = False
+      .Forward = True
+      .MatchCase = False
+      .MatchWholeWord = False
+      .MatchWildcards = False
+      .MatchSoundsLike = False
+      .MatchAllWordForms = False
+    End With
+    If activeRng.Find.Execute = False Then
+        Set activeRng = ActiveDocument.Range
+        activeRng.InsertAfter "</ch>"
+    End If
 End If
 
 End Sub
