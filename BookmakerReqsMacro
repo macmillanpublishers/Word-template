@@ -1,3 +1,4 @@
+
 Option Explicit
 
 Sub BookmakerReqs()
@@ -264,8 +265,11 @@ Debug.Print "Title: " & bString(1) & vbNewLine & _
             
 '-------------------Get Illustrations List from Document-----------
 
-Dim cString As String
-Dim iCount As Integer
+Dim cString(1000) As String             'Max number of illustrations. Could be lower than 1000.
+Dim cCount As Integer
+Dim pageNumberC As Integer
+
+cCount = 0
 
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
@@ -285,19 +289,25 @@ Selection.HomeKey Unit:=wdStory
         .MatchAllWordForms = False
     End With
 
-Do While Selection.Find.Execute = True And iCount < 1000            'iCount so we don't get an infinite loop
-    iCount = iCount + 1
-    cString = cString & Selection.Text & vbNewLine
+Do While Selection.Find.Execute = True And cCount < 1000            'cCount < 1000 so we don't get an infinite loop
+    cCount = cCount + 1
+    pageNumberC = Selection.Information(wdActiveEndPageNumber)
+    cString(cCount) = "Page " & pageNumberC & ": " & Selection.Text & vbNewLine
 Loop
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
 
-If cString = "" Then
-    cString = "no illustrations detected"
+If cCount > 1000 Then
+    MsgBox "You have more than 1,000 illustrations in your manuscript." & vbNewLine & _
+    "Please contact workflows@macmillan.com to complete your illustration list."
 End If
 
-Debug.Print cString
+If cString(1) = "" Then
+    cString(1) = "no illustrations detected"
+End If
+
+Debug.Print cString(1) & cString(2) & cString(3)
 
 '-------------------Create error report----------------------------
 
@@ -345,6 +355,8 @@ End If
 '''end ''''for 32 char Mc OS bug part 1
 
 'set and open file for output
+Dim E As Integer
+
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
 If errorList = "" And badCount = 0 Then
@@ -364,13 +376,15 @@ If errorList = "" And badCount = 0 Then
     Print #fnum, vbCr
     Print #fnum, "-----------------------ILLUSTRATION LIST ---------------------" & vbCr
     Print #fnum, vbCr
-    Print #fnum, cString & vbCr
-    Print #fnum, vbCr
     
-    If cString <> "no illustrations detected" Then
-        Print #fnum, "Verify that the list of illustrations includes the correct file names" & vbCr
-        Print #fnum, "and ONLY the file names for your illustrations. Place these files in" & vbCr
-        Print #fnum, "the Submitted Images folder before you run the bookmaker tool." & vbCr
+    For E = 1 To cCount
+        Print #fnum, cString(E)
+    Next E
+       
+    If cString(1) <> "no illustrations detected" Then
+        Print #fnum, "Verify that this list of illustrations includes the correct file names--" & vbCr
+        Print #fnum, "and ONLY the file names--for your illustrations. Place these files in" & vbCr
+        Print #fnum, "the submitted_images folder BEFORE you run the bookmaker tool." & vbCr
         Print #fnum, vbCr
         Print #fnum, vbCr
     End If
@@ -422,3 +436,4 @@ End If
 Application.ScreenUpdating = True
 
 End Sub
+
