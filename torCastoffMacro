@@ -5,19 +5,18 @@ Dim designChar As Integer
 Dim pageCount As Integer
 
 charCount = ActiveDocument.Range.ComputeStatistics(wdStatisticCharactersWithSpaces)
-designChar = 2500               'character count with spaces of print text design
+designChar = 2500               'average character count with spaces per page of print text design
 pageCount = charCount / designChar
 
 Debug.Print pageCount
 
 With ActiveDocument.Range.Find
     .ClearFormatting
-    .Text = ""
-    .Replacement.Text = ""
+    .Text = "^m"
+    .Replacement.Text = "^m"
     .Forward = True
     .Wrap = wdFindStop
-    .Format = True
-    .Style = ActiveDocument.Styles("Page Break (pb)")
+    .Format = False
     .MatchCase = False
     .MatchWholeWord = False
     .MatchWildcards = False
@@ -28,12 +27,13 @@ Do While .Execute(Forward:=True) = True
 Loop
 End With
 
-If pageCount > 48 Then
+Debug.Print pageCount
+
+If pageCount > 55 Then
     MsgBox "Your book will be approximately " & pageCount & " pages using the Tor.com automated conversion tool."
 Else
-    MsgBox "Your book will be approximately " & pageCount & " pages using the Tor.com automated conversion tool." & vbNewLine & vbNewLine & "Note that books 48 pages and shorter will be saddle stiched (no spine)."
+    MsgBox "Your book will be approximately " & pageCount & " pages using the Tor.com automated conversion tool." & vbNewLine & _
+    vbNewLine & "Note that books 48 pages and shorter will be saddle stiched (no spine)."
 End If
-
-
 
 End Sub
