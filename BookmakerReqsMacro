@@ -1,11 +1,12 @@
+
 Option Explicit
 
 Sub BookmakerReqs()
 '-----------------------------------------------------------
 
 'Created by Erica Warren - erica.warren@macmillan.com
+'3/26/2015:
 '3/20/2015: Added check if template is attached
-
 '3/17/2015: Added Illustrations List
 '3/16/2015: Fixed error creating text file, added title/author/isbn confirmation
 
@@ -55,7 +56,7 @@ End If
 '-------Check that only approved tor.com styles are used-----
 Dim paraStyle As String
 Dim activeParaCount As Integer
-Dim badStyles(100) As String
+Dim badStyles(100) As String        'Increase number if want to count more bad styles
 Dim badCount As Integer
 Dim activeParaRange As Range
 Dim pageNumber As Integer
@@ -142,7 +143,7 @@ For D = 1 To activeParaCount
                         paraStyle <> "Space Break - 2-Line (ls2)" And _
                         paraStyle <> "Space Break - 1-Line (ls1)" And _
                         paraStyle <> "Space Break with ALT Ornament (orn2)" And _
-                        paraStyle <> "Chap Number Nonprinting (cnp)" And _
+                        paraStyle <> "Chap Title Nonprinting (ctnp)" And _
                         paraStyle <> "Front Sales Text (fstx)" And _
                         paraStyle <> "Chap Opening Text Space After (cotx#)" And _
                         paraStyle <> "Chap Opening Text (cotx)" Then
@@ -169,7 +170,7 @@ styleName(2) = "Titlepage Author Name (au)"
 styleName(3) = "span ISBN (isbn)"
 styleName(4) = "Chap Number (cn)"
 styleName(5) = "Chap Title (ct)"
-styleName(6) = "Chap Number Nonprinting (cnp)"
+styleName(6) = "Chap Title Nonprinting (ctnp)"
 
 For A = 1 To UBound(styleName())
     With ActiveDocument.Range.Find
@@ -198,11 +199,41 @@ Debug.Print styleName(1) & ": " & styleCount(1) & vbNewLine _
             ; styleName(5) & ": " & styleCount(5) & vbNewLine _
             ; styleName(6) & ": " & styleCount(6) & vbNewLine
             
+'------------Convert solo Chap Number paras to Chap Title-------
+
+If styleCount(4) > 0 And styleCount(5) = 0 Then         'If Chap Num > 0 and Chap Title = 0
+
+'Move selection to start of document
+Selection.HomeKey Unit:=wdStory
+
+    Selection.Find.ClearFormatting
+    Selection.Find.Style = ActiveDocument.Styles("Chap Number (cn)")
+    Selection.Find.Replacement.ClearFormatting
+    Selection.Find.Replacement.Style = ActiveDocument.Styles("Chap Title (ct)")
+    With Selection.Find
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindContinue
+        .Format = True
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+    Selection.Find.Execute Replace:=wdReplaceAll
+    
+End If
+
 '------------Get title/author/isbn text from document-----------
 
 Dim styleNameB(3) As String         ' must declare number of items in array here
 Dim bString(3) As String            ' and here
 Dim b As Long
+
+'Move selection to start of document
+Selection.HomeKey Unit:=wdStory
 
 styleNameB(1) = "Titlepage Book Title (tit)"
 styleNameB(2) = "Titlepage Author Name (au)"
@@ -234,8 +265,11 @@ Debug.Print "Title: " & bString(1) & vbNewLine & _
             
 '-------------------Get Illustrations List from Document-----------
 
-Dim cString As String
-Dim iCount As Integer
+Dim cString(1000) As String             'Max number of illustrations. Could be lower than 1000.
+Dim cCount As Integer
+Dim pageNumberC As Integer
+
+cCount = 0
 
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
@@ -255,19 +289,25 @@ Selection.HomeKey Unit:=wdStory
         .MatchAllWordForms = False
     End With
 
-Do While Selection.Find.Execute = True And iCount < 1000            'iCount so we don't get an infinite loop
-    iCount = iCount + 1
-    cString = cString & Selection.Text & vbCrLf
+Do While Selection.Find.Execute = True And cCount < 1000            'cCount < 1000 so we don't get an infinite loop
+    cCount = cCount + 1
+    pageNumberC = Selection.Information(wdActiveEndPageNumber)
+    cString(cCount) = "Page " & pageNumberC & ": " & Selection.Text & vbNewLine
 Loop
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
 
-If cString = "" Then
-    cString = "no illustrations detected"
+If cCount > 1000 Then
+    MsgBox "You have more than 1,000 illustrations in your manuscript." & vbNewLine & _
+    "Please contact workflows@macmillan.com to complete your illustration list."
 End If
 
-Debug.Print cString
+If cString(1) = "" Then
+    cString(1) = "no illustrations detected"
+End If
+
+Debug.Print cString(1) & cString(2) & cString(3)
 
 '-------------------Create error report----------------------------
 
@@ -278,7 +318,8 @@ If styleCount(1) = 0 Then errorList = errorList & "ERROR: No tagged title detect
 If styleCount(1) > 1 Then errorList = errorList & "ERROR: Too many title paragraphs detected." & vbNewLine
 If styleCount(2) = 0 Then errorList = errorList & "ERROR: No tagged author name detected." & vbNewLine
 If styleCount(3) = 0 Then errorList = errorList & "ERROR: No tagged ISBN detected." & vbNewLine
-If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged chapter openers detected." & vbNewLine
+If styleCount(4) > 0 And styleCount(5) = 0 Then errorList = errorList & "ERROR: Chap Number (cn) cannot be used alone (every chapter must start with Chapter Title (ct)). Chapter number paragraphs have been converted to the Chap Title (ct) style." & vbNewLine
+If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged chapter openers detected. If your book does not have chapter openers, use the Chap Title Nonprinting (ctnp) style at the start of each section." & vbNewLine
 
 Debug.Print errorList
 
@@ -314,6 +355,8 @@ End If
 '''end ''''for 32 char Mc OS bug part 1
 
 'set and open file for output
+Dim E As Integer
+
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
 If errorList = "" And badCount = 0 Then
@@ -333,13 +376,15 @@ If errorList = "" And badCount = 0 Then
     Print #fnum, vbCr
     Print #fnum, "-----------------------ILLUSTRATION LIST ---------------------" & vbCr
     Print #fnum, vbCr
-    Print #fnum, cString & vbCr
-    Print #fnum, vbCr
     
-    If cString <> "no illustrations detected" Then
-        Print #fnum, "Verify that the list of illustrations includes the correct file names" & vbCr
-        Print #fnum, "and ONLY the file names for your illustrations. Place these files in" & vbCr
-        Print #fnum, "the Submitted Images folder before you run the bookmaker tool." & vbCr
+    For E = 1 To cCount
+        Print #fnum, cString(E)
+    Next E
+       
+    If cString(1) <> "no illustrations detected" Then
+        Print #fnum, "Verify that this list of illustrations includes the correct file names--" & vbCr
+        Print #fnum, "and ONLY the file names--for your illustrations. Place these files in" & vbCr
+        Print #fnum, "the submitted_images folder BEFORE you run the bookmaker tool." & vbCr
         Print #fnum, vbCr
         Print #fnum, vbCr
     End If
@@ -375,7 +420,7 @@ Name reqReportDoc As reqReportDocAlt
 End If
 ''''END for 32 char Mac OS bug-<PART 2
 
-'open Bookmaker Report for user once it is complete.
+'----------------open Bookmaker Report for user once it is complete--------------------------.
 Dim Shex As Object
 
 If Not TheOS Like "*Mac*" Then
@@ -391,3 +436,4 @@ End If
 Application.ScreenUpdating = True
 
 End Sub
+
