@@ -5,7 +5,8 @@ Sub BookmakerReqs()
 '-----------------------------------------------------------
 
 'Created by Erica Warren - erica.warren@macmillan.com
-'3/26/2015:
+'3/27/2015: converts solo CNs to CTs
+'           page numbers added to Illustration List
 '3/20/2015: Added check if template is attached
 '3/17/2015: Added Illustrations List
 '3/16/2015: Fixed error creating text file, added title/author/isbn confirmation
@@ -45,7 +46,8 @@ Dim docSaved As Boolean
 docSaved = mainDoc.Saved
 If docSaved = False Then
     iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-        "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+        "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
+            vbOKCancel, "Alert")
     If iReply = vbOK Then
         mainDoc.Save
     Else
@@ -151,7 +153,8 @@ For D = 1 To activeParaCount
                             badCount = badCount + 1
                             Set activeParaRange = ActiveDocument.Paragraphs(D).Range
                             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
-                            badStyles(badCount) = "Bad style on page " & pageNumber & " (Paragraph " & D & "): " & vbTab & paraStyle
+                            badStyles(badCount) = "Bad style on page " & pageNumber & " (Paragraph " & D & "): " & _
+                                vbTab & paraStyle
                     End If
             End If
     End If
@@ -299,7 +302,7 @@ Loop
 Selection.HomeKey Unit:=wdStory
 
 If cCount > 1000 Then
-    MsgBox "You have more than 1,000 illustrations in your manuscript." & vbNewLine & _
+    MsgBox "You have more than 1,000 illustrations tagged in your manuscript." & vbNewLine & _
     "Please contact workflows@macmillan.com to complete your illustration list."
 End If
 
@@ -308,6 +311,62 @@ If cString(1) = "" Then
 End If
 
 Debug.Print cString(1) & cString(2) & cString(3)
+
+'-------------------Get list of good styles from document---------
+
+Dim activeDoc As Document
+Set activeDoc = ActiveDocument
+Dim stylesGood() As String
+Dim stylesGoodLong As Long
+stylesGoodLong = 100
+ReDim stylesGood(stylesGoodLong)
+Dim styleGoodCount As Integer
+Dim activeParaCountJ As Integer
+Dim J As Integer, K As Integer
+Dim paraStyleGood As String
+
+Application.DisplayStatusBar = True
+Application.ScreenUpdating = False
+
+'Alter built-in Normal (Web) style temporarily (later, maybe forever?)
+ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
+
+' Collect all styles being used
+styleGoodCount = 0
+activeParaCountJ = activeDoc.Paragraphs.Count
+For J = 1 To activeParaCountJ
+    'Next two lines are for the status bar
+    Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
+    If J Mod 100 = 0 Then DoEvents
+    
+    paraStyleGood = activeDoc.Paragraphs(J).Style
+    
+    If Right(paraStyleGood, 1) = ")" Then
+        For K = 1 To styleGoodCount
+            If paraStyleGood = stylesGood(K) Then                   'stylereport bug fix #1  v. 3.1
+                K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                Exit For                                        'stylereport bug fix #1   v. 3.1
+            End If                                              'stylereport bug fix #1   v. 3.1
+        Next K
+        If K = styleGoodCount + 1 Then
+            styleGoodCount = K
+            stylesGood(styleGoodCount) = paraStyleGood
+        End If
+    End If
+Next J
+ 
+'Change Normal (Web) back (if you want to)
+ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
+
+'Sort good styles
+If K <> 0 Then
+ReDim Preserve stylesGood(K)
+WordBasic.SortArray stylesGood()
+End If
+
+For K = 1 To styleGoodCount
+    Debug.Print stylesGood(K)
+Next
 
 '-------------------Create error report----------------------------
 
@@ -318,13 +377,24 @@ If styleCount(1) = 0 Then errorList = errorList & "ERROR: No tagged title detect
 If styleCount(1) > 1 Then errorList = errorList & "ERROR: Too many title paragraphs detected." & vbNewLine
 If styleCount(2) = 0 Then errorList = errorList & "ERROR: No tagged author name detected." & vbNewLine
 If styleCount(3) = 0 Then errorList = errorList & "ERROR: No tagged ISBN detected." & vbNewLine
-If styleCount(4) > 0 And styleCount(5) = 0 Then errorList = errorList & "ERROR: Chap Number (cn) cannot be used alone (every chapter must start with Chapter Title (ct)). Chapter number paragraphs have been converted to the Chap Title (ct) style." & vbNewLine
-If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged chapter openers detected. If your book does not have chapter openers, use the Chap Title Nonprinting (ctnp) style at the start of each section." & vbNewLine
+If styleCount(4) > 0 And styleCount(5) = 0 Then errorList = errorList & "ERROR: Chap Number (cn) cannot " & _
+    "be used alone (every chapter must start with Chapter Title (ct)). Chapter number paragraphs have been " & _
+    "converted to the Chap Title (ct) style." & vbNewLine
+If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged " & _
+    "chapter openers detected. If your book does not have chapter openers, use the Chap Title Nonprinting (ctnp) " & _
+    "style at the start of each section." & vbNewLine
+If styleCount(4) > styleCount(5) Then errorList = errorList & "WARNING: More Chap Number (cn) paragraphs than Chap " & _
+    "Title (ct) paragraphs found. Each Chap Number (cn) paragraph MUST be followed by a Chap Title (ct) paragraph. " & _
+    "Please adjust your styles." & vbNewLine
+
+If errorList <> "" Then
+    errorList = errorList & vbNewLine & "**If you have any questions about how to handle these errors, " & _
+        "please contact workflows@macmillan.com.**"
+End If
 
 Debug.Print errorList
 
 'Create report file
-Dim activeDoc As Document
 Dim activeRng As Range
 Set activeDoc = ActiveDocument
 Set activeRng = ActiveDocument.Range
@@ -405,13 +475,12 @@ Else
     Print #fnum, vbCr
     Print #fnum, vbCr
 End If
-    Print #fnum, "------------------------- Tag Summary -------------------------" & vbCr
-    Print #fnum, styleCount(1) & "  Titlepage Book Title (tit) paragraphs found."
-    Print #fnum, styleCount(2) & "  Titlepage Author Name (au) paragraphs found."
-    Print #fnum, styleCount(3) & "  span ISBN (isbn) paragraphs found."
-    Print #fnum, styleCount(4) & "  Chap Number (cn) paragraphs found."
-    Print #fnum, styleCount(5) & "  Chap Title (ct) paragraphs found."
-    Print #fnum, styleCount(6) & "  Chap Number Nonprinting (cnp) paragraphs found."
+    Print #fnum, "------------------------- GOOD STYLES IN USE -------------------------" & vbCr
+    
+    For K = 1 To styleGoodCount
+        Print #fnum, stylesGood(K)
+    Next K
+
 Close #fnum
 
 ''''for 32 char Mc OS bug-<PART 2
@@ -436,4 +505,3 @@ End If
 Application.ScreenUpdating = True
 
 End Sub
-
