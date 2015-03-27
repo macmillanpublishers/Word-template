@@ -6,7 +6,8 @@ Sub BookmakerReqs()
 
 'Created by Erica Warren - erica.warren@macmillan.com
 '3/27/2015: converts solo CNs to CTs
-'           page numbers added to Illustration List
+'           page numbers added to Illustrations List
+'           Added style report WITH character styles
 '3/20/2015: Added check if template is attached
 '3/17/2015: Added Illustrations List
 '3/16/2015: Fixed error creating text file, added title/author/isbn confirmation
@@ -312,7 +313,7 @@ End If
 
 Debug.Print cString(1) & cString(2) & cString(3)
 
-'-------------------Get list of good styles from document---------
+'-------------------Get list of good paragraph styles from document---------
 
 Dim activeDoc As Document
 Set activeDoc = ActiveDocument
@@ -367,6 +368,53 @@ End If
 For K = 1 To styleGoodCount
     Debug.Print stylesGood(K)
 Next
+
+'-------------------get list of good character styles--------------
+
+Dim charStyles As String
+Dim styleNameM(21) As String        'declare number in array
+Dim M As Integer
+
+styleNameM(1) = "span italic characters (ital)"
+styleNameM(2) = "span boldface characters (bf)"
+styleNameM(3) = "span small caps characters (sc)"
+styleNameM(4) = "span underscore characters (us)"
+styleNameM(5) = "span superscript characters (sup)"
+styleNameM(6) = "span subscript characters (sub)"
+styleNameM(7) = "span bold ital (bem)"
+styleNameM(8) = "span smcap ital (scital)"
+styleNameM(9) = "span smcap bold (scbold)"
+styleNameM(10) = "span symbols (sym)"
+styleNameM(11) = "span accent characters (acc)"
+styleNameM(12) = "span cross-reference (xref)"
+styleNameM(13) = "span hyperlink (url)"
+styleNameM(14) = "span material to come (tk)"
+styleNameM(15) = "span carry query (cq)"
+styleNameM(16) = "span preserve characters (pre)"
+styleNameM(17) = "bookmaker force page break (br)"
+styleNameM(18) = "bookmaker keep together (kt)"
+styleNameM(19) = "span ISBN (isbn)"
+styleNameM(20) = "span symbols ital (symi)"
+styleNameM(21) = "span symbols bold (symb)"
+
+'Move selection back to start of document
+Selection.HomeKey Unit:=wdStory
+
+For M = 1 To UBound(styleNameM())
+    With Selection.Find
+        .Style = ActiveDocument.Styles(styleNameM(M))
+        .Wrap = wdFindContinue
+        .Format = True
+    End With
+    If Selection.Find.Execute = True Then
+        charStyles = charStyles & styleNameM(M) & vbNewLine
+    End If
+Next M
+
+'Move selection back to start of document
+Selection.HomeKey Unit:=wdStory
+
+Debug.Print charStyles
 
 '-------------------Create error report----------------------------
 
@@ -480,6 +528,7 @@ End If
     For K = 1 To styleGoodCount
         Print #fnum, stylesGood(K)
     Next K
+    Print #fnum, charStyles
 
 Close #fnum
 
