@@ -296,7 +296,7 @@ Selection.HomeKey Unit:=wdStory
 Do While Selection.Find.Execute = True And cCount < 1000            'cCount < 1000 so we don't get an infinite loop
     cCount = cCount + 1
     pageNumberC = Selection.Information(wdActiveEndPageNumber)
-    cString(cCount) = "Page " & pageNumberC & ": " & Selection.Text & vbNewLine
+    cString(cCount) = "Page " & pageNumberC & ": " & Selection.Text
 Loop
 
 'Move selection back to start of document
@@ -344,10 +344,10 @@ For J = 1 To activeParaCountJ
     
     If Right(paraStyleGood, 1) = ")" Then
         For K = 1 To styleGoodCount
-            If paraStyleGood = stylesGood(K) Then                   'stylereport bug fix #1  v. 3.1
-                K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
-                Exit For                                        'stylereport bug fix #1   v. 3.1
-            End If                                              'stylereport bug fix #1   v. 3.1
+            If paraStyleGood = stylesGood(K) Then
+                K = styleGoodCount
+                Exit For
+            End If
         Next K
         If K = styleGoodCount + 1 Then
             styleGoodCount = K
@@ -482,35 +482,11 @@ If errorList = "" And badCount = 0 Then
     Print #fnum, "CONGRATULATIONS! YOU PASSED!" & vbCr
     Print #fnum, "But you're not done yet. Please check the info listed below." & vbCr
     Print #fnum, vbCr
-    Print #fnum, "-------------------------- METADATA ------------------------" & vbCr
-    Print #fnum, vbCr
-    Print #fnum, "Title: " & bString(1) & vbCr
-    Print #fnum, "Author: " & bString(2) & vbCr
-    Print #fnum, "ISBN: " & bString(3) & vbCr
-    Print #fnum, vbCr
-    Print #fnum, vbCr
-    Print #fnum, "If any of these are incorrect, please fix the associated styles" & vbCr
-    Print #fnum, "in the manuscript." & vbCr
-    Print #fnum, vbCr
-    Print #fnum, "-----------------------ILLUSTRATION LIST ---------------------" & vbCr
-    Print #fnum, vbCr
-    
-    For E = 1 To cCount
-        Print #fnum, cString(E)
-    Next E
-       
-    If cString(1) <> "no illustrations detected" Then
-        Print #fnum, "Verify that this list of illustrations includes the correct file names--" & vbCr
-        Print #fnum, "and ONLY the file names--for your illustrations. Place these files in" & vbCr
-        Print #fnum, "the submitted_images folder BEFORE you run the bookmaker tool." & vbCr
-        Print #fnum, vbCr
-        Print #fnum, vbCr
-    End If
 
 Else
-    Print #fnum, "BAD NEWS:" & vbCr
     Print #fnum, vbCr
-    Print #fnum, "Problems were found with the tags in your document '" & activeDoc.Name & "':" & vbCr
+    Print #fnum, "OOPS!" & vbCr
+    Print #fnum, "Problems were found with the styles in your document '" & activeDoc.Name & "':" & vbCr
     Print #fnum, vbCr
     Print #fnum, vbCr
     Print #fnum, "--------------------------- ERRORS ---------------------------" & vbCr
@@ -522,8 +498,33 @@ Else
         
     Print #fnum, vbCr
     Print #fnum, vbCr
+    Print #fnum, "Also, check the info listed below:"
+    Print #fnum, vbCr
 End If
-    Print #fnum, "------------------------- GOOD STYLES IN USE -------------------------" & vbCr
+    Print #fnum, "-------------------------- METADATA ------------------------" & vbCr
+    Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
+    Print #fnum, "associated styles in the manuscript." & vbCr
+    Print #fnum, vbCr
+    Print #fnum, "Title: " & bString(1) & vbCr
+    Print #fnum, "Author: " & bString(2) & vbCr
+    Print #fnum, "ISBN: " & bString(3) & vbCr
+    Print #fnum, vbCr
+    Print #fnum, vbCr
+    Print #fnum, "---------------------- ILLUSTRATION LIST --------------------" & vbCr
+    
+    If cString(1) <> "no illustrations detected" Then
+        Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
+        Print #fnum, "names of your illustrations. Be sure to place these files in" & vbCr
+        Print #fnum, "the submitted_images folder BEFORE you run the bookmaker tool." & vbCr
+        Print #fnum, vbCr
+    End If
+    
+    For E = 1 To cCount
+        Print #fnum, cString(E)
+    Next E
+       
+    Print #fnum, vbCr
+    Print #fnum, "---------------------- GOOD STYLES IN USE -------------------" & vbCr
     
     For K = 1 To styleGoodCount
         Print #fnum, stylesGood(K)
