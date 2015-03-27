@@ -1,4 +1,4 @@
-
+﻿
 Option Explicit
 
 Sub BookmakerReqs()
@@ -307,8 +307,9 @@ If cCount > 1000 Then
     "Please contact workflows@macmillan.com to complete your illustration list."
 End If
 
-If cString(1) = "" Then
-    cString(1) = "no illustrations detected"
+If cCount = 0 Then
+    cCount = 1
+    cString(1) = "no illustrations detected" & vbNewLine
 End If
 
 Debug.Print cString(1) & cString(2) & cString(3)
@@ -512,7 +513,7 @@ End If
     Print #fnum, vbCr
     Print #fnum, "---------------------- ILLUSTRATION LIST --------------------" & vbCr
     
-    If cString(1) <> "no illustrations detected" Then
+    If cString(1) <> "no illustrations detected" & vbNewLine Then
         Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
         Print #fnum, "names of your illustrations. Be sure to place these files in" & vbCr
         Print #fnum, "the submitted_images folder BEFORE you run the bookmaker tool." & vbCr
