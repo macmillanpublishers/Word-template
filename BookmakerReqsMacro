@@ -154,8 +154,8 @@ For D = 1 To activeParaCount
                             badCount = badCount + 1
                             Set activeParaRange = ActiveDocument.Paragraphs(D).Range
                             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
-                            badStyles(badCount) = "Bad style on page " & pageNumber & " (Paragraph " & D & "): " & _
-                                vbTab & paraStyle
+                            badStyles(badCount) = "**ERROR: Bad style on page " & pageNumber & " (Paragraph " & D & "): " & _
+                                vbTab & paraStyle & vbNewLine & vbNewLine
                     End If
             End If
     End If
@@ -262,6 +262,20 @@ For b = 1 To UBound(styleNameB())
     Selection.Find.Execute
     bString(b) = Selection.Text
 Next
+
+'Set as blank if nothing has been tagged as that style (otherwise is just first character of the document)
+If styleCount(1) = 0 Then
+    bString(1) = ""
+End If
+
+If styleCount(2) = 0 Then
+    bString(2) = ""
+End If
+
+If styleCount(3) = 0 Then
+    bString(3) = ""
+End If
+
 
 Debug.Print "Title: " & bString(1) & vbNewLine & _
             "Author: " & bString(2) & vbNewLine & _
@@ -422,23 +436,28 @@ Debug.Print charStyles
 ' Prepare error message
 Dim errorList As String
 errorList = ""
-If styleCount(1) = 0 Then errorList = errorList & "ERROR: No tagged title detected." & vbNewLine
-If styleCount(1) > 1 Then errorList = errorList & "ERROR: Too many title paragraphs detected." & vbNewLine
-If styleCount(2) = 0 Then errorList = errorList & "ERROR: No tagged author name detected." & vbNewLine
-If styleCount(3) = 0 Then errorList = errorList & "ERROR: No tagged ISBN detected." & vbNewLine
-If styleCount(4) > 0 And styleCount(5) = 0 Then errorList = errorList & "ERROR: Chap Number (cn) cannot " & _
+If styleCount(1) = 0 Then errorList = errorList & "**ERROR: No tagged title detected." & vbNewLine & vbNewLine
+If styleCount(1) > 1 Then errorList = errorList & "**ERROR: Too many title paragraphs detected." & vbNewLine & vbNewLine
+If styleCount(2) = 0 Then errorList = errorList & "**ERROR: No tagged author name detected." & vbNewLine & vbNewLine
+If styleCount(3) = 0 Then errorList = errorList & "**ERROR: No tagged ISBN detected." & vbNewLine & vbNewLine
+If styleCount(4) > 0 And styleCount(5) = 0 Then errorList = errorList & "**ERROR: Chap Number (cn) cannot " & _
     "be used alone (every chapter must start with Chapter Title (ct)). Chapter number paragraphs have been " & _
-    "converted to the Chap Title (ct) style." & vbNewLine
-If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "ERROR: No tagged " & _
+    "converted to the Chap Title (ct) style." & vbNewLine & vbNewLine
+If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "**ERROR: No tagged " & _
     "chapter openers detected. If your book does not have chapter openers, use the Chap Title Nonprinting (ctnp) " & _
-    "style at the start of each section." & vbNewLine
-If styleCount(4) > styleCount(5) Then errorList = errorList & "WARNING: More Chap Number (cn) paragraphs than Chap " & _
+    "style at the start of each section." & vbNewLine & vbNewLine
+If styleCount(4) > styleCount(5) And styleCount(5) > 0 Then errorList = errorList & "**ERROR: More Chap Number (cn) paragraphs than Chap " & _
     "Title (ct) paragraphs found. Each Chap Number (cn) paragraph MUST be followed by a Chap Title (ct) paragraph. " & _
-    "Please adjust your styles." & vbNewLine
+    "Please adjust your styles." & vbNewLine & vbNewLine
+
+'Add bad styles to error message
+For D = 1 To badCount
+    errorList = errorList & badStyles(D)
+Next D
 
 If errorList <> "" Then
-    errorList = errorList & vbNewLine & "**If you have any questions about how to handle these errors, " & _
-        "please contact workflows@macmillan.com.**"
+    errorList = errorList & vbNewLine & "If you have any questions about how to handle these errors, " & _
+        "please contact workflows@macmillan.com." & vbNewLine
 End If
 
 Debug.Print errorList
@@ -486,23 +505,16 @@ If errorList = "" And badCount = 0 Then
 
 Else
     Print #fnum, vbCr
-    Print #fnum, "OOPS!" & vbCr
-    Print #fnum, "Problems were found with the styles in your document '" & activeDoc.Name & "':" & vbCr
+    Print #fnum, "                             OOPS!" & vbCr
+    Print #fnum, "     Problems were found with the styles in your document '" & activeDoc.Name & "':" & vbCr
     Print #fnum, vbCr
     Print #fnum, vbCr
     Print #fnum, "--------------------------- ERRORS ---------------------------" & vbCr
     Print #fnum, errorList
-    
-    For D = 1 To badCount
-        Print #fnum, badStyles(D)
-    Next D
-        
     Print #fnum, vbCr
-    Print #fnum, vbCr
-    Print #fnum, "Also, check the info listed below:"
     Print #fnum, vbCr
 End If
-    Print #fnum, "-------------------------- METADATA ------------------------" & vbCr
+    Print #fnum, "--------------------------- METADATA -------------------------" & vbCr
     Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
     Print #fnum, "associated styles in the manuscript." & vbCr
     Print #fnum, vbCr
@@ -511,7 +523,7 @@ End If
     Print #fnum, "ISBN: " & bString(3) & vbCr
     Print #fnum, vbCr
     Print #fnum, vbCr
-    Print #fnum, "---------------------- ILLUSTRATION LIST --------------------" & vbCr
+    Print #fnum, "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
     
     If cString(1) <> "no illustrations detected" & vbNewLine Then
         Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
@@ -525,7 +537,7 @@ End If
     Next E
        
     Print #fnum, vbCr
-    Print #fnum, "---------------------- GOOD STYLES IN USE -------------------" & vbCr
+    Print #fnum, "----------------------- GOOD STYLES IN USE --------------------" & vbCr
     
     For K = 1 To styleGoodCount
         Print #fnum, stylesGood(K)
