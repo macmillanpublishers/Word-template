@@ -234,7 +234,7 @@ End If
 
 Dim styleNameB(3) As String         ' must declare number of items in array here
 Dim bString(3) As String            ' and here
-Dim b As Long
+Dim b As Integer
 
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
@@ -264,18 +264,11 @@ For b = 1 To UBound(styleNameB())
 Next
 
 'Set as blank if nothing has been tagged as that style (otherwise is just first character of the document)
-If styleCount(1) = 0 Then
-    bString(1) = ""
-End If
-
-If styleCount(2) = 0 Then
-    bString(2) = ""
-End If
-
-If styleCount(3) = 0 Then
-    bString(3) = ""
-End If
-
+For b = 1 To UBound(styleNameB())
+    If styleCount(b) = 0 Then
+        bString(b) = ""
+    End If
+Next b
 
 Debug.Print "Title: " & bString(1) & vbNewLine & _
             "Author: " & bString(2) & vbNewLine & _
@@ -436,19 +429,23 @@ Debug.Print charStyles
 ' Prepare error message
 Dim errorList As String
 errorList = ""
-If styleCount(1) = 0 Then errorList = errorList & "**ERROR: No tagged title detected." & vbNewLine & vbNewLine
-If styleCount(1) > 1 Then errorList = errorList & "**ERROR: Too many title paragraphs detected." & vbNewLine & vbNewLine
-If styleCount(2) = 0 Then errorList = errorList & "**ERROR: No tagged author name detected." & vbNewLine & vbNewLine
-If styleCount(3) = 0 Then errorList = errorList & "**ERROR: No tagged ISBN detected." & vbNewLine & vbNewLine
-If styleCount(4) > 0 And styleCount(5) = 0 Then errorList = errorList & "**ERROR: Chap Number (cn) cannot " & _
-    "be used alone (every chapter must start with Chapter Title (ct)). Chapter number paragraphs have been " & _
-    "converted to the Chap Title (ct) style." & vbNewLine & vbNewLine
-If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & "**ERROR: No tagged " & _
-    "chapter openers detected. If your book does not have chapter openers, use the Chap Title Nonprinting (ctnp) " & _
-    "style at the start of each section." & vbNewLine & vbNewLine
-If styleCount(4) > styleCount(5) And styleCount(5) > 0 Then errorList = errorList & "**ERROR: More Chap Number (cn) paragraphs than Chap " & _
-    "Title (ct) paragraphs found. Each Chap Number (cn) paragraph MUST be followed by a Chap Title (ct) paragraph. " & _
-    "Please adjust your styles." & vbNewLine & vbNewLine
+If styleCount(1) = 0 Then errorList = errorList & "**ERROR: No styled title detected." & vbNewLine & vbNewLine
+If styleCount(1) > 1 Then errorList = errorList & "**ERROR: Too many title paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
+If styleCount(2) = 0 Then errorList = errorList & "**ERROR: No styled author name detected." & vbNewLine & vbNewLine
+If styleCount(3) = 0 Then errorList = errorList & "**ERROR: No styled ISBN detected." & vbNewLine & vbNewLine
+If styleCount(4) > 0 And styleCount(5) = 0 Then errorList = errorList & _
+    "**ERROR: Chap Number (cn) cannot be the main heading for" & vbNewLine _
+    & vbTab & "a chapter. Every chapter must start with Chapter Title (ct)" & vbNewLine _
+    & vbTab & "style. Chap Number (cn) paragraphs have been converted to the" & vbNewLine _
+    & vbTab & "Chap Title (ct) style." & vbNewLine & vbNewLine
+If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & _
+    "**ERROR: No tagged chapter openers detected. If your book does" & vbNewLine _
+    & vbTab & "not have chapter openers, use the Chap Title Nonprinting" & vbNewLine _
+    & vbTab & "(ctnp) style at the start of each section." & vbNewLine & vbNewLine
+If styleCount(4) > styleCount(5) And styleCount(5) > 0 Then errorList = errorList & _
+    "**ERROR: More Chap Number (cn) paragraphs than Chap Title (ct)" & vbNewLine _
+    & vbTab & "paragraphs found. Each Chap Number (cn) paragraph MUST be" & vbNewLine _
+    & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
 
 'Add bad styles to error message
 For D = 1 To badCount
