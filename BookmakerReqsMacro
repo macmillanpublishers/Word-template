@@ -230,49 +230,26 @@ Selection.HomeKey Unit:=wdStory
     
 End If
 
-'------------Get title/author/isbn text from document-----------
+'--------Get title/author/isbn/illustration text from document-----------
 
 Dim styleNameB(3) As String         ' must declare number of items in array here
 Dim bString(3) As String            ' and here
 Dim b As Integer
 
-'Move selection to start of document
-Selection.HomeKey Unit:=wdStory
-
 styleNameB(1) = "Titlepage Book Title (tit)"
 styleNameB(2) = "Titlepage Author Name (au)"
 styleNameB(3) = "span ISBN (isbn)"
 
-'Search for required style, select, and copy
 For b = 1 To UBound(styleNameB())
-    Selection.Find.ClearFormatting
-    Selection.Find.Style = ActiveDocument.Styles(styleNameB(b))
-    With Selection.Find
-        .Text = ""
-        .Replacement.Text = ""
-        .Forward = True
-        .Wrap = wdFindContinue
-        .Format = True
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = False
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-    End With
-    Selection.Find.Execute
-    bString(b) = Selection.Text
-Next
-
-'Set as blank if nothing has been tagged as that style (otherwise is just first character of the document)
-For b = 1 To UBound(styleNameB())
-    If styleCount(b) = 0 Then
-        bString(b) = ""
-    End If
+    bString(b) = GetText(styleNameB(b))
 Next b
 
-Debug.Print "Title: " & bString(1) & vbNewLine & _
-            "Author: " & bString(2) & vbNewLine & _
-            "ISBN: " & bString(3) & vbNewLine
+Debug.Print "Title: " & vbNewLine & _
+            bString(1) & vbNewLine & _
+            "Author: " & vbNewLine & _
+            bString(2) & vbNewLine & _
+            "ISBN: " & vbNewLine & _
+            bString(3) & vbNewLine
             
 '-------------------Get Illustrations List from Document-----------
 
@@ -303,7 +280,18 @@ Selection.HomeKey Unit:=wdStory
 Do While Selection.Find.Execute = True And cCount < 1000            'cCount < 1000 so we don't get an infinite loop
     cCount = cCount + 1
     pageNumberC = Selection.Information(wdActiveEndPageNumber)
+    
+    'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
+    If InStr(Selection.Text, Chr(13)) > 0 Then
+        Selection.MoveEnd Unit:=wdCharacter, Count:=-1
+    End If
+    
     cString(cCount) = "Page " & pageNumberC & ": " & Selection.Text
+    
+    'If the next character is a paragraph return, add that to the selection
+    'Otherwise the next Find will just select the same text with the paragraph return
+    Selection.MoveEndWhile Cset:=Chr(13), Count:=wdForward
+    
 Loop
 
 'Move selection back to start of document
@@ -496,14 +484,14 @@ fnum = FreeFile()
 Open reqReportDoc For Output As fnum
 If errorList = "" And badCount = 0 Then
     Print #fnum, vbCr
-    Print #fnum, "CONGRATULATIONS! YOU PASSED!" & vbCr
-    Print #fnum, "But you're not done yet. Please check the info listed below." & vbCr
+    Print #fnum, "                 CONGRATULATIONS! YOU PASSED!" & vbCr
+    Print #fnum, " But you're not done yet. Please check the info listed below." & vbCr
     Print #fnum, vbCr
 
 Else
     Print #fnum, vbCr
     Print #fnum, "                             OOPS!" & vbCr
-    Print #fnum, "     Problems were found with the styles in your document '" & activeDoc.Name & "':" & vbCr
+    Print #fnum, "     Problems were found with the styles in your document." & vbCr
     Print #fnum, vbCr
     Print #fnum, vbCr
     Print #fnum, "--------------------------- ERRORS ---------------------------" & vbCr
@@ -515,9 +503,12 @@ End If
     Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
     Print #fnum, "associated styles in the manuscript." & vbCr
     Print #fnum, vbCr
-    Print #fnum, "Title: " & bString(1) & vbCr
-    Print #fnum, "Author: " & bString(2) & vbCr
-    Print #fnum, "ISBN: " & bString(3) & vbCr
+    Print #fnum, "* Title *" & vbCr
+    Print #fnum, bString(1) & vbCr
+    Print #fnum, "* Author *" & vbCr
+    Print #fnum, bString(2) & vbCr
+    Print #fnum, "* ISBN *" & vbCr
+    Print #fnum, bString(3) & vbCr
     Print #fnum, vbCr
     Print #fnum, vbCr
     Print #fnum, "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
@@ -565,3 +556,53 @@ End If
 Application.ScreenUpdating = True
 
 End Sub
+Private Function GetText(styleName As String)
+Dim fString As String
+Dim fCount As Integer
+
+fCount = 0
+
+'Move selection to start of document
+Selection.HomeKey Unit:=wdStory
+
+    Selection.Find.ClearFormatting
+    With Selection.Find
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles(styleName)
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+
+Do While Selection.Find.Execute = True And fCount < 1000            'cCount < 1000 so we don't get an infinite loop
+    fCount = fCount + 1
+    
+    'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
+    If InStr(Selection.Text, Chr(13)) > 0 Then
+        Selection.MoveEnd Unit:=wdCharacter, Count:=-1
+    End If
+    
+    'Assign selected text to variable
+    fString = fString & Selection.Text & vbNewLine
+    
+    'If the next character is a paragraph return, add that to the selection
+    'Otherwise the next Find will just select the same text with the paragraph return
+    Selection.MoveEndWhile Cset:=Chr(13), Count:=wdForward
+Loop
+
+'Move selection back to start of document
+Selection.HomeKey Unit:=wdStory
+
+If fCount = 0 Then
+    GetText = ""
+Else
+    GetText = fString
+End If
+
+End Function
