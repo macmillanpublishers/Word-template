@@ -201,7 +201,8 @@ Else     '''file does not exist
     
 End If
 
-If Dir(localDrive & "\" & templateFile) = vbNullString Then 'template file doesn't exist
+'check if template file exists at all
+If FileOrDirExists(localDrive & "\" & templateFile) = False Then
     updateCheck = True
 End If
     
@@ -401,6 +402,12 @@ logFileMac = dirNameMac & logFileName
     Else                                                                                                                         '''file does not exist
             ShellAndWaitMac ("[ -e " & dirNameBash & " ] &>/dev/null || mkdir -p " & dirNameBash)
     End If
+
+'check if template file exists at all
+If FileOrDirExists(dirNameMac & templateFile) = False Then
+        updateCheck = True
+    End If
+
 '''run log setup sub
 LogInformation logFileMac, logString
 
@@ -529,4 +536,32 @@ Function FileLocked(strFileName As String) As Boolean
       FileLocked = True
       Err.Clear
    End If
+End Function
+Function FileOrDirExists(PathName As String) As Boolean
+     ' From here: http://www.vbaexpress.com/kb/getarticle.php?kb_id=559
+     'Macro Purpose: Function returns TRUE if the specified file
+     '               or folder exists, false if not.
+     'PathName     : Supports Windows mapped drives or UNC
+     '             : Supports Macintosh paths
+     'File usage   : Provide full file path and extension
+     'Folder usage : Provide full folder path
+     '               Accepts with/without trailing "\" (Windows)
+     '               Accepts with/without trailing ":" (Macintosh)
+     
+    Dim iTemp As Integer
+     
+     'Ignore errors to allow for error evaluation
+    On Error Resume Next
+    iTemp = GetAttr(PathName)
+     
+     'Check if error exists and set response appropriately
+    Select Case Err.Number
+    Case Is = 0
+        FileOrDirExists = True
+    Case Else
+        FileOrDirExists = False
+    End Select
+     
+     'Resume error checking
+    On Error GoTo 0
 End Function
