@@ -952,21 +952,24 @@ Dim mainDoc As Document
 Set mainDoc = ActiveDocument
 
 '-------Check if Macmillan template is attached--------------
-
 Dim currentTemplate As String
 Dim ourTemplate1 As String
 Dim ourTemplate2 As String
+Dim ourTemplate3 As String
 
-currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
+currentTemplate = mainDoc.BuiltInDocumentProperties(wdPropertyTemplate)
 ourTemplate1 = "macmillan.dotm"
 ourTemplate2 = "macmillan_NoColor.dotm"
+ourTemplate3 = "MacmillanCoverCopy.dotm"
 
 Debug.Print "Current template is " & currentTemplate & vbNewLine
 
 If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
-        MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
-        Exit Function
+        If currentTemplate <> ourTemplate3 Then
+            MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+            Exit Function
+        End If
     End If
 End If
 
@@ -1204,17 +1207,21 @@ Dim iReply As Integer
 Dim currentTemplate As String
 Dim ourTemplate1 As String
 Dim ourTemplate2 As String
+Dim ourTemplate3 As String
 
 currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
 ourTemplate1 = "macmillan.dotm"
 ourTemplate2 = "macmillan_NoColor.dotm"
+ourTemplate3 = "MacmillanCoverCopy.dotm"
 
 Debug.Print "Current template is " & currentTemplate & vbNewLine
 
 If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
-        MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
-        Exit Function
+        If currentTemplate <> ourTemplate3 Then
+            MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+            Exit Function
+        End If
     End If
 End If
 
@@ -1275,3 +1282,4 @@ ActiveDocument.ActiveWindow.View.ShowAll = True                         'Shows n
 ActiveDocument.ActiveWindow.View.Type = wdNormalView                'Switches to Normal/Draft view
 ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5)                           'Sets Styles margin area in draft view to 1.5 in.
 End Sub
+
