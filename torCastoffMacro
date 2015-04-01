@@ -1,3 +1,5 @@
+Option Explicit
+
 Sub torCastoff()
 
 Dim charCount As Long
@@ -29,7 +31,16 @@ End With
 
 Debug.Print pageCount
 
-If pageCount > 55 Then
+'Test if pageCount is odd or even
+If ((pageCount Mod 2) = 0) Then ' Even = True
+    pageCount = pageCount
+Else                            ' pageCount is odd, must round up 1 page.
+    pageCount = pageCount + 1
+End If
+    
+Debug.Print pageCount
+
+If pageCount > 56 Then
     MsgBox "Your book will be approximately " & pageCount & " pages using the Tor.com automated conversion tool."
 Else
     MsgBox "Your book will be approximately " & pageCount & " pages using the Tor.com automated conversion tool." & vbNewLine & _
