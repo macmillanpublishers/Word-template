@@ -12,6 +12,7 @@ pageCount = charCount / designChar
 
 Debug.Print pageCount
 
+'search for page breaks, add a page for each
 With ActiveDocument.Range.Find
     .ClearFormatting
     .Text = "^m"
@@ -44,7 +45,7 @@ If pageCount > 56 Then
     MsgBox "Your book will be approximately " & pageCount & " pages using the Tor.com automated conversion tool."
 Else
     MsgBox "Your book will be approximately " & pageCount & " pages using the Tor.com automated conversion tool." & vbNewLine & _
-    vbNewLine & "Note that books 48 pages and shorter will be saddle stiched (no spine)."
+    vbNewLine & "Note that books 48 pages and shorter will be saddle stitched (no spine)."
 End If
 
 End Sub
