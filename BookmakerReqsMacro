@@ -443,9 +443,10 @@ If styleCount(4) > styleCount(5) And styleCount(5) > 0 Then errorList = errorLis
 If styleCount(7) = 0 Then errorList = errorList & "**ERROR: No styled Imprint Line detected." & vbNewLine & vbNewLine
 If styleCount(7) > 1 Then errorList = errorList & "**ERROR: Too many Imprint Line paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
 If (styleCount(4) > 0 And styleCount(5) = 0) Or (styleCount(4) = 0 And styleCount(5) > 0) Then errorList = CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
-If styleCount(4) >= styleCount(5) Then errorList = CheckPrevStyle("Chap Number (cn)", "Page Break (pb)")
-If styleCount(4) >= styleCount(5) Then errorList = CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
 If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) > 0 Then errorList = CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
+If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Number (cn)", "Page Break (pb)")
+If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
+
 
 
 'Add bad styles to error message
