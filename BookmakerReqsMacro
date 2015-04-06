@@ -5,6 +5,7 @@ Sub BookmakerReqs()
 '-----------------------------------------------------------
 
 'Created by Erica Warren - erica.warren@macmillan.com
+'4/3/2015: adding Imprint Line requirement
 '3/27/2015: converts solo CNs to CTs
 '           page numbers added to Illustrations List
 '           Added style report WITH character styles
@@ -63,13 +64,13 @@ Dim badStyles(100) As String        'Increase number if want to count more bad s
 Dim badCount As Integer
 Dim activeParaRange As Range
 Dim pageNumber As Integer
-Dim D As Integer
+Dim d As Integer
 
 badCount = 0
-activeParaCount = ActiveDocument.Paragraphs.Count
+activeParaCount = ActiveDocument.paragraphs.Count
 
-For D = 1 To activeParaCount
-    paraStyle = ActiveDocument.Paragraphs(D).Style
+For d = 1 To activeParaCount
+    paraStyle = ActiveDocument.paragraphs(d).Style
     
     'Debug.Print ActiveDocument.Paragraphs(A).Style & vbNewLine
     
@@ -152,9 +153,9 @@ For D = 1 To activeParaCount
                         paraStyle <> "Chap Opening Text (cotx)" Then
                             
                             badCount = badCount + 1
-                            Set activeParaRange = ActiveDocument.Paragraphs(D).Range
+                            Set activeParaRange = ActiveDocument.paragraphs(d).Range
                             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
-                            badStyles(badCount) = "**ERROR: Bad style on page " & pageNumber & " (Paragraph " & D & "): " & _
+                            badStyles(badCount) = "**ERROR: Bad style on page " & pageNumber & " (Paragraph " & d & "): " & _
                                 vbTab & paraStyle & vbNewLine & vbNewLine
                     End If
             End If
@@ -165,8 +166,8 @@ Next
 
 '-------Count number of occurences of each required style----
 
-Dim styleName(6) As String                      ' Declare number of items in array
-Dim styleCount(6) As Integer                    ' ditto
+Dim styleName(7) As String                      ' Declare number of items in array
+Dim styleCount(7) As Integer                    ' ditto
 Dim A As Long
 
 styleName(1) = "Titlepage Book Title (tit)"
@@ -175,6 +176,7 @@ styleName(3) = "span ISBN (isbn)"
 styleName(4) = "Chap Number (cn)"
 styleName(5) = "Chap Title (ct)"
 styleName(6) = "Chap Title Nonprinting (ctnp)"
+styleName(7) = "Titlepage Imprint Line (imp)"
 
 For A = 1 To UBound(styleName())
     With ActiveDocument.Range.Find
@@ -201,7 +203,8 @@ Debug.Print styleName(1) & ": " & styleCount(1) & vbNewLine _
             ; styleName(3) & ": " & styleCount(3) & vbNewLine _
             ; styleName(4) & ": " & styleCount(4) & vbNewLine _
             ; styleName(5) & ": " & styleCount(5) & vbNewLine _
-            ; styleName(6) & ": " & styleCount(6) & vbNewLine
+            ; styleName(6) & ": " & styleCount(6) & vbNewLine _
+            ; styleName(7) & ": " & styleCount(7) & vbNewLine
             
 '------------Convert solo Chap Number paras to Chap Title-------
 
@@ -232,13 +235,14 @@ End If
 
 '--------Get title/author/isbn/illustration text from document-----------
 
-Dim styleNameB(3) As String         ' must declare number of items in array here
-Dim bString(3) As String            ' and here
+Dim styleNameB(4) As String         ' must declare number of items in array here
+Dim bString(4) As String            ' and here
 Dim b As Integer
 
 styleNameB(1) = "Titlepage Book Title (tit)"
 styleNameB(2) = "Titlepage Author Name (au)"
 styleNameB(3) = "span ISBN (isbn)"
+styleNameB(4) = "Titlepage Imprint Line (imp)"
 
 For b = 1 To UBound(styleNameB())
     bString(b) = GetText(styleNameB(b))
@@ -249,7 +253,9 @@ Debug.Print "Title: " & vbNewLine & _
             "Author: " & vbNewLine & _
             bString(2) & vbNewLine & _
             "ISBN: " & vbNewLine & _
-            bString(3) & vbNewLine
+            bString(3) & vbNewLine & _
+            "Imprint: " & vbNewLine & _
+            bString(4) & vbNewLine
             
 '-------------------Get Illustrations List from Document-----------
 
@@ -281,7 +287,7 @@ Do While Selection.Find.Execute = True And cCount < 1000            'cCount < 10
     cCount = cCount + 1
     pageNumberC = Selection.Information(wdActiveEndPageNumber)
     
-    'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
+    'If paragraph return exists in selection, don't select last character (the last paragraph return)
     If InStr(Selection.Text, Chr(13)) > 0 Then
         Selection.MoveEnd Unit:=wdCharacter, Count:=-1
     End If
@@ -330,13 +336,13 @@ ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 
 ' Collect all styles being used
 styleGoodCount = 0
-activeParaCountJ = activeDoc.Paragraphs.Count
+activeParaCountJ = activeDoc.paragraphs.Count
 For J = 1 To activeParaCountJ
     'Next two lines are for the status bar
     Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
     If J Mod 100 = 0 Then DoEvents
     
-    paraStyleGood = activeDoc.Paragraphs(J).Style
+    paraStyleGood = activeDoc.paragraphs(J).Style
     
     If Right(paraStyleGood, 1) = ")" Then
         For K = 1 To styleGoodCount
@@ -369,7 +375,7 @@ Next
 
 Dim charStyles As String
 Dim styleNameM(21) As String        'declare number in array
-Dim M As Integer
+Dim m As Integer
 
 styleNameM(1) = "span italic characters (ital)"
 styleNameM(2) = "span boldface characters (bf)"
@@ -396,16 +402,16 @@ styleNameM(21) = "span symbols bold (symb)"
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
 
-For M = 1 To UBound(styleNameM())
+For m = 1 To UBound(styleNameM())
     With Selection.Find
-        .Style = ActiveDocument.Styles(styleNameM(M))
+        .Style = ActiveDocument.Styles(styleNameM(m))
         .Wrap = wdFindContinue
         .Format = True
     End With
     If Selection.Find.Execute = True Then
-        charStyles = charStyles & styleNameM(M) & vbNewLine
+        charStyles = charStyles & styleNameM(m) & vbNewLine
     End If
-Next M
+Next m
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
@@ -434,14 +440,22 @@ If styleCount(4) > styleCount(5) And styleCount(5) > 0 Then errorList = errorLis
     "**ERROR: More Chap Number (cn) paragraphs than Chap Title (ct)" & vbNewLine _
     & vbTab & "paragraphs found. Each Chap Number (cn) paragraph MUST be" & vbNewLine _
     & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
+If styleCount(7) = 0 Then errorList = errorList & "**ERROR: No styled Imprint Line detected." & vbNewLine & vbNewLine
+If styleCount(7) > 1 Then errorList = errorList & "**ERROR: Too many Imprint Line paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
+If (styleCount(4) > 0 And styleCount(5) = 0) Or (styleCount(4) = 0 And styleCount(5) > 0) Then errorList = CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
+If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) > 0 Then errorList = CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
+If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Number (cn)", "Page Break (pb)")
+If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
+
+
 
 'Add bad styles to error message
-For D = 1 To badCount
-    errorList = errorList & badStyles(D)
-Next D
+For d = 1 To badCount
+    errorList = errorList & badStyles(d)
+Next d
 
 If errorList <> "" Then
-    errorList = errorList & vbNewLine & "If you have any questions about how to handle these errors, " & _
+    errorList = errorList & vbNewLine & "If you have any questions about how to handle these errors, " & vbNewLine & _
         "please contact workflows@macmillan.com." & vbNewLine
 End If
 
@@ -478,7 +492,7 @@ End If
 '''end ''''for 32 char Mc OS bug part 1
 
 'set and open file for output
-Dim E As Integer
+Dim e As Integer
 
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
@@ -503,12 +517,14 @@ End If
     Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
     Print #fnum, "associated styles in the manuscript." & vbCr
     Print #fnum, vbCr
-    Print #fnum, "* Title *" & vbCr
+    Print #fnum, "* TITLE *" & vbCr
     Print #fnum, bString(1) & vbCr
-    Print #fnum, "* Author *" & vbCr
+    Print #fnum, "* AUTHOR *" & vbCr
     Print #fnum, bString(2) & vbCr
     Print #fnum, "* ISBN *" & vbCr
     Print #fnum, bString(3) & vbCr
+    Print #fnum, "* IMPRINT *" & vbCr
+    Print #fnum, bString(4) & vbCr
     Print #fnum, vbCr
     Print #fnum, vbCr
     Print #fnum, "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
@@ -520,9 +536,9 @@ End If
         Print #fnum, vbCr
     End If
     
-    For E = 1 To cCount
-        Print #fnum, cString(E)
-    Next E
+    For e = 1 To cCount
+        Print #fnum, cString(e)
+    Next e
        
     Print #fnum, vbCr
     Print #fnum, "----------------------- GOOD STYLES IN USE --------------------" & vbCr
@@ -580,7 +596,7 @@ Selection.HomeKey Unit:=wdStory
         .MatchAllWordForms = False
     End With
 
-Do While Selection.Find.Execute = True And fCount < 1000            'cCount < 1000 so we don't get an infinite loop
+Do While Selection.Find.Execute = True And fCount < 1000            'fCount < 1000 so we don't get an infinite loop
     fCount = fCount + 1
     
     'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
@@ -604,5 +620,66 @@ If fCount = 0 Then
 Else
     GetText = fString
 End If
+
+End Function
+Function CheckPrevStyle(findStyle As String, prevStyle As String)
+Dim jString As String
+Dim jCount As Integer
+Dim pageNum As Integer
+
+jCount = 0
+jString = ""
+
+'Move selection to start of document
+Selection.HomeKey Unit:=wdStory
+
+'select paragraph with that style
+    Selection.Find.ClearFormatting
+    With Selection.Find
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles(findStyle)
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+
+Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 1000 so we don't get an infinite loop
+    jCount = jCount + 1
+    
+    'select preceding paragraph
+    Selection.Previous(Unit:=wdParagraph, Count:=1).Select
+    pageNum = Selection.Information(wdActiveEndPageNumber)
+    
+        'Check if preceding paragraph style is correct
+        If Selection.Style <> prevStyle Then
+            jString = jString & "**ERROR: Missing or incorrect " & prevStyle & " style on page " & pageNum & "." & vbNewLine
+        End If
+        
+        'If you're searching for a page break before, also check if manual page break is in paragraph
+        If prevStyle = "Page Break (pb)" Then
+            If InStr(Selection.Text, Chr(12)) = 0 Then
+                jString = jString & "**ERROR: Missing manual page break on page " & pageNum & "." & vbNewLine
+            End If
+        End If
+        
+    'Debug.Print jString
+    
+    'move the selection back to original paragraph, so it won't be
+    'selected again on next search
+    Selection.Next(Unit:=wdParagraph, Count:=1).Select
+Loop
+
+'Debug.Print jString
+
+CheckPrevStyle = jString
+
+'Move selection back to start of document
+Selection.HomeKey Unit:=wdStory
 
 End Function
