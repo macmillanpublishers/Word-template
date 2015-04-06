@@ -442,10 +442,10 @@ If styleCount(4) > styleCount(5) And styleCount(5) > 0 Then errorList = errorLis
     & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
 If styleCount(7) = 0 Then errorList = errorList & "**ERROR: No styled Imprint Line detected." & vbNewLine & vbNewLine
 If styleCount(7) > 1 Then errorList = errorList & "**ERROR: Too many Imprint Line paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
-If (styleCount(4) > 0 And styleCount(5) = 0) Or (styleCount(4) = 0 And styleCount(5) > 0) Then errorList = CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
-If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) > 0 Then errorList = CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
+If (styleCount(4) > 0 And styleCount(5) = 0) Or (styleCount(4) = 0 And styleCount(5) > 0) Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
+If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) > 0 Then errorList = errorList & CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
 If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Number (cn)", "Page Break (pb)")
-If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
+If styleCount(4) >= styleCount(5) And styleCount(5) <> 0 Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
 
 errorList = errorList & CheckAfterPB
 
@@ -658,13 +658,13 @@ Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 10
     
         'Check if preceding paragraph style is correct
         If Selection.Style <> prevStyle Then
-            jString = jString & "**ERROR: Missing or incorrect " & prevStyle & " style on page " & pageNum & "." & vbNewLine
+            jString = jString & "**ERROR: Missing or incorrect " & prevStyle & " style on page " & pageNum & "." & vbNewLine & vbNewLine
         End If
         
         'If you're searching for a page break before, also check if manual page break is in paragraph
         If prevStyle = "Page Break (pb)" Then
             If InStr(Selection.Text, Chr(12)) = 0 Then
-                jString = jString & "**ERROR: Missing manual page break on page " & pageNum & "." & vbNewLine
+                jString = jString & "**ERROR: Missing manual page break on page " & pageNum & "." & vbNewLine & vbNewLine
             End If
         End If
         
@@ -740,7 +740,7 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
             Selection.Style <> "Illustration holder (ill)" And _
             Selection.Style <> "Page Break (pb)" Then
                 nextStyle = Selection.Style
-                kString = kString & "**ERROR: Missing or incorrect Page Break or " & nextStyle & " style on page " & pageNumK & "." & vbNewLine
+                kString = kString & "**ERROR: Missing or incorrect Page Break or " & nextStyle & " style on page " & pageNumK & "." & vbNewLine & vbNewLine
         End If
                 
     'Debug.Print kString
