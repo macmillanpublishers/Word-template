@@ -67,10 +67,10 @@ Dim pageNumber As Integer
 Dim d As Integer
 
 badCount = 0
-activeParaCount = ActiveDocument.paragraphs.Count
+activeParaCount = ActiveDocument.Paragraphs.Count
 
 For d = 1 To activeParaCount
-    paraStyle = ActiveDocument.paragraphs(d).Style
+    paraStyle = ActiveDocument.Paragraphs(d).Style
     
     'Debug.Print ActiveDocument.Paragraphs(A).Style & vbNewLine
     
@@ -153,7 +153,7 @@ For d = 1 To activeParaCount
                         paraStyle <> "Chap Opening Text (cotx)" Then
                             
                             badCount = badCount + 1
-                            Set activeParaRange = ActiveDocument.paragraphs(d).Range
+                            Set activeParaRange = ActiveDocument.Paragraphs(d).Range
                             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
                             badStyles(badCount) = "**ERROR: Bad style on page " & pageNumber & " (Paragraph " & d & "): " & _
                                 vbTab & paraStyle & vbNewLine & vbNewLine
@@ -336,13 +336,13 @@ ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 
 ' Collect all styles being used
 styleGoodCount = 0
-activeParaCountJ = activeDoc.paragraphs.Count
+activeParaCountJ = activeDoc.Paragraphs.Count
 For J = 1 To activeParaCountJ
     'Next two lines are for the status bar
     Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
     If J Mod 100 = 0 Then DoEvents
     
-    paraStyleGood = activeDoc.paragraphs(J).Style
+    paraStyleGood = activeDoc.Paragraphs(J).Style
     
     If Right(paraStyleGood, 1) = ")" Then
         For K = 1 To styleGoodCount
@@ -442,12 +442,12 @@ If styleCount(4) > styleCount(5) And styleCount(5) > 0 Then errorList = errorLis
     & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
 If styleCount(7) = 0 Then errorList = errorList & "**ERROR: No styled Imprint Line detected." & vbNewLine & vbNewLine
 If styleCount(7) > 1 Then errorList = errorList & "**ERROR: Too many Imprint Line paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
-If (styleCount(4) > 0 And styleCount(5) = 0) Or (styleCount(4) = 0 And styleCount(5) > 0) Then errorList = CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
-If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) > 0 Then errorList = CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
+If (styleCount(4) > 0 And styleCount(5) = 0) Or (styleCount(4) = 0 And styleCount(5) > 0) Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
+If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) > 0 Then errorList = errorList & CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
 If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Number (cn)", "Page Break (pb)")
-If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
+If styleCount(4) >= styleCount(5) And styleCount(5) <> 0 Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
 
-
+errorList = errorList & CheckAfterPB
 
 'Add bad styles to error message
 For d = 1 To badCount
@@ -658,13 +658,13 @@ Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 10
     
         'Check if preceding paragraph style is correct
         If Selection.Style <> prevStyle Then
-            jString = jString & "**ERROR: Missing or incorrect " & prevStyle & " style on page " & pageNum & "." & vbNewLine
+            jString = jString & "**ERROR: Missing or incorrect " & prevStyle & " style on page " & pageNum & "." & vbNewLine & vbNewLine
         End If
         
         'If you're searching for a page break before, also check if manual page break is in paragraph
         If prevStyle = "Page Break (pb)" Then
             If InStr(Selection.Text, Chr(12)) = 0 Then
-                jString = jString & "**ERROR: Missing manual page break on page " & pageNum & "." & vbNewLine
+                jString = jString & "**ERROR: Missing manual page break on page " & pageNum & "." & vbNewLine & vbNewLine
             End If
         End If
         
@@ -678,6 +678,81 @@ Loop
 'Debug.Print jString
 
 CheckPrevStyle = jString
+
+'Move selection back to start of document
+Selection.HomeKey Unit:=wdStory
+
+End Function
+Function CheckAfterPB()
+Dim kString As String
+Dim kCount As Integer
+Dim pageNumK As Integer
+Dim nextStyle As String
+
+kCount = 0
+kString = ""
+
+'Move selection to start of document
+Selection.HomeKey Unit:=wdStory
+
+'select paragraph with that style
+    Selection.Find.ClearFormatting
+    With Selection.Find
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles("Page Break (pb)")
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+
+Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 1000 so we don't get an infinite loop
+    kCount = kCount + 1
+    
+    'select preceding paragraph
+    Selection.Next(Unit:=wdParagraph, Count:=1).Select
+    pageNumK = Selection.Information(wdActiveEndPageNumber)
+    
+        'Check if preceding paragraph style is correct
+        If Selection.Style <> "Chap Title (ct)" And _
+            Selection.Style <> "Chap Number (cn)" And _
+            Selection.Style <> "Chap Title Nonprinting (ctnp)" And _
+            Selection.Style <> "Halftitle Book Title (htit)" And _
+            Selection.Style <> "Titlepage Book Title (tit)" And _
+            Selection.Style <> "Copyright Text single space (crtx)" And _
+            Selection.Style <> "Copyright Text double space (crtxd)" And _
+            Selection.Style <> "Dedication (ded)" And _
+            Selection.Style <> "Ad Card Main Head (acmh)" And _
+            Selection.Style <> "Ad Card List of Titles (acl)" And _
+            Selection.Style <> "Part Title (pt)" And _
+            Selection.Style <> "Part Number (pn)" And _
+            Selection.Style <> "Front Sales Title (fst)" And _
+            Selection.Style <> "Front Sales Quote (fsq)" And _
+            Selection.Style <> "Front Sales Quote NoIndent (fsq1)" And _
+            Selection.Style <> "Epigraph – non-verse (epi)" And _
+            Selection.Style <> "Epigraph – verse (epiv)" And _
+            Selection.Style <> "FM Head (fmh)" And _
+            Selection.Style <> "Illustration holder (ill)" And _
+            Selection.Style <> "Page Break (pb)" Then
+                nextStyle = Selection.Style
+                kString = kString & "**ERROR: Missing or incorrect Page Break or " & nextStyle & " style on page " & pageNumK & "." & vbNewLine & vbNewLine
+        End If
+                
+    'Debug.Print kString
+    
+    'move the selection back to original paragraph, so it won't be
+    'selected again on next search
+    Selection.Previous(Unit:=wdParagraph, Count:=1).Select
+Loop
+
+'Debug.Print kString
+
+CheckAfterPB = kString
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
