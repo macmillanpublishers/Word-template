@@ -482,12 +482,12 @@ Dim wsFindArray(3) As String              'number of items in array should be de
 Dim wsReplaceArray(3) As String       'and here
 Dim q As Long
 
-wsFindArray(1) = "^m{1,}"              'manual page breaks
+wsFindArray(1) = "^m^13"              'manual page breaks
 wsFindArray(2) = "^13{2,}"          '2 or more paragraphs
 wsFindArray(3) = "(`[0-9]``)^13"    'remove para following a preserved break style                     v. 3.1 patch
 
-wsReplaceArray(1) = "^p"
-wsReplaceArray(2) = "^p"
+wsReplaceArray(1) = "^13"
+wsReplaceArray(2) = "^13"
 wsReplaceArray(3) = "\1"
 
 
@@ -510,10 +510,10 @@ Next
 
 ''' the bit below to remove the last paragraph if it's blank
 Dim MyRange As Range
-Set MyRange = ActiveDocument.Paragraphs(1).Range
+Set MyRange = ActiveDocument.paragraphs(1).Range
 If MyRange.Text = vbCr Then MyRange.Delete
 
-Set MyRange = ActiveDocument.Paragraphs.Last.Range
+Set MyRange = ActiveDocument.paragraphs.Last.Range
 If MyRange.Text = vbCr Then MyRange.Delete
 
 End Sub
@@ -1085,12 +1085,12 @@ ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 styleGoodCount = 0
 styleBadCount = 0
 styleBadOverflow = False
-activeParaCount = activeDoc.Paragraphs.Count
+activeParaCount = activeDoc.paragraphs.Count
 For J = 1 To activeParaCount
     'Next two lines are for the status bar
     Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
     If J Mod 100 = 0 Then DoEvents
-    paraStyle = activeDoc.Paragraphs(J).Style
+    paraStyle = activeDoc.paragraphs(J).Style
         'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
     If Right(paraStyle, 1) = ")" Then
         For K = 1 To styleGoodCount
@@ -1113,7 +1113,7 @@ For J = 1 To activeParaCount
         End If
         If L = styleBadCount + 1 Then
             styleBadCount = L
-            Set activeParaRange = ActiveDocument.Paragraphs(J).Range
+            Set activeParaRange = ActiveDocument.paragraphs(J).Range
             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
             stylesBad(styleBadCount) = "Page " & pageNumber & " (Paragraph " & J & "): " & vbTab & paraStyle
         End If
@@ -1282,4 +1282,3 @@ ActiveDocument.ActiveWindow.View.ShowAll = True                         'Shows n
 ActiveDocument.ActiveWindow.View.Type = wdNormalView                'Switches to Normal/Draft view
 ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5)                           'Sets Styles margin area in draft view to 1.5 in.
 End Sub
-
