@@ -86,7 +86,7 @@ Dim chTag As Integer
 
 CHstylesArray(1) = "Chap Number (cn)"
 CHstylesArray(2) = "Chap Title (ct)"
-CHstylesArray(3) = "Chap Number Nonprinting (cnp)"
+CHstylesArray(3) = "Chap Title Nonprinting (ctnp)"
 
 For i = 1 To UBound(CHstylesArray())
 With activeRng.Find
@@ -946,7 +946,7 @@ Application.ScreenUpdating = False
 #End If
 
     'Save new document as a text file. Encoding/Line Breaks/Substitutions per LOC info
-    ActiveDocument.SaveAs fileName:=strDocName, _
+    ActiveDocument.SaveAs FileName:=strDocName, _
         FileFormat:=wdFormatEncodedText, _
         Encoding:=encodingFmt, _
         InsertLineBreaks:=lineBreak, _
