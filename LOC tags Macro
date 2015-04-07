@@ -929,9 +929,11 @@ Application.ScreenUpdating = False
 #End If
 
     'Copy text of active document and paste into a new document
+    'Because otherwise open document is converted to .txt, and we want it to stay .doc*
     ActiveDocument.Select
     Selection.Copy
-    Documents.Add.Content.Paste
+    'PasteSpecial because otherwise gives a warning about too many styles being pasted
+    Documents.Add.Content.PasteSpecial DataType:=wdPasteText
     
 ' Set different text encoding based on OS
 ' And Mac can't create file with line breaks
@@ -945,6 +947,9 @@ Application.ScreenUpdating = False
     lineBreak = True
 #End If
 
+'Turn off alerts because PC warns before saving with this encoding
+Application.DisplayAlerts = wdAlertsNone
+
     'Save new document as a text file. Encoding/Line Breaks/Substitutions per LOC info
     ActiveDocument.SaveAs FileName:=strDocName, _
         FileFormat:=wdFormatEncodedText, _
@@ -952,6 +957,7 @@ Application.ScreenUpdating = False
         InsertLineBreaks:=lineBreak, _
         AllowSubstitutions:=True
         
+Application.DisplayAlerts = wdAlertsAll
     Documents(strDocName).Close
     
 Application.ScreenUpdating = True
