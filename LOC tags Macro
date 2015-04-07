@@ -677,7 +677,7 @@ Set activeRng = ActiveDocument.Range
 Dim ELCstylesArray(9) As String                                   ' number of items in array should be declared here
 Dim i As Long
 
-ELCstylesArray(1) = "BM Head (bmh)"
+ELCstylesArray(1) = "BM Head (bmh)"
 ELCstylesArray(2) = "BM Title (bmt)"
 ELCstylesArray(3) = "Appendix Head (aph)"
 ELCstylesArray(4) = "Appendix Subhead (apsh)"
@@ -752,8 +752,10 @@ End If
 
 'start loop
 Do While testvar = False
-        
-    With activeRng.Find
+Dim activeRngC As Range
+Set activeRngC = ActiveDocument.Range
+
+    With activeRngC.Find
         .Text = "``````"
         .Forward = True
         .Wrap = wdFindContinue
@@ -765,8 +767,8 @@ Do While testvar = False
         .MatchAllWordForms = False
     End With
     ''set range with bookmarks, only search after init tag
-    If activeRng.Find.Execute = True Then
-        ActiveDocument.Bookmarks.Add Name:="elcBookmark", Range:=activeRng
+    If activeRngC.Find.Execute = True Then
+        ActiveDocument.Bookmarks.Add Name:="elcBookmark", Range:=activeRngC
         Set bookmarkRng = ActiveDocument.Range(Start:=ActiveDocument.Bookmarks("elcBookmark").Range.Start, End:=ActiveDocument.Bookmarks("\EndOfDoc").Range.End)
     Else
         Exit Do
