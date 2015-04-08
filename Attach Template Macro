@@ -3,7 +3,8 @@ Sub zz_AttachStyleTemplate()
 
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
-'''version 2.1
+'''version 2.1.1
+'''updated 4/8/2015 by Erica Warren: changing download URL to new Confluence server: confluence.macmillan.com
 '''updated 4/1/2015 by Erica Warren: Adding zz_AttachCoverTemplate sub and editing other subs to only download the template that is being attached.
 '''updated 2/3/15 by Erica Warren: Changed PCupdateCheck and MacUpdateCheck to functions that return false if the template should NOT be attached.
 '''updated 1/30 by Erica Warren: added PCupdateCheck sub
@@ -132,6 +133,14 @@ End If
     
 End Sub
 
+'''created by Matt Retzer  - matthew.retzer@macmillan.com
+'''update by Erica Warren - erica.warren@macmillan.com
+'''version 1.0
+'''updated 2/3/15 by Erica Warren: added more error handling, message prompt to update, more events logged'
+''' updated 2/2/2015:   PC version downloads both templates
+'''                     error handling for when template is open (changed PC Sub to Function)
+''' updated 1/30/2015: PC version works with macmillan.dotm & macmillan_NoColor.dotm
+
 Function PCupdateCheck(templateFile As String, versionFile As String)
 
 '***********************************
@@ -226,7 +235,10 @@ Else ' updateCheck is still True
     Dim myURL As String
     Dim WinHttpReq As Object
     Dim oStream As Object
-    myURL = "https://macmillan.atlassian.net/wiki/download/attachments/9044274/" & versionFile
+    Dim templateURL As String
+    
+    templateURL = "http://confluence.macmillan.com/download/attachments/9044274/"  'this is download link, actual page housing template is http://confluence.macmillan.com/display/PBL/Test
+    myURL = templateURL & versionFile
 
     Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
     WinHttpReq.Open "GET", myURL, False
@@ -236,7 +248,7 @@ Else ' updateCheck is still True
         ' Exit sub if error in connecting to website
         
         If Err.Number <> 0 Then 'HTTP request is not OK
-            LogInformation logFilePC, Now & " -- tried to update " & templateFile & "; unable to connect to atlassian website (check network connectivity)"
+            LogInformation logFilePC, Now & " -- tried to update " & templateFile & "; unable to connect to Confluence website (check network connectivity)"
             PCupdateCheck = True ''still attach old template if can't download new one
             Exit Function
         End If
@@ -276,7 +288,7 @@ Else 'installed template is less than current template
     End If
     
     'download the template file to log directory
-    myURL = "https://macmillan.atlassian.net/wiki/download/attachments/9044274/" & templateFile
+    myURL = templateURL & templateFile
     Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
     WinHttpReq.Open "GET", myURL, False
     WinHttpReq.Send
@@ -322,16 +334,17 @@ Else 'installed template is less than current template
             Exit Function
         Else 'file was moved correctly, we're OK
             LogInformation logFilePC, Now & " -- Replaced existing " & templateFile & " Style Template."
-            MsgBox "The Macmillan Style Template " & templateFile & " has been upgraded to version " & currentVersionST & " on your computer.", , "UPDATE COMPLETED"
         End If
-        
-        
             
 End If
 
 End Function
 
 Function MacUpdateCheck(templateFile As String, versionFile As String)
+                                                                   
+' updated 2/11/15 by Erica Warren: fixed typos.
+' updated 2/3/15 by Erica Warren: added more error handling, message prompt to update, more events logged'
+                                                                   
                                                                    
 '**********************************************************************************
 ''for standalone testing use:
@@ -365,8 +378,8 @@ MacUpdateCheck = True
 updateCheck = True                                      'default
 updateFrequency = 1                                     'number of days between update checks
 logString = "created logfile: " & Now               'for first run ; any other outcome results in this string being reset
-cvUrl = "https://macmillan.atlassian.net/wiki/display/PBL/Test"
-dlUrl = "https://macmillan.atlassian.net/wiki/download/attachments/9044274"
+cvUrl = "http://confluence.macmillan.com/display/PBL/Test"
+dlUrl = "http://confluence.macmillan.com/download/attachments/9044274"
 installedVersionST = "(none installed)"         'default
 
 '''set Mac vars
@@ -411,8 +424,8 @@ LogInformation logFileMac, logString
             Exit Function
     Else
             'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
-            If ShellAndWaitMac("ping -o macmillan.atlassian.net &> /dev/null ; echo $?") <> 0 Then
-                    LogInformation logFileMac, Now & " -- tried update; unable to connect to atlassian website (check network connectivity)"
+            If ShellAndWaitMac("ping -o confluence.macmillan.com &> /dev/null ; echo $?") <> 0 Then
+                    LogInformation logFileMac, Now & " -- tried update; unable to connect to Confluence website (check network connectivity)"
                     Exit Function
             Else
                     'check current Version if it exists, exit if it matches
