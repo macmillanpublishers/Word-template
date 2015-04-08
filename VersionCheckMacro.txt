@@ -14,9 +14,9 @@ Dim TheOS As String
 
 ' ---------------------------------------------------------
 ' If re-creating to check another template, change all the variables here
-templateFile = "MacmillanGT.dotm"  'the template file you are checking
-pcDir = Environ("APPDATA") & "\Microsoft\Word\STARTUP\"  'the directory where templateFile is supposed to live, including training slash
-macDir = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:"  'the directory where templateFile is supposed to live, including trailing colon
+templateFile = "MacmillanGT.dotm"                         'the template file you are checking
+pcDir = Environ("APPDATA") & "\Microsoft\Word\STARTUP\"   'the PC directory where templateFile is supposed to live, including training slash
+macDir = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:"  'the Mac directory where templateFile is supposed to live, including trailing colon
 ''---------------------------------------------------------
 
 'these variables stay the same even if checking a different template
@@ -81,17 +81,14 @@ Private Sub VersionCheck(fullPath As String, fileName As String)
 'Alerts user to the version number of the template file
 
 Dim installedVersion As String
+Debug.Print fullPath
 
 If FileOrDirExists(fullPath) = False Then           ' the template file is not installed, or is not in the correct place
     installedVersion = "none"
 Else                                                                'the template file is installed in the correct place
-    If FileLocked(fullPath) = True Then             'the template file is already open, e.g. in Startup folder or attached to current doc
-        installedVersion = Documents(fullPath).CustomDocumentProperties("version")
-    Else                                                            'file is closed, have to open first and close when done
-        Documents.Open fileName:=fullPath, ReadOnly:=True                   ' Note can't set Visible:=False because that's not an argument in Word Mac VBA :(
-        installedVersion = Documents(fullPath).CustomDocumentProperties("version")
-        Documents(fullPath).Close
-    End If
+    Documents.Open fileName:=fullPath, ReadOnly:=True                   ' Note can't set Visible:=False because that's not an argument in Word Mac VBA :(
+    installedVersion = Documents(fullPath).CustomDocumentProperties("version")
+    Documents(fullPath).Close
 End If
 
 'Now we tell the user what version they have
