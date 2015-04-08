@@ -1,0 +1,25 @@
+Sub VersionCheck()
+Dim localDrive As String
+Dim templateFile As String
+Dim installedVersionST As String
+Dim pcTemplatePath As String
+
+localDrive = Environ("APPDATA") & "\Microsoft\Word\STARTUP"
+templateFile = "MacmillanGT.dotm"
+
+'Debug.Print localDrive
+    
+If Dir(localDrive & "\" & templateFile) = vbNullString Then  ' template file does not exist
+    installedVersionST = 0
+Else
+    pcTemplatePath = localDrive & "\" & templateFile
+    Documents.Open FileName:=pcTemplatePath, ReadOnly:=True, Visible:=False
+    installedVersionST = Documents(pcTemplatePath).CustomDocumentProperties("version")
+    Documents(pcTemplatePath).Close
+End If
+    
+'Debug.Print installedVersionST
+
+MsgBox "You currently have version " & installedVersionST & " of the file " & templateFile & " installed."
+    
+End Sub
