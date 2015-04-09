@@ -435,6 +435,7 @@ Else 'installed template is less than current template
             Exit Function
         Else 'file was moved correctly, we're OK
             LogInformation logFilePC, Now & " -- Replaced existing " & templateFile & " Style Template."
+            MsgBox "The Macmillan Style Template " & templateFile & " has been upgraded to version " & currentVersionST & " on your computer.", , "UPDATE COMPLETED"
         End If
             
 End If
@@ -590,8 +591,6 @@ Else
             
     'download Versions file so version is readily visible from client Mac
     ShellAndWaitMac ("rm -f  " & dirNameBash & "/Version-* ; curl -o " & dirNameBash & "/Version-" & templateFile & ".txt " & dlUrl & "/" & versionFile)
-    LogInformation logFileMac, Now & " -- Replaced existing Style Template.  Telling user to relaunch Word."
-    
     MsgBox "The Macmillan Style Template has been upgraded to version " & currentVersionST & " on your Mac.", , "UPDATE COMPLETED"
     
 End If
