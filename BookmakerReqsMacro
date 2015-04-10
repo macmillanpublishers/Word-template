@@ -59,6 +59,16 @@ If docSaved = False Then
     End If
 End If
 
+'-------Delete content controls on PC------------------------
+'Has to be a separate sub because objects don't exist in Word 2011 Mac and it breaks
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
+If Not TheOS Like "*Mac*" Then
+    Call DeleteContentControlPC
+End If
+
+
 '-------Deal with Track Changes and Comments----------------
 Dim n As Long
 Dim oComments As Comments
@@ -205,6 +215,7 @@ Next
 Dim styleName(7) As String                      ' Declare number of items in array
 Dim styleCount(7) As Integer                    ' ditto
 Dim A As Long
+Dim xCount As Integer
 
 styleName(1) = "Titlepage Book Title (tit)"
 styleName(2) = "Titlepage Author Name (au)"
@@ -215,6 +226,8 @@ styleName(6) = "Chap Title Nonprinting (ctnp)"
 styleName(7) = "Titlepage Imprint Line (imp)"
 
 For A = 1 To UBound(styleName())
+    xCount = 0
+    
     With ActiveDocument.Range.Find
         .ClearFormatting
         .Text = ""
@@ -228,8 +241,9 @@ For A = 1 To UBound(styleName())
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
-    Do While .Execute(Forward:=True) = True
+    Do While .Execute(Forward:=True) = True And xCount < 100   'xCount < 100 to precent infinite loop, especially if content controls in title or author blocks
         styleCount(A) = styleCount(A) + 1
+        xCount = xCount + 1
     Loop
     End With
 Next
@@ -241,6 +255,17 @@ Debug.Print styleName(1) & ": " & styleCount(1) & vbNewLine _
             ; styleName(5) & ": " & styleCount(5) & vbNewLine _
             ; styleName(6) & ": " & styleCount(6) & vbNewLine _
             ; styleName(7) & ": " & styleCount(7) & vbNewLine
+            
+'------------Exit Sub if exactly 10 Titles styled, suggests hidden content controls-----
+If styleCount(1) = 100 Then
+    
+    MsgBox "Something went wrong!" & vbCr & vbCr & "It looks like you might have content controls (form fields or drop downs) in your document, but Word for Mac doesn't play nicely with these." _
+    & vbCr & vbCr & "Try running this macro on a PC or contact workflows@macmillan.com for assistance.", vbCritical, "OH NO!!"
+
+    Exit Sub
+    
+End If
+    
             
 '------------Convert solo Chap Number paras to Chap Title-------
 
@@ -505,8 +530,6 @@ Dim activeDocName As String
 Dim activeDocPath As String
 Dim reqReportDoc As String
 Dim reqReportDocAlt As String
-Dim TheOS As String
-TheOS = System.OperatingSystem
 Dim fnum As Integer
 
 'activeDocName below works for .doc and .docx
@@ -794,3 +817,10 @@ CheckAfterPB = kString
 Selection.HomeKey Unit:=wdStory
 
 End Function
+Sub DeleteContentControlPC()
+Dim cc As ContentControl
+
+For Each cc In ActiveDocument.ContentControls
+    cc.Delete
+Next
+End Sub
