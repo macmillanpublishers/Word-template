@@ -1202,6 +1202,12 @@ If foundLOC = True Then
     Exit Function
 End If
 
+'-----remove any content controls (embedded form/drop-down fields)
+Dim cc As ContentControl
+For Each cc In ActiveDocument.ContentControls
+    cc.Delete
+Next
+
 End Function
 
 Private Sub zz_TagReport()
