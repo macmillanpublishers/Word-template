@@ -5,6 +5,7 @@ Sub BookmakerReqs()
 '-----------------------------------------------------------
 
 'Created by Erica Warren - erica.warren@macmillan.com
+'4/10/2015: adding handling of track changes
 '4/3/2015: adding Imprint Line requirement
 '3/27/2015: converts solo CNs to CTs
 '           page numbers added to Illustrations List
@@ -33,7 +34,7 @@ Debug.Print "Current template is " & currentTemplate & vbNewLine
 If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
         MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
-        Exit Sub
+        'Exit Sub
     End If
 End If
 
@@ -51,7 +52,7 @@ If docSaved = False Then
         "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
             vbOKCancel, "Alert")
     If iReply = vbOK Then
-        mainDoc.Save
+        'mainDoc.Save
     Else
         Exit Sub
     End If
@@ -62,14 +63,17 @@ Dim n As Long
 Dim oComments As Comments
 Set oComments = ActiveDocument.Comments
 
+Application.DisplayAlerts = False
+
 'Turn off track changes
 ActiveDocument.TrackRevisions = False
 
 'See if there are tracked changes or comments in document
 On Error Resume Next
-WordBasic.NextChangeOrComment
+Selection.HomeKey Unit:=wdStory   'start search at beginning of doc
+WordBasic.NextChangeOrComment       'search for a tracked change or comment. error if none are found.
 
-'If there are, ask user if they want macro to accept changes or cancel
+'If there are changes, ask user if they want macro to accept changes or cancel
 If Err = 0 Then
     If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
         & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
@@ -85,6 +89,9 @@ If Err = 0 Then
     End If
 End If
 
+On Error GoTo 0
+Application.DisplayAlerts = True
+
 '-------Check that only approved tor.com styles are used-----
 Dim paraStyle As String
 Dim activeParaCount As Integer
@@ -95,10 +102,10 @@ Dim pageNumber As Integer
 Dim d As Integer
 
 badCount = 0
-activeParaCount = ActiveDocument.paragraphs.Count
+activeParaCount = ActiveDocument.Paragraphs.Count
 
 For d = 1 To activeParaCount
-    paraStyle = ActiveDocument.paragraphs(d).Style
+    paraStyle = ActiveDocument.Paragraphs(d).Style
     
     'Debug.Print ActiveDocument.Paragraphs(A).Style & vbNewLine
     
@@ -181,7 +188,7 @@ For d = 1 To activeParaCount
                         paraStyle <> "Chap Opening Text (cotx)" Then
                             
                             badCount = badCount + 1
-                            Set activeParaRange = ActiveDocument.paragraphs(d).Range
+                            Set activeParaRange = ActiveDocument.Paragraphs(d).Range
                             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
                             badStyles(badCount) = "**ERROR: Bad style on page " & pageNumber & " (Paragraph " & d & "): " & _
                                 vbTab & paraStyle & vbNewLine & vbNewLine
@@ -364,13 +371,13 @@ ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 
 ' Collect all styles being used
 styleGoodCount = 0
-activeParaCountJ = activeDoc.paragraphs.Count
+activeParaCountJ = activeDoc.Paragraphs.Count
 For J = 1 To activeParaCountJ
     'Next two lines are for the status bar
     Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
     If J Mod 100 = 0 Then DoEvents
     
-    paraStyleGood = activeDoc.paragraphs(J).Style
+    paraStyleGood = activeDoc.Paragraphs(J).Style
     
     If Right(paraStyleGood, 1) = ")" Then
         For K = 1 To styleGoodCount
