@@ -1,4 +1,5 @@
 ﻿
+
 Option Explicit
 
 Sub BookmakerReqs()
@@ -34,7 +35,7 @@ Debug.Print "Current template is " & currentTemplate & vbNewLine
 If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
         MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
-        'Exit Sub
+        Exit Sub
     End If
 End If
 
@@ -52,7 +53,7 @@ If docSaved = False Then
         "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
             vbOKCancel, "Alert")
     If iReply = vbOK Then
-        'mainDoc.Save
+        mainDoc.Save
     Else
         Exit Sub
     End If
