@@ -7,6 +7,10 @@ Sub MacmillanManuscriptCleanup()
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 ''''''''''''''''''''''''''''''
+'version 3.8.2: adding handling of track changes
+
+'version 3.8.1: fixing bug in character styles macro that was causing page breaks to drop out
+
 'version 3.8:
 'updated 2015-03-25 by Erica Warren
 ' Design Note can now contain blank characters
@@ -116,9 +120,15 @@ If exitOnError <> False Then
 Exit Sub
 End If
 
+'-----------Turn off track changes--------
+Dim currentTracking As Boolean
+currentTracking = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
 '-----------Remove White Space------------
 Application.DisplayStatusBar = True
 Application.ScreenUpdating = False
+
 
 Call zz_clearFind                          'Clear find object
 
@@ -146,6 +156,7 @@ Application.ScreenUpdating = True
 Application.ScreenRefresh
 
 MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
+ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 
 End Sub
 Sub MacmillanCharStyles()
@@ -162,6 +173,11 @@ exitOnError = zz_errorChecks()   ''Doc is unsaved, protected, or uses backtick c
 If exitOnError <> False Then
 Exit Sub
 End If
+
+'-----------Turn off track changes--------
+Dim currentTracking As Boolean
+currentTracking = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
 
 '-----------Replace Local Styles-----------
 Application.DisplayStatusBar = True
@@ -204,6 +220,8 @@ Application.ScreenUpdating = True
 Application.ScreenRefresh
 
 MsgBox "Macmillan character styles have been applied throughout your manuscript."
+
+ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
 
 End Sub
 
