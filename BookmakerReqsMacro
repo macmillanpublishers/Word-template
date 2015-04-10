@@ -1,10 +1,12 @@
 ﻿
+
 Option Explicit
 
 Sub BookmakerReqs()
 '-----------------------------------------------------------
 
 'Created by Erica Warren - erica.warren@macmillan.com
+'4/10/2015: adding handling of track changes
 '4/3/2015: adding Imprint Line requirement
 '3/27/2015: converts solo CNs to CTs
 '           page numbers added to Illustrations List
@@ -56,6 +58,40 @@ If docSaved = False Then
         Exit Sub
     End If
 End If
+
+'-------Deal with Track Changes and Comments----------------
+Dim n As Long
+Dim oComments As Comments
+Set oComments = ActiveDocument.Comments
+
+Application.DisplayAlerts = False
+
+'Turn off track changes
+ActiveDocument.TrackRevisions = False
+
+'See if there are tracked changes or comments in document
+On Error Resume Next
+Selection.HomeKey Unit:=wdStory   'start search at beginning of doc
+WordBasic.NextChangeOrComment       'search for a tracked change or comment. error if none are found.
+
+'If there are changes, ask user if they want macro to accept changes or cancel
+If Err = 0 Then
+    If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
+        & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
+        & vbCr & vbCr & "Click CANCEL to stop the Bookmaker Requirements Check and deal with the tracked changes and comments on your own.", _
+        273, "Are those tracked changes I see?") = vbCancel Then           '273 = vbOkCancel(1) + vbCritical(16) + vbDefaultButton2(256)
+            Exit Sub
+    Else 'User clicked OK, so accept all tracked changes and delete all comments
+        ActiveDocument.AcceptAllRevisions
+        For n = oComments.Count To 1 Step -1
+            oComments(n).Delete
+        Next n
+        Set oComments = Nothing
+    End If
+End If
+
+On Error GoTo 0
+Application.DisplayAlerts = True
 
 '-------Check that only approved tor.com styles are used-----
 Dim paraStyle As String
