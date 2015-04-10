@@ -34,6 +34,9 @@ Application.ScreenUpdating = False
 
 '----------remove content controls from PC---
 ' can't remove from Mac, breaks whole sub--
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
 If Not TheOS Like "*Mac*" Then
 Call ClearContentControls
 End If
@@ -959,7 +962,7 @@ Application.ScreenUpdating = False
 Application.DisplayAlerts = wdAlertsNone
 
     'Save new document as a text file. Encoding/Line Breaks/Substitutions per LOC info
-    ActiveDocument.SaveAs FileName:=strDocName, _
+    ActiveDocument.SaveAs fileName:=strDocName, _
         FileFormat:=wdFormatEncodedText, _
         Encoding:=encodingFmt, _
         InsertLineBreaks:=lineBreak, _
