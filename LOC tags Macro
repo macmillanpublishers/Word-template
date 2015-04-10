@@ -32,6 +32,12 @@ End If
 Application.DisplayStatusBar = True
 Application.ScreenUpdating = False
 
+'----------remove content controls from PC---
+' can't remove from Mac, breaks whole sub--
+If Not TheOS Like "*Mac*" Then
+Call ClearContentControls
+End If
+
 Application.StatusBar = "Adding tags for Title page": DoEvents
 Call tagTitlePage
 Call zz_clearFindB
@@ -1048,6 +1054,15 @@ End With
 Next
 
 End Function
+Sub ClearContentControls()
+'This is it's own sub because doesn't exist in Mac Word, breaks whole sub if included
+Dim cc As ContentControl
+
+For Each cc In ActiveDocument.ContentControls
+    cc.Delete
+Next
+
+End Sub
 
 Private Sub zz_clearFindB()
 
