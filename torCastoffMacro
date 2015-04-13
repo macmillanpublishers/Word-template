@@ -35,6 +35,7 @@ End With
 
 'search for space breaks
 Dim sbCount As Long
+sbCount = 0
 
 With ActiveDocument.Range.Find
     .ClearFormatting
@@ -48,7 +49,7 @@ With ActiveDocument.Range.Find
     .MatchWildcards = False
     .MatchSoundsLike = False
     .MatchAllWordForms = False
-Do While .Execute(Forward:=True) = True
+Do While .Execute(Forward:=True) = True And sbCount < 500   'to prevent infinite loops
     sbCount = sbCount + 1
 Loop
 End With
