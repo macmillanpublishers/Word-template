@@ -1,3 +1,4 @@
+Attribute VB_Name = "LOCtagsMacro"
 Option Explicit
 Option Base 1
 Dim activeRng As Range
@@ -45,6 +46,7 @@ skipChapterTags = volumestylecheck()
 
 If exitOnError <> False Then
 Call zz_clearFindB
+Unload UserForm1        'To close progress bar if exiting sub
 Exit Sub
 End If
 
@@ -122,7 +124,8 @@ Application.ScreenRefresh
 'If skipChapterTags = True Then
 '    MsgBox "Library of Congress tagging is complete except for Chapter tags." & vbNewLine & vbNewLine & "Chapter tags will need to be manually applied."
 'End If
-UserForm1.Hide
+
+Unload UserForm1        'To close progress bar if exiting sub; UserForm1.Hide triggers activation again on Mac
 End Sub
 
 Private Sub tagChapterHeads()
