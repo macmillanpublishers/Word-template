@@ -1,3 +1,4 @@
+Attribute VB_Name = "CleanupMacro"
 Option Explicit
 Option Base 1
 Dim activeRng As Range
