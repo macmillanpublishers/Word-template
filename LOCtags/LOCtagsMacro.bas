@@ -1,3 +1,4 @@
+Attribute VB_Name = "LOCtagsMacro"
 Option Explicit
 Option Base 1
 Dim activeRng As Range
