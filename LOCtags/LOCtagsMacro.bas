@@ -15,6 +15,7 @@ With UserForm1
     .FrameProgress.Caption = Format(pctDone, "0%")
     .LabelProgress.Width = pctDone * .FrameProgress.Width
     .LabelDesc.Caption = eventCaption
+    DoEvents
 End With
 
 End Sub
@@ -36,8 +37,9 @@ Sub LibraryOfCongressTags()
 '''                 is not eventually followed by <ch#> or <tp> tag
 ''''''''''''''''''''''''''''''
 
+
 '-----------run preliminary error checks------------
-Call ProgressBar(0.1, "Checking Macmillan Style Template...")
+Call ProgressBar(0.1, "Checking if document is saved with template attached...")
 
 Dim exitOnError As Boolean
 Dim skipChapterTags As Boolean
@@ -50,12 +52,11 @@ Unload UserForm1        'To close progress bar if exiting sub
 Exit Sub
 End If
 
-'-----------the rest of the macro------------
-Application.DisplayStatusBar = True
 Application.ScreenUpdating = False
 
 '----------remove content controls from PC---
-' can't remove from Mac, breaks whole sub--
+' can't remove from Mac, breaks whole sub
+
 Dim TheOS As String
 TheOS = System.OperatingSystem
 
@@ -63,56 +64,40 @@ If Not TheOS Like "*Mac*" Then
 Call ClearContentControls
 End If
 
-Call ProgressBar(0.2, "Adding tags for Title page...")
 
-Application.StatusBar = "Adding tags for Title page...": DoEvents
+'-----------the rest of the macro------------
+Call ProgressBar(0.2, "Adding tags for Title page...")
 Call tagTitlePage
 Call zz_clearFindB
 
 Call ProgressBar(0.3, "Adding tags for Copyright page...")
-
-Application.StatusBar = "Adding tags for Copyright page": DoEvents
 Call tagCopyrightPage
 Call zz_clearFindB
 
 Call ProgressBar(0.4, "Adding tags for Series page...")
-
-Application.StatusBar = "Adding tags for Series page": DoEvents
 Call tagSeriesPage
 Call zz_clearFindB
 
 Call ProgressBar(0.5, "Adding tags for Table of Contents...")
-
-Application.StatusBar = "Adding tags for Table of Contents": DoEvents
 Call tagTOC
 Call zz_clearFindB
 
-
-
 If skipChapterTags = False Then
     Call ProgressBar(0.6, "Adding tags for chapters...")
-    Application.StatusBar = "Adding tags for Chapter beginnings": DoEvents
     Call tagChapterHeads
     Call zz_clearFindB
     
-    Application.StatusBar = "Adding tag for end last chapter": DoEvents
     Call tagEndLastChapter
     Call zz_clearFindB
 End If
 
 Call ProgressBar(0.7, "Saving as text document...")
-
-Application.StatusBar = "Saving as text document": DoEvents
 Call SaveAsTextFile
 
 Call ProgressBar(0.8, "Running tag check & generating report...")
-
-Application.StatusBar = "Running tag check & generating report": DoEvents
 Call zz_TagReport
 
 Call ProgressBar(0.9, "Cleaning up file...")
-
-Application.StatusBar = "Cleaning up file": DoEvents
 Call cleanFile
 Call zz_clearFindB
 
@@ -1401,3 +1386,4 @@ Else
 End If
 
 End Sub
+
