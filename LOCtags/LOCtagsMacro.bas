@@ -15,6 +15,7 @@ With UserForm1
     .FrameProgress.Caption = Format(pctDone, "0%")
     .LabelProgress.Width = pctDone * .FrameProgress.Width
     .LabelDesc.Caption = eventCaption
+    DoEvents
 End With
 
 End Sub
@@ -35,6 +36,7 @@ Sub LibraryOfCongressTags()
 '''         3/24/15 : re-did ELC in case of atax or other styles present early in manuscript ; uses while loop to scan for first backmatter style that
 '''                 is not eventually followed by <ch#> or <tp> tag
 ''''''''''''''''''''''''''''''
+
 
 '-----------run preliminary error checks------------
 Call ProgressBar(0.1, "Checking if document is saved with template attached...")
