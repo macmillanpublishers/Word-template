@@ -1,64 +1,129 @@
-# Macmillan Word Styles and Template
+# Macmillan Word Styles and Templates
 
-This is a stub.
+The Macmillan template files collect the Microsoft Word style sets, macros, and macro launch buttons for editorial production work. All macros are launched from custom Quick Access Toolbar buttons (Windows) and custom toolbars (Mac) saved in each template.
 
-- The macmillan.dotm template file collects the Microsoft Word style set and macros for editorial production work.
-- The MacmillanGT.dotm (GT = Global Template) will be a Word startup item, with a macro to attach the macmillan.dotm & load its styles.
+## MacmillanGT.dotm
 
-## Dependencies
+MacmillanGT.dotm (GT = Global Template) is a Word startup item. It contains the following macros:
 
-https://github.com/macmillanpublishers/Word-macros - This repo stores the code for the macros that are incorporated into our template. These macros are maintained and updated independently, and then changes are added to this template.
+### AttachTemplateMacros.bas
 
-## Distribution End Points
+Attaches the Macmillan style templates (macmillan.dotm, macmillan_NoColor.dotm, MacmillanCoverCopy.dotm) & loads their styles and macros into the current document. [More info.](http://confluence.macmillan.com/display/PBL/Attach+the+Macmillan+Template)
 
-Publishing Tools server share
+### VersionCheck.bas
+
+Tells the user the current version number of MacmillanGT.dotm and macmillan.dotm. [More info--requires login.](http://confluence.macmillan.com/pages/viewpage.action?pageId=32112870)
+
+## macmillan.dotm
+
+The primary Macmillan style template. It contains all of the [custom styles](http://confluence.macmillan.com/display/PBL/Word+Template+Styles+List) for use in Macmillan manuscripts, and the following macros:
+
+### CharacterStyles.bas
+
+Converts direct formatting of italics, bold, small caps, etc. to Macmillan character styles and removes unstyled page breaks and blank paragraphs. [More info.](http://confluence.macmillan.com/display/PBL/Macmillan+Character+Styles+Macro)
+
+### CleanupMacro.bas
+
+Fixes common typographics errors. [More info.](http://confluence.macmillan.com/display/PBL/Macmillan+Manuscript+Cleanup+Macro)
+
+### Reports.bas
+
+Contains two reports that verify that the manuscript is styled following [Macmillan best practices.](http://confluence.macmillan.com/display/PBL/Manuscript+Styling+Best+Practices)
+
+#### Style Report
+
+Produces a report listing all of the Macmillan paragraph styles used and the page number and paragraph number of any non-Macmillan styles used. [More info.](http://confluence.macmillan.com/display/PBL/Macmillan+Style+Report+Macro)
+
+#### Bookmaker Requirements
+
+Produces a report listing errors in the manuscript that need to be resolved before using the Macmillan Bookmaker tool. [More info--requires login.](http://confluence.macmillan.com/display/PE/Bookmaker+Requirements+Macro)
+
+### ViewStyles.bas
+
+Opens windows and page view useful for working with styles. [More info.](http://confluence.macmillan.com/display/PBL/View+Styles+with+a+Macro)
+
+## macmillan_NoColor.dotm
+
+Contains all of the same styles and macros as macmillan.dotm but without colored shading and borders.
+
+## MacmillanCoverCopy.dotm
+
+Contains custom styles for jacket and cover copy. Also includes Cleanup, Style Report, and View Styles macros.
+
+## LOC_Tags.dotm
+
+Contains LOCtagsMacro.bas, a macro that converts Macmillan-styled manuscripts for the Library of Congress CIP application.
+
+## SwoonReadsTemplate.dotm
+
+Contains the limited Macmillan style set for Swoon Reads.
+
+## torCastoffTemplate.dotm
+
+Contains torCastoffMacro.bas, a macro that estimates the print page count of manuscripts for Tor.com.
+
+# Dependencies
+
+Macros are stored in modules in the Visual Basic Editor in each template, and also exported as .bas files and stored in the same directory as their source template. UserForms are exported as .frx files.
+
+To export macros and userforms from the template files, ctrl+click/right-click on the module and selecting "Export file...". 
+
+To import macros and userforms into the template files, ctrl+click/right-click on the module in the template and select "Remove [name of module]", then ctrl+click on "TemplateProject(NameOfTemplate)", select "Import file...", and select the .bas file of the module to import.
+
+Any style or macro changes made to macmillan.dotm must be made to macmillan_NoColor.dotm.
+
+Templates must be saved on Windows; saving on a Mac causes the Windows macro launch buttons to drop out.
+
+# Distribution End Points
+
+## MacmillanGT.dotm
+
+Direct link to raw file on GitHub on [Macmillan Confluence site.](http://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template#InstalltheMacmillanTemplate-OnaPC(orMac-external))
+
 Also available for client install on Macs via Casper 'Self Service' in Digital Workflow category.
 
-## Deployment
+## macmillan.dotm, macmillan_NoColor.dotm, MacmillanCoverCopy.dotm
 
-The two .dotm files need to be deployed on the server, and the pkg also needs to be updated with the newest changes and deployed to Self Service.
+Attachments to [public Macmillan Confluence page;](http://confluence.macmillan.com/display/PBL/Test).
 
-To deploy the .dotm files on the server:
+## LOC_Tags.dotm
 
-1. Navigate to the _NYFILE23/Word Template_ directory 
-2. Download the two .dotm files from this repo, and save them in the above directory, **replacing** the existing files.
+Users download from direct link to raw file on GitHub on [Macmillan Confluence site--requires login.](http://confluence.macmillan.com/display/PE/CIP+Tagging+Macro)
 
-To update the self-service package and deploy:
+## torCastoffTemplate.dotm
 
-1. Contact MacSupport group (x6111) with location of the updated .dotm files on NYFILE23, and name of the Self-Service policy (Macmillan Style Templates & Macros). They will update the pkg and policy. 
+Users download from direct link to raw file on GitHub on [Macmillan Confluence site--requires login.](http://confluence.macmillan.com/display/EDIT/Tor.com+Castoff+Macro)
 
-## Client installation
+# Deployment
 
-**Mac**
+[Word styles template update process--requires login.](http://confluence.macmillan.com/display/~erica.warren/Word+Styles+template+update+process)
 
-*macmillan.dotm* goes here:  /Macintosh HD/Users/Shared/MacmillanStyleTemplate/
+# Client installation
 
-*MacmillanGT.dotm* goes here:  /Macintosh HD/Applications/Microsoft Office 2011/Office/Startup/Word/
+## MacmillanGT.dotm
 
-Quick menu items ('Attach template' and 'View Macros' buttons) load along with the Global template at startup
+Users can download from direct link to raw file on GitHub on [Macmillan Confluence site.](http://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template#InstalltheMacmillanTemplate-OnaPC(orMac-external))
 
-Can also deploy to a Mac via Self Service, "Macmillan Style Templates & Macros" in Digital Workflow category, or via standalone .pkg from repo: MacmillanStyle+MacroTemplate_052714.pkg
+[Manual installation instructions.](http://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template)
 
-**PC**
+Also available for client install on Macs via Casper 'Self Service' in Digital Workflow category.
 
-*macmillan.dotm* goes here:  C:\ProgramData\MacmillanStyleTemplate\macmillan.dotm  
+## macmillan.dotm, macmillan_NoColor.dotm, MacmillanCoverCopy.dotm
 
-*MacmillanGT.dotm* goes either of these places:  
+Attachments to [public Macmillan Confluence page;](http://confluence.macmillan.com/display/PBL/Test) downloaded to users' machines via the AttachTemplateMacros.bas macros.
 
-- C:\Program Files (x86)\Microsoft Office\Office14\STARTUP\  *(preferable, but requires admin permissions)*
-- C:\Users\ *username* \AppData\Roaming\Microsoft\Word\STARTUP\   *alternate, account-based option*
+## LOC_Tags.dotm
 
-Quick menu items ('Attach template' and 'View Macros' buttons) need to be manually created (for now):
+[Manual installation instructions--requires login](http://confluence.macmillan.com/display/PE/CIP+Tagging+Macro#CIPTaggingMacro-InstallingtheMacro)
 
-- 1) Once MacmillanGT.dotm is in aforementioned STARTUP folder, relaunch Word to load it as a global template
-- 2) goto File-> Options-> Quick Access Toolbar
-- 3) Under 'Choose Commands from:' select 'Macros' and 'Add' desired one.
-- 4) Under 'Choose Commands from:' select 'Popular' and 'Add' 'View Macros'.
+## torCastoffTemplate.dotm
 
-## Stakeholders
+[Manual installation instructions--requires login](http://confluence.macmillan.com/display/EDIT/Tor.com+Castoff+Macro)
 
-Editorial Production, Design
+# Stakeholders
 
-## Usage
+Production Editorial, Design
 
-See https://macmillan.atlassian.net/wiki/display/EDIT/Word+Template+Quick+Start+Guide
+# Usage
+
+[More info available on the Macmillan Confluence site.](http://confluence.macmillan.com/display/PBL/About+the+Macmillan+Word+Template)
