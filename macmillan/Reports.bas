@@ -1,6 +1,211 @@
 Attribute VB_Name = "Reports"
 Option Explicit
+Sub MacmillanStyleReport()
 
+'-----------run preliminary error checks------------
+Dim exitOnError As Boolean
+exitOnError = srErrorCheck()
+
+If exitOnError <> False Then
+Exit Sub
+End If
+
+''''''''''''''''''''''
+''Timer opening
+'Dim aTime As Double, bTime As Double
+'aTime = Timer
+
+'''''''''''''''''''''
+Dim activeDoc As Document
+Set activeDoc = ActiveDocument
+Dim stylesGood() As String
+Dim stylesGoodLong As Long
+stylesGoodLong = 400                                    'could maybe reduce this number
+ReDim stylesGood(stylesGoodLong)
+Dim stylesBad(100) As String                            'could maybe reduce this number too
+Dim styleGoodCount As Integer
+Dim styleBadCount As Integer
+Dim styleBadOverflow As Boolean
+Dim activeParaCount As Integer
+Dim J As Integer, K As Integer, L As Integer
+Dim paraStyle As String
+'''''''''''''''''''''
+Dim activeParaRange As Range
+Dim pageNumber As Integer
+Dim activeDocName As String
+Dim activeDocPath As String
+Dim styleReportDoc As String
+Dim fnum As Integer
+Dim TheOS As String
+TheOS = System.OperatingSystem
+activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".doc") - 1)
+activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
+
+Application.DisplayStatusBar = True
+Application.ScreenUpdating = False
+
+'Alter built-in Normal (Web) style temporarily (later, maybe forever?)
+ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
+
+' Collect all styles being used
+styleGoodCount = 0
+styleBadCount = 0
+styleBadOverflow = False
+activeParaCount = activeDoc.paragraphs.Count
+For J = 1 To activeParaCount
+    'Next two lines are for the status bar
+    Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
+    If J Mod 100 = 0 Then DoEvents
+    paraStyle = activeDoc.paragraphs(J).Style
+        'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
+    If Right(paraStyle, 1) = ")" Then
+        For K = 1 To styleGoodCount
+            If paraStyle = stylesGood(K) Then                   'stylereport bug fix #1  v. 3.1
+                K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                Exit For                                        'stylereport bug fix #1   v. 3.1
+            End If                                              'stylereport bug fix #1   v. 3.1
+        Next K
+        If K = styleGoodCount + 1 Then
+            styleGoodCount = K
+            stylesGood(styleGoodCount) = paraStyle
+        End If
+    Else
+        For L = 1 To styleBadCount
+            'If paraStyle = stylesBad(L) Then Exit For                  'Not needed, since we want EVERY instance of bad style
+        Next L
+        If L > 100 Then
+                styleBadOverflow = True
+            Exit For
+        End If
+        If L = styleBadCount + 1 Then
+            styleBadCount = L
+            Set activeParaRange = ActiveDocument.paragraphs(J).Range
+            pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
+            stylesBad(styleBadCount) = "Page " & pageNumber & " (Paragraph " & J & "): " & vbTab & paraStyle
+        End If
+    End If
+Next J
+ 
+'Change Normal (Web) back (if you want to)
+ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
+
+'Sort good styles
+If K <> 0 Then
+ReDim Preserve stylesGood(K)
+WordBasic.SortArray stylesGood()
+End If
+
+'create text file
+styleReportDoc = activeDocPath & activeDocName & "_StyleReport.txt"
+
+''''for 32 char Mc OS bug- could check if this is Mac OS too< PART 1
+If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
+    styleReportDoc = activeDocPath & "\" & activeDocName & "_StyleReport.txt"
+Else
+    Dim styleReportDocAlt As String
+    Dim placeholdDocName As String
+    placeholdDocName = "filenamePlacehold_Styleport.txt"
+    styleReportDocAlt = styleReportDoc
+    styleReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
+End If
+
+'set and open file for output
+fnum = FreeFile()
+Open styleReportDoc For Output As fnum
+Print #fnum, "-----" & styleGoodCount & " Macmillan Styles In Use: -----"   '"----- Good Styles In Use: -----"
+    For J = 1 To styleGoodCount
+        Print #fnum, stylesGood(J)
+    Next J
+Print #fnum, vbCr
+Print #fnum, vbCr
+If styleBadCount <> 0 Then
+    Print #fnum, "----- " & styleBadCount & " PARAGRAPHS WITH BAD STYLES FOUND: ----- " & vbCr
+    Print #fnum, "(Please apply Macmillan styles to the following paragraphs:)",
+    Print #fnum, vbCr
+    For J = 1 To styleBadCount
+        Print #fnum, stylesBad(J)
+    Next J
+Else
+    Print #fnum, "----- great job! no bad paragraph styles found ----- "
+End If
+Close #fnum
+
+Application.ScreenUpdating = True
+Application.ScreenRefresh
+
+''''for 32 char Mc OS bug-<PART 2
+If styleReportDocAlt <> "" Then
+Name styleReportDoc As styleReportDocAlt
+End If
+
+If styleBadOverflow = True Then
+MsgBox "Macmillan Style Report has finished running." & vbCr & "PLEASE NOTE: more than 100 paragraphs have non-Macmillan styles." & vbCr & "Only the first 100 are shown in the Style report.", , "Alert"
+Else
+MsgBox "The Macmillan Style Report macro has finished running. Go take a look at the results!"
+End If
+
+'open Style Report for user once it is complete.
+Dim Shex As Object
+
+If Not TheOS Like "*Mac*" Then
+   Set Shex = CreateObject("Shell.Application")
+   Shex.Open (styleReportDoc)
+Else
+    MacScript ("tell application ""Finder"" " & vbCr & _
+    "open document file " & """" & styleReportDocAlt & """" & vbCr & _
+    "activate" & vbCr & _
+    "end tell" & vbCr)
+End If
+
+''Timer closing
+'bTime = Timer
+'MsgBox "CreateStyleListEBranch: " & Format(Round(bTime - aTime, 2), "00:00:00") & " for " & activeParaCount & " paragraphs"
+End Sub
+
+Function srErrorCheck()
+
+srErrorCheck = False
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
+
+'-------Check if Macmillan template is attached--------------
+Dim currentTemplate As String
+Dim ourTemplate1 As String
+Dim ourTemplate2 As String
+Dim ourTemplate3 As String
+
+currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
+ourTemplate1 = "macmillan.dotm"
+ourTemplate2 = "macmillan_NoColor.dotm"
+ourTemplate3 = "MacmillanCoverCopy.dotm"
+
+Debug.Print "Current template is " & currentTemplate & vbNewLine
+
+If currentTemplate <> ourTemplate1 Then
+    If currentTemplate <> ourTemplate2 Then
+        If currentTemplate <> ourTemplate3 Then
+            MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+            Exit Function
+        End If
+    End If
+End If
+
+'-----make sure document is saved
+Dim docSaved As Boolean
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK, and I will save the document and run the Style Report." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
+        srErrorCheck = True
+        Exit Function
+    End If
+End If
+
+End Function
 Sub BookmakerReqs()
 '-----------------------------------------------------------
 
@@ -112,10 +317,10 @@ Dim pageNumber As Integer
 Dim d As Integer
 
 badCount = 0
-activeParaCount = ActiveDocument.Paragraphs.Count
+activeParaCount = ActiveDocument.paragraphs.Count
 
 For d = 1 To activeParaCount
-    paraStyle = ActiveDocument.Paragraphs(d).Style
+    paraStyle = ActiveDocument.paragraphs(d).Style
     
     'Debug.Print ActiveDocument.Paragraphs(A).Style & vbNewLine
     
@@ -161,11 +366,11 @@ For d = 1 To activeParaCount
                 paraStyle <> "Front Sales Quote NoIndent (fsq1)" And _
                 paraStyle <> "Front Sales Quote (fsq)" And _
                 paraStyle <> "Front Sales Quote Source (fsqs)" And _
-                paraStyle <> "Epigraph – non-verse (epi)" And _
-                paraStyle <> "Epigraph – verse (epiv)" And _
+                paraStyle <> "Epigraph - non-verse (epi)" And _
+                paraStyle <> "Epigraph - verse (epiv)" And _
                 paraStyle <> "Epigraph Source (eps)" And _
-                paraStyle <> "Chap Epigraph – non-verse (cepi)" And _
-                paraStyle <> "Chap Epigraph – verse (cepiv)" And _
+                paraStyle <> "Chap Epigraph - non-verse (cepi)" And _
+                paraStyle <> "Chap Epigraph - verse (cepiv)" And _
                 paraStyle <> "Chap Epigraph Source (ceps)" And _
                 paraStyle <> "Text - Standard ALT (atx)" And _
                 paraStyle <> "Text - Std No-Indent ALT (atx1)" And _
@@ -175,8 +380,8 @@ For d = 1 To activeParaCount
                         paraStyle <> "Titlepage Translator Name (tran)" And _
                         paraStyle <> "FM Head (fmh)" And _
                         paraStyle <> "FM Subhead (fmsh)" And _
-                        paraStyle <> "FM Epigraph – non-verse (fmepi)" And _
-                        paraStyle <> "FM Epigraph – verse (fmepiv)" And _
+                        paraStyle <> "FM Epigraph - non-verse (fmepi)" And _
+                        paraStyle <> "FM Epigraph - verse (fmepiv)" And _
                         paraStyle <> "FM Epigraph Source (fmeps)" And _
                         paraStyle <> "FM Text (fmtx)" And _
                         paraStyle <> "FM Text Space After (fmtx#)" And _
@@ -198,7 +403,7 @@ For d = 1 To activeParaCount
                         paraStyle <> "Chap Opening Text (cotx)" Then
                             
                             badCount = badCount + 1
-                            Set activeParaRange = ActiveDocument.Paragraphs(d).Range
+                            Set activeParaRange = ActiveDocument.paragraphs(d).Range
                             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
                             badStyles(badCount) = "**ERROR: Bad style on page " & pageNumber & " (Paragraph " & d & "): " & _
                                 vbTab & paraStyle & vbNewLine & vbNewLine
@@ -396,13 +601,13 @@ ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 
 ' Collect all styles being used
 styleGoodCount = 0
-activeParaCountJ = activeDoc.Paragraphs.Count
+activeParaCountJ = activeDoc.paragraphs.Count
 For J = 1 To activeParaCountJ
     'Next two lines are for the status bar
     Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
     If J Mod 100 = 0 Then DoEvents
     
-    paraStyleGood = activeDoc.Paragraphs(J).Style
+    paraStyleGood = activeDoc.paragraphs(J).Style
     
     If Right(paraStyleGood, 1) = ")" Then
         For K = 1 To styleGoodCount
@@ -792,8 +997,8 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
             Selection.Style <> "Front Sales Title (fst)" And _
             Selection.Style <> "Front Sales Quote (fsq)" And _
             Selection.Style <> "Front Sales Quote NoIndent (fsq1)" And _
-            Selection.Style <> "Epigraph – non-verse (epi)" And _
-            Selection.Style <> "Epigraph – verse (epiv)" And _
+            Selection.Style <> "Epigraph - non-verse (epi)" And _
+            Selection.Style <> "Epigraph - verse (epiv)" And _
             Selection.Style <> "FM Head (fmh)" And _
             Selection.Style <> "Illustration holder (ill)" And _
             Selection.Style <> "Page Break (pb)" Then
@@ -816,7 +1021,7 @@ CheckAfterPB = kString
 Selection.HomeKey Unit:=wdStory
 
 End Function
-Sub DeleteContentControlPC()
+Private Sub DeleteContentControlPC()
 Dim cc As ContentControl
 
 For Each cc In ActiveDocument.ContentControls
