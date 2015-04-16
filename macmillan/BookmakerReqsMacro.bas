@@ -51,12 +51,12 @@ ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 styleGoodCount = 0
 styleBadCount = 0
 styleBadOverflow = False
-activeParaCount = activeDoc.Paragraphs.Count
+activeParaCount = activeDoc.paragraphs.Count
 For J = 1 To activeParaCount
     'Next two lines are for the status bar
     Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
     If J Mod 100 = 0 Then DoEvents
-    paraStyle = activeDoc.Paragraphs(J).Style
+    paraStyle = activeDoc.paragraphs(J).Style
         'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
     If Right(paraStyle, 1) = ")" Then
         For K = 1 To styleGoodCount
@@ -79,7 +79,7 @@ For J = 1 To activeParaCount
         End If
         If L = styleBadCount + 1 Then
             styleBadCount = L
-            Set activeParaRange = ActiveDocument.Paragraphs(J).Range
+            Set activeParaRange = ActiveDocument.paragraphs(J).Range
             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
             stylesBad(styleBadCount) = "Page " & pageNumber & " (Paragraph " & J & "): " & vbTab & paraStyle
         End If
@@ -317,10 +317,10 @@ Dim pageNumber As Integer
 Dim d As Integer
 
 badCount = 0
-activeParaCount = ActiveDocument.Paragraphs.Count
+activeParaCount = ActiveDocument.paragraphs.Count
 
 For d = 1 To activeParaCount
-    paraStyle = ActiveDocument.Paragraphs(d).Style
+    paraStyle = ActiveDocument.paragraphs(d).Style
     
     'Debug.Print ActiveDocument.Paragraphs(A).Style & vbNewLine
     
@@ -366,11 +366,11 @@ For d = 1 To activeParaCount
                 paraStyle <> "Front Sales Quote NoIndent (fsq1)" And _
                 paraStyle <> "Front Sales Quote (fsq)" And _
                 paraStyle <> "Front Sales Quote Source (fsqs)" And _
-                paraStyle <> "Epigraph â€“ non-verse (epi)" And _
-                paraStyle <> "Epigraph â€“ verse (epiv)" And _
+                paraStyle <> "Epigraph - non-verse (epi)" And _
+                paraStyle <> "Epigraph - verse (epiv)" And _
                 paraStyle <> "Epigraph Source (eps)" And _
-                paraStyle <> "Chap Epigraph â€“ non-verse (cepi)" And _
-                paraStyle <> "Chap Epigraph â€“ verse (cepiv)" And _
+                paraStyle <> "Chap Epigraph - non-verse (cepi)" And _
+                paraStyle <> "Chap Epigraph - verse (cepiv)" And _
                 paraStyle <> "Chap Epigraph Source (ceps)" And _
                 paraStyle <> "Text - Standard ALT (atx)" And _
                 paraStyle <> "Text - Std No-Indent ALT (atx1)" And _
@@ -380,8 +380,8 @@ For d = 1 To activeParaCount
                         paraStyle <> "Titlepage Translator Name (tran)" And _
                         paraStyle <> "FM Head (fmh)" And _
                         paraStyle <> "FM Subhead (fmsh)" And _
-                        paraStyle <> "FM Epigraph â€“ non-verse (fmepi)" And _
-                        paraStyle <> "FM Epigraph â€“ verse (fmepiv)" And _
+                        paraStyle <> "FM Epigraph - non-verse (fmepi)" And _
+                        paraStyle <> "FM Epigraph - verse (fmepiv)" And _
                         paraStyle <> "FM Epigraph Source (fmeps)" And _
                         paraStyle <> "FM Text (fmtx)" And _
                         paraStyle <> "FM Text Space After (fmtx#)" And _
@@ -403,7 +403,7 @@ For d = 1 To activeParaCount
                         paraStyle <> "Chap Opening Text (cotx)" Then
                             
                             badCount = badCount + 1
-                            Set activeParaRange = ActiveDocument.Paragraphs(d).Range
+                            Set activeParaRange = ActiveDocument.paragraphs(d).Range
                             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
                             badStyles(badCount) = "**ERROR: Bad style on page " & pageNumber & " (Paragraph " & d & "): " & _
                                 vbTab & paraStyle & vbNewLine & vbNewLine
@@ -601,13 +601,13 @@ ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 
 ' Collect all styles being used
 styleGoodCount = 0
-activeParaCountJ = activeDoc.Paragraphs.Count
+activeParaCountJ = activeDoc.paragraphs.Count
 For J = 1 To activeParaCountJ
     'Next two lines are for the status bar
     Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
     If J Mod 100 = 0 Then DoEvents
     
-    paraStyleGood = activeDoc.Paragraphs(J).Style
+    paraStyleGood = activeDoc.paragraphs(J).Style
     
     If Right(paraStyleGood, 1) = ")" Then
         For K = 1 To styleGoodCount
@@ -997,8 +997,8 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
             Selection.Style <> "Front Sales Title (fst)" And _
             Selection.Style <> "Front Sales Quote (fsq)" And _
             Selection.Style <> "Front Sales Quote NoIndent (fsq1)" And _
-            Selection.Style <> "Epigraph â€“ non-verse (epi)" And _
-            Selection.Style <> "Epigraph â€“ verse (epiv)" And _
+            Selection.Style <> "Epigraph - non-verse (epi)" And _
+            Selection.Style <> "Epigraph - verse (epiv)" And _
             Selection.Style <> "FM Head (fmh)" And _
             Selection.Style <> "Illustration holder (ill)" And _
             Selection.Style <> "Page Break (pb)" Then
