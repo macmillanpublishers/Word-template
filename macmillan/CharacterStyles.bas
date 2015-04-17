@@ -259,8 +259,8 @@ wsFindArray(1) = "^m^13"              'manual page breaks
 wsFindArray(2) = "^13{2,}"          '2 or more paragraphs
 wsFindArray(3) = "(`[0-9]``)^13"    'remove para following a preserved break style                     v. 3.1 patch
 
-wsReplaceArray(1) = "^13"
-wsReplaceArray(2) = "^13"
+wsReplaceArray(1) = "^p"
+wsReplaceArray(2) = "^p"
 wsReplaceArray(3) = "\1"
 
 
