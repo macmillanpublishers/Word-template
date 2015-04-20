@@ -6,6 +6,7 @@ Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} ProgressBar
    ClientTop       =   375
    ClientWidth     =   9345
    OleObjectBlob   =   "ProgressBar.frx":0000
+   ShowModal       =   0   'False
    StartUpPosition =   1  'CenterOwner
 End
 Attribute VB_Name = "ProgressBar"
@@ -13,6 +14,9 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+
+
+
 Option Explicit
 
 '========================Progress bar================================.
@@ -39,17 +43,18 @@ Private cPercentComplete As Single
 
 'This Procedure is Run when the Form in Initiated
 Private Sub UserForm_Initialize()
-'Set Default Values for all the Variables
 
+'Set Default Values for all the Variables
 cFormTitle = "Progress Bar"
 cStatusMessage = "Ready"
 cPercentComplete = 0
 cBarWidth = cPercentComplete * Me.FrameProgress.Width
 
-Me.Caption = cFormTitle
+Me.Title = cFormTitle
 Me.LabelCaption.Caption = cStatusMessage
-Me.FrameProgress.Caption = Format(cPercentComplete, "0%")
+Me.FrameProgress.Caption = cPercentComplete
 Me.LabelProgress.Width = cBarWidth
+
 End Sub
 
 
@@ -57,31 +62,16 @@ End Sub
 'Properties
 '##########################################################################
 
-'This Procedure is Executed when the Title Propoerty is Set
+'This Procedure is Executed when the Title Property is Set
 Public Property Let Title(value As String)
-
-    'Proceed if the user did not send a blank string
-'If Not value = vbNullString Then
-    'Initialize the private class variable
-    cFormTitle = value
-    'Update the Form's title if it has already been loaded
-    'If Not Me Is Nothing Then
-        'Do Events makes sure the rest of your macro keeps running
-        'DoEvents
-        Me.Caption = cFormTitle
-        'Me.Repaint  'Supposedly less computationally expensive as DoEvents?
-   ' End If
-'End If
-
-
+cFormTitle = value
+Me.Caption = cFormTitle
 End Property
 
 'This Procedure lets the User try to access the Title Property.
 Public Property Get Title() As String
 Title = cFormTitle
 End Property
-
-
 
 '-----------------------------------------------------------------------
 'This Procedure is Executed when the StatusMessage Property is Set.
@@ -97,15 +87,11 @@ Public Property Get StatusMessage() As String
 StatusMessage = cStatusMessage
 End Property
 
-
-
 '-------------------------------------------------------------------------
 'This Procedure is Executed when the Percent Property is Set.
 Public Property Let Percent(value As Single)
-
-cPercentComplete = Format(value, "0%")
-Me.FrameProgress.Caption = cPercentComplete
-
+cPercentComplete = Format(value * 100, "0")
+Me.FrameProgress.Caption = cPercentComplete & "%"
 End Property
 
 'This Procedure lets the User try to access the Percent Property.
@@ -113,14 +99,11 @@ Public Property Get Percent() As Single
 Percent = cPercentComplete
 End Property
 
-
 '-------------------------------------------------------------------------
 'This Procedure is Executed when the BarWidth Property is Set.
 Public Property Let BarWidth(value As Single)
-
 cBarWidth = value * Me.FrameProgress.Width
 Me.LabelProgress.Width = cBarWidth
-
 End Property
 
 'This Procedure lets the User try to access the Percent Property.
@@ -131,12 +114,11 @@ End Property
 '##########################################################################
 'Public Methods
 '##########################################################################
+Public Sub Increment(sglPctComplete As Single, strStatus As String)
 
-Public Sub Progress(sglPctComplete As Single, strStatus As String)
-
-Me.StatusMessage (strStatus)
-Me.Percent (sglPctComplete)
-Me.BarWidth (sglPctComplete)
+Me.StatusMessage = strStatus
+Me.Percent = sglPctComplete
+Me.BarWidth = sglPctComplete
 Me.Repaint
 
 End Sub
