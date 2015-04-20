@@ -8,6 +8,8 @@ Sub MacmillanManuscriptCleanup()
 ''''''''''''''''''''''''''''''''
 '''created by Matt Retzer  - matthew.retzer@macmillan.com
 ''''''''''''''''''''''''''''''
+'version 3.9: Adding progress bar
+
 'version 3.8.2: adding handling of track changes
 
 'version 3.8.1: fixing bug in character styles macro that was causing page breaks to drop out
@@ -113,6 +115,21 @@ Sub MacmillanManuscriptCleanup()
 ''' - removed .Forward = True from all Find/Replaces as it is redundant when wrap = Continue
 ''' - made all Subs Private except for the Main one
 
+'----------Timer Start-----------------------------
+Dim StartTime As Double
+Dim SecondsElapsed As Double
+
+'Remember time when macro starts
+  StartTime = Timer
+
+'-----------------Start Progress Bar----------
+Dim oProgress As ProgressBar
+Set oProgress = New ProgressBar
+
+oProgress.Title = "Manuscript Cleanup Macro"
+oProgress.Show
+oProgress.Increment 0.05, "Verifying document is saved and doing error checks..."
+
 '-----------run preliminary error checks------------
 Dim exitOnError As Boolean
 
@@ -127,38 +144,49 @@ currentTracking = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
 '-----------Remove White Space------------
-Application.DisplayStatusBar = True
 Application.ScreenUpdating = False
 
 
 Call zz_clearFind                          'Clear find object
 
-Application.StatusBar = "Fixing quotes, unicode, section breaks": DoEvents
+oProgress.Increment 0.2, "Fixing quotes, unicode, section breaks..."
 Call RmNonWildcardItems                     'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
 Call zz_clearFind
 
-Application.StatusBar = "Preserving styled characters": DoEvents
+oProgress.Increment 0.4, "Preserving styled whitespace characters..."
 Call PreserveStyledCharactersA              ' EW added v. 3.2, tags styled page breaks, tabs
 Call zz_clearFind
 
-Application.StatusBar = "Removing whitespace, fixing ellipses and dashes": DoEvents
+oProgress.Increment 0.6, "Removing unstyled whitespace, fixing ellipses and dashes..."
 Call RmWhiteSpaceB                      'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
 Call zz_clearFind
 
-Application.StatusBar = "Preserving styled white-space": DoEvents
+oProgress.Increment 0.8, "Cleaning up styled whitespace..."
 Call PreserveStyledCharactersB              ' EW added v. 3.2, replaces character tags with actual character
 Call zz_clearFind
 
-Application.StatusBar = "Removing bookmarks": DoEvents
+oProgress.Increment 0.95, "Removing bookmarks..."
 Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
 Call zz_clearFind
+
+oProgress.Increment 1#, "Finished!"
+
 
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 
+Unload oProgress
+
 MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 
+'----------------Timer End-----------------
+'Determine how many seconds code took to run
+  SecondsElapsed = Round(Timer - StartTime, 2)
+
+'Notify user in seconds
+  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+  
 End Sub
 
 Private Sub RemoveBookmarks()
