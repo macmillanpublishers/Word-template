@@ -7,6 +7,21 @@ Sub MacmillanCharStyles()
 'Created by Erica Warren -- erica.warren@macmillan.com
 'Split off from MacmillanCleanupMacro: https://github.com/macmillanpublishers/Word-template/blob/master/macmillan/CleanupMacro.bas
 
+'------------------Time Start-----------------
+'Dim StartTime As Double
+'Dim SecondsElapsed As Double
+
+'Remember time when macro starts
+'StartTime = Timer
+
+'-----------------Start Progress Bar----------
+Dim oProgress As ProgressBar
+Set oProgress = New ProgressBar
+
+oProgress.Title = "Character Styles Macro"
+oProgress.Show
+oProgress.Increment 0.05, "Verifying document is saved and template is attached..."
+
 ''-----------------Error checks---------------
 Dim exitOnError As Boolean
 
@@ -26,44 +41,55 @@ currentTracking = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
 '-----------Replace Local Styles-----------
-Application.DisplayStatusBar = True
 Application.ScreenUpdating = False
 
 Call zz_clearFind                          'Clear find object
 
-Application.StatusBar = "Preserving styled whitespace": DoEvents
+oProgress.Increment 0.15, "Preserving styled whitespace..."
 Call PreserveWhiteSpaceinBrkStylesA     'Part A tags styled blank paragraphs so they don't get deleted
 Call zz_clearFind
 
-Application.StatusBar = "Applying styles to hyperlinks": DoEvents
+oProgress.Increment 0.25, "Applying styles to hyperlinks..."
 Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
 Call zz_clearFind
 
-Application.StatusBar = "Removing unstyled breaks": DoEvents
+oProgress.Increment 0.4, "Removing unstyled breaks..."
 Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
 Call zz_clearFind
 
-Application.StatusBar = "Tagging character styles": DoEvents
+oProgress.Increment 0.55, "Tagging character styles..."
 Call TagExistingCharStyles            'tag existing styled items
 Call zz_clearFind
 
-Application.StatusBar = "Tagging and clearing local styles": DoEvents
+oProgress.Increment 0.7, "Tagging and clearing local styles..."
 Call LocalStyleTag                 'tag local styling, reset local styling, remove text highlights
 Call zz_clearFind
 
-Application.StatusBar = "Applying Macmillan styles": DoEvents
+oProgress.Increment 0.85, "Applying Macmillan styles..."
 Call LocalStyleReplace            'reapply local styling through char styles
 Call zz_clearFind
 
+oProgress.Increment 0.95, "Cleaning up styled whitespace..."
 Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies the styles
 Call zz_clearFind
+
+oProgress.Increment 1, "Finished!"
 
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 
+Unload oProgress
+
 MsgBox "Macmillan character styles have been applied throughout your manuscript."
 
 ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
+
+'----------------------Timer End-------------------------------------------
+'Determine how many seconds code took to run
+'  SecondsElapsed = Round(Timer - StartTime, 2)
+
+'Notify user in seconds
+'  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 
 End Sub
 
