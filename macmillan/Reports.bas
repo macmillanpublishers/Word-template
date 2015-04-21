@@ -1,5 +1,7 @@
 Attribute VB_Name = "Reports"
 Option Explicit
+Option Base 1
+
 Sub MacmillanStyleReport()
 
 '-----------run preliminary error checks------------
@@ -222,6 +224,12 @@ Sub BookmakerReqs()
 
 '------------------------------------------------------------
 
+'------------------Time Start-----------------
+'Dim StartTime As Double
+'Dim SecondsElapsed As Double
+
+'Remember time when macro starts
+'StartTime = Timer
 
 Application.ScreenUpdating = False
 
@@ -253,7 +261,8 @@ strBadStylesList = TorBadStylesCheck
 
 
 '-------Count number of occurences of each required style----
-Dim styleCount() As Integer
+Dim styleCount() As Variant
+
 styleCount = CountReqdStyles()
 
 If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to user in last function
@@ -271,7 +280,7 @@ strMetadata = GetMetadata
 
             
 '-------------------Get Illustrations List from Document-----------
-Dim strIllustrationsList
+Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
 
@@ -291,47 +300,54 @@ Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStyles
 
 Application.ScreenUpdating = True
 
+'----------------------Timer End-------------------------------------------
+'Determine how many seconds code took to run
+'  SecondsElapsed = Round(Timer - StartTime, 2)
+
+'Notify user in seconds
+'  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+
 End Sub
-Private Function CreateErrorList(badStyles As String, arrStyleCount() As Integer) As String
+Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant) As String
 Dim errorList As String
 errorList = ""
 
 'Generate errors based on number of required elements found
-If styleCount(1) = 0 Then errorList = errorList & "**ERROR: No styled title detected." & vbNewLine & vbNewLine
+If arrStyleCount(1) = 0 Then errorList = errorList & "**ERROR: No styled title detected." & vbNewLine & vbNewLine
 
-If styleCount(1) > 1 Then errorList = errorList & "**ERROR: Too many title paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
+If arrStyleCount(1) > 1 Then errorList = errorList & "**ERROR: Too many title paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
 
-If styleCount(2) = 0 Then errorList = errorList & "**ERROR: No styled author name detected." & vbNewLine & vbNewLine
+If arrStyleCount(2) = 0 Then errorList = errorList & "**ERROR: No styled author name detected." & vbNewLine & vbNewLine
 
-If styleCount(3) = 0 Then errorList = errorList & "**ERROR: No styled ISBN detected." & vbNewLine & vbNewLine
+If arrStyleCount(3) = 0 Then errorList = errorList & "**ERROR: No styled ISBN detected." & vbNewLine & vbNewLine
 
-If styleCount(4) > 0 And styleCount(5) = 0 Then errorList = errorList & _
+If arrStyleCount(4) > 0 And arrStyleCount(5) = 0 Then errorList = errorList & _
     "**ERROR: Chap Number (cn) cannot be the main heading for" & vbNewLine _
     & vbTab & "a chapter. Every chapter must start with Chapter Title (ct)" & vbNewLine _
     & vbTab & "style. Chap Number (cn) paragraphs have been converted to the" & vbNewLine _
     & vbTab & "Chap Title (ct) style." & vbNewLine & vbNewLine
 
-If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) = 0 Then errorList = errorList & _
+If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) = 0 Then errorList = errorList & _
     "**ERROR: No tagged chapter openers detected. If your book does" & vbNewLine _
     & vbTab & "not have chapter openers, use the Chap Title Nonprinting" & vbNewLine _
     & vbTab & "(ctnp) style at the start of each section." & vbNewLine & vbNewLine
 
-If styleCount(4) > styleCount(5) And styleCount(5) > 0 Then errorList = errorList & _
+If arrStyleCount(4) > arrStyleCount(5) And arrStyleCount(5) > 0 Then errorList = errorList & _
     "**ERROR: More Chap Number (cn) paragraphs than Chap Title (ct)" & vbNewLine _
     & vbTab & "paragraphs found. Each Chap Number (cn) paragraph MUST be" & vbNewLine _
     & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
 
-If styleCount(7) = 0 Then errorList = errorList & "**ERROR: No styled Imprint Line detected." & vbNewLine & vbNewLine
+If arrStyleCount(7) = 0 Then errorList = errorList & "**ERROR: No styled Imprint Line detected." & vbNewLine & vbNewLine
 
-If styleCount(7) > 1 Then errorList = errorList & "**ERROR: Too many Imprint Line paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
+If arrStyleCount(7) > 1 Then errorList = errorList & "**ERROR: Too many Imprint Line paragraphs detected. Only 1 allowed." & vbNewLine & vbNewLine
 
-If (styleCount(4) > 0 And styleCount(5) = 0) Or (styleCount(4) = 0 And styleCount(5) > 0) Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
+If (arrStyleCount(4) > 0 And arrStyleCount(5) = 0) Or (arrStyleCount(4) = 0 And arrStyleCount(5) > 0) Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
 
-If styleCount(4) = 0 And styleCount(5) = 0 And styleCount(6) > 0 Then errorList = errorList & CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
+If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) > 0 Then errorList = errorList & CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
 
-If styleCount(4) >= styleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Number (cn)", "Page Break (pb)")
+If arrStyleCount(4) >= arrStyleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Number (cn)", "Page Break (pb)")
 
-If styleCount(4) >= styleCount(5) And styleCount(5) <> 0 Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
+If arrStyleCount(4) >= arrStyleCount(5) And arrStyleCount(5) <> 0 Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
 
 'Check that only heading styles follow page breaks
 errorList = errorList & CheckAfterPB
@@ -452,7 +468,7 @@ Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 10
     Selection.Next(Unit:=wdParagraph, Count:=1).Select
 Loop
 
-'Debug.Print jString
+Debug.Print jString
 
 CheckPrevStyle = jString
 
@@ -688,15 +704,18 @@ For d = 1 To activeParaCount
 Next
 
 For e = LBound(arrBadStyles()) To UBound(arrBadStyles())
-    strBadStyles = strBadStyles & arrBadStyles(e) & vbCr & vbCr
+    strBadStyles = strBadStyles & arrBadStyles(e)
 Next e
+
+Debug.Print strBadStyles
 
 TorBadStylesCheck = strBadStyles
 
 End Function
-Private Function CountReqdStyles() As Integer
+Private Function CountReqdStyles() As Variant
 Dim arrStyleName(1 To 7) As String                      ' Declare number of items in array
-Dim intStyleCount(1 To 7) As Integer                    ' ditto
+Dim intStyleCount() As Variant
+ReDim intStyleCount(1 To 7) As Variant
 Dim A As Long
 Dim xCount As Integer
 
@@ -708,7 +727,7 @@ arrStyleName(5) = "Chap Title (ct)"
 arrStyleName(6) = "Chap Title Nonprinting (ctnp)"
 arrStyleName(7) = "Titlepage Imprint Line (imp)"
 
-For A = 1 To UBound(styleName())
+For A = 1 To UBound(arrStyleName())
     xCount = 0
     
     With ActiveDocument.Range.Find
@@ -718,7 +737,7 @@ For A = 1 To UBound(styleName())
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles(styleName(A))
+        .Style = ActiveDocument.Styles(arrStyleName(A))
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
@@ -741,13 +760,9 @@ If intStyleCount(1) = 100 Then
     
 End If
 
-Debug.Print arrStyleName(1) & ": " & styleCount(1) & vbNewLine _
-            ; arrStyleName(2) & ": " & styleCount(2) & vbNewLine _
-            ; arrStyleName(3) & ": " & styleCount(3) & vbNewLine _
-            ; arrStyleName(4) & ": " & styleCount(4) & vbNewLine _
-            ; arrStyleName(5) & ": " & styleCount(5) & vbNewLine _
-            ; arrStyleName(6) & ": " & styleCount(6) & vbNewLine _
-            ; arrStyleName(7) & ": " & styleCount(7) & vbNewLine
+For A = 1 To UBound(arrStyleName())
+    Debug.Print arrStyleName(A) & ": " & intStyleCount(A) & vbNewLine
+Next A
 
 CountReqdStyles = intStyleCount()
 
@@ -986,6 +1001,7 @@ End Function
 Private Sub CreateReport(errorList As String, metadata As String, illustrations As String, goodStyles As String, suffix As String)
 'Create report file
 Dim activeRng As Range
+Dim activeDoc As Document
 Set activeDoc = ActiveDocument
 Set activeRng = ActiveDocument.Range
 Dim activeDocName As String
@@ -993,6 +1009,8 @@ Dim activeDocPath As String
 Dim reqReportDoc As String
 Dim reqReportDocAlt As String
 Dim fnum As Integer
+Dim TheOS As String
+TheOS = System.OperatingSystem
 
 'activeDocName below works for .doc and .docx
 activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".doc") - 1)
@@ -1017,7 +1035,7 @@ Dim e As Integer
 
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
-If errorList = "" And badCount = 0 Then
+If errorList = "" Then
     Print #fnum, vbCr
     Print #fnum, "                 CONGRATULATIONS! YOU PASSED!" & vbCr
     Print #fnum, " But you're not done yet. Please check the info listed below." & vbCr
@@ -1038,36 +1056,23 @@ End If
     Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
     Print #fnum, "associated styles in the manuscript." & vbCr
     Print #fnum, vbCr
-    Print #fnum, "* TITLE *" & vbCr
-    Print #fnum, bString(1) & vbCr
-    Print #fnum, "* AUTHOR *" & vbCr
-    Print #fnum, bString(2) & vbCr
-    Print #fnum, "* ISBN *" & vbCr
-    Print #fnum, bString(3) & vbCr
-    Print #fnum, "* IMPRINT *" & vbCr
-    Print #fnum, bString(4) & vbCr
+    Print #fnum, metadata
     Print #fnum, vbCr
     Print #fnum, vbCr
     Print #fnum, "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
     
-    If cString(1) <> "no illustrations detected" & vbNewLine Then
+    If illustrations <> "no illustrations detected" & vbNewLine Then
         Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
         Print #fnum, "names of your illustrations. Be sure to place these files in" & vbCr
         Print #fnum, "the submitted_images folder BEFORE you run the bookmaker tool." & vbCr
         Print #fnum, vbCr
     End If
     
-    For e = 1 To cCount
-        Print #fnum, cString(e)
-    Next e
-       
+    Print #fnum, illustrations
     Print #fnum, vbCr
-    Print #fnum, "----------------------- GOOD STYLES IN USE --------------------" & vbCr
-    
-    For K = 1 To styleGoodCount
-        Print #fnum, stylesGood(K)
-    Next K
-    Print #fnum, charStyles
+    Print #fnum, vbCr
+    Print #fnum, "----------------------- MACMILLAN STYLES IN USE --------------------" & vbCr
+    Print #fnum, goodStyles
 
 Close #fnum
 
