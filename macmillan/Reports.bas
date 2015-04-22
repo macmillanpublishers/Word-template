@@ -18,11 +18,11 @@ Sub BookmakerReqs()
 '------------------------------------------------------------
 
 '------------------Time Start-----------------
-'Dim StartTime As Double
-'Dim SecondsElapsed As Double
+Dim StartTime As Double
+Dim SecondsElapsed As Double
 
 'Remember time when macro starts
-'StartTime = Timer
+StartTime = Timer
 
 Application.ScreenUpdating = False
 
@@ -99,11 +99,11 @@ Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStyles
 Application.ScreenUpdating = True
 
 '----------------------Timer End-------------------------------------------
-'Determine how many seconds code took to run
-'  SecondsElapsed = Round(Timer - StartTime, 2)
+''''Determine how many seconds code took to run
+  SecondsElapsed = Round(Timer - StartTime, 2)
 
-'Notify user in seconds
-'  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+''''Notify user in seconds
+  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 
 End Sub
 Sub MacmillanStyleReport()
@@ -230,7 +230,6 @@ For J = 1 To activeParaCount
         If K = styleGoodCount + 1 Then
             styleGoodCount = K
             stylesGood(styleGoodCount) = paraStyle
-            Debug.Print stylesGood(K)
         End If
     Else
         For L = 1 To styleBadCount
@@ -259,17 +258,13 @@ ReDim Preserve stylesGood(1 To styleGoodCount)
 WordBasic.SortArray stylesGood()
 End If
 
-For K = 1 To UBound(stylesGood())
-    Debug.Print stylesGood(K)
-Next K
-
 'Create single string for good styles
 Dim strGoodStyles As String
 For K = LBound(stylesGood()) To UBound(stylesGood())
     strGoodStyles = strGoodStyles & stylesGood(K) & vbNewLine
 Next K
 
-Debug.Print strGoodStyles
+'Debug.Print strGoodStyles
 
 'Create single string for bad styles
 Dim strBadStyles As String
@@ -278,7 +273,7 @@ For L = LBound(stylesBad()) To UBound(stylesBad())
     strBadStyles = strBadStyles & stylesBad(L)
 Next L
 
-Debug.Print strBadStyles
+'Debug.Print strBadStyles
 
 '-------------------get list of good character styles--------------
 
@@ -335,8 +330,8 @@ If torDOTcom = True Then
     strBadStyles = strBadStyles & vbNewLine & strTorBadStyles
 End If
 
-Debug.Print strGoodStyles
-Debug.Print strBadStyles
+'Debug.Print strGoodStyles
+'Debug.Print strBadStyles
 
 'Add both good and bad styles lists to an array to pass back to original sub
 Dim arrFinalLists() As Variant
@@ -366,7 +361,7 @@ ourTemplate1 = "macmillan.dotm"
 ourTemplate2 = "macmillan_NoColor.dotm"
 ourTemplate3 = "MacmillanCoverCopy.dotm"
 
-Debug.Print "Current template is " & currentTemplate & vbNewLine
+'Debug.Print "Current template is " & currentTemplate & vbNewLine
 
 If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
@@ -469,7 +464,7 @@ If errorList <> "" Then
         "please contact workflows@macmillan.com." & vbNewLine
 End If
 
-Debug.Print errorList
+'Debug.Print errorList
 
 CreateErrorList = errorList
 
@@ -577,7 +572,7 @@ Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 10
     Selection.Next(Unit:=wdParagraph, Count:=1).Select
 Loop
 
-Debug.Print jString
+'Debug.Print jString
 
 CheckPrevStyle = jString
 
@@ -724,7 +719,7 @@ activeParaCount = arrGoodCount
 For d = 1 To activeParaCount
     paraStyle = arrGoodList(d)
     
-    Debug.Print arrGoodList(d)
+    'Debug.Print arrGoodList(d)
     
      'Broken down into multiple statements because max 24 line continuation characters in a statement
      'And also most common styles listed in first IF-THEN so it won't have to search all most of the time
@@ -814,17 +809,13 @@ For d = 1 To activeParaCount
     End If
 Next
 
-Debug.Print intBadCount
-Debug.Print arrBadStyles(1)
-Debug.Print arrBadStyles(2)
-
 'Put list of errors in a single string
 ReDim Preserve arrBadStyles(1 To intBadCount)
 For e = LBound(arrBadStyles()) To UBound(arrBadStyles())
     strBadStyles = strBadStyles & arrBadStyles(e) & vbNewLine
 Next e
 
-Debug.Print strBadStyles
+'Debug.Print strBadStyles
 
 BadTorStyles = strBadStyles
 
@@ -877,9 +868,9 @@ If intStyleCount(1) = 100 Then
     
 End If
 
-For A = 1 To UBound(arrStyleName())
-    Debug.Print arrStyleName(A) & ": " & intStyleCount(A) & vbNewLine
-Next A
+'For A = 1 To UBound(arrStyleName())
+ '   Debug.Print arrStyleName(A) & ": " & intStyleCount(A) & vbNewLine
+'Next A
 
 CountReqdStyles = intStyleCount()
 
@@ -934,7 +925,7 @@ strTitleData = "** Title **" & vbNewLine & _
             "** Imprint **" & vbNewLine & _
             bString(4) & vbNewLine
             
-Debug.Print strTitleData
+'Debug.Print strTitleData
 
 GetMetadata = strTitleData
 
@@ -1001,7 +992,7 @@ For n = 1 To cCount
     strFullList = strFullList & cString(n)
 Next n
 
-Debug.Print strFullList
+'Debug.Print strFullList
 
 IllustrationsList = strFullList
 
