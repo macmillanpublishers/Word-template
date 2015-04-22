@@ -116,11 +116,11 @@ Sub MacmillanManuscriptCleanup()
 ''' - made all Subs Private except for the Main one
 
 '----------Timer Start-----------------------------
-Dim StartTime As Double
-Dim SecondsElapsed As Double
+'Dim StartTime As Double
+'Dim SecondsElapsed As Double
 
 'Remember time when macro starts
-  StartTime = Timer
+'  StartTime = Timer
 
 '-----------------Start Progress Bar----------
 Dim oProgress As ProgressBar
@@ -182,10 +182,10 @@ ActiveDocument.TrackRevisions = currentTracking         'Return track changes to
 
 '----------------Timer End-----------------
 'Determine how many seconds code took to run
-  SecondsElapsed = Round(Timer - StartTime, 2)
+'  SecondsElapsed = Round(Timer - StartTime, 2)
 
 'Notify user in seconds
-  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+'  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
   
 End Sub
 
