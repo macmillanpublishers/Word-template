@@ -5,6 +5,7 @@ Sub BookmakerReqs()
 '-----------------------------------------------------------
 
 'Created by Erica Warren - erica.warren@macmillan.com
+'4/23/2015: expanding private subs to cover all macmillan styles for style report
 '4/21/2015: breaking down into individual subs and functions for each step
 '4/10/2015: adding handling of track changes
 '4/3/2015: adding Imprint Line requirement
@@ -25,7 +26,6 @@ Dim SecondsElapsed As Double                    '|
 StartTime = Timer                               '|
 '=================================================
 
-Application.ScreenUpdating = False
 
 '-----------run preliminary error checks------------
 Dim exitOnError As Boolean
@@ -34,6 +34,8 @@ exitOnError = srErrorCheck()
 If exitOnError <> False Then
 Exit Sub
 End If
+
+Application.ScreenUpdating = False
 
 '-------Delete content controls on PC------------------------
 'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
@@ -136,13 +138,6 @@ Dim SecondsElapsed As Double                    '|
 StartTime = Timer                               '|
 '=================================================
 
-Application.ScreenUpdating = False
-
-'-----------Turn off track changes--------
-Dim currentTracking As Boolean
-currentTracking = ActiveDocument.TrackRevisions
-ActiveDocument.TrackRevisions = False
-
 '-----------run preliminary error checks------------
 Dim exitOnError As Boolean
 exitOnError = srErrorCheck()
@@ -150,6 +145,14 @@ exitOnError = srErrorCheck()
 If exitOnError <> False Then
 Exit Sub
 End If
+
+Application.ScreenUpdating = False
+
+'-----------Turn off track changes--------
+Dim currentTracking As Boolean
+currentTracking = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
 
 '-------Delete content controls on PC------------------------
 'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
@@ -221,8 +224,11 @@ Dim strSuffix As String
 strSuffix = "StyleReport"       'suffix for report file, no spaces
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
+'-----------------------return settings to original-----------------
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
+
+
 '================================================================================================
 '----------------------Timer End-------------------------------------------
 ''''Determine how many seconds code took to run
@@ -231,6 +237,8 @@ Application.ScreenUpdating = True
 ''''Notify user in seconds
   Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '================================================================================================
+
+
 End Sub
 Private Function GoodBadStyles(torDOTcom As Boolean) As Variant
 'Creates a list of Macmillan styles in use
@@ -293,7 +301,7 @@ For J = 1 To activeParaCount
             styleBadCount = L
             Set activeParaRange = ActiveDocument.paragraphs(J).Range
             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
-            stylesBad(styleBadCount) = "**ERROR: Non-Macmillan style on page " & pageNumber & _
+            stylesBad(styleBadCount) = "** ERROR: Non-Macmillan style on page " & pageNumber & _
                 " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
         End If
     End If
@@ -465,11 +473,11 @@ errorList = ""
 '=====================Generate errors based on number of required elements found==================
 
 'If Book Title = 0
-If arrStyleCount(1) = 0 Then errorList = errorList & "**ERROR: No styled title detected." & _
+If arrStyleCount(1) = 0 Then errorList = errorList & "** ERROR: No styled title detected." & _
     vbNewLine & vbNewLine
 
 'If Book Title > 1
-If arrStyleCount(1) > 1 Then errorList = errorList & "**ERROR: Too many title paragraphs detected." _
+If arrStyleCount(1) > 1 Then errorList = errorList & "** ERROR: Too many title paragraphs detected." _
     & " Only 1 allowed." & vbNewLine & vbNewLine
 
 'Check if page break before Book Title
@@ -478,11 +486,11 @@ If arrStyleCount(1) > 0 Then errorList = errorList & CheckPrevStyle(findStyle:="
 
 
 'If Author Name = 0
-If arrStyleCount(2) = 0 Then errorList = errorList & "**ERROR: No styled author name detected." _
+If arrStyleCount(2) = 0 Then errorList = errorList & "** ERROR: No styled author name detected." _
     & vbNewLine & vbNewLine
 
 'If ISBN = 0
-If arrStyleCount(3) = 0 Then errorList = errorList & "**ERROR: No styled ISBN detected." _
+If arrStyleCount(3) = 0 Then errorList = errorList & "** ERROR: No styled ISBN detected." _
     & vbNewLine & vbNewLine
 
 'If CN > 0 and CT = 0 (already fixed in FixSectionHeadings sub)
@@ -526,11 +534,11 @@ If arrStyleCount(4) > arrStyleCount(5) And arrStyleCount(5) > 0 Then errorList =
     & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
 
 'If Imprint line = 0
-If arrStyleCount(7) = 0 Then errorList = errorList & "**ERROR: No styled Imprint Line detected." _
+If arrStyleCount(7) = 0 Then errorList = errorList & "** ERROR: No styled Imprint Line detected." _
     & vbNewLine & vbNewLine
 
 'If Imprint Lline > 1
-If arrStyleCount(7) > 1 Then errorList = errorList & "**ERROR: Too many Imprint Line paragraphs" _
+If arrStyleCount(7) > 1 Then errorList = errorList & "** ERROR: Too many Imprint Line paragraphs" _
     & " detected. Only 1 allowed." & vbNewLine & vbNewLine
 
 'If only CTs (either originally or converted by macro) check for a page break before
@@ -659,12 +667,12 @@ Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 10
     
     'select preceding paragraph
     Selection.Previous(Unit:=wdParagraph, Count:=1).Select
-    pageNum = Selection.Information(wdActiveEndPageNumber)
+    pageNum = Selection.Information(wdActiveEndPageNumber) - 1
     
         'Check if preceding paragraph style is correct
         If Selection.Style <> prevStyle Then
-            jString = jString & "** ERROR: Missing or incorrect " & prevStyle & " style on page " _
-                & pageNum & "." & vbNewLine & vbNewLine
+            jString = jString & "** ERROR: Missing or incorrect " & prevStyle & " style before " _
+                & findStyle & " style on page " & pageNum & "." & vbNewLine & vbNewLine
         End If
         
         'If you're searching for a page break before, also check if manual page break is in paragraph
@@ -751,8 +759,8 @@ Selection.HomeKey Unit:=wdStory
 'select paragraph with styled as Page Break
     Selection.Find.ClearFormatting
     With Selection.Find
-        .Text = ""
-        .Replacement.Text = ""
+        .Text = "^m"
+        .Replacement.Text = "^m"
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
@@ -767,7 +775,7 @@ Selection.HomeKey Unit:=wdStory
 Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 1000 so we don't get an infinite loop
     kCount = kCount + 1
     nCount = 0
-    'select preceding paragraph
+    'select following paragraph
     Selection.Next(Unit:=wdParagraph, Count:=1).Select
     nextStyle = Selection.Style
     pageNumK = Selection.Information(wdActiveEndPageNumber)
@@ -793,7 +801,7 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
     Selection.Previous(Unit:=wdParagraph, Count:=1).Select
 Loop
 
-Debug.Print kString
+'Debug.Print kString
 
 CheckAfterPB = kString
 
@@ -853,7 +861,7 @@ Dim paraStyle As String
 Dim activeParaCount As Integer
 
 Dim arrTorStyles() As String
-ReDim arrTorStyles(1 To 76)
+ReDim arrTorStyles(1 To 78)
 
 Dim intBadCount As Integer
 Dim activeParaRange As Range
@@ -904,14 +912,14 @@ arrTorStyles(35) = "Text - Std No-Indent Space Before (#tx1)"
 arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
 arrTorStyles(37) = "Dedication (ded)"
 arrTorStyles(38) = "Dedication Author (dedau)"
-arrTorStyles(39) = "Epigraph - non-verse (epi)"
-arrTorStyles(40) = "Epigraph - verse (epiv)"
+arrTorStyles(39) = "Epigraph – non-verse (epi)"
+arrTorStyles(40) = "Epigraph – verse (epiv)"
 arrTorStyles(41) = "Epigraph Source (eps)"
 arrTorStyles(42) = "Chap Epigraph Source (ceps)"
-arrTorStyles(43) = "Chap Epigraph—non-verse (cepi)"
-arrTorStyles(44) = "Chap Epigraph—verse (cepiv)"
-arrTorStyles(45) = "Chap Title Nonprinting (cnp)"
-arrTorStyles(46) = "FM Epigraph - non-verse (fmepi)"
+arrTorStyles(43) = "Chap Epigraph – non-verse (cepi)"
+arrTorStyles(44) = "Chap Epigraph – verse (cepiv)"
+arrTorStyles(45) = "Chap Title Nonprinting (ctp)"
+arrTorStyles(46) = "FM Epigraph – non-verse (fmepi)"
 arrTorStyles(47) = "FM Epigraph – verse (fmepiv)"
 arrTorStyles(48) = "FM Epigraph Source (fmeps)"
 arrTorStyles(49) = "FM Head (fmh)"
@@ -928,20 +936,22 @@ arrTorStyles(59) = "Front Sales Quote (fsq)"
 arrTorStyles(60) = "Front Sales Quote NoIndent (fsq1)"
 arrTorStyles(61) = "Front Sales Quote Source (fsqs)"
 arrTorStyles(62) = "Front Sales Title (fst)"
-arrTorStyles(63) = "Space Break with ALT Ornament (orn2)"
-arrTorStyles(64) = "Space Break - 1-Line (ls1)"
-arrTorStyles(65) = "Space Break - 2-Line (ls2)"
-arrTorStyles(66) = "Space Break - 3-Line (ls3)"
-arrTorStyles(67) = "Text - Computer Type (com)"
-arrTorStyles(68) = "Text - Computer Type No-Indent (com1)"
-arrTorStyles(69) = "Text - Standard ALT (atx)"
-arrTorStyles(70) = "Text - Std No-Indent ALT (atx1)"
-arrTorStyles(71) = "Caption (cap)"
-arrTorStyles(72) = "Titlepage Contributor Name (con)"
-arrTorStyles(73) = "Titlepage Translator Name (tran)"
-arrTorStyles(74) = "Chap Ornament (corn)"
-arrTorStyles(75) = "Chap Ornament ALT (corn2)"
-arrTorStyles(76) = "Chap Opening Text (cotx)"
+arrTorStyles(63) = "Front Sales Text (fstx)"
+arrTorStyles(64) = "Space Break with ALT Ornament (orn2)"
+arrTorStyles(65) = "Space Break - 1-Line (ls1)"
+arrTorStyles(66) = "Space Break - 2-Line (ls2)"
+arrTorStyles(67) = "Space Break - 3-Line (ls3)"
+arrTorStyles(68) = "Text - Computer Type (com)"
+arrTorStyles(69) = "Text - Computer Type No-Indent (com1)"
+arrTorStyles(70) = "Text - Standard ALT (atx)"
+arrTorStyles(71) = "Text - Std No-Indent ALT (atx1)"
+arrTorStyles(72) = "Caption (cap)"
+arrTorStyles(73) = "Titlepage Contributor Name (con)"
+arrTorStyles(74) = "Titlepage Translator Name (tran)"
+arrTorStyles(75) = "Chap Ornament (corn)"
+arrTorStyles(76) = "Chap Ornament ALT (corn2)"
+arrTorStyles(77) = "Chap Opening Text (cotx)"
+arrTorStyles(78) = "Chap Opening Text Space After (cotx#)"
 
 activeParaCount = ActiveDocument.paragraphs.Count
 
@@ -971,7 +981,7 @@ For N = 1 To activeParaCount
 
 Next N
 
-Debug.Print strBadStyles
+'Debug.Print strBadStyles
 
 BadTorStyles = strBadStyles
 
@@ -1130,7 +1140,7 @@ Do While Selection.Find.Execute = True And cCount < 1000            'cCount < 10
         Selection.MoveEnd Unit:=wdCharacter, Count:=-1
     End If
     
-    cString(cCount) = "Page " & pageNumberC & ": " & Selection.Text
+    cString(cCount) = "Page " & pageNumberC & ": " & Selection.Text & vbNewLine
     
     'If the next character is a paragraph return, add that to the selection
     'Otherwise the next Find will just select the same text with the paragraph return
@@ -1227,8 +1237,7 @@ End If
     
     If illustrations <> "no illustrations detected" & vbNewLine Then
         Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
-        Print #fnum, "names of your illustrations. Be sure to place these files in" & vbCr
-        Print #fnum, "the submitted_images folder BEFORE you run the bookmaker tool." & vbCr
+        Print #fnum, "names of your illustrations." & vbCr
         Print #fnum, vbCr
     End If
     
