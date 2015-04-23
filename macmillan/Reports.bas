@@ -710,42 +710,39 @@ Dim arrTorStyles() As String
 ReDim arrTorStyles(1 To 76)
 
 Dim intBadCount As Integer
-Dim arrBadStyles() As String
-ReDim arrBadStyles(1 To 200)        'Increase number if want to count more bad styles
 Dim activeParaRange As Range
 Dim pageNumber As Integer
 
 Dim N As Integer
 Dim M As Integer
-Dim e As Integer
 Dim strBadStyles As String
 
 'List of styles approved for use in Tor.com automated workflow
-'Organized in approximate frequency in manuscripts
+'Organized by approximate frequency in manuscripts (most freq at top)
 
-arrTorStyles(1) = "Text -Standard(tx)"
+arrTorStyles(1) = "Text - Standard (tx)"
 arrTorStyles(2) = "Text - Std No-Indent (tx1)"
-arrTorStyles(3) = "Chap Title(ct)"
-arrTorStyles(4) = "Chap Number(cn)"
+arrTorStyles(3) = "Chap Title (ct)"
+arrTorStyles(4) = "Chap Number (cn)"
 arrTorStyles(5) = "Chap Opening Text No-Indent (cotx1)"
-arrTorStyles(6) = "Page Break(pb)"
+arrTorStyles(6) = "Page Break (pb)"
 arrTorStyles(7) = "Space Break (#)"
 arrTorStyles(8) = "Space Break with Ornament (orn)"
 arrTorStyles(9) = "Titlepage Author Name (au)"
 arrTorStyles(10) = "Titlepage Book Subtitle (stit)"
 arrTorStyles(11) = "Titlepage Book Title (tit)"
-arrTorStyles(12) = "Titlepage Cities(cit)"
+arrTorStyles(12) = "Titlepage Cities (cit)"
 arrTorStyles(13) = "Titlepage Imprint Line (imp)"
 arrTorStyles(14) = "Copyright Text double space (crtxd)"
 arrTorStyles(15) = "Copyright Text single space (crtx)"
 arrTorStyles(16) = "Extract (ext)"
-arrTorStyles(17) = "Extract Head(exth)"
+arrTorStyles(17) = "Extract Head (exth)"
 arrTorStyles(18) = "Extract-No Indent (ext1)"
 arrTorStyles(19) = "Halftitle Book Title (htit)"
-arrTorStyles(20) = "Illustration holder(ill)"
+arrTorStyles(20) = "Illustration holder (ill)"
 arrTorStyles(21) = "Illustration Source (is)"
-arrTorStyles(22) = "Part Number(pn)"
-arrTorStyles(23) = "Part Title(pt)"
+arrTorStyles(22) = "Part Number (pn)"
+arrTorStyles(23) = "Part Title (pt)"
 arrTorStyles(24) = "About Author Text Head (atah)"
 arrTorStyles(25) = "About Author Text (atatx)"
 arrTorStyles(26) = "About Author Text No-Indent (atatx1)"
@@ -760,20 +757,20 @@ arrTorStyles(34) = "Text - Std No-Indent Space Around (#tx1#)"
 arrTorStyles(35) = "Text - Std No-Indent Space Before (#tx1)"
 arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
 arrTorStyles(37) = "Dedication (ded)"
-arrTorStyles(38) = "Dedication Author(dedau)"
-arrTorStyles(39) = "Epigraph -non - verse(epi)"
-arrTorStyles(40) = "Epigraph -verse(epiv)"
-arrTorStyles(41) = "Epigraph Source(eps)"
+arrTorStyles(38) = "Dedication Author (dedau)"
+arrTorStyles(39) = "Epigraph - non-verse (epi)"
+arrTorStyles(40) = "Epigraph - verse (epiv)"
+arrTorStyles(41) = "Epigraph Source (eps)"
 arrTorStyles(42) = "Chap Epigraph Source (ceps)"
-arrTorStyles(43) = "Chap Epigraph—non - verse(cepi)"
-arrTorStyles(44) = "Chap Epigraph—verse(cepiv)"
+arrTorStyles(43) = "Chap Epigraph—non-verse (cepi)"
+arrTorStyles(44) = "Chap Epigraph—verse (cepiv)"
 arrTorStyles(45) = "Chap Title Nonprinting (cnp)"
-arrTorStyles(46) = "FM Epigraph - non - verse(fmepi)"
-arrTorStyles(47) = "FM Epigraph - verse(fmepiv)"
+arrTorStyles(46) = "FM Epigraph - non-verse (fmepi)"
+arrTorStyles(47) = "FM Epigraph - verse (fmepiv)"
 arrTorStyles(48) = "FM Epigraph Source (fmeps)"
-arrTorStyles(49) = "FM Head(fmh)"
-arrTorStyles(50) = "FM Subhead(fmsh)"
-arrTorStyles(51) = "FM Text(fmtx)"
+arrTorStyles(49) = "FM Head (fmh)"
+arrTorStyles(50) = "FM Subhead (fmsh)"
+arrTorStyles(51) = "FM Text (fmtx)"
 arrTorStyles(52) = "FM Text No-Indent (fmtx1)"
 arrTorStyles(53) = "FM Text No-Indent Space After (fmtx1#)"
 arrTorStyles(54) = "FM Text No-Indent Space Around (#fmtx1#)"
@@ -786,9 +783,9 @@ arrTorStyles(60) = "Front Sales Quote NoIndent (fsq1)"
 arrTorStyles(61) = "Front Sales Quote Source (fsqs)"
 arrTorStyles(62) = "Front Sales Title (fst)"
 arrTorStyles(63) = "Space Break with ALT Ornament (orn2)"
-arrTorStyles(64) = "Space Break - 1 - Line(ls1)"
-arrTorStyles(65) = "Space Break - 2 - Line(ls2)"
-arrTorStyles(66) = "Space Break - 3 - Line(ls3)"
+arrTorStyles(64) = "Space Break - 1-Line (ls1)"
+arrTorStyles(65) = "Space Break - 2-Line (ls2)"
+arrTorStyles(66) = "Space Break - 3-Line (ls3)"
 arrTorStyles(67) = "Text - Computer Type (com)"
 arrTorStyles(68) = "Text - Computer Type No-Indent (com1)"
 arrTorStyles(69) = "Text - Standard ALT (atx)"
@@ -796,30 +793,35 @@ arrTorStyles(70) = "Text - Std No-Indent ALT (atx1)"
 arrTorStyles(71) = "Caption (cap)"
 arrTorStyles(72) = "Titlepage Contributor Name (con)"
 arrTorStyles(73) = "Titlepage Translator Name (tran)"
-arrTorStyles(74) = "Chap Ornament(corn)"
+arrTorStyles(74) = "Chap Ornament (corn)"
 arrTorStyles(75) = "Chap Ornament ALT (corn2)"
 arrTorStyles(76) = "Chap Opening Text (cotx)"
 
-intBadCount = 0
 activeParaCount = ActiveDocument.paragraphs.Count
 
 For N = 1 To activeParaCount
+    intBadCount = 0
     paraStyle = ActiveDocument.paragraphs(N).Style
     
-    For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
-        If paraStyle(N) <> arrTorStyle(M) Then
-            intBadCount = intBadCount + 1
-        Else
-            Exit For
-        End If
-    Next M
+    If Right(paraStyle, 1) = ")" Then
     
-    If intBadCount = UBound(arrTorStyles()) Then
-        Set activeParaRange = ActiveDocument.paragraphs(N).Range
-        pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
-                            strBadStyles = strBadStyles & "**ERROR: Bad Tor.com style on page " & pageNumber & " (Paragraph " & d & "): " & _
-                                vbTab & paraStyle(N) & vbNewLine & vbNewLine
+        For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
+            If paraStyle <> arrTorStyles(M) Then
+                intBadCount = intBadCount + 1
+            Else
+                Exit For
+            End If
+        Next M
+    
+        If intBadCount = UBound(arrTorStyles()) Then
+            Set activeParaRange = ActiveDocument.paragraphs(N).Range
+            pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
+            strBadStyles = strBadStyles & "** ERROR: Non-Tor.com style on page " & pageNumber _
+                & " (Paragraph " & N & "): " & vbTab & paraStyle & vbNewLine & vbNewLine
+        End If
+    
     End If
+
 
 Next N
 
