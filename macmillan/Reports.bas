@@ -60,10 +60,27 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
     Exit Sub
 End If
             
-'------------Convert solo Chap Number paras to Chap Title-------
-If styleCount(4) > 0 And styleCount(5) = 0 Then         'If Chap Num > 0 and Chap Title = 0
-    Call FixSoloCNs
+            
+'------------Convert unapproved headings to correct heading-------
+' If certain styles (oldStyle) appear by themselves, converts to
+' the approved solo style (newStyle)
+
+If styleCount(4) > 0 And styleCount(5) = 0 Then
+    Call FixSectionHeadings(oldStyle:="Chap Number (cn)", newStyle:="Chap Title (ct)")
 End If
+
+If styleCount(9) > 0 And styleCount(8) = 0 Then
+    Call FixSectionHeadings(oldStyle:="Part Number (pn)", newStyle:="Part Title (pt)")
+End If
+
+If styleCount(11) > 0 And styleCount(10) = 0 Then
+    Call FixSectionHeadings(oldStyle:="FM Title (fmt)", newStyle:="FM Head (fmh)")
+End If
+
+If styleCount(13) > 0 And styleCount(12) = 0 Then
+    Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
+End If
+
 
 '--------Get title/author/isbn/imprint text from document-----------
 Dim strMetadata As String
@@ -142,9 +159,24 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
     Exit Sub
 End If
             
-'------------Convert solo Chap Number paras to Chap Title-------
-If styleCount(4) > 0 And styleCount(5) = 0 Then         'If Chap Num > 0 and Chap Title = 0
-    Call FixSoloCNs
+'------------Convert unapproved headings to correct heading-------
+' If certain styles (oldStyle) appear by themselves, converts to
+' the approved solo style (newStyle)
+
+If styleCount(4) > 0 And styleCount(5) = 0 Then
+    Call FixSectionHeadings(oldStyle:="Chap Number (cn)", newStyle:="Chap Title (ct)")
+End If
+
+If styleCount(9) > 0 And styleCount(8) = 0 Then
+    Call FixSectionHeadings(oldStyle:="Part Number (pn)", newStyle:="Part Title (pt)")
+End If
+
+If styleCount(11) > 0 And styleCount(10) = 0 Then
+    Call FixSectionHeadings(oldStyle:="FM Title (fmt)", newStyle:="FM Head (fmh)")
+End If
+
+If styleCount(13) > 0 And styleCount(12) = 0 Then
+    Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
 End If
 
 '--------Get title/author/isbn/imprint text from document-----------
@@ -243,8 +275,8 @@ For J = 1 To activeParaCount
             styleBadCount = L
             Set activeParaRange = ActiveDocument.paragraphs(J).Range
             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
-            stylesBad(styleBadCount) = "**ERROR: Non-Macmillan style on page " & pageNumber & " (Paragraph " & J & "): " _
-                & vbTab & paraStyle & vbNewLine & vbNewLine
+            stylesBad(styleBadCount) = "**ERROR: Non-Macmillan style on page " & pageNumber & _
+                " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
         End If
     End If
 Next J
@@ -266,12 +298,16 @@ Next K
 
 'Debug.Print strGoodStyles
 
+If styleBadCount > 0 Then
 'Create single string for bad styles
 Dim strBadStyles As String
-ReDim Preserve stylesBad(1 To styleBadCount)
-For L = LBound(stylesBad()) To UBound(stylesBad())
-    strBadStyles = strBadStyles & stylesBad(L)
-Next L
+    ReDim Preserve stylesBad(1 To styleBadCount)
+    For L = LBound(stylesBad()) To UBound(stylesBad())
+        strBadStyles = strBadStyles & stylesBad(L)
+    Next L
+Else
+    strBadStyles = ""
+End If
 
 'Debug.Print strBadStyles
 
@@ -392,6 +428,22 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
 Dim errorList As String
 errorList = ""
 
+'--------------For reference----------------------
+'arrStyleCount(1) = "Titlepage Book Title (tit)"
+'arrStyleCount(2) = "Titlepage Author Name (au)"
+'arrStyleCount(3) = "span ISBN (isbn)"
+'arrStyleCount(4) = "Chap Number (cn)"
+'arrStyleCount(5) = "Chap Title (ct)"
+'arrStyleCount(6) = "Chap Title Nonprinting (ctnp)"
+'arrStyleCount(7) = "Titlepage Imprint Line (imp)"
+'arrStyleCount(8) = "Part Title (pt)"
+'arrStyleCount(9) = "Part Number (pn)"
+'arrStyleCount(10) = "FM Head (fmh)"
+'arrStyleCount(11) = "FM Title (fmt)"
+'arrStyleCount(12) = "BM Head (bmh)"
+'arrStyleCount(13) = "BM Title (bmt)"
+'------------------------------------------------
+
 '=====================Generate errors based on number of required elements found==================
 
 'If Book Title = 0
@@ -402,6 +454,11 @@ If arrStyleCount(1) = 0 Then errorList = errorList & "**ERROR: No styled title d
 If arrStyleCount(1) > 1 Then errorList = errorList & "**ERROR: Too many title paragraphs detected." _
     & " Only 1 allowed." & vbNewLine & vbNewLine
 
+'Check if page break before Book Title
+If arrStyleCount(1) > 0 Then errorList = errorList & CheckPrevStyle(findStyle:="Titlepage Book Title (tit)", _
+    prevStyle:="Page Break (pb)")
+
+
 'If Author Name = 0
 If arrStyleCount(2) = 0 Then errorList = errorList & "**ERROR: No styled author name detected." _
     & vbNewLine & vbNewLine
@@ -410,22 +467,43 @@ If arrStyleCount(2) = 0 Then errorList = errorList & "**ERROR: No styled author 
 If arrStyleCount(3) = 0 Then errorList = errorList & "**ERROR: No styled ISBN detected." _
     & vbNewLine & vbNewLine
 
-'If CN > 1 and CT = 0 (already fixed in FixSoloCNs sub)
+'If CN > 0 and CT = 0 (already fixed in FixSectionHeadings sub)
 If arrStyleCount(4) > 0 And arrStyleCount(5) = 0 Then errorList = errorList & _
-    "**WARNING: Chap Number (cn) cannot be the main heading for" & vbNewLine _
+    "** WARNING: Chap Number (cn) cannot be the main heading for" & vbNewLine _
     & vbTab & "a chapter. Every chapter must start with Chapter Title (ct)" & vbNewLine _
     & vbTab & "style. Chap Number (cn) paragraphs have been converted to the" & vbNewLine _
     & vbTab & "Chap Title (ct) style." & vbNewLine & vbNewLine
 
+'If PN > 0 and PT = 0 (already fixed in FixSectionHeadings sub)
+If arrStyleCount(9) > 0 And arrStyleCount(8) = 0 Then errorList = errorList & _
+    "** WARNING: Part Number (pn) cannot be the main heading for" & vbNewLine _
+    & vbTab & "a section. Every part must start with Part Title (pt)" & vbNewLine _
+    & vbTab & "style. Part Number (pn) paragraphs have been converted" & vbNewLine _
+    & vbTab & "to the Part Title (pt) style." & vbNewLine & vbNewLine
+
+'If FMT > 0 and FMH = 0 (already fixed in FixSectionHeadings sub)
+If arrStyleCount(11) > 0 And arrStyleCount(10) = 0 Then errorList = errorList & _
+    "** WARNING: FM Title (fmt) cannot be the main heading for" & vbNewLine _
+    & vbTab & "a section. Every front matter section must start" & vbNewLine _
+    & vbTab & "with the FM Head (fmh) style. FM Title (fmt) paragraphs" & vbNewLine _
+    & vbTab & "have been converted to the FM Head (fmh) style." & vbNewLine & vbNewLine
+
+'If BMT > 0 and BMH = 0 (already fixed in FixSectionHeadings sub)
+If arrStyleCount(13) > 0 And arrStyleCount(12) = 0 Then errorList = errorList & _
+    "** WARNING: BM Title (fmt) cannot be the main heading for" & vbNewLine _
+    & vbTab & "a section. Every back matter section must start" & vbNewLine _
+    & vbTab & "with the BM Head (fmh) style. BM Title (fmt) paragraphs" & vbNewLine _
+    & vbTab & "have been converted to the BM Head (fmh) style." & vbNewLine & vbNewLine
+        
 'If no chapter opening paragraphs (CN, CT, or CTNP)
 If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) = 0 Then errorList = errorList _
-    & "**ERROR: No tagged chapter openers detected. If your book does" & vbNewLine _
+    & "** ERROR: No tagged chapter openers detected. If your book does" & vbNewLine _
     & vbTab & "not have chapter openers, use the Chap Title Nonprinting" & vbNewLine _
     & vbTab & "(ctnp) style at the start of each section." & vbNewLine & vbNewLine
 
 'If CN > CT and CT > 0 (i.e., Not a CT for every CN)
 If arrStyleCount(4) > arrStyleCount(5) And arrStyleCount(5) > 0 Then errorList = errorList & _
-    "**ERROR: More Chap Number (cn) paragraphs than Chap Title (ct)" & vbNewLine _
+    "** ERROR: More Chap Number (cn) paragraphs than Chap Title (ct)" & vbNewLine _
     & vbTab & "paragraphs found. Each Chap Number (cn) paragraph MUST be" & vbNewLine _
     & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
 
@@ -439,19 +517,31 @@ If arrStyleCount(7) > 1 Then errorList = errorList & "**ERROR: Too many Imprint 
 
 'If only CTs (either originally or converted by macro) check for a page break before
 If (arrStyleCount(4) > 0 And arrStyleCount(5) = 0) Or (arrStyleCount(4) = 0 And arrStyleCount(5) > 0) _
-    Then errorList = errorList & CheckPrevStyle("Chap Title (ct)", "Page Break (pb)")
+    Then errorList = errorList & CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Page Break (pb)")
+
+'If only PTs (either originally or converted by macro) check for a page break before
+If (arrStyleCount(9) > 0 And arrStyleCount(8) = 0) Or (arrStyleCount(9) = 0 And arrStyleCount(8) > 0) _
+    Then errorList = errorList & CheckPrevStyle(findStyle:="Part Title (pt)", prevStyle:="Page Break (pb)")
+
+'If only FMHs (either originally or converted by macro) check for a page break before
+If (arrStyleCount(11) > 0 And arrStyleCount(10) = 0) Or (arrStyleCount(11) = 0 And arrStyleCount(10) > 0) _
+    Then errorList = errorList & CheckPrevStyle(findStyle:="FM Head (fmh)", prevStyle:="Page Break (pb)")
+
+'If only BMHs (either originally or converted by macro) check for a page break before
+If (arrStyleCount(13) > 0 And arrStyleCount(12) = 0) Or (arrStyleCount(13) = 0 And arrStyleCount(12) > 0) _
+    Then errorList = errorList & CheckPrevStyle(findStyle:="BM Head (bmh)", prevStyle:="Page Break (pb)")
 
 'If only CTNP, check for a page break before
 If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) > 0 Then errorList = errorList _
-    & CheckPrevStyle("Chap Title Nonprinting (ctnp)", "Page Break (pb)")
+    & CheckPrevStyle(findStyle:="Chap Title Nonprinting (ctnp)", prevStyle:="Page Break (pb)")
 
 'If CNs are >= CTs, check for page break before CNs
-If arrStyleCount(4) >= arrStyleCount(5) Then errorList = errorList & CheckPrevStyle("Chap Number (cn)", _
-    "Page Break (pb)")
+If arrStyleCount(4) >= arrStyleCount(5) Then errorList = errorList & CheckPrevStyle(findStyle:="Chap Number (cn)", _
+    prevStyle:="Page Break (pb)")
 
 'If CNs and CTs, check that CN always comes before CT
 If arrStyleCount(4) >= arrStyleCount(5) And arrStyleCount(5) <> 0 Then errorList = errorList _
-    & CheckPrevStyle("Chap Title (ct)", "Chap Number (cn)")
+    & CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Chap Number (cn)")
 
 'Check that only heading styles follow page breaks
 errorList = errorList & CheckAfterPB
@@ -555,13 +645,15 @@ Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 10
     
         'Check if preceding paragraph style is correct
         If Selection.Style <> prevStyle Then
-            jString = jString & "**ERROR: Missing or incorrect " & prevStyle & " style on page " & pageNum & "." & vbNewLine & vbNewLine
+            jString = jString & "** ERROR: Missing or incorrect " & prevStyle & " style on page " _
+                & pageNum & "." & vbNewLine & vbNewLine
         End If
         
         'If you're searching for a page break before, also check if manual page break is in paragraph
         If prevStyle = "Page Break (pb)" Then
             If InStr(Selection.Text, Chr(12)) = 0 Then
-                jString = jString & "**ERROR: Missing manual page break on page " & pageNum & "." & vbNewLine & vbNewLine
+                jString = jString & "** ERROR: Missing manual page break on page " & pageNum & "." _
+                    & vbNewLine & vbNewLine
             End If
         End If
         
@@ -637,7 +729,7 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
             Selection.Style <> "Illustration holder (ill)" And _
             Selection.Style <> "Page Break (pb)" Then
                 nextStyle = Selection.Style
-                kString = kString & "**ERROR: Missing or incorrect Page Break or " & nextStyle & " style on page " & pageNumK & "." & vbNewLine & vbNewLine
+                kString = kString & "** ERROR: Missing or incorrect Page Break or " & nextStyle & " style on page " & pageNumK & "." & vbNewLine & vbNewLine
         End If
                 
     'Debug.Print kString
@@ -766,7 +858,7 @@ arrTorStyles(43) = "Chap Epigraph—non-verse (cepi)"
 arrTorStyles(44) = "Chap Epigraph—verse (cepiv)"
 arrTorStyles(45) = "Chap Title Nonprinting (cnp)"
 arrTorStyles(46) = "FM Epigraph - non-verse (fmepi)"
-arrTorStyles(47) = "FM Epigraph - verse (fmepiv)"
+arrTorStyles(47) = "FM Epigraph – verse (fmepiv)"
 arrTorStyles(48) = "FM Epigraph Source (fmeps)"
 arrTorStyles(49) = "FM Head (fmh)"
 arrTorStyles(50) = "FM Subhead (fmsh)"
@@ -817,7 +909,7 @@ For N = 1 To activeParaCount
             Set activeParaRange = ActiveDocument.paragraphs(N).Range
             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
             strBadStyles = strBadStyles & "** ERROR: Non-Tor.com style on page " & pageNumber _
-                & " (Paragraph " & N & "): " & vbTab & paraStyle & vbNewLine & vbNewLine
+                & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
         End If
     
     End If
@@ -831,9 +923,10 @@ BadTorStyles = strBadStyles
 
 End Function
 Private Function CountReqdStyles() As Variant
-Dim arrStyleName(1 To 7) As String                      ' Declare number of items in array
+Dim arrStyleName(1 To 13) As String                      ' Declare number of items in array
 Dim intStyleCount() As Variant
-ReDim intStyleCount(1 To 7) As Variant
+ReDim intStyleCount(1 To 13) As Variant                  ' Delcare items in array. Must be dynamic to pass back to Sub
+
 Dim A As Long
 Dim xCount As Integer
 
@@ -844,6 +937,12 @@ arrStyleName(4) = "Chap Number (cn)"
 arrStyleName(5) = "Chap Title (ct)"
 arrStyleName(6) = "Chap Title Nonprinting (ctnp)"
 arrStyleName(7) = "Titlepage Imprint Line (imp)"
+arrStyleName(8) = "Part Title (pt)"
+arrStyleName(9) = "Part Number (pn)"
+arrStyleName(10) = "FM Head (fmh)"
+arrStyleName(11) = "FM Title (fmt)"
+arrStyleName(12) = "BM Head (bmh)"
+arrStyleName(13) = "BM Title (bmt)"
 
 For A = 1 To UBound(arrStyleName())
     xCount = 0
@@ -885,16 +984,16 @@ End If
 CountReqdStyles = intStyleCount()
 
 End Function
-Private Sub FixSoloCNs()
+Private Sub FixSectionHeadings(oldStyle As String, newStyle As String)
 
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
 'Find paras styles as CN and change to CT style
     Selection.Find.ClearFormatting
-    Selection.Find.Style = ActiveDocument.Styles("Chap Number (cn)")
+    Selection.Find.Style = ActiveDocument.Styles(oldStyle)
     Selection.Find.Replacement.ClearFormatting
-    Selection.Find.Replacement.Style = ActiveDocument.Styles("Chap Title (ct)")
+    Selection.Find.Replacement.Style = ActiveDocument.Styles(newStyle)
     With Selection.Find
         .Text = ""
         .Replacement.Text = ""
