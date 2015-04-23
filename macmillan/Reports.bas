@@ -15,14 +15,15 @@ Sub BookmakerReqs()
 '3/17/2015: Added Illustrations List
 '3/16/2015: Fixed error creating text file, added title/author/isbn confirmation
 
-'------------------------------------------------------------
 
-'------------------Time Start-----------------
-Dim StartTime As Double
-Dim SecondsElapsed As Double
-
-'Remember time when macro starts
-StartTime = Timer
+'=================================================
+'                  Timer Start                  '|
+Dim StartTime As Double                         '|
+Dim SecondsElapsed As Double                    '|
+                                                '|
+'Remember time when macro starts                '|
+StartTime = Timer                               '|
+'=================================================
 
 Application.ScreenUpdating = False
 
@@ -115,15 +116,25 @@ Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStyles
 
 Application.ScreenUpdating = True
 
+'============================================================================
 '----------------------Timer End-------------------------------------------
 ''''Determine how many seconds code took to run
   SecondsElapsed = Round(Timer - StartTime, 2)
 
 ''''Notify user in seconds
   Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+'============================================================================
 
 End Sub
 Sub MacmillanStyleReport()
+'=================================================
+'                  Timer Start                  '|
+Dim StartTime As Double                         '|
+Dim SecondsElapsed As Double                    '|
+                                                '|
+'Remember time when macro starts                '|
+StartTime = Timer                               '|
+'=================================================
 
 Application.ScreenUpdating = False
 
@@ -211,8 +222,15 @@ strSuffix = "StyleReport"       'suffix for report file, no spaces
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
+Application.ScreenUpdating = True
+'================================================================================================
+'----------------------Timer End-------------------------------------------
+''''Determine how many seconds code took to run
+  SecondsElapsed = Round(Timer - StartTime, 2)
 
-
+''''Notify user in seconds
+  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+'================================================================================================
 End Sub
 Private Function GoodBadStyles(torDOTcom As Boolean) As Variant
 'Creates a list of Macmillan styles in use
@@ -673,10 +691,56 @@ Selection.HomeKey Unit:=wdStory
 
 End Function
 Function CheckAfterPB()
+Dim arrSecStartStyles() As String
+ReDim arrSecStartStyles(1 To 41)
 Dim kString As String
 Dim kCount As Integer
 Dim pageNumK As Integer
 Dim nextStyle As String
+Dim N As Integer
+Dim nCount As Integer
+
+arrSecStartStyles(1) = "Chap Title (ct)"
+arrSecStartStyles(2) = "Chap Number (cn)"
+arrSecStartStyles(3) = "Chap Title Nonprinting (ctnp)"
+arrSecStartStyles(4) = "Halftitle Book Title (htit)"
+arrSecStartStyles(5) = "Titlepage Book Title (tit)"
+arrSecStartStyles(6) = "Copyright Text single space (crtx)"
+arrSecStartStyles(7) = "Copyright Text double space (crtxd)"
+arrSecStartStyles(8) = "Dedication (ded)"
+arrSecStartStyles(9) = "Ad Card Main Head (acmh)"
+arrSecStartStyles(10) = "Ad Card List of Titles (acl)"
+arrSecStartStyles(11) = "Part Title (pt)"
+arrSecStartStyles(12) = "Part Number (pn)"
+arrSecStartStyles(13) = "Front Sales Title (fst)"
+arrSecStartStyles(14) = "Front Sales Quote (fsq)"
+arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
+arrSecStartStyles(16) = "Epigraph - non-verse (epi)"
+arrSecStartStyles(17) = "Epigraph - verse (epiv)"
+arrSecStartStyles(18) = "FM Head (fmh)"
+arrSecStartStyles(19) = "Illustration holder (ill)"
+arrSecStartStyles(20) = "Page Break (pb)"
+arrSecStartStyles(21) = "FM Epigraph - non-verse (fmepi)"
+arrSecStartStyles(22) = "FM Epigraph – verse (fmepiv)"
+arrSecStartStyles(23) = "FM Head ALT (afmh)"
+arrSecStartStyles(24) = "Part Number (pn)"
+arrSecStartStyles(25) = "Part Title (pt)"
+arrSecStartStyles(26) = "Part Epigraph - non-verse (pepi)"
+arrSecStartStyles(27) = "Part Epigraph - verse (pepiv)"
+arrSecStartStyles(28) = "Part Contents Main Head (pcmh)"
+arrSecStartStyles(29) = "Poem Title (vt)"
+arrSecStartStyles(30) = "Recipe Head (rh)"
+arrSecStartStyles(31) = "Sub-Recipe Head (srh)"
+arrSecStartStyles(32) = "BM Head (bmh)"
+arrSecStartStyles(33) = "BM Head ALT (abmh)"
+arrSecStartStyles(34) = "Appendix Head (aph)"
+arrSecStartStyles(35) = "About Author Text (atatx)"
+arrSecStartStyles(36) = "About Author Text No-Indent (atatx1)"
+arrSecStartStyles(37) = "About Author Text Head (atah)"
+arrSecStartStyles(38) = "Colophon Text (coltx)"
+arrSecStartStyles(39) = "Colophon Text No-Indent (coltx1)"
+arrSecStartStyles(40) = "BOB Ad Title (bobt)"
+arrSecStartStyles(41) = "Series Page Heading (sh)"
 
 kCount = 0
 kString = ""
@@ -684,7 +748,7 @@ kString = ""
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
-'select paragraph with that style
+'select paragraph with styled as Page Break
     Selection.Find.ClearFormatting
     With Selection.Find
         .Text = ""
@@ -702,34 +766,24 @@ Selection.HomeKey Unit:=wdStory
 
 Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 1000 so we don't get an infinite loop
     kCount = kCount + 1
-    
+    nCount = 0
     'select preceding paragraph
     Selection.Next(Unit:=wdParagraph, Count:=1).Select
+    nextStyle = Selection.Style
     pageNumK = Selection.Information(wdActiveEndPageNumber)
-    
-        'Check if preceding paragraph style is correct
-        If Selection.Style <> "Chap Title (ct)" And _
-            Selection.Style <> "Chap Number (cn)" And _
-            Selection.Style <> "Chap Title Nonprinting (ctnp)" And _
-            Selection.Style <> "Halftitle Book Title (htit)" And _
-            Selection.Style <> "Titlepage Book Title (tit)" And _
-            Selection.Style <> "Copyright Text single space (crtx)" And _
-            Selection.Style <> "Copyright Text double space (crtxd)" And _
-            Selection.Style <> "Dedication (ded)" And _
-            Selection.Style <> "Ad Card Main Head (acmh)" And _
-            Selection.Style <> "Ad Card List of Titles (acl)" And _
-            Selection.Style <> "Part Title (pt)" And _
-            Selection.Style <> "Part Number (pn)" And _
-            Selection.Style <> "Front Sales Title (fst)" And _
-            Selection.Style <> "Front Sales Quote (fsq)" And _
-            Selection.Style <> "Front Sales Quote NoIndent (fsq1)" And _
-            Selection.Style <> "Epigraph - non-verse (epi)" And _
-            Selection.Style <> "Epigraph - verse (epiv)" And _
-            Selection.Style <> "FM Head (fmh)" And _
-            Selection.Style <> "Illustration holder (ill)" And _
-            Selection.Style <> "Page Break (pb)" Then
-                nextStyle = Selection.Style
-                kString = kString & "** ERROR: Missing or incorrect Page Break or " & nextStyle & " style on page " & pageNumK & "." & vbNewLine & vbNewLine
+        
+        For N = LBound(arrSecStartStyles()) To UBound(arrSecStartStyles())
+            'Check if preceding paragraph style is correct
+            If nextStyle <> arrSecStartStyles(N) Then
+                nCount = nCount + 1
+            Else
+                Exit For
+            End If
+        Next N
+            
+        If nCount = UBound(arrSecStartStyles()) Then
+            kString = kString & "** ERROR: " & nextStyle & " style on page " & pageNumK _
+                & " cannot follow Page Break (pb) style." & vbNewLine & vbNewLine
         End If
                 
     'Debug.Print kString
@@ -739,7 +793,7 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
     Selection.Previous(Unit:=wdParagraph, Count:=1).Select
 Loop
 
-'Debug.Print kString
+Debug.Print kString
 
 CheckAfterPB = kString
 
