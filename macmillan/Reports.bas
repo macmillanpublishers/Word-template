@@ -279,7 +279,7 @@ Next L
 
 Dim charStyles As String
 Dim styleNameM(1 To 21) As String        'declare number in array
-Dim m As Integer
+Dim M As Integer
 
 styleNameM(1) = "span italic characters (ital)"
 styleNameM(2) = "span boldface characters (bf)"
@@ -306,16 +306,16 @@ styleNameM(21) = "span symbols bold (symb)"
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
 
-For m = 1 To UBound(styleNameM())
+For M = 1 To UBound(styleNameM())
     With Selection.Find
-        .Style = ActiveDocument.Styles(styleNameM(m))
+        .Style = ActiveDocument.Styles(styleNameM(M))
         .Wrap = wdFindContinue
         .Format = True
     End With
     If Selection.Find.Execute = True Then
-        charStyles = charStyles & styleNameM(m) & vbNewLine
+        charStyles = charStyles & styleNameM(M) & vbNewLine
     End If
-Next m
+Next M
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
@@ -326,8 +326,8 @@ strGoodStyles = strGoodStyles & charStyles
 'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
 Dim strTorBadStyles As String
 If torDOTcom = True Then
-    strTorBadStyles = BadTorStyles(stylesGood(), styleGoodCount)
-    strBadStyles = strBadStyles & vbNewLine & strTorBadStyles
+    strTorBadStyles = BadTorStyles
+    strBadStyles = strBadStyles & strTorBadStyles
 End If
 
 'Debug.Print strGoodStyles
@@ -663,7 +663,7 @@ For Each cc In ActiveDocument.ContentControls
 Next
 End Sub
 Private Function FixTrackChanges() As Boolean
-Dim n As Long
+Dim N As Long
 Dim oComments As Comments
 Set oComments = ActiveDocument.Comments
 
@@ -689,9 +689,9 @@ If Err = 0 Then
             Exit Function
     Else 'User clicked OK, so accept all tracked changes and delete all comments
         ActiveDocument.AcceptAllRevisions
-        For n = oComments.Count To 1 Step -1
-            oComments(n).Delete
-        Next n
+        For N = oComments.Count To 1 Step -1
+            oComments(N).Delete
+        Next N
         Set oComments = Nothing
     End If
 End If
@@ -700,122 +700,130 @@ On Error GoTo 0
 Application.DisplayAlerts = True
 
 End Function
-Private Function BadTorStyles(arrGoodList As Variant, arrGoodCount As Integer) As String
+Private Function BadTorStyles() As String
+'Called from GoodBadStyles sub if torDOTcom parameter is set to True.
+
 Dim paraStyle As String
 Dim activeParaCount As Integer
+
+Dim arrTorStyles() As String
+ReDim arrTorStyles(1 To 76)
+
+Dim intBadCount As Integer
 Dim arrBadStyles() As String
 ReDim arrBadStyles(1 To 200)        'Increase number if want to count more bad styles
-Dim intBadCount As Integer
 Dim activeParaRange As Range
 Dim pageNumber As Integer
-Dim d As Integer
+
+Dim N As Integer
+Dim M As Integer
 Dim e As Integer
 Dim strBadStyles As String
 
+'List of styles approved for use in Tor.com automated workflow
+'Organized in approximate frequency in manuscripts
+
+arrTorStyles(1) = "Text -Standard(tx)"
+arrTorStyles(2) = "Text - Std No-Indent (tx1)"
+arrTorStyles(3) = "Chap Title(ct)"
+arrTorStyles(4) = "Chap Number(cn)"
+arrTorStyles(5) = "Chap Opening Text No-Indent (cotx1)"
+arrTorStyles(6) = "Page Break(pb)"
+arrTorStyles(7) = "Space Break (#)"
+arrTorStyles(8) = "Space Break with Ornament (orn)"
+arrTorStyles(9) = "Titlepage Author Name (au)"
+arrTorStyles(10) = "Titlepage Book Subtitle (stit)"
+arrTorStyles(11) = "Titlepage Book Title (tit)"
+arrTorStyles(12) = "Titlepage Cities(cit)"
+arrTorStyles(13) = "Titlepage Imprint Line (imp)"
+arrTorStyles(14) = "Copyright Text double space (crtxd)"
+arrTorStyles(15) = "Copyright Text single space (crtx)"
+arrTorStyles(16) = "Extract (ext)"
+arrTorStyles(17) = "Extract Head(exth)"
+arrTorStyles(18) = "Extract-No Indent (ext1)"
+arrTorStyles(19) = "Halftitle Book Title (htit)"
+arrTorStyles(20) = "Illustration holder(ill)"
+arrTorStyles(21) = "Illustration Source (is)"
+arrTorStyles(22) = "Part Number(pn)"
+arrTorStyles(23) = "Part Title(pt)"
+arrTorStyles(24) = "About Author Text Head (atah)"
+arrTorStyles(25) = "About Author Text (atatx)"
+arrTorStyles(26) = "About Author Text No-Indent (atatx1)"
+arrTorStyles(27) = "Ad Card List of Titles (acl)"
+arrTorStyles(28) = "Ad Card Main Head (acmh)"
+arrTorStyles(29) = "Ad Card Subhead (acsh)"
+arrTorStyles(30) = "Text - Standard Space After (tx#)"
+arrTorStyles(31) = "Text - Standard Space Around (#tx#)"
+arrTorStyles(32) = "Text - Standard Space Before (#tx)"
+arrTorStyles(33) = "Text - Std No-Indent Space After (tx1#)"
+arrTorStyles(34) = "Text - Std No-Indent Space Around (#tx1#)"
+arrTorStyles(35) = "Text - Std No-Indent Space Before (#tx1)"
+arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
+arrTorStyles(37) = "Dedication (ded)"
+arrTorStyles(38) = "Dedication Author(dedau)"
+arrTorStyles(39) = "Epigraph -non - verse(epi)"
+arrTorStyles(40) = "Epigraph -verse(epiv)"
+arrTorStyles(41) = "Epigraph Source(eps)"
+arrTorStyles(42) = "Chap Epigraph Source (ceps)"
+arrTorStyles(43) = "Chap Epigraph—non - verse(cepi)"
+arrTorStyles(44) = "Chap Epigraph—verse(cepiv)"
+arrTorStyles(45) = "Chap Title Nonprinting (cnp)"
+arrTorStyles(46) = "FM Epigraph - non - verse(fmepi)"
+arrTorStyles(47) = "FM Epigraph - verse(fmepiv)"
+arrTorStyles(48) = "FM Epigraph Source (fmeps)"
+arrTorStyles(49) = "FM Head(fmh)"
+arrTorStyles(50) = "FM Subhead(fmsh)"
+arrTorStyles(51) = "FM Text(fmtx)"
+arrTorStyles(52) = "FM Text No-Indent (fmtx1)"
+arrTorStyles(53) = "FM Text No-Indent Space After (fmtx1#)"
+arrTorStyles(54) = "FM Text No-Indent Space Around (#fmtx1#)"
+arrTorStyles(55) = "FM Text No-Indent Space Before (#fmtx1)"
+arrTorStyles(56) = "FM Text Space After (fmtx#)"
+arrTorStyles(57) = "FM Text Space Around (#fmtx#)"
+arrTorStyles(58) = "FM Text Space Before (#fmtx)"
+arrTorStyles(59) = "Front Sales Quote (fsq)"
+arrTorStyles(60) = "Front Sales Quote NoIndent (fsq1)"
+arrTorStyles(61) = "Front Sales Quote Source (fsqs)"
+arrTorStyles(62) = "Front Sales Title (fst)"
+arrTorStyles(63) = "Space Break with ALT Ornament (orn2)"
+arrTorStyles(64) = "Space Break - 1 - Line(ls1)"
+arrTorStyles(65) = "Space Break - 2 - Line(ls2)"
+arrTorStyles(66) = "Space Break - 3 - Line(ls3)"
+arrTorStyles(67) = "Text - Computer Type (com)"
+arrTorStyles(68) = "Text - Computer Type No-Indent (com1)"
+arrTorStyles(69) = "Text - Standard ALT (atx)"
+arrTorStyles(70) = "Text - Std No-Indent ALT (atx1)"
+arrTorStyles(71) = "Caption (cap)"
+arrTorStyles(72) = "Titlepage Contributor Name (con)"
+arrTorStyles(73) = "Titlepage Translator Name (tran)"
+arrTorStyles(74) = "Chap Ornament(corn)"
+arrTorStyles(75) = "Chap Ornament ALT (corn2)"
+arrTorStyles(76) = "Chap Opening Text (cotx)"
+
 intBadCount = 0
-'we're just searching through the list of good MAcmillan styles passed from calling function
-activeParaCount = arrGoodCount
+activeParaCount = ActiveDocument.paragraphs.Count
 
-For d = 1 To activeParaCount
-    paraStyle = arrGoodList(d)
+For N = 1 To activeParaCount
+    paraStyle = ActiveDocument.paragraphs(N).Style
     
-    'Debug.Print arrGoodList(d)
+    For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
+        If paraStyle(N) <> arrTorStyle(M) Then
+            intBadCount = intBadCount + 1
+        Else
+            Exit For
+        End If
+    Next M
     
-     'Broken down into multiple statements because max 24 line continuation characters in a statement
-     'And also most common styles listed in first IF-THEN so it won't have to search all most of the time
-    If paraStyle <> "Text - Standard (tx)" And _
-        paraStyle <> "Text - Standard Space After (tx#)" And _
-        paraStyle <> "Text - Standard Space Before (#tx)" And _
-        paraStyle <> "Text - Standard Space Around (#tx#)" And _
-        paraStyle <> "Text - Std No-Indent (tx1)" And _
-        paraStyle <> "Text - Std No-Indent Space Before (#tx1)" And _
-        paraStyle <> "Text - Std No-Indent Space After (tx1#)" And _
-        paraStyle <> "Text - Std No-Indent Space Around (#tx1#)" And _
-        paraStyle <> "Chap Number (cn)" And _
-        paraStyle <> "Chap Title (ct)" And _
-        paraStyle <> "Chap Opening Text No-Indent (cotx1)" And _
-        paraStyle <> "Chap Opening Text No-Indent Space After (cotx1#)" And _
-        paraStyle <> "Space Break (#)" And _
-        paraStyle <> "Page Break (pb)" And _
-        paraStyle <> "Halftitle Book Title (htit)" And _
-        paraStyle <> "Titlepage Book Title (tit)" And _
-        paraStyle <> "Titlepage Book Subtitle (stit)" And _
-        paraStyle <> "Titlepage Author Name (au)" And _
-        paraStyle <> "Titlepage Imprint Line (imp)" And _
-        paraStyle <> "Titlepage Cities (cit)" And _
-        paraStyle <> "Copyright Text single space (crtx)" And _
-        paraStyle <> "Copyright Text double space (crtxd)" And _
-        paraStyle <> "Space Break with Ornament (orn)" And _
-        paraStyle <> "Dedication (ded)" And _
-        paraStyle <> "Dedication Author (dedau)" Then
-            If paraStyle <> "Ad Card Main Head (acmh)" And _
-                paraStyle <> "Ad Card Subhead (acsh)" And _
-                paraStyle <> "Ad Card List of Titles (acl)" And _
-                paraStyle <> "Extract Head (exth)" And _
-                paraStyle <> "Extract-No Indent (ext1)" And _
-                paraStyle <> "Extract (ext)" And _
-                paraStyle <> "Illustration holder (ill)" And _
-                paraStyle <> "Caption (cap)" And _
-                paraStyle <> "Illustration Source (is)" And _
-                paraStyle <> "Part Number (pn)" And _
-                paraStyle <> "Part Title (pt)" And _
-                paraStyle <> "Front Sales Title (fst)" And _
-                paraStyle <> "Front Sales Quote NoIndent (fsq1)" And _
-                paraStyle <> "Front Sales Quote (fsq)" And _
-                paraStyle <> "Front Sales Quote Source (fsqs)" And _
-                paraStyle <> "Epigraph - non-verse (epi)" And _
-                paraStyle <> "Epigraph - verse (epiv)" And _
-                paraStyle <> "Epigraph Source (eps)" And _
-                paraStyle <> "Chap Epigraph - non-verse (cepi)" And _
-                paraStyle <> "Chap Epigraph - verse (cepiv)" And _
-                paraStyle <> "Chap Epigraph Source (ceps)" And _
-                paraStyle <> "Text - Standard ALT (atx)" And _
-                paraStyle <> "Text - Std No-Indent ALT (atx1)" And _
-                paraStyle <> "Text - Computer Type No-Indent (com1)" And _
-                paraStyle <> "Text - Computer Type (com)" Then
-                    If paraStyle <> "Titlepage Contributor Name (con)" And _
-                        paraStyle <> "Titlepage Translator Name (tran)" And _
-                        paraStyle <> "FM Head (fmh)" And _
-                        paraStyle <> "FM Subhead (fmsh)" And _
-                        paraStyle <> "FM Epigraph - non-verse (fmepi)" And _
-                        paraStyle <> "FM Epigraph - verse (fmepiv)" And _
-                        paraStyle <> "FM Epigraph Source (fmeps)" And _
-                        paraStyle <> "FM Text (fmtx)" And _
-                        paraStyle <> "FM Text Space After (fmtx#)" And _
-                        paraStyle <> "FM Text Space Before (#fmtx)" And _
-                        paraStyle <> "FM Text Space Around (#fmtx#)" And _
-                        paraStyle <> "FM Text No-Indent (fmtx1)" And _
-                        paraStyle <> "FM Text No-Indent Space Before (#fmtx1)" And _
-                        paraStyle <> "FM Text No-Indent Space After (fmtx1#)" And _
-                        paraStyle <> "FM Text No-Indent Space Around (#fmtx1#)" And _
-                        paraStyle <> "Chap Ornament (corn)" And _
-                        paraStyle <> "Chap Ornament ALT (corn2)" And _
-                        paraStyle <> "Space Break - 3-Line (ls3)" And _
-                        paraStyle <> "Space Break - 2-Line (ls2)" And _
-                        paraStyle <> "Space Break - 1-Line (ls1)" And _
-                        paraStyle <> "Space Break with ALT Ornament (orn2)" And _
-                        paraStyle <> "Chap Title Nonprinting (ctnp)" And _
-                        paraStyle <> "Front Sales Text (fstx)" And _
-                        paraStyle <> "Chap Opening Text Space After (cotx#)" And _
-                        paraStyle <> "Chap Opening Text (cotx)" Then
-                            
-                            intBadCount = intBadCount + 1
-                            Set activeParaRange = ActiveDocument.paragraphs(d).Range
-                            pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
-                            arrBadStyles(intBadCount) = "**ERROR: Bad Tor.com style on page " & pageNumber & " (Paragraph " & d & "): " & _
-                                vbTab & paraStyle & vbNewLine & vbNewLine
-                    End If
-            End If
+    If intBadCount = UBound(arrTorStyles()) Then
+        Set activeParaRange = ActiveDocument.paragraphs(N).Range
+        pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
+                            strBadStyles = strBadStyles & "**ERROR: Bad Tor.com style on page " & pageNumber & " (Paragraph " & d & "): " & _
+                                vbTab & paraStyle(N) & vbNewLine & vbNewLine
     End If
-Next
 
-'Put list of errors in a single string
-ReDim Preserve arrBadStyles(1 To intBadCount)
-For e = LBound(arrBadStyles()) To UBound(arrBadStyles())
-    strBadStyles = strBadStyles & arrBadStyles(e) & vbNewLine
-Next e
+Next N
 
-'Debug.Print strBadStyles
+Debug.Print strBadStyles
 
 BadTorStyles = strBadStyles
 
@@ -936,7 +944,7 @@ Dim cString(1000) As String             'Max number of illustrations. Could be l
 Dim cCount As Integer
 Dim pageNumberC As Integer
 Dim strFullList As String
-Dim n As Integer
+Dim N As Integer
 
 cCount = 0
 
@@ -988,9 +996,9 @@ If cCount = 0 Then
     cString(1) = "no illustrations detected" & vbNewLine
 End If
 
-For n = 1 To cCount
-    strFullList = strFullList & cString(n)
-Next n
+For N = 1 To cCount
+    strFullList = strFullList & cString(N)
+Next N
 
 'Debug.Print strFullList
 
