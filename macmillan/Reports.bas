@@ -19,11 +19,11 @@ Sub BookmakerReqs()
 
 '=================================================
 '                  Timer Start                  '|
-Dim StartTime As Double                         '|
-Dim SecondsElapsed As Double                    '|
+'Dim StartTime As Double                         '|
+'Dim SecondsElapsed As Double                    '|
                                                 '|
 'Remember time when macro starts                '|
-StartTime = Timer                               '|
+'StartTime = Timer                               '|
 '=================================================
 
 
@@ -121,10 +121,10 @@ Application.ScreenUpdating = True
 '============================================================================
 '----------------------Timer End-------------------------------------------
 ''''Determine how many seconds code took to run
-  SecondsElapsed = Round(Timer - StartTime, 2)
+'  SecondsElapsed = Round(Timer - StartTime, 2)
 
 ''''Notify user in seconds
-  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+'  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '============================================================================
 
 End Sub
@@ -710,7 +710,7 @@ Dim nCount As Integer
 
 arrSecStartStyles(1) = "Chap Title (ct)"
 arrSecStartStyles(2) = "Chap Number (cn)"
-arrSecStartStyles(3) = "Chap Title Nonprinting (ctnp)"
+arrSecStartStyles(3) = "Chap Title Nonprinting (ctp)"
 arrSecStartStyles(4) = "Halftitle Book Title (htit)"
 arrSecStartStyles(5) = "Titlepage Book Title (tit)"
 arrSecStartStyles(6) = "Copyright Text single space (crtx)"
@@ -723,7 +723,7 @@ arrSecStartStyles(12) = "Part Number (pn)"
 arrSecStartStyles(13) = "Front Sales Title (fst)"
 arrSecStartStyles(14) = "Front Sales Quote (fsq)"
 arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
-arrSecStartStyles(16) = "Epigraph - non-verse (epi)"
+arrSecStartStyles(16) = "Epigraph – non-verse (epi)"
 arrSecStartStyles(17) = "Epigraph - verse (epiv)"
 arrSecStartStyles(18) = "FM Head (fmh)"
 arrSecStartStyles(19) = "Illustration holder (ill)"
@@ -759,8 +759,8 @@ Selection.HomeKey Unit:=wdStory
 'select paragraph with styled as Page Break
     Selection.Find.ClearFormatting
     With Selection.Find
-        .Text = "^m"
-        .Replacement.Text = "^m"
+        .Text = "^m^p"
+        .Replacement.Text = "^m^p"
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
@@ -794,7 +794,7 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
                 & " cannot follow Page Break (pb) style." & vbNewLine & vbNewLine
         End If
                 
-    'Debug.Print kString
+    Debug.Print kString
     
     'move the selection back to original paragraph, so it won't be
     'selected again on next search
