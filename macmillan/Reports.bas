@@ -405,7 +405,7 @@ arrFinalLists(2) = strBadStyles
 GoodBadStyles = arrFinalLists
 
 End Function
-Private Function srErrorCheck()
+Private Function srErrorCheck() As Boolean
 
 srErrorCheck = False
 Dim mainDoc As Document
@@ -468,6 +468,8 @@ errorList = ""
 'arrStyleCount(11) = "FM Title (fmt)"
 'arrStyleCount(12) = "BM Head (bmh)"
 'arrStyleCount(13) = "BM Title (bmt)"
+'arrStyleCount(14) = "Illustration holder (ill)"
+'arrStyleCount(15) = "Illustration source (is)"
 '------------------------------------------------
 
 '=====================Generate errors based on number of required elements found==================
@@ -569,6 +571,10 @@ If arrStyleCount(4) >= arrStyleCount(5) Then errorList = errorList & CheckPrevSt
 If arrStyleCount(4) >= arrStyleCount(5) And arrStyleCount(5) <> 0 Then errorList = errorList _
     & CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Chap Number (cn)")
 
+'If Illustrations and sources exist, check that source comes after
+If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & IllustrationErrors
+
+
 'Check that only heading styles follow page breaks
 errorList = errorList & CheckAfterPB
 
@@ -585,7 +591,7 @@ End If
 CreateErrorList = errorList
 
 End Function
-Private Function GetText(styleName As String)
+Private Function GetText(styleName As String) As String
 Dim fString As String
 Dim fCount As Integer
 
@@ -635,7 +641,7 @@ Else
 End If
 
 End Function
-Function CheckPrevStyle(findStyle As String, prevStyle As String)
+Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
 Dim jString As String
 Dim jCount As Integer
 Dim pageNum As Integer
@@ -713,7 +719,7 @@ CheckPrevStyle = jString
 Selection.HomeKey Unit:=wdStory
 
 End Function
-Function CheckAfterPB()
+Function CheckAfterPB() As String
 Dim arrSecStartStyles() As String
 ReDim arrSecStartStyles(1 To 42)
 Dim kString As String
@@ -772,7 +778,7 @@ kString = ""
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
-'select paragraph with styled as Page Break
+'select paragraph styled as Page Break with manual page break inserted
     Selection.Find.ClearFormatting
     With Selection.Find
         .Text = "^m^p"
@@ -877,7 +883,7 @@ Dim paraStyle As String
 Dim activeParaCount As Integer
 
 Dim arrTorStyles() As String
-ReDim arrTorStyles(1 To 78)
+ReDim arrTorStyles(1 To 79)
 
 Dim intBadCount As Integer
 Dim activeParaRange As Range
@@ -968,6 +974,7 @@ arrTorStyles(75) = "Chap Ornament (corn)"
 arrTorStyles(76) = "Chap Ornament ALT (corn2)"
 arrTorStyles(77) = "Chap Opening Text (cotx)"
 arrTorStyles(78) = "Chap Opening Text Space After (cotx#)"
+arrTorStyles(79) = "Design Note (dn)"
 
 activeParaCount = ActiveDocument.paragraphs.Count
 
@@ -1003,9 +1010,9 @@ BadTorStyles = strBadStyles
 
 End Function
 Private Function CountReqdStyles() As Variant
-Dim arrStyleName(1 To 13) As String                      ' Declare number of items in array
+Dim arrStyleName(1 To 15) As String                      ' Declare number of items in array
 Dim intStyleCount() As Variant
-ReDim intStyleCount(1 To 13) As Variant                  ' Delcare items in array. Must be dynamic to pass back to Sub
+ReDim intStyleCount(1 To 15) As Variant                  ' Delcare items in array. Must be dynamic to pass back to Sub
 
 Dim A As Long
 Dim xCount As Integer
@@ -1023,6 +1030,8 @@ arrStyleName(10) = "FM Head (fmh)"
 arrStyleName(11) = "FM Title (fmt)"
 arrStyleName(12) = "BM Head (bmh)"
 arrStyleName(13) = "BM Title (bmt)"
+arrStyleName(14) = "Illustration holder (ill)"
+arrStyleName(15) = "Illustration Source (is)"
 
 For A = 1 To UBound(arrStyleName())
     xCount = 0
@@ -1187,7 +1196,112 @@ IllustrationsList = strFullList
 
 
 End Function
+Function IllustrationErrors() As String
+Dim strErrors As String
+Dim intCount As Integer
+Dim pageNum As Integer
+Dim intCurrentPara As Integer
+Dim findStyle As String
+Dim prevStyle As String
+Dim prevStyle2 As String
 
+intCount = 0
+strErrors = ""
+findStyle = "Illustration Source (is)"
+prevStyle = "Illustration holder (ill)"
+prevStyle2 = "Caption (cap)"
+
+'Move selection to start of document
+Selection.HomeKey Unit:=wdStory
+
+'select paragraph with that style
+    Selection.Find.ClearFormatting
+    With Selection.Find
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles(findStyle)
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+
+Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 1000 so we don't get an infinite loop
+    intCount = intCount + 1
+    
+    'Get number of current pagaraph, because we get an error if try to select before 1st para
+    Dim rParagraphs As Range
+    Dim CurPos As Long
+     
+    Selection.Range.Select  'select current ran
+    CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
+    Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
+    intCurrentPara = rParagraphs.paragraphs.Count
+    
+    'Debug.Print intCurrentPara
+    
+    If intCurrentPara > 1 Then      'NOT first paragraph of document
+        'select preceding paragraph
+        Selection.Previous(Unit:=wdParagraph, Count:=1).Select
+        pageNum = Selection.Information(wdActiveEndPageNumber)
+    
+            'Check if preceding paragraph style is correct
+            If Selection.Style <> prevStyle Then
+            
+                If Selection.Style = prevStyle2 Then
+                    'select preceding paragraph again, see if it's prevStyle
+                    Selection.Previous(Unit:=wdParagraph, Count:=1).Select
+                    pageNum = Selection.Information(wdActiveEndPageNumber)
+                    
+                        If Selection.Style <> prevStyle Then
+                            strErrors = strErrors & "** ERROR: Caption (cap) followed by Illustration " _
+                                & "Source (is) on" & vbNewLine & vbTab & "page " & pageNum & " must be preceded by " _
+                                & "Illustration holder (ill)." & vbNewLine & vbNewLine
+                        End If
+                        
+                    Selection.Next(Unit:=wdParagraph, Count:=1).Select
+                Else
+                
+                    strErrors = strErrors & "** ERROR: Illustration Source (is) on page " _
+                        & pageNum & " must be used after an" & vbNewLine & vbTab & "Illustration holder (ill)."
+                        
+                End If
+            Else
+                'select follow paragraph again, see if it's a Caption
+                Selection.Next(Unit:=wdParagraph, Count:=2).Select
+                pageNum = Selection.Information(wdActiveEndPageNumber)
+                        
+                    If Selection.Style = "Caption (cap)" Then
+                        strErrors = strErrors & "** ERROR: Illustration Source (is) style on page " & pageNum & " must" _
+                            & " come after Caption (cap) style." & vbNewLine & vbNewLine
+                    End If
+            
+            End If
+        
+            'Debug.Print strErrors
+    
+        'move the selection back to original paragraph, so it won't be
+        'selected again on next search
+        Selection.Next(Unit:=wdParagraph, Count:=1).Select
+    
+    Else 'Selection is first paragraph of the document
+        strErrors = strErrors & findStyle & " cannot be first paragraph of document." & vbNewLine & vbNewLine
+    End If
+    
+Loop
+
+Debug.Print strErrors
+
+IllustrationErrors = strErrors
+
+'Move selection back to start of document
+Selection.HomeKey Unit:=wdStory
+
+End Function
 Private Sub CreateReport(errorList As String, metadata As String, illustrations As String, goodStyles As String, suffix As String)
 'Create report file
 Dim activeRng As Range
