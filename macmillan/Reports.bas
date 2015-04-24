@@ -18,11 +18,11 @@ Sub BookmakerReqs()
 
 
 '=================================================
-'                  Timer Start                  '|
+'''''              Timer Start                  '|
 'Dim StartTime As Double                         '|
 'Dim SecondsElapsed As Double                    '|
                                                 '|
-'Remember time when macro starts                '|
+'''''Remember time when macro starts            '|
 'StartTime = Timer                               '|
 '=================================================
 
@@ -121,10 +121,10 @@ Application.ScreenUpdating = True
 '============================================================================
 '----------------------Timer End-------------------------------------------
 ''''Determine how many seconds code took to run
-'  SecondsElapsed = Round(Timer - StartTime, 2)
+  'SecondsElapsed = Round(Timer - StartTime, 2)
 
 ''''Notify user in seconds
-'  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+  'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '============================================================================
 
 End Sub
@@ -496,30 +496,30 @@ If arrStyleCount(3) = 0 Then errorList = errorList & "** ERROR: No styled ISBN d
 'If CN > 0 and CT = 0 (already fixed in FixSectionHeadings sub)
 If arrStyleCount(4) > 0 And arrStyleCount(5) = 0 Then errorList = errorList & _
     "** WARNING: Chap Number (cn) cannot be the main heading for" & vbNewLine _
-    & vbTab & "a chapter. Every chapter must start with Chapter Title (ct)" & vbNewLine _
+    & vbTab & "a chapter. Every chapter must include Chapter Title (ct)" & vbNewLine _
     & vbTab & "style. Chap Number (cn) paragraphs have been converted to the" & vbNewLine _
     & vbTab & "Chap Title (ct) style." & vbNewLine & vbNewLine
 
 'If PN > 0 and PT = 0 (already fixed in FixSectionHeadings sub)
 If arrStyleCount(9) > 0 And arrStyleCount(8) = 0 Then errorList = errorList & _
     "** WARNING: Part Number (pn) cannot be the main heading for" & vbNewLine _
-    & vbTab & "a section. Every part must start with Part Title (pt)" & vbNewLine _
+    & vbTab & "a section. Every part must include Part Title (pt)" & vbNewLine _
     & vbTab & "style. Part Number (pn) paragraphs have been converted" & vbNewLine _
     & vbTab & "to the Part Title (pt) style." & vbNewLine & vbNewLine
 
 'If FMT > 0 and FMH = 0 (already fixed in FixSectionHeadings sub)
 If arrStyleCount(11) > 0 And arrStyleCount(10) = 0 Then errorList = errorList & _
     "** WARNING: FM Title (fmt) cannot be the main heading for" & vbNewLine _
-    & vbTab & "a section. Every front matter section must start" & vbNewLine _
-    & vbTab & "with the FM Head (fmh) style. FM Title (fmt) paragraphs" & vbNewLine _
+    & vbTab & "a section. Every front matter section must include" & vbNewLine _
+    & vbTab & "the FM Head (fmh) style. FM Title (fmt) paragraphs" & vbNewLine _
     & vbTab & "have been converted to the FM Head (fmh) style." & vbNewLine & vbNewLine
 
 'If BMT > 0 and BMH = 0 (already fixed in FixSectionHeadings sub)
 If arrStyleCount(13) > 0 And arrStyleCount(12) = 0 Then errorList = errorList & _
-    "** WARNING: BM Title (fmt) cannot be the main heading for" & vbNewLine _
-    & vbTab & "a section. Every back matter section must start" & vbNewLine _
-    & vbTab & "with the BM Head (fmh) style. BM Title (fmt) paragraphs" & vbNewLine _
-    & vbTab & "have been converted to the BM Head (fmh) style." & vbNewLine & vbNewLine
+    "** WARNING: BM Title (bmt) cannot be the main heading for" & vbNewLine _
+    & vbTab & "a section. Every back matter section must incldue" & vbNewLine _
+    & vbTab & "the BM Head (bmh) style. BM Title (bmt) paragraphs" & vbNewLine _
+    & vbTab & "have been converted to the BM Head (bmh) style." & vbNewLine & vbNewLine
         
 'If no chapter opening paragraphs (CN, CT, or CTNP)
 If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) = 0 Then errorList = errorList _
@@ -639,6 +639,7 @@ Function CheckPrevStyle(findStyle As String, prevStyle As String)
 Dim jString As String
 Dim jCount As Integer
 Dim pageNum As Integer
+Dim intCurrentPara As Integer
 
 jCount = 0
 jString = ""
@@ -665,29 +666,43 @@ Selection.HomeKey Unit:=wdStory
 Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 1000 so we don't get an infinite loop
     jCount = jCount + 1
     
-    'select preceding paragraph
-    Selection.Previous(Unit:=wdParagraph, Count:=1).Select
-    pageNum = Selection.Information(wdActiveEndPageNumber) - 1
+    'Get number of current pagaraph, because we get an error if try to select before 1st para
+    Dim rParagraphs As Range
+    Dim CurPos As Long
+     
+    Selection.Range.Select  'select current ran
+    CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
+    Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
+    intCurrentPara = rParagraphs.paragraphs.Count
     
-        'Check if preceding paragraph style is correct
-        If Selection.Style <> prevStyle Then
-            jString = jString & "** ERROR: Missing or incorrect " & prevStyle & " style before " _
-                & findStyle & " style on page " & pageNum & "." & vbNewLine & vbNewLine
-        End If
-        
-        'If you're searching for a page break before, also check if manual page break is in paragraph
-        If prevStyle = "Page Break (pb)" Then
-            If InStr(Selection.Text, Chr(12)) = 0 Then
-                jString = jString & "** ERROR: Missing manual page break on page " & pageNum & "." _
-                    & vbNewLine & vbNewLine
+    'Debug.Print intCurrentPara
+    
+    If intCurrentPara > 1 Then
+        'select preceding paragraph
+        Selection.Previous(Unit:=wdParagraph, Count:=1).Select
+        pageNum = Selection.Information(wdActiveEndPageNumber) - 1
+    
+            'Check if preceding paragraph style is correct
+            If Selection.Style <> prevStyle Then
+                jString = jString & "** ERROR: Missing or incorrect " & prevStyle & " style before " _
+                    & findStyle & " style on page " & pageNum & "." & vbNewLine & vbNewLine
             End If
-        End If
         
-    'Debug.Print jString
+            'If you're searching for a page break before, also check if manual page break is in paragraph
+            If prevStyle = "Page Break (pb)" Then
+                If InStr(Selection.Text, Chr(12)) = 0 Then
+                    jString = jString & "** ERROR: Missing manual page break on page " & pageNum & "." _
+                        & vbNewLine & vbNewLine
+                End If
+            End If
+        
+            'Debug.Print jString
     
-    'move the selection back to original paragraph, so it won't be
-    'selected again on next search
-    Selection.Next(Unit:=wdParagraph, Count:=1).Select
+        'move the selection back to original paragraph, so it won't be
+        'selected again on next search
+        Selection.Next(Unit:=wdParagraph, Count:=1).Select
+    End If
+    
 Loop
 
 'Debug.Print jString
@@ -700,7 +715,7 @@ Selection.HomeKey Unit:=wdStory
 End Function
 Function CheckAfterPB()
 Dim arrSecStartStyles() As String
-ReDim arrSecStartStyles(1 To 41)
+ReDim arrSecStartStyles(1 To 42)
 Dim kString As String
 Dim kCount As Integer
 Dim pageNumK As Integer
@@ -749,6 +764,7 @@ arrSecStartStyles(38) = "Colophon Text (coltx)"
 arrSecStartStyles(39) = "Colophon Text No-Indent (coltx1)"
 arrSecStartStyles(40) = "BOB Ad Title (bobt)"
 arrSecStartStyles(41) = "Series Page Heading (sh)"
+arrSecStartStyles(42) = "span small caps characters (sc)"
 
 kCount = 0
 kString = ""
@@ -794,7 +810,7 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
                 & " cannot follow Page Break (pb) style." & vbNewLine & vbNewLine
         End If
                 
-    Debug.Print kString
+    'Debug.Print kString
     
     'move the selection back to original paragraph, so it won't be
     'selected again on next search
