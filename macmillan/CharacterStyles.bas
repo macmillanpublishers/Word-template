@@ -591,7 +591,7 @@ ourTemplate1 = "macmillan.dotm"
 ourTemplate2 = "macmillan_NoColor.dotm"
 ourTemplate3 = "MacmillanCoverCopy.dotm"
 
-Debug.Print "Current template is " & currentTemplate & vbNewLine
+'Debug.Print "Current template is " & currentTemplate & vbNewLine
 
 If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
