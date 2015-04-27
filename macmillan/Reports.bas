@@ -1237,10 +1237,18 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
     Dim rParagraphs As Range
     Dim CurPos As Long
      
-    Selection.Range.Select  'select current ran
+    Selection.Range.Select  'select current range
     CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
     Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
     intCurrentPara = rParagraphs.paragraphs.Count
+    
+    'Also determine if selection is the LAST paragraph of the document, for later
+    Dim SelectionIncludesFinalParagraphMark As Boolean
+    If Selection.Type = wdSelectionNormal And Selection.End = ActiveDocument.Content.End Then
+        SelectionIncludesFinalParagraphMark = True
+    Else
+        SelectionIncludesFinalParagraphMark = False
+    End If
     
     'Debug.Print intCurrentPara
     
@@ -1271,18 +1279,21 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
                         
                 End If
             Else
-                'select follow paragraph again, see if it's a Caption
-                Selection.Next(Unit:=wdParagraph, Count:=2).Select
-                pageNum = Selection.Information(wdActiveEndPageNumber)
+                'Make sure initial selection wasn't last paragraph, or else we'll error when trying to select after it
+                If SelectionIncludesFinalParagraphMark = False Then
+                    'select follow paragraph again, see if it's a Caption
+                    Selection.Next(Unit:=wdParagraph, Count:=2).Select
+                    pageNum = Selection.Information(wdActiveEndPageNumber)
                         
-                    If Selection.Style = "Caption (cap)" Then
-                        strErrors = strErrors & "** ERROR: Illustration Source (is) style on page " & pageNum & " must" _
-                            & " come after Caption (cap) style." & vbNewLine & vbNewLine
-                    End If
+                        If Selection.Style = "Caption (cap)" Then
+                            strErrors = strErrors & "** ERROR: Illustration Source (is) style on page " & pageNum & " must" _
+                                & " come after Caption (cap) style." & vbNewLine & vbNewLine
+                        End If
+                End If
             
             End If
         
-            'Debug.Print strErrors
+            Debug.Print strErrors
     
         'move the selection back to original paragraph, so it won't be
         'selected again on next search
