@@ -1,6 +1,13 @@
 Attribute VB_Name = "Reports"
 Option Explicit
 Option Base 1
+Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Private Sub Doze(ByVal lngPeriod As Long)
+DoEvents
+Sleep lngPeriod
+' Call it in desired location to sleep for 1 seconds like this:
+' Doze 1000
+End Sub
 Sub BookmakerReqs()
 '-----------------------------------------------------------
 
@@ -26,7 +33,6 @@ Dim SecondsElapsed As Double                    '|
 StartTime = Timer                               '|
 '=================================================
 
-
 '-----------run preliminary error checks------------
 Dim exitOnError As Boolean
 exitOnError = srErrorCheck()
@@ -37,6 +43,13 @@ End If
 
 Application.ScreenUpdating = False
 
+Dim oProgressBkmkr As ProgressBar
+Set oProgressBkmkr = New ProgressBar
+
+oProgressBkmkr.Title = "Bookmaker Check Macro"
+oProgressBkmkr.Show
+
+oProgressBkmkr.Increment 0.08, "Checking Content Controls and Track Changes..."
 '-------Delete content controls on PC------------------------
 'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
 Dim TheOS As String
@@ -52,7 +65,7 @@ If FixTrackChanges = False Then
     Exit Sub
 End If
 
-
+oProgressBkmkr.Increment 0.12, "Counting required styles..."
 '-------Count number of occurences of each required style----
 Dim styleCount() As Variant
 
@@ -63,7 +76,7 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
     Exit Sub
 End If
             
-            
+oProgressBkmkr.Increment 0.17, "Correcting heading styles..."
 '------------Convert unapproved headings to correct heading-------
 ' If certain styles (oldStyle) appear by themselves, converts to
 ' the approved solo style (newStyle)
@@ -84,45 +97,40 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
     Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
 End If
 
-
+oProgressBkmkr.Increment 0.24, "Getting book metadata from manuscript..."
 '--------Get title/author/isbn/imprint text from document-----------
 Dim strMetadata As String
 strMetadata = GetMetadata
 
-            
+oProgressBkmkr.Increment 0.3, "Getting list of illustrations..."
 '-------------------Get Illustrations List from Document-----------
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
-
+oProgressBkmkr.Increment 0.35, "Getting list of styles in use..."
 '-------------------Get list of good and bad styles from document---------
 Dim arrGoodBadStyles() As Variant
 Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
 'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=True)
+arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr)
 
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
-'-------------------Check Illustration source and caption position------
-Dim strIlloErrors As String
-strIlloErrors = IllustrationErrors
-
+oProgressBkmkr.Increment 0.95, "Checking styles for errors..."
 '-------------------Create error report----------------------------
 Dim strErrorList As String
-strErrorList = CreateErrorList(strBadStylesList, strIlloErrors, styleCount)
+strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
 
-'-------------------Check Illustration source and caption position------
-Dim strIlloErrors As String
-strIlloErrors = IllustrationErrors
-
+oProgressBkmkr.Increment 0.98, "Creating report file..."
 '------Create Report File-------------------------------
 Dim strSuffix As String
 strSuffix = "BookmakerReport" ' suffix for the report file
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
+oProgressBkmkr.Increment 1, "Finishing up..."
 Application.ScreenUpdating = True
 
 '============================================================================
@@ -133,7 +141,7 @@ Application.ScreenUpdating = True
 ''''Notify user in seconds
   Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '============================================================================
-
+Unload oProgressBkmkr
 End Sub
 Sub MacmillanStyleReport()
 '=================================================
@@ -155,6 +163,13 @@ End If
 
 Application.ScreenUpdating = False
 
+Dim oProgressStyleRpt As ProgressBar
+Set oProgressStyleRpt = New ProgressBar
+
+oProgressStyleRpt.Title = "Macmillan Style Report"
+oProgressStyleRpt.Show
+
+oProgressStyleRpt.Increment 0.05, "Pausing track changes and removing content controls..."
 '-----------Turn off track changes--------
 Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
@@ -170,6 +185,7 @@ If Not TheOS Like "*Mac*" Then
     Call DeleteContentControlPC
 End If
 
+oProgressStyleRpt.Increment 0.08, "Counting required styles..."
 '-------Count number of occurences of each required style----
 Dim styleCount() As Variant
 
@@ -180,6 +196,7 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
     Exit Sub
 End If
             
+oProgressStyleRpt.Increment 0.15, "Checking for correct heading styles..."
 '------------Convert unapproved headings to correct heading-------
 ' If certain styles (oldStyle) appear by themselves, converts to
 ' the approved solo style (newStyle)
@@ -200,32 +217,34 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
     Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
 End If
 
+oProgressStyleRpt.Increment 0.22, "Getting metadata from manuscript..."
 '--------Get title/author/isbn/imprint text from document-----------
 Dim strMetadata As String
 strMetadata = GetMetadata
 
-            
+oProgressStyleRpt.Increment 0.3, "Generating illustration list..."
 '-------------------Get Illustrations List from Document-----------
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
-
+oProgressStyleRpt.Increment 0.35, "Generating list of Macmillan styles..."
 '-------------------Get list of good and bad styles from document---------
 Dim arrGoodBadStyles() As Variant
 Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
 'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=False)
+arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt)
 
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
+oProgressStyleRpt.Increment 0.95, "Checking styles for errors..."
 '-------------------Create error report----------------------------
 Dim strErrorList As String
-strErrorList = CreateErrorList(strBadStylesList, styleCount)
+strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=False)
 
-
+oProgressStyleRpt.Increment 0.99, "Creating report file..."
 '-----------------------create text file------------------------------
 Dim strSuffix As String
 strSuffix = "StyleReport"       'suffix for report file, no spaces
@@ -235,6 +254,7 @@ Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStyles
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
 
+oProgressStyleRpt.Increment 1, "Finishing up..."
 
 '================================================================================================
 '----------------------Timer End-------------------------------------------
@@ -245,9 +265,10 @@ Application.ScreenUpdating = True
   Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '================================================================================================
 
+Unload oProgressStyleRpt
 
 End Sub
-Private Function GoodBadStyles(torDOTcom As Boolean) As Variant
+Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar) As Variant
 'Creates a list of Macmillan styles in use
 'And a separate list of non-Macmillan styles in use
 
@@ -273,15 +294,20 @@ Dim pageNumber As Integer
 'Alter built-in Normal (Web) style temporarily (later, maybe forever?)
 ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 
-' Collect all styles being used
+'----------Collect all styles being used-------------------------------
 styleGoodCount = 0
 styleBadCount = 0
 styleBadOverflow = False
 activeParaCount = activeDoc.paragraphs.Count
 For J = 1 To activeParaCount
     'Next two lines are for the status bar
-    Application.StatusBar = "Checking paragraph: " & J & " of " & activeParaCount
-    If J Mod 100 = 0 Then DoEvents
+    If J Mod 100 = 0 Then
+        '(J/activeParaCount) is % complete of this loop,  0.3 is total % of whole progress bar this step
+        ' takes up, 0.35 is starting point of this step
+        ProgressBar.Increment (((J / activeParaCount) * 0.3) + 0.35), "Checking paragraph " & J & " of " & _
+            activeParaCount & " for Macmillan styles..."
+        Doze 500            'Wait half a second otherwise next line executes before progress bar is done and progress bar crashes
+    End If
     
     paraStyle = activeDoc.paragraphs(J).Style
         'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
@@ -313,7 +339,7 @@ For J = 1 To activeParaCount
         End If
     End If
 Next J
- 
+
 'Change Normal (Web) back (if you want to)
 ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
 
@@ -375,7 +401,9 @@ styleNameM(21) = "span symbols bold (symb)"
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
 
+
 For M = 1 To UBound(styleNameM())
+    ProgressBar.Increment (((M / UBound(styleNameM())) * 0.1) + 0.65), "Checking for " & styleNameM(M) & " styles..."
     With Selection.Find
         .Style = ActiveDocument.Styles(styleNameM(M))
         .Wrap = wdFindContinue
@@ -395,7 +423,7 @@ strGoodStyles = strGoodStyles & charStyles
 'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
 Dim strTorBadStyles As String
 If torDOTcom = True Then
-    strTorBadStyles = BadTorStyles
+    strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar)
     strBadStyles = strBadStyles & strTorBadStyles
 End If
 
@@ -457,7 +485,7 @@ End If
 
 End Function
 
-Private Function CreateErrorList(badStyles As String, IllustrationErrors As String, arrStyleCount() As Variant) As String
+Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant, torDOTcom As Boolean) As String
 Dim errorList As String
 errorList = ""
 
@@ -579,14 +607,15 @@ If arrStyleCount(4) >= arrStyleCount(5) And arrStyleCount(5) <> 0 Then errorList
     & CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Chap Number (cn)")
 
 'If Illustrations and sources exist, check that source comes after
-If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & IllustrationErrors
-
+If torDOTcom = True Then
+    If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & IllustrationErrors
+End If
 
 'Check that only heading styles follow page breaks
 errorList = errorList & CheckAfterPB
 
 'Add bad styles to error message
-    errorList = errorList & badStyles & IllustrationErrors
+    errorList = errorList & badStyles
 
 If errorList <> "" Then
     errorList = errorList & vbNewLine & "If you have any questions about how to handle these errors, " & vbNewLine & _
@@ -883,7 +912,7 @@ On Error GoTo 0
 Application.DisplayAlerts = True
 
 End Function
-Private Function BadTorStyles() As String
+Private Function BadTorStyles(ProgressBar2 As ProgressBar) As String
 'Called from GoodBadStyles sub if torDOTcom parameter is set to True.
 
 Dim paraStyle As String
@@ -988,6 +1017,14 @@ activeParaCount = ActiveDocument.paragraphs.Count
 For N = 1 To activeParaCount
     intBadCount = 0
     paraStyle = ActiveDocument.paragraphs(N).Style
+    
+    If N Mod 100 = 0 Then
+        '(N/activeParaCount) is % complete of this loop,  0.1 is total % of whole progress bar this step
+        ' takes up, 0.75 is starting point of this step
+        ProgressBar2.Increment (((N / activeParaCount) * 0.1) + 0.75), "Checking paragraph " & N & " of " & activeParaCount _
+            & " for Tor.com approved styles..."
+        Doze 500            'Wait half a second otherwise next line executes before progress bar is done and progress bar crashes
+    End If
     
     If Right(paraStyle, 1) = ")" Then
     
