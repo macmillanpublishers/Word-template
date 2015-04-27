@@ -1201,16 +1201,17 @@ Dim strErrors As String
 Dim intCount As Integer
 Dim pageNum As Integer
 Dim intCurrentPara As Integer
-Dim findStyle As String
-Dim prevStyle As String
-Dim prevStyle2 As String
+Dim strStyle1 As String
+Dim strStyle2 As String
+Dim strStyle3 As String
 
-intCount = 0
 strErrors = ""
-findStyle = "Illustration Source (is)"
-prevStyle = "Illustration holder (ill)"
-prevStyle2 = "Caption (cap)"
+strStyle1 = "Illustration Source (is)"
+strStyle2 = "Illustration holder (ill)"
+strStyle3 = "Caption (cap)"
 
+
+'------------------Search for Illustration Source and check previous paragraph(s)-----------------
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
@@ -1222,13 +1223,15 @@ Selection.HomeKey Unit:=wdStory
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles(findStyle)
+        .Style = ActiveDocument.Styles(strStyle1)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
     End With
+
+intCount = 0
 
 Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 1000 so we don't get an infinite loop
     intCount = intCount + 1
@@ -1258,24 +1261,25 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
         pageNum = Selection.Information(wdActiveEndPageNumber)
     
             'Check if preceding paragraph style is correct
-            If Selection.Style <> prevStyle Then
+            If Selection.Style <> strStyle2 Then
             
-                If Selection.Style = prevStyle2 Then
+                If Selection.Style = strStyle3 Then
                     'select preceding paragraph again, see if it's prevStyle
                     Selection.Previous(Unit:=wdParagraph, Count:=1).Select
                     pageNum = Selection.Information(wdActiveEndPageNumber)
                     
-                        If Selection.Style <> prevStyle Then
-                            strErrors = strErrors & "** ERROR: Caption (cap) followed by Illustration " _
-                                & "Source (is) on" & vbNewLine & vbTab & "page " & pageNum & " must be preceded by " _
-                                & "Illustration holder (ill)." & vbNewLine & vbNewLine
+                        If Selection.Style <> strStyle2 Then
+                            strErrors = strErrors & "** ERROR: " & strStyle3 & " followed by " & strStyle1 & "" _
+                                & " on" & vbNewLine & vbTab & "page " & pageNum & " must be preceded by " _
+                                & strStyle2 & "." & vbNewLine & vbNewLine
                         End If
                         
                     Selection.Next(Unit:=wdParagraph, Count:=1).Select
                 Else
                 
-                    strErrors = strErrors & "** ERROR: Illustration Source (is) on page " _
-                        & pageNum & " must be used after an" & vbNewLine & vbTab & "Illustration holder (ill)."
+                    strErrors = strErrors & "** ERROR: " & strStyle1 & " on page " _
+                        & pageNum & " must be used after an" & vbNewLine & vbTab & strStyle2 & "." _
+                            & vbNewLine & vbNewLine
                         
                 End If
             Else
@@ -1285,24 +1289,71 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
                     Selection.Next(Unit:=wdParagraph, Count:=2).Select
                     pageNum = Selection.Information(wdActiveEndPageNumber)
                         
-                        If Selection.Style = "Caption (cap)" Then
-                            strErrors = strErrors & "** ERROR: Illustration Source (is) style on page " & pageNum & " must" _
-                                & " come after Caption (cap) style." & vbNewLine & vbNewLine
+                        If Selection.Style = strStyle3 Then
+                            strErrors = strErrors & "** ERROR: " & strStyle1 & " style on page " & pageNum & " must" _
+                                & " come after " & strStyle3 & " style." & vbNewLine & vbNewLine
                         End If
+                    Selection.Previous(Unit:=wdParagraph, Count:=2).Select
                 End If
             
             End If
         
-            Debug.Print strErrors
+            'Debug.Print strErrors
     
         'move the selection back to original paragraph, so it won't be
         'selected again on next search
         Selection.Next(Unit:=wdParagraph, Count:=1).Select
     
     Else 'Selection is first paragraph of the document
-        strErrors = strErrors & findStyle & " cannot be first paragraph of document." & vbNewLine & vbNewLine
+        strErrors = strErrors & strStyle1 & " cannot be first paragraph of document." & vbNewLine & vbNewLine
     End If
     
+Loop
+
+'------------------------Search for Illustration holder and check previous paragraph--------------
+'Move selection to start of document
+Selection.HomeKey Unit:=wdStory
+
+'select paragraph with that style
+    Selection.Find.ClearFormatting
+    With Selection.Find
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles(strStyle2)
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+
+intCount = 0
+
+Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 1000 so we don't get an infinite loop
+    intCount = intCount + 1
+    
+    'Get number of current pagaraph, because we get an error if try to select before 1st para
+    Selection.Range.Select  'select current range
+    CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
+    Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
+    intCurrentPara = rParagraphs.paragraphs.Count
+
+    If intCurrentPara > 1 Then      'NOT first paragraph of document
+        'select preceding paragraph
+        Selection.Previous(Unit:=wdParagraph, Count:=1).Select
+        pageNum = Selection.Information(wdActiveEndPageNumber)
+    
+            'Check if preceding paragraph style is a Caption, which is not allowed
+            If Selection.Style = strStyle3 Then
+                strErrors = strErrors & "** ERROR: " & strStyle3 & " on page " & pageNum & " must come after " _
+                                & strStyle2 & "." & vbNewLine & vbNewLine
+            End If
+            
+        Selection.Next(Unit:=wdParagraph, Count:=1).Select
+    End If
 Loop
 
 Debug.Print strErrors
