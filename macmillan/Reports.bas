@@ -106,17 +106,9 @@ arrGoodBadStyles = GoodBadStyles(torDOTcom:=True)
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
-'-------------------Check Illustration source and caption position------
-Dim strIlloErrors As String
-strIlloErrors = IllustrationErrors
-
 '-------------------Create error report----------------------------
 Dim strErrorList As String
-strErrorList = CreateErrorList(strBadStylesList, strIlloErrors, styleCount)
-
-'-------------------Check Illustration source and caption position------
-Dim strIlloErrors As String
-strIlloErrors = IllustrationErrors
+strErrorList = CreateErrorList(strBadStylesList, styleCount)
 
 '------Create Report File-------------------------------
 Dim strSuffix As String
@@ -457,7 +449,7 @@ End If
 
 End Function
 
-Private Function CreateErrorList(badStyles As String, IllustrationErrors As String, arrStyleCount() As Variant) As String
+Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant) As String
 Dim errorList As String
 errorList = ""
 
@@ -586,7 +578,7 @@ If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & 
 errorList = errorList & CheckAfterPB
 
 'Add bad styles to error message
-    errorList = errorList & badStyles & IllustrationErrors
+    errorList = errorList & badStyles
 
 If errorList <> "" Then
     errorList = errorList & vbNewLine & "If you have any questions about how to handle these errors, " & vbNewLine & _
