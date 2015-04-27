@@ -19,11 +19,11 @@ Sub BookmakerReqs()
 
 '=================================================
 '''''              Timer Start                  '|
-'Dim StartTime As Double                         '|
-'Dim SecondsElapsed As Double                    '|
+Dim StartTime As Double                         '|
+Dim SecondsElapsed As Double                    '|
                                                 '|
 '''''Remember time when macro starts            '|
-'StartTime = Timer                               '|
+StartTime = Timer                               '|
 '=================================================
 
 
@@ -111,6 +111,10 @@ strBadStylesList = arrGoodBadStyles(2)
 Dim strErrorList As String
 strErrorList = CreateErrorList(strBadStylesList, styleCount)
 
+'-------------------Check Illustration source and caption position------
+Dim strIlloErrors As String
+strErrorList = strErrorList & IllustrationErrors
+
 '------Create Report File-------------------------------
 Dim strSuffix As String
 strSuffix = "BookmakerReport" ' suffix for the report file
@@ -121,10 +125,10 @@ Application.ScreenUpdating = True
 '============================================================================
 '----------------------Timer End-------------------------------------------
 ''''Determine how many seconds code took to run
-  'SecondsElapsed = Round(Timer - StartTime, 2)
+  SecondsElapsed = Round(Timer - StartTime, 2)
 
 ''''Notify user in seconds
-  'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '============================================================================
 
 End Sub
@@ -1305,7 +1309,7 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
         Selection.Next(Unit:=wdParagraph, Count:=1).Select
     
     Else 'Selection is first paragraph of the document
-        strErrors = strErrors & strStyle1 & " cannot be first paragraph of document." & vbNewLine & vbNewLine
+        strErrors = strErrors & "** ERROR: " & strStyle1 & " cannot be first paragraph of document." & vbNewLine & vbNewLine
     End If
     
 Loop
@@ -1356,7 +1360,7 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
     End If
 Loop
 
-Debug.Print strErrors
+'Debug.Print strErrors
 
 IllustrationErrors = strErrors
 
