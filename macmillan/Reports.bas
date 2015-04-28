@@ -22,7 +22,7 @@ Sub BookmakerReqs()
 '           Added style report WITH character styles
 '3/20/2015: Added check if template is attached
 '3/17/2015: Added Illustrations List
-'3/16/2015: Fixed error creating text file, added title/author/isbn confirmation
+'3/16/32015: Fixed error creating text file, added title/author/isbn confirmation
 
 
 '=================================================
@@ -42,8 +42,15 @@ If exitOnError <> False Then
     Exit Sub
 End If
 
-Application.ScreenUpdating = False
+'Application.ScreenUpdating = False
+Application.DisplayStatusBar = True
 
+'Percent complete and status for progress bar (PC) and status bar (Mac)
+Dim sglPercentComplete As Single
+Dim strStatus As String
+
+sglPercentComplete = 0.02
+strStatus = "Checking Content Controls and Track Changes..."
 'All Progress Bar statements for PC only because won't run modeless on Mac
 Dim TheOS As String
 TheOS = System.OperatingSystem
@@ -55,8 +62,12 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Title = "Bookmaker Check Macro"
     oProgressBkmkr.Show
 
-    oProgressBkmkr.Increment 0.02, "Checking Content Controls and Track Changes..."
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Application.StatusBar = (100 * sglPercentComplete) & "% | " & strStatus
+    Application.StatusBar = "Testing...."
+    DoEvents
 End If
 
 '--------save the current cursor location in a bookmark---------------------------
@@ -77,6 +88,8 @@ If FixTrackChanges = False Then
 End If
 
 '-------Count number of occurences of each required style----
+sglPercentComplete = 0.07
+strStatus = "Checking Content Controls and Track Changes..."
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment 0.07, "Counting required styles..."
     Doze 50
