@@ -99,7 +99,7 @@ End Property
 '-------------------------------------------------------------------------
 'This Procedure is Executed when the BarWidth Property is Set.
 Public Property Let BarWidth(value As Single)
-cBarWidth = value * (Me.FrameProgress.Width - 12)
+cBarWidth = value * (Me.FrameProgress.Width - 16)
 Me.LabelProgress.Width = cBarWidth
 End Property
 
