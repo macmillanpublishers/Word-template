@@ -2,7 +2,13 @@ Attribute VB_Name = "CharacterStyles"
 Option Explicit
 Option Base 1
 Dim activeRng As Range
-
+Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Private Sub Doze(ByVal lngPeriod As Long)
+DoEvents
+Sleep lngPeriod
+' Call it in desired location to sleep for 1 seconds like this:
+' Doze 1000
+End Sub
 Sub MacmillanCharStyles()
 'Created by Erica Warren -- erica.warren@macmillan.com
 'Split off from MacmillanCleanupMacro: https://github.com/macmillanpublishers/Word-template/blob/master/macmillan/CleanupMacro.bas
@@ -13,14 +19,6 @@ Sub MacmillanCharStyles()
 
 'Remember time when macro starts
 'StartTime = Timer
-
-'-----------------Start Progress Bar----------
-Dim oProgress As ProgressBar
-Set oProgress = New ProgressBar
-
-oProgress.Title = "Character Styles Macro"
-oProgress.Show
-oProgress.Increment 0.05, "Verifying document is saved and template is attached..."
 
 ''-----------------Error checks---------------
 Dim exitOnError As Boolean
@@ -35,6 +33,20 @@ If exitOnError <> False Then
 Exit Sub
 End If
 
+'-----------------Start Progress Bar----------
+Dim oProgress As ProgressBar
+Set oProgress = New ProgressBar
+
+oProgress.Title = "Character Styles Macro"
+oProgress.Show
+Doze 50
+
+oProgress.Increment 0.05, "Verifying document is saved and template is attached..."
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
+
+'--------save the current cursor location in a bookmark---------------------------
+ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+
 '-----------Turn off track changes--------
 Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
@@ -46,43 +58,55 @@ Application.ScreenUpdating = False
 Call zz_clearFind                          'Clear find object
 
 oProgress.Increment 0.15, "Preserving styled whitespace..."
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
 Call PreserveWhiteSpaceinBrkStylesA     'Part A tags styled blank paragraphs so they don't get deleted
 Call zz_clearFind
 
 oProgress.Increment 0.25, "Applying styles to hyperlinks..."
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
 Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
 Call zz_clearFind
 
 oProgress.Increment 0.4, "Removing unstyled breaks..."
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
 Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
 Call zz_clearFind
 
 oProgress.Increment 0.55, "Tagging character styles..."
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
 Call TagExistingCharStyles            'tag existing styled items
 Call zz_clearFind
 
 oProgress.Increment 0.7, "Tagging and clearing local styles..."
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
 Call LocalStyleTag                 'tag local styling, reset local styling, remove text highlights
 Call zz_clearFind
 
 oProgress.Increment 0.85, "Applying Macmillan styles..."
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
 Call LocalStyleReplace            'reapply local styling through char styles
 Call zz_clearFind
 
 oProgress.Increment 0.95, "Cleaning up styled whitespace..."
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
 Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies the styles
 Call zz_clearFind
 
-oProgress.Increment 1, "Finished!"
+Doze 50         ' Pause for 50 milliseconds to let progress bar update
+oProgress.Increment 1, "Finishing up..."
+
+ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
+
+'-------------Go back to original insertion point and delete bookmark-----------------
+Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 
 Unload oProgress
-
 MsgBox "Macmillan character styles have been applied throughout your manuscript."
 
-ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
 
 '----------------------Timer End-------------------------------------------
 'Determine how many seconds code took to run
