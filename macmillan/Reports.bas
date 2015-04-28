@@ -5,6 +5,7 @@ Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 Private Sub Doze(ByVal lngPeriod As Long)
 DoEvents
 Sleep lngPeriod
+DoEvents
 ' Call it in desired location to sleep for 1 seconds like this:
 ' Doze 1000
 End Sub
@@ -49,7 +50,7 @@ Set oProgressBkmkr = New ProgressBar
 oProgressBkmkr.Title = "Bookmaker Check Macro"
 oProgressBkmkr.Show
 
-oProgressBkmkr.Increment 0.08, "Checking Content Controls and Track Changes..."
+oProgressBkmkr.Increment 0.02, "Checking Content Controls and Track Changes..."
 Doze 50 'Wait 50 milliseconds for progress bar to update
 
 '--------save the current cursor location in a bookmark---------------------------
@@ -71,7 +72,7 @@ If FixTrackChanges = False Then
 End If
 
 '-------Count number of occurences of each required style----
-oProgressBkmkr.Increment 0.12, "Counting required styles..."
+oProgressBkmkr.Increment 0.07, "Counting required styles..."
 Doze 50
 
 Dim styleCount() As Variant
@@ -84,7 +85,7 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
 End If
 
 '------------Convert unapproved headings to correct heading-------
-oProgressBkmkr.Increment 0.17, "Correcting heading styles..."
+oProgressBkmkr.Increment 0.1, "Correcting heading styles..."
 Doze 50
 
 ' If certain styles (oldStyle) appear by themselves, converts to
@@ -107,21 +108,21 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
 End If
 
 '--------Get title/author/isbn/imprint text from document-----------
-oProgressBkmkr.Increment 0.24, "Getting book metadata from manuscript..."
+oProgressBkmkr.Increment 0.12, "Getting book metadata from manuscript..."
 Doze 50
 
 Dim strMetadata As String
 strMetadata = GetMetadata
 
 '-------------------Get Illustrations List from Document-----------
-oProgressBkmkr.Increment 0.3, "Getting list of illustrations..."
+oProgressBkmkr.Increment 0.15, "Getting list of illustrations..."
 Doze 50
 
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
 '-------------------Get list of good and bad styles from document---------
-oProgressBkmkr.Increment 0.35, "Getting list of styles in use..."
+oProgressBkmkr.Increment 0.18, "Getting list of styles in use..."
 Doze 50
 
 Dim arrGoodBadStyles() As Variant
@@ -135,14 +136,14 @@ strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
 '-------------------Create error report----------------------------
-oProgressBkmkr.Increment 0.95, "Checking styles for errors..."
+oProgressBkmkr.Increment 0.98, "Checking styles for errors..."
 Doze 50
 
 Dim strErrorList As String
 strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
 
 '------Create Report File-------------------------------
-oProgressBkmkr.Increment 0.98, "Creating report file..."
+oProgressBkmkr.Increment 0.99, "Creating report file..."
 Doze 50
 
 Dim strSuffix As String
@@ -152,10 +153,11 @@ Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStyles
 '-------------Go back to original insertion point and delete bookmark-----------------
 oProgressBkmkr.Increment 1, "Finishing up..."
 Doze 50
-Application.ScreenUpdating = True
 
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
+Application.ScreenUpdating = True
 
 '============================================================================
 '----------------------Timer End-------------------------------------------
@@ -195,7 +197,7 @@ Set oProgressStyleRpt = New ProgressBar
 oProgressStyleRpt.Title = "Macmillan Style Report"
 oProgressStyleRpt.Show
 
-oProgressStyleRpt.Increment 0.05, "Pausing track changes and removing content controls..."
+oProgressStyleRpt.Increment 0.02, "Pausing track changes and removing content controls..."
 Doze 50 'Wait 50 milliseconds for progress bar to update
 
 '--------save the current cursor location in a bookmark---------------------------
@@ -219,7 +221,7 @@ End If
 
 
 '-------Count number of occurences of each required style----
-oProgressStyleRpt.Increment 0.08, "Counting required styles..."
+oProgressStyleRpt.Increment 0.05, "Counting required styles..."
 Doze 50 'Wait 50 milliseconds for progress bar to update
 
 Dim styleCount() As Variant
@@ -232,7 +234,7 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
 End If
             
 '------------Convert unapproved headings to correct heading-------
-oProgressStyleRpt.Increment 0.15, "Checking for correct heading styles..."
+oProgressStyleRpt.Increment 0.09, "Checking for correct heading styles..."
 Doze 50 'Wait 50 milliseconds for progress bar to update
 
 ' If certain styles (oldStyle) appear by themselves, converts to
@@ -255,21 +257,21 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
 End If
 
 '--------Get title/author/isbn/imprint text from document-----------
-oProgressStyleRpt.Increment 0.22, "Getting metadata from manuscript..."
+oProgressStyleRpt.Increment 0.12, "Getting metadata from manuscript..."
 Doze 50 'Wait 50 milliseconds for progress bar to update
 
 Dim strMetadata As String
 strMetadata = GetMetadata
 
 '-------------------Get Illustrations List from Document-----------
-oProgressStyleRpt.Increment 0.3, "Generating illustration list..."
+oProgressStyleRpt.Increment 0.15, "Generating illustration list..."
 Doze 50 'Wait 50 milliseconds for progress bar to update
 
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
 '-------------------Get list of good and bad styles from document---------
-oProgressStyleRpt.Increment 0.35, "Generating list of Macmillan styles..."
+oProgressStyleRpt.Increment 0.18, "Generating list of Macmillan styles..."
 Doze 50 'Wait 50 milliseconds for progress bar to update
 
 Dim arrGoodBadStyles() As Variant
@@ -283,7 +285,7 @@ strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
 '-------------------Create error report----------------------------
-oProgressStyleRpt.Increment 0.95, "Checking styles for errors..."
+oProgressStyleRpt.Increment 0.98, "Checking styles for errors..."
 Doze 50 'Wait 50 milliseconds for progress bar to update
 
 Dim strErrorList As String
@@ -356,7 +358,7 @@ For J = 1 To activeParaCount
     If J Mod 100 = 0 Then
         '(J/activeParaCount) is % complete of this loop,  0.3 is total % of whole progress bar this step
         ' takes up, 0.35 is starting point of this step
-        ProgressBar.Increment (((J / activeParaCount) * 0.3) + 0.35), "Checking paragraph " & J & " of " & _
+        ProgressBar.Increment (((J / activeParaCount) * 0.5) + 0.18), "Checking paragraph " & J & " of " & _
             activeParaCount & " for Macmillan styles..."
         Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
     End If
@@ -455,7 +457,7 @@ Selection.HomeKey Unit:=wdStory
 
 
 For M = 1 To UBound(styleNameM())
-    ProgressBar.Increment (((M / UBound(styleNameM())) * 0.1) + 0.65), "Checking for " & styleNameM(M) & " styles..."
+    ProgressBar.Increment (((M / UBound(styleNameM())) * 0.1) + 0.68), "Checking for " & styleNameM(M) & " styles..."
     With Selection.Find
         .Style = ActiveDocument.Styles(styleNameM(M))
         .Wrap = wdFindContinue
@@ -1073,7 +1075,7 @@ For N = 1 To activeParaCount
     If N Mod 100 = 0 Then
         '(N/activeParaCount) is % complete of this loop,  0.1 is total % of whole progress bar this step
         ' takes up, 0.75 is starting point of this step
-        ProgressBar2.Increment (((N / activeParaCount) * 0.1) + 0.75), "Checking paragraph " & N & " of " & activeParaCount _
+        ProgressBar2.Increment (((N / activeParaCount) * 0.2) + 0.78), "Checking paragraph " & N & " of " & activeParaCount _
             & " for Tor.com approved styles..."
         Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
     End If
