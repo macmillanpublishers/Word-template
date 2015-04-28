@@ -50,6 +50,10 @@ oProgressBkmkr.Title = "Bookmaker Check Macro"
 oProgressBkmkr.Show
 
 oProgressBkmkr.Increment 0.08, "Checking Content Controls and Track Changes..."
+
+'--------save the current cursor location in a bookmark---------------------------
+ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+
 '-------Delete content controls on PC------------------------
 'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
 Dim TheOS As String
@@ -133,6 +137,10 @@ Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStyles
 oProgressBkmkr.Increment 1, "Finishing up..."
 Application.ScreenUpdating = True
 
+'-------------Go back to original insertion point and delete bookmark-----------------
+Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
 '============================================================================
 '----------------------Timer End-------------------------------------------
 ''''Determine how many seconds code took to run
@@ -170,6 +178,11 @@ oProgressStyleRpt.Title = "Macmillan Style Report"
 oProgressStyleRpt.Show
 
 oProgressStyleRpt.Increment 0.05, "Pausing track changes and removing content controls..."
+
+'--------save the current cursor location in a bookmark---------------------------
+ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+
+
 '-----------Turn off track changes--------
 Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
@@ -250,11 +263,15 @@ Dim strSuffix As String
 strSuffix = "StyleReport"       'suffix for report file, no spaces
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
+oProgressStyleRpt.Increment 1, "Finishing up..."
+
 '-----------------------return settings to original-----------------
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
 
-oProgressStyleRpt.Increment 1, "Finishing up..."
+'-------------Go back to original insertion point and delete bookmark-----------------
+Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
 '================================================================================================
 '----------------------Timer End-------------------------------------------
