@@ -6,7 +6,7 @@ Private Sub Doze(ByVal lngPeriod As Long)
 DoEvents
 Sleep lngPeriod
 DoEvents
-' Call it in desired location to sleep for 1 seconds like this:
+ 'Call it in desired location to sleep for 1 seconds like this:
 ' Doze 1000
 End Sub
 Sub BookmakerReqs()
@@ -44,14 +44,17 @@ End If
 
 Application.ScreenUpdating = False
 
-Dim oProgressBkmkr As ProgressBar
-Set oProgressBkmkr = New ProgressBar
+'All Progress Bar statements for PC only because won't run modeless on Mac
+If Not TheOS Like "*Mac*" Then
+    Dim oProgressBkmkr As ProgressBar
+    Set oProgressBkmkr = New ProgressBar
 
-oProgressBkmkr.Title = "Bookmaker Check Macro"
-oProgressBkmkr.Show
+    oProgressBkmkr.Title = "Bookmaker Check Macro"
+    oProgressBkmkr.Show
 
-oProgressBkmkr.Increment 0.02, "Checking Content Controls and Track Changes..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+    oProgressBkmkr.Increment 0.02, "Checking Content Controls and Track Changes..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 '--------save the current cursor location in a bookmark---------------------------
 ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
@@ -72,8 +75,10 @@ If FixTrackChanges = False Then
 End If
 
 '-------Count number of occurences of each required style----
-oProgressBkmkr.Increment 0.07, "Counting required styles..."
-Doze 50
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment 0.07, "Counting required styles..."
+    Doze 50
+End If
 
 Dim styleCount() As Variant
 
@@ -85,8 +90,10 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
 End If
 
 '------------Convert unapproved headings to correct heading-------
-oProgressBkmkr.Increment 0.1, "Correcting heading styles..."
-Doze 50
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment 0.1, "Correcting heading styles..."
+    Doze 50
+End If
 
 ' If certain styles (oldStyle) appear by themselves, converts to
 ' the approved solo style (newStyle)
@@ -108,22 +115,28 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
 End If
 
 '--------Get title/author/isbn/imprint text from document-----------
-oProgressBkmkr.Increment 0.12, "Getting book metadata from manuscript..."
-Doze 50
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment 0.12, "Getting book metadata from manuscript..."
+    Doze 50
+End If
 
 Dim strMetadata As String
 strMetadata = GetMetadata
 
 '-------------------Get Illustrations List from Document-----------
-oProgressBkmkr.Increment 0.15, "Getting list of illustrations..."
-Doze 50
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment 0.15, "Getting list of illustrations..."
+    Doze 50
+End If
 
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
 '-------------------Get list of good and bad styles from document---------
-oProgressBkmkr.Increment 0.18, "Getting list of styles in use..."
-Doze 50
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment 0.18, "Getting list of styles in use..."
+    Doze 50
+End If
 
 Dim arrGoodBadStyles() As Variant
 Dim strGoodStylesList As String
@@ -136,23 +149,29 @@ strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
 '-------------------Create error report----------------------------
-oProgressBkmkr.Increment 0.98, "Checking styles for errors..."
-Doze 50
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment 0.98, "Checking styles for errors..."
+    Doze 50
+If Not TheOS Like "*Mac*" Then
 
 Dim strErrorList As String
 strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
 
 '------Create Report File-------------------------------
-oProgressBkmkr.Increment 0.99, "Creating report file..."
-Doze 50
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment 0.99, "Creating report file..."
+    Doze 50
+End If
 
 Dim strSuffix As String
 strSuffix = "BookmakerReport" ' suffix for the report file
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
 '-------------Go back to original insertion point and delete bookmark-----------------
-oProgressBkmkr.Increment 1, "Finishing up..."
-Doze 50
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment 1, "Finishing up..."
+    Doze 50
+End If
 
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
@@ -168,7 +187,9 @@ Application.ScreenUpdating = True
   Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '============================================================================
 
-Unload oProgressBkmkr
+If Not TheOS Like "*Mac*" Then
+    Unload oProgressBkmkr
+End If
 
 End Sub
 Sub MacmillanStyleReport()
@@ -191,14 +212,16 @@ End If
 
 Application.ScreenUpdating = False
 
-Dim oProgressStyleRpt As ProgressBar
-Set oProgressStyleRpt = New ProgressBar
+If Not TheOS Like "*Mac*" Then
+    Dim oProgressStyleRpt As ProgressBar
+    Set oProgressStyleRpt = New ProgressBar
 
-oProgressStyleRpt.Title = "Macmillan Style Report"
-oProgressStyleRpt.Show
+    oProgressStyleRpt.Title = "Macmillan Style Report"
+    oProgressStyleRpt.Show
 
-oProgressStyleRpt.Increment 0.02, "Pausing track changes and removing content controls..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+    oProgressStyleRpt.Increment 0.02, "Pausing track changes and removing content controls..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 '--------save the current cursor location in a bookmark---------------------------
 ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
@@ -221,8 +244,10 @@ End If
 
 
 '-------Count number of occurences of each required style----
-oProgressStyleRpt.Increment 0.05, "Counting required styles..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment 0.05, "Counting required styles..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 Dim styleCount() As Variant
 
@@ -234,8 +259,10 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
 End If
             
 '------------Convert unapproved headings to correct heading-------
-oProgressStyleRpt.Increment 0.09, "Checking for correct heading styles..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment 0.09, "Checking for correct heading styles..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 ' If certain styles (oldStyle) appear by themselves, converts to
 ' the approved solo style (newStyle)
@@ -257,22 +284,28 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
 End If
 
 '--------Get title/author/isbn/imprint text from document-----------
-oProgressStyleRpt.Increment 0.12, "Getting metadata from manuscript..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment 0.12, "Getting metadata from manuscript..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 Dim strMetadata As String
 strMetadata = GetMetadata
 
 '-------------------Get Illustrations List from Document-----------
-oProgressStyleRpt.Increment 0.15, "Generating illustration list..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment 0.15, "Generating illustration list..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
 '-------------------Get list of good and bad styles from document---------
-oProgressStyleRpt.Increment 0.18, "Generating list of Macmillan styles..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment 0.18, "Generating list of Macmillan styles..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 Dim arrGoodBadStyles() As Variant
 Dim strGoodStylesList As String
@@ -285,23 +318,29 @@ strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
 '-------------------Create error report----------------------------
-oProgressStyleRpt.Increment 0.98, "Checking styles for errors..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment 0.98, "Checking styles for errors..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 Dim strErrorList As String
 strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=False)
 
 '-----------------------create text file------------------------------
-oProgressStyleRpt.Increment 0.99, "Creating report file..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment 0.99, "Creating report file..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 Dim strSuffix As String
 strSuffix = "StyleReport"       'suffix for report file, no spaces
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
 '-----------------------return settings to original-----------------
-oProgressStyleRpt.Increment 1, "Finishing up..."
-Doze 50 'Wait 50 milliseconds for progress bar to update
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment 1, "Finishing up..."
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+End If
 
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
@@ -319,7 +358,9 @@ ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
   Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '================================================================================================
 
-Unload oProgressStyleRpt
+If Not TheOS Like "*Mac*" Then
+    Unload oProgressStyleRpt
+End If
 
 End Sub
 Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar) As Variant
@@ -360,7 +401,7 @@ For J = 1 To activeParaCount
         ' takes up, 0.35 is starting point of this step
         ProgressBar.Increment (((J / activeParaCount) * 0.5) + 0.18), "Checking paragraph " & J & " of " & _
             activeParaCount & " for Macmillan styles..."
-        Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
+       ' Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
     End If
     
     paraStyle = activeDoc.paragraphs(J).Style
@@ -834,13 +875,13 @@ arrSecStartStyles(12) = "Part Number (pn)"
 arrSecStartStyles(13) = "Front Sales Title (fst)"
 arrSecStartStyles(14) = "Front Sales Quote (fsq)"
 arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
-arrSecStartStyles(16) = "Epigraph – non-verse (epi)"
+arrSecStartStyles(16) = "Epigraph Ð non-verse (epi)"
 arrSecStartStyles(17) = "Epigraph - verse (epiv)"
 arrSecStartStyles(18) = "FM Head (fmh)"
 arrSecStartStyles(19) = "Illustration holder (ill)"
 arrSecStartStyles(20) = "Page Break (pb)"
 arrSecStartStyles(21) = "FM Epigraph - non-verse (fmepi)"
-arrSecStartStyles(22) = "FM Epigraph – verse (fmepiv)"
+arrSecStartStyles(22) = "FM Epigraph Ð verse (fmepiv)"
 arrSecStartStyles(23) = "FM Head ALT (afmh)"
 arrSecStartStyles(24) = "Part Number (pn)"
 arrSecStartStyles(25) = "Part Title (pt)"
@@ -1024,15 +1065,15 @@ arrTorStyles(35) = "Text - Std No-Indent Space Before (#tx1)"
 arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
 arrTorStyles(37) = "Dedication (ded)"
 arrTorStyles(38) = "Dedication Author (dedau)"
-arrTorStyles(39) = "Epigraph – non-verse (epi)"
-arrTorStyles(40) = "Epigraph – verse (epiv)"
+arrTorStyles(39) = "Epigraph Ð non-verse (epi)"
+arrTorStyles(40) = "Epigraph Ð verse (epiv)"
 arrTorStyles(41) = "Epigraph Source (eps)"
 arrTorStyles(42) = "Chap Epigraph Source (ceps)"
-arrTorStyles(43) = "Chap Epigraph – non-verse (cepi)"
-arrTorStyles(44) = "Chap Epigraph – verse (cepiv)"
+arrTorStyles(43) = "Chap Epigraph Ð non-verse (cepi)"
+arrTorStyles(44) = "Chap Epigraph Ð verse (cepiv)"
 arrTorStyles(45) = "Chap Title Nonprinting (ctp)"
-arrTorStyles(46) = "FM Epigraph – non-verse (fmepi)"
-arrTorStyles(47) = "FM Epigraph – verse (fmepiv)"
+arrTorStyles(46) = "FM Epigraph Ð non-verse (fmepi)"
+arrTorStyles(47) = "FM Epigraph Ð verse (fmepiv)"
 arrTorStyles(48) = "FM Epigraph Source (fmeps)"
 arrTorStyles(49) = "FM Head (fmh)"
 arrTorStyles(50) = "FM Subhead (fmsh)"
@@ -1077,7 +1118,7 @@ For N = 1 To activeParaCount
         ' takes up, 0.75 is starting point of this step
         ProgressBar2.Increment (((N / activeParaCount) * 0.2) + 0.78), "Checking paragraph " & N & " of " & activeParaCount _
             & " for Tor.com approved styles..."
-        Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
+        'Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
     End If
     
     If Right(paraStyle, 1) = ")" Then
