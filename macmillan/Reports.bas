@@ -39,12 +39,15 @@ Dim exitOnError As Boolean
 exitOnError = srErrorCheck()
 
 If exitOnError <> False Then
-Exit Sub
+    Exit Sub
 End If
 
 Application.ScreenUpdating = False
 
 'All Progress Bar statements for PC only because won't run modeless on Mac
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
 If Not TheOS Like "*Mac*" Then
     Dim oProgressBkmkr As ProgressBar
     Set oProgressBkmkr = New ProgressBar
@@ -61,8 +64,7 @@ ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Ra
 
 '-------Delete content controls on PC------------------------
 'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
-Dim TheOS As String
-TheOS = System.OperatingSystem
+
 
 If Not TheOS Like "*Mac*" Then
     Call DeleteContentControlPC
@@ -152,7 +154,7 @@ strBadStylesList = arrGoodBadStyles(2)
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment 0.98, "Checking styles for errors..."
     Doze 50
-If Not TheOS Like "*Mac*" Then
+End If
 
 Dim strErrorList As String
 strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
@@ -212,6 +214,11 @@ End If
 
 Application.ScreenUpdating = False
 
+'--------Progress Bar------------------------------
+' Conditional for PC only because Mac does not have modeless option
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
 If Not TheOS Like "*Mac*" Then
     Dim oProgressStyleRpt As ProgressBar
     Set oProgressStyleRpt = New ProgressBar
@@ -235,8 +242,7 @@ ActiveDocument.TrackRevisions = False
 
 '-------Delete content controls on PC------------------------
 'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
-Dim TheOS As String
-TheOS = System.OperatingSystem
+
 
 If Not TheOS Like "*Mac*" Then
     Call DeleteContentControlPC
@@ -367,6 +373,9 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar)
 'Creates a list of Macmillan styles in use
 'And a separate list of non-Macmillan styles in use
 
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
 Dim activeDoc As Document
 Set activeDoc = ActiveDocument
 Dim stylesGood() As String
@@ -393,18 +402,21 @@ ActiveDocument.Styles("Normal (Web)").NameLocal = "_"
 styleGoodCount = 0
 styleBadCount = 0
 styleBadOverflow = False
-activeParaCount = activeDoc.paragraphs.Count
+activeParaCount = activeDoc.Paragraphs.Count
 For J = 1 To activeParaCount
-    'Next two lines are for the status bar
-    If J Mod 100 = 0 Then
-        '(J/activeParaCount) is % complete of this loop,  0.3 is total % of whole progress bar this step
-        ' takes up, 0.35 is starting point of this step
-        ProgressBar.Increment (((J / activeParaCount) * 0.5) + 0.18), "Checking paragraph " & J & " of " & _
-            activeParaCount & " for Macmillan styles..."
-       ' Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
+    
+    'Update progress bar on PC
+    If Not TheOS Like "*Mac*" Then
+        If J Mod 100 = 0 Then
+            '(J/activeParaCount) is % complete of this loop,  0.3 is total % of whole progress bar this step
+            ' takes up, 0.35 is starting point of this step
+            ProgressBar.Increment (((J / activeParaCount) * 0.5) + 0.18), "Checking paragraph " & J & " of " & _
+                activeParaCount & " for Macmillan styles..."
+            Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
+        End If
     End If
     
-    paraStyle = activeDoc.paragraphs(J).Style
+    paraStyle = activeDoc.Paragraphs(J).Style
         'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
     If Right(paraStyle, 1) = ")" Then
         For K = 1 To styleGoodCount
@@ -427,7 +439,7 @@ For J = 1 To activeParaCount
         End If
         If L = styleBadCount + 1 Then
             styleBadCount = L
-            Set activeParaRange = ActiveDocument.paragraphs(J).Range
+            Set activeParaRange = ActiveDocument.Paragraphs(J).Range
             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
             stylesBad(styleBadCount) = "** ERROR: Non-Macmillan style on page " & pageNumber & _
                 " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
@@ -498,7 +510,12 @@ Selection.HomeKey Unit:=wdStory
 
 
 For M = 1 To UBound(styleNameM())
-    ProgressBar.Increment (((M / UBound(styleNameM())) * 0.1) + 0.68), "Checking for " & styleNameM(M) & " styles..."
+    
+    If Not TheOS Like "*Mac*" Then
+        ProgressBar.Increment (((M / UBound(styleNameM())) * 0.1) + 0.68), "Checking for " & styleNameM(M) & " styles..."
+        Doze 50
+    End If
+    
     With Selection.Find
         .Style = ActiveDocument.Styles(styleNameM(M))
         .Wrap = wdFindContinue
@@ -507,6 +524,7 @@ For M = 1 To UBound(styleNameM())
     If Selection.Find.Execute = True Then
         charStyles = charStyles & styleNameM(M) & vbNewLine
     End If
+
 Next M
 
 'Move selection back to start of document
@@ -810,7 +828,7 @@ Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 10
     Selection.Range.Select  'select current ran
     CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
     Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
-    intCurrentPara = rParagraphs.paragraphs.Count
+    intCurrentPara = rParagraphs.Paragraphs.Count
     
     'Debug.Print intCurrentPara
     
@@ -1024,6 +1042,9 @@ Dim N As Integer
 Dim M As Integer
 Dim strBadStyles As String
 
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
 'List of styles approved for use in Tor.com automated workflow
 'Organized by approximate frequency in manuscripts (most freq at top)
 
@@ -1107,18 +1128,20 @@ arrTorStyles(77) = "Chap Opening Text (cotx)"
 arrTorStyles(78) = "Chap Opening Text Space After (cotx#)"
 arrTorStyles(79) = "Design Note (dn)"
 
-activeParaCount = ActiveDocument.paragraphs.Count
+activeParaCount = ActiveDocument.Paragraphs.Count
 
 For N = 1 To activeParaCount
     intBadCount = 0
-    paraStyle = ActiveDocument.paragraphs(N).Style
+    paraStyle = ActiveDocument.Paragraphs(N).Style
     
-    If N Mod 100 = 0 Then
-        '(N/activeParaCount) is % complete of this loop,  0.1 is total % of whole progress bar this step
-        ' takes up, 0.75 is starting point of this step
-        ProgressBar2.Increment (((N / activeParaCount) * 0.2) + 0.78), "Checking paragraph " & N & " of " & activeParaCount _
-            & " for Tor.com approved styles..."
-        'Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
+    If Not TheOS Like "*Mac*" Then
+        If N Mod 100 = 0 Then
+            '(N/activeParaCount) is % complete of this loop,  0.1 is total % of whole progress bar this step
+            ' takes up, 0.75 is starting point of this step
+            ProgressBar2.Increment (((N / activeParaCount) * 0.2) + 0.78), "Checking paragraph " & N & " of " & activeParaCount _
+                & " for Tor.com approved styles..."
+            Doze 50            'Wait 50 milliseconds otherwise next line executes before progress bar is done and progress bar crashes
+        End If
     End If
     
     If Right(paraStyle, 1) = ")" Then
@@ -1132,7 +1155,7 @@ For N = 1 To activeParaCount
         Next M
     
         If intBadCount = UBound(arrTorStyles()) Then
-            Set activeParaRange = ActiveDocument.paragraphs(N).Range
+            Set activeParaRange = ActiveDocument.Paragraphs(N).Range
             pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
             strBadStyles = strBadStyles & "** ERROR: Non-Tor.com style on page " & pageNumber _
                 & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
@@ -1376,13 +1399,10 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
     intCount = intCount + 1
     
     'Get number of current pagaraph, because we get an error if try to select before 1st para
-    Dim rParagraphs As Range
-    Dim CurPos As Long
-     
-    Selection.Range.Select  'select current range
-    CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
-    Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
-    intCurrentPara = rParagraphs.paragraphs.Count
+    
+    intCurrentPara = ActiveDocument.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
+    
+    'Debug.Print intCurrentPara
     
     'Also determine if selection is the LAST paragraph of the document, for later
     Dim SelectionIncludesFinalParagraphMark As Boolean
@@ -1475,10 +1495,7 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
     intCount = intCount + 1
     
     'Get number of current pagaraph, because we get an error if try to select before 1st para
-    Selection.Range.Select  'select current range
-    CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
-    Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
-    intCurrentPara = rParagraphs.paragraphs.Count
+    intCurrentPara = ActiveDocument.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
 
     If intCurrentPara > 1 Then      'NOT first paragraph of document
         'select preceding paragraph
