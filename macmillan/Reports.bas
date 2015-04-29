@@ -44,6 +44,10 @@ If exitOnError <> False Then
 End If
 
 Application.ScreenUpdating = False
+
+'------------record status of current status bar and then turn on-------
+Dim currentStatusBar As Boolean
+currentStatusBar = Application.DisplayStatusBar
 Application.DisplayStatusBar = True
 
 'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -209,9 +213,15 @@ Dim strErrorList As String
 strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
 
 '------Create Report File-------------------------------
+sglPercentComplete = 0.99
+strStatus = "Creating report file..."
+
 If Not TheOS Like "*Mac*" Then
-    oProgressBkmkr.Increment 0.99, "Creating report file..."
-    Doze 50
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
 End If
 
 Dim strSuffix As String
@@ -224,11 +234,12 @@ If Not TheOS Like "*Mac*" Then
     Doze 50
 End If
 
+'return cursor to original position and delete bookmark
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
 Application.ScreenUpdating = True
-Application.DisplayStatusBar = False
+Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
 
 If Not TheOS Like "*Mac*" Then
     Unload oProgressBkmkr
@@ -263,6 +274,11 @@ Exit Sub
 End If
 
 Application.ScreenUpdating = False
+
+'------------record status of current status bar and then turn on-------
+Dim currentStatusBar As Boolean
+currentStatusBar = Application.DisplayStatusBar
+Application.DisplayStatusBar = True
 
 '--------Progress Bar------------------------------
 'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -364,7 +380,7 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
 End If
 
 '--------Get title/author/isbn/imprint text from document-----------
-sglPercentComplete = 0.12
+sglPercentComplete = 1
 strStatus = "Getting metadata from manuscript..."
 
 If Not TheOS Like "*Mac*" Then
@@ -459,10 +475,15 @@ End If
 
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
+Application.DisplayStatusBar = currentStatusBar             ' return status bar ato original setting
 
 '-------------Go back to original insertion point and delete bookmark-----------------
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
+If Not TheOS Like "*Mac*" Then
+    Unload oProgressStyleRpt
+End If
 
 '================================================================================================
 '----------------------Timer End-------------------------------------------
@@ -472,10 +493,6 @@ ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 ''''Notify user in seconds
   'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '================================================================================================
-
-If Not TheOS Like "*Mac*" Then
-    Unload oProgressStyleRpt
-End If
 
 End Sub
 Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar) As Variant
@@ -644,13 +661,14 @@ For M = 1 To UBound(styleNameM())
             DoEvents
         End If
     
-    
+
     
     With Selection.Find
         .Style = ActiveDocument.Styles(styleNameM(M))
         .Wrap = wdFindContinue
         .Format = True
     End With
+    'Debug.Print Application.ScreenUpdating
     If Selection.Find.Execute = True Then
         charStyles = charStyles & styleNameM(M) & vbNewLine
     End If
