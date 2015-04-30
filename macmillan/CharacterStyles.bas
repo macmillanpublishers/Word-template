@@ -23,12 +23,12 @@ Sub MacmillanCharStyles()
 ''-----------------Error checks---------------
 Dim exitOnError As Boolean
 
-exitOnError = zz_templateCheck()   '' template is attached?
+exitOnError = zz_errorChecks()   ''Doc is unsaved, protected, or uses backtick character?
 If exitOnError = True Then
 Exit Sub
 End If
 
-exitOnError = zz_errorChecks()   ''Doc is unsaved, protected, or uses backtick character?
+exitOnError = zz_templateCheck()   '' template is attached?
 If exitOnError = True Then
 Exit Sub
 End If
@@ -752,7 +752,7 @@ If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
         If currentTemplate <> ourTemplate3 Then
             MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
-            exitOnError = True
+            zz_templateCheck = True
             Exit Function
         End If
     End If
@@ -787,4 +787,4 @@ If ActiveDocument.ProtectionType <> wdNoProtection Then
     Exit Function
 End If
 
-
+End Function
