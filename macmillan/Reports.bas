@@ -50,12 +50,37 @@ Dim currentStatusBar As Boolean
 currentStatusBar = Application.DisplayStatusBar
 Application.DisplayStatusBar = True
 
+'--------Progress Bar------------------------------
 'Percent complete and status for progress bar (PC) and status bar (Mac)
+'Requires ProgressBar custom UserForm and Class
 Dim sglPercentComplete As Single
 Dim strStatus As String
 
+'First status shown will be randomly pulled from array, for funzies
+Dim funArray() As String
+ReDim funArray(1 To 10)      'Declare bounds of array here
+
+funArray(1) = "* Is this thing on?..."
+funArray(2) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
+funArray(3) = "* Zapping space invaders..."
+funArray(4) = "* Leaping over tall buildings in a single bound..."
+funArray(5) = "* Are we there yet?..."
+funArray(6) = "* Take me to your leader..."
+funArray(7) = "* Partying like it's 1999..."
+funArray(8) = "* Thanks for running the Bookmaker Macro!"
+funArray(9) = "* Revving engines..."
+funArray(10) = "* Dividing by zero..."
+
+Dim x As Integer
+
+'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
+Randomize           'Sets seed for Rnd below to value of system timer
+x = Int(UBound(funArray()) * Rnd()) + 1
+
+'Debug.Print x
+
 sglPercentComplete = 0.02
-strStatus = "Checking Content Controls and Track Changes..."
+strStatus = funArray(x)
 
 'All Progress Bar statements for PC only because won't run modeless on Mac
 Dim TheOS As String
@@ -81,8 +106,6 @@ ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Ra
 
 '-------Delete content controls on PC------------------------
 'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
-
-
 If Not TheOS Like "*Mac*" Then
     Call DeleteContentControlPC
 End If
@@ -95,7 +118,7 @@ End If
 
 '-------Count number of occurences of each required style----
 sglPercentComplete = 0.05
-strStatus = "Counting required styles..."
+strStatus = "* Counting required styles..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
@@ -116,7 +139,7 @@ End If
 
 '------------Convert unapproved headings to correct heading-------
 sglPercentComplete = 0.08
-strStatus = "Correcting heading styles..."
+strStatus = "* Correcting heading styles..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
@@ -147,7 +170,7 @@ End If
 
 '--------Get title/author/isbn/imprint text from document-----------
 sglPercentComplete = 0.11
-strStatus = "Getting book metadata from manuscript..."
+strStatus = "* Getting book metadata from manuscript..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
@@ -162,7 +185,7 @@ strMetadata = GetMetadata
 
 '-------------------Get Illustrations List from Document-----------
 sglPercentComplete = 0.15
-strStatus = "Getting list of illustrations..."
+strStatus = "* Getting list of illustrations..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
@@ -177,7 +200,7 @@ strIllustrationsList = IllustrationsList
 
 '-------------------Get list of good and bad styles from document---------I
 sglPercentComplete = 0.18
-strStatus = "Getting list of styles in use..."
+strStatus = "* Getting list of styles in use..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
@@ -192,14 +215,14 @@ Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
 'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr)
+arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus)
 
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
 '-------------------Create error report----------------------------
 sglPercentComplete = 0.98
-strStatus = "Checking styles for errors..."
+strStatus = "* Checking styles for errors..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
@@ -214,7 +237,7 @@ strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=style
 
 '------Create Report File-------------------------------
 sglPercentComplete = 0.99
-strStatus = "Creating report file..."
+strStatus = "* Creating report file..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
@@ -229,9 +252,15 @@ strSuffix = "BookmakerReport" ' suffix for the report file
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
 '-------------Go back to original insertion point and delete bookmark-----------------
+sglPercentComplete = 1
+strStatus = "* Finishing up..." & vbCr & strStatus
+
 If Not TheOS Like "*Mac*" Then
-    oProgressBkmkr.Increment 1, "Finishing up..."
-    Doze 50
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
 End If
 
 'return cursor to original position and delete bookmark
@@ -286,8 +315,31 @@ Application.DisplayStatusBar = True
 Dim sglPercentComplete As Single
 Dim strStatus As String
 
+'First status shown will be randomly pulled from array, for funzies
+Dim funArray() As String
+ReDim funArray(1 To 10)      'Declare bounds of array here
+
+funArray(1) = "* Waving magic wand..."
+funArray(2) = "* Doing a little dance..."
+funArray(3) = "* Making plans for the weekend..."
+funArray(4) = "* Setting sail for the tropics..."
+funArray(5) = "* Making a cup of tea..."
+funArray(6) = "* Beep beep boop beep..."
+funArray(7) = "* Writing the next Great American Novel..."
+funArray(8) = "* My, don't you look nice today..."
+funArray(9) = "* Having a snack..."
+funArray(10) = "* Initiating launch sequence..."
+
+Dim x As Integer
+
+'Rnd returns random numner between (0,1], rest of expression is to return an integer (1,10)
+Randomize           'Sets seed for Rnd below to value of system timer
+x = Int(UBound(funArray()) * Rnd()) + 1
+
+Debug.Print x
+
 sglPercentComplete = 0.02
-strStatus = "* Waving magic wand..."
+strStatus = funArray(x)
 
 'All Progress Bar statements for PC only because can't run modeless on Mac
 Dim TheOS As String
@@ -382,7 +434,7 @@ End If
 
 '--------Get title/author/isbn/imprint text from document-----------
 sglPercentComplete = 0.12
-strStatus = "* Getting metadata from manuscript..." & vbCr & strStatus
+strStatus = "* Getting title, author, ISBN from manuscript..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
@@ -483,7 +535,7 @@ Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
 If Not TheOS Like "*Mac*" Then
-    'Unload oProgressStyleRpt
+    Unload oProgressStyleRpt
 End If
 
 '================================================================================================
@@ -713,6 +765,20 @@ Dim mainDoc As Document
 Set mainDoc = ActiveDocument
 Dim iReply As Integer
 
+'-----make sure document is saved
+Dim docSaved As Boolean
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK, and I will save the document and run the report." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
+        srErrorCheck = True
+        Exit Function
+    End If
+End If
+
 '-------Check if Macmillan template is attached--------------
 Dim currentTemplate As String
 Dim ourTemplate1 As String
@@ -730,24 +796,13 @@ If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
         If currentTemplate <> ourTemplate3 Then
             MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+            srErrorCheck = True
             Exit Function
         End If
     End If
 End If
 
-'-----make sure document is saved
-Dim docSaved As Boolean
-docSaved = mainDoc.Saved
-If docSaved = False Then
-    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-        "Click OK, and I will save the document and run the report." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
-    If iReply = vbOK Then
-        mainDoc.Save
-    Else
-        srErrorCheck = True
-        Exit Function
-    End If
-End If
+
 
 End Function
 
