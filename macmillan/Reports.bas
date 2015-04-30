@@ -282,13 +282,14 @@ Application.DisplayStatusBar = True
 
 '--------Progress Bar------------------------------
 'Percent complete and status for progress bar (PC) and status bar (Mac)
+'Requires ProgressBar custom UserForm and Class
 Dim sglPercentComplete As Single
 Dim strStatus As String
 
 sglPercentComplete = 0.02
-strStatus = "Pausing track changes and removing content controls..."
+strStatus = "* Waving magic wand..."
 
-'All Progress Bar statements for PC only because won't run modeless on Mac
+'All Progress Bar statements for PC only because can't run modeless on Mac
 Dim TheOS As String
 TheOS = System.OperatingSystem
 
@@ -327,7 +328,7 @@ End If
 
 '-------Count number of occurences of each required style----
 sglPercentComplete = 0.05
-strStatus = "Counting required styles..."
+strStatus = "* Counting required styles..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
@@ -349,7 +350,7 @@ End If
             
 '------------Convert unapproved headings to correct heading-------
 sglPercentComplete = 0.09
-strStatus = "Checking for correct heading styles..."
+strStatus = "* Checking for correct heading styles..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
@@ -381,7 +382,7 @@ End If
 
 '--------Get title/author/isbn/imprint text from document-----------
 sglPercentComplete = 0.12
-strStatus = "Getting metadata from manuscript..."
+strStatus = "* Getting metadata from manuscript..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
@@ -397,7 +398,7 @@ strMetadata = GetMetadata
 
 '-------------------Get Illustrations List from Document-----------
 sglPercentComplete = 0.15
-strStatus = "Generating illustration list..."
+strStatus = "* Generating illustration list..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
@@ -413,7 +414,7 @@ strIllustrationsList = IllustrationsList
 
 '-------------------Get list of good and bad styles from document---------
 sglPercentComplete = 0.18
-strStatus = "Generating list of Macmillan styles..."
+strStatus = "* Generating list of Macmillan styles..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
@@ -429,14 +430,14 @@ Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
 'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt)
+arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, Status:=strStatus)
 
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
 '-------------------Create error report----------------------------
 sglPercentComplete = 0.98
-strStatus = "Checking styles for errors..."
+strStatus = "* Checking styles for errors..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
@@ -452,7 +453,7 @@ strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=style
 
 '-----------------------create text file------------------------------
 sglPercentComplete = 0.99
-strStatus = "Creating report file..."
+strStatus = "* Creating report file..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
@@ -469,20 +470,20 @@ Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStyles
 
 '-----------------------return settings to original-----------------
 If Not TheOS Like "*Mac*" Then
-    oProgressStyleRpt.Increment 1, "Finishing up..."
+    oProgressStyleRpt.Increment 1, "* Finishing up..." & vbCr & strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 End If
 
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
-Application.DisplayStatusBar = currentStatusBar             ' return status bar ato original setting
+Application.DisplayStatusBar = currentStatusBar             ' return status bar to original setting
 
 '-------------Go back to original insertion point and delete bookmark-----------------
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
 If Not TheOS Like "*Mac*" Then
-    Unload oProgressStyleRpt
+    'Unload oProgressStyleRpt
 End If
 
 '================================================================================================
@@ -495,7 +496,7 @@ End If
 '================================================================================================
 
 End Sub
-Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar) As Variant
+Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar, Status As String) As Variant
 'Creates a list of Macmillan styles in use
 'And a separate list of non-Macmillan styles in use
 
@@ -541,7 +542,7 @@ For J = 1 To activeParaCount
     
         'Percent complete and status for progress bar (PC) and status bar (Mac)
         sglPercentComplete = (((J / activeParaCount) * 0.5) + 0.18)
-        strStatus = "Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..."
+        strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
 
         If Not TheOS Like "*Mac*" Then
             ProgressBar.Increment sglPercentComplete, strStatus
@@ -583,6 +584,8 @@ For J = 1 To activeParaCount
         End If
     End If
 Next J
+
+Status = "* Checking paragraphs for Macmillan styles..." & vbCr & Status
 
 'Change Normal (Web) back (if you want to)
 ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
@@ -650,7 +653,7 @@ For M = 1 To UBound(styleNameM())
     
         'Percent complete and status for progress bar (PC) and status bar (Mac)
         sglPercentComplete = (((M / UBound(styleNameM())) * 0.1) + 0.68)
-        strStatus = "Checking for " & styleNameM(M) & " styles..."
+        strStatus = "* Checking for " & styleNameM(M) & " styles..." & vbCr & Status
 
         If Not TheOS Like "*Mac*" Then
             ProgressBar.Increment sglPercentComplete, strStatus
@@ -660,8 +663,6 @@ For M = 1 To UBound(styleNameM())
             Application.StatusBar = "Bookmaker Check Macro " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
             DoEvents
         End If
-    
-
     
     With Selection.Find
         .Style = ActiveDocument.Styles(styleNameM(M))
@@ -675,6 +676,8 @@ For M = 1 To UBound(styleNameM())
 
 Next M
 
+Status = "* Checking character styles..." & vbCr & Status
+
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
 
@@ -684,7 +687,7 @@ strGoodStyles = strGoodStyles & charStyles
 'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
 Dim strTorBadStyles As String
 If torDOTcom = True Then
-    strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar)
+    strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status)
     strBadStyles = strBadStyles & strTorBadStyles
 End If
 
@@ -1188,7 +1191,7 @@ On Error GoTo 0
 Application.DisplayAlerts = True
 
 End Function
-Private Function BadTorStyles(ProgressBar2 As ProgressBar) As String
+Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String) As String
 'Called from GoodBadStyles sub if torDOTcom parameter is set to True.
 
 Dim paraStyle As String
@@ -1304,7 +1307,7 @@ For N = 1 To activeParaCount
     If N Mod 100 = 0 Then
         'Percent complete and status for progress bar (PC) and status bar (Mac)
         sglPercentComplete = (((N / activeParaCount) * 0.2) + 0.78)
-        strStatus = "Checking paragraph " & N & " of " & activeParaCount & " for Tor.com approved styles..."
+        strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for Tor.com approved styles..." & vbCr & StatusBar
 
         'All Progress Bar statements for PC only because won't run modeless on Mac
         If Not TheOS Like "*Mac*" Then
@@ -1338,6 +1341,8 @@ For N = 1 To activeParaCount
 
 
 Next N
+
+StatusBar = "* Checking paragraphs for Tor.com approved styles..." & vbCr & StatusBar
 
 'Debug.Print strBadStyles
 
