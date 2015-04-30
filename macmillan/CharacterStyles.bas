@@ -24,12 +24,12 @@ Sub MacmillanCharStyles()
 Dim exitOnError As Boolean
 
 exitOnError = zz_templateCheck()   '' template is attached?
-If exitOnError <> False Then
+If exitOnError = True Then
 Exit Sub
 End If
 
 exitOnError = zz_errorChecks()   ''Doc is unsaved, protected, or uses backtick character?
-If exitOnError <> False Then
+If exitOnError = True Then
 Exit Sub
 End If
 
@@ -752,11 +752,39 @@ If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
         If currentTemplate <> ourTemplate3 Then
             MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+            exitOnError = True
             Exit Function
         End If
     End If
 End If
 
 End Function
+Function zz_errorChecks()
+
+zz_errorChecks = False
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
+
+'-----make sure document is saved
+Dim docSaved As Boolean                                                                                                 'v. 3.1 update
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
+        zz_errorChecks = True
+        Exit Function
+    End If
+End If
+
+'-----test protection
+If ActiveDocument.ProtectionType <> wdNoProtection Then
+    MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & "TIP: If you don't know the protection password, try pasting contents of this file into a new file, and run the macro on that.", , "Error 2"
+    zz_errorChecks = True
+    Exit Function
+End If
 
 
