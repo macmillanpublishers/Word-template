@@ -269,6 +269,7 @@ ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
 Application.ScreenUpdating = True
 Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
+Application.ScreenRefresh
 
 If Not TheOS Like "*Mac*" Then
     Unload oProgressBkmkr
@@ -521,18 +522,28 @@ strSuffix = "StyleReport"       'suffix for report file, no spaces
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
 '-----------------------return settings to original-----------------
-If Not TheOS Like "*Mac*" Then
-    oProgressStyleRpt.Increment 1, "* Finishing up..." & vbCr & strStatus
-    Doze 50 'Wait 50 milliseconds for progress bar to update
-End If
+sglPercentComplete = 1
+strStatus = "* Finishing up" & vbCr & strStatus
 
-ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
-Application.ScreenUpdating = True
-Application.DisplayStatusBar = currentStatusBar             ' return status bar to original setting
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
 
 '-------------Go back to original insertion point and delete bookmark-----------------
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
+ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
+Application.ScreenUpdating = True
+Application.DisplayStatusBar = currentStatusBar             ' return status bar to original setting
+Application.ScreenRefresh
+
+
 
 If Not TheOS Like "*Mac*" Then
     Unload oProgressStyleRpt
