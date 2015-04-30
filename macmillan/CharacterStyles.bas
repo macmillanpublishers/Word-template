@@ -33,16 +33,57 @@ If exitOnError <> False Then
 Exit Sub
 End If
 
-'-----------------Start Progress Bar----------
-Dim oProgress As ProgressBar
-Set oProgress = New ProgressBar
+'--------Progress Bar------------------------------
+'Percent complete and status for progress bar (PC) and status bar (Mac)
+'Requires ProgressBar custom UserForm and Class
+Dim sglPercentComplete As Single
+Dim strStatus As String
 
-oProgress.Title = "Character Styles Macro"
-oProgress.Show
-Doze 50
+'First status shown will be randomly pulled from array, for funzies
+Dim funArray() As String
+ReDim funArray(1 To 10)      'Declare bounds of array here
 
-oProgress.Increment 0.05, "Verifying document is saved and template is attached..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+funArray(1) = "* ..."
+funArray(2) = "* ..."
+funArray(3) = "* ..."
+funArray(4) = "* ..."
+funArray(5) = "* ..."
+funArray(6) = "* ..."
+funArray(7) = "* ..."
+funArray(8) = "* ..."
+funArray(9) = "* ..."
+funArray(10) = "* ..."
+
+Dim x As Integer
+
+'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
+Randomize           'Sets seed for Rnd below to value of system timer
+x = Int(UBound(funArray()) * Rnd()) + 1
+
+'Debug.Print x
+
+sglPercentComplete = 0.05
+strStatus = funArray(x)
+
+'All Progress Bar statements for PC only because won't run modeless on Mac
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
+If Not TheOS Like "*Mac*" Then
+    Dim oProgressChar As ProgressBar
+    Set oProgressChar = New ProgressBar
+
+    oProgressChar.Title = "Character Styles Macro"
+    oProgressChar.Show
+
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 
 '--------save the current cursor location in a bookmark---------------------------
 ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
@@ -52,59 +93,149 @@ Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
-'-----------Replace Local Styles-----------
+'===================== Replace Local Styles Start ========================
 Application.ScreenUpdating = False
 
+'-----------------------Tag space break styles----------------------------
 Call zz_clearFind                          'Clear find object
 
-oProgress.Increment 0.15, "Preserving styled whitespace..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+sglPercentComplete = 0.15
+strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call PreserveWhiteSpaceinBrkStylesA     'Part A tags styled blank paragraphs so they don't get deleted
 Call zz_clearFind
 
-oProgress.Increment 0.25, "Applying styles to hyperlinks..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'----------------------------Fix hyperlinks---------------------------------------
+sglPercentComplete = 0.25
+strStatus = "* Applying styles to hyperlinks..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
 Call zz_clearFind
 
-oProgress.Increment 0.4, "Removing unstyled breaks..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'--------------------------Remove unstyled space breaks---------------------------
+sglPercentComplete = 0.4
+strStatus = "* Removing unstyled breaks..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
 Call zz_clearFind
 
-oProgress.Increment 0.55, "Tagging character styles..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'--------------------------Tag existing character styles------------------------
+sglPercentComplete = 0.55
+strStatus = "* Tagging character styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call TagExistingCharStyles            'tag existing styled items
 Call zz_clearFind
 
-oProgress.Increment 0.7, "Tagging and clearing local styles..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'-------------------------Tag direct formatting----------------------------------
+sglPercentComplete = 0.7
+strStatus = "* Tagging direct formatting..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call LocalStyleTag                 'tag local styling, reset local styling, remove text highlights
 Call zz_clearFind
 
-oProgress.Increment 0.85, "Applying Macmillan styles..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'----------------------------Apply Macmillan character styles to tagged text--------
+sglPercentComplete = 0.85
+strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call LocalStyleReplace            'reapply local styling through char styles
 Call zz_clearFind
 
-oProgress.Increment 0.95, "Cleaning up styled whitespace..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'---------------------------Remove tags from styled space breaks---------------------
+sglPercentComplete = 0.95
+strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies the styles
 Call zz_clearFind
 
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
-oProgress.Increment 1, "Finishing up..."
+'---------------------------Return settings to original------------------------------
+sglPercentComplete = 1
+strStatus = "* Finishing up..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
 
 ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
 
-'-------------Go back to original insertion point and delete bookmark-----------------
+'Go back to original insertion point and delete bookmark
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 
-Unload oProgress
+If Not TheOS Like "*Mac*" Then
+    Unload oProgressChar
+End If
+
 MsgBox "Macmillan character styles have been applied throughout your manuscript."
 
 
