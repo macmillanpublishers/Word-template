@@ -128,8 +128,6 @@ Sub MacmillanManuscriptCleanup()
 'Remember time when macro starts
 '  StartTime = Timer
 
-
-
 '-----------run preliminary error checks------------
 Dim exitOnError As Boolean
 
@@ -137,6 +135,13 @@ exitOnError = zz_errorChecks()      ''Doc is unsaved, protected, or uses backtic
 If exitOnError <> False Then
 Exit Sub
 End If
+
+Application.ScreenUpdating = False
+
+'------------record status of current status bar and then turn on-------
+Dim currentStatusBar As Boolean
+currentStatusBar = Application.DisplayStatusBar
+Application.DisplayStatusBar = True
 
 '--------Progress Bar------------------------------
 'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -191,7 +196,6 @@ Else
     DoEvents
 End If
 
-
 '--------save the current cursor location in a bookmark---------------------------
 ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
 
@@ -199,8 +203,6 @@ ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Ra
 Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
-
-Application.ScreenUpdating = False
 
 
 '-----------Find/Replace with Wildcards = False--------------------------------
@@ -292,7 +294,12 @@ Else
     DoEvents
 End If
 
+'Go back to original insertion point and delete bookmark
+Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
+Application.DisplayStatusBar = currentStatusBar
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 

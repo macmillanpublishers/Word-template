@@ -33,6 +33,11 @@ If exitOnError = True Then
 Exit Sub
 End If
 
+'------------record status of current status bar and then turn on-------
+Dim currentStatusBar As Boolean
+currentStatusBar = Application.DisplayStatusBar
+Application.DisplayStatusBar = True
+
 '--------Progress Bar------------------------------
 'Percent complete and status for progress bar (PC) and status bar (Mac)
 'Requires ProgressBar custom UserForm and Class
@@ -225,12 +230,12 @@ Else
     DoEvents
 End If
 
-ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
-
 'Go back to original insertion point and delete bookmark
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
+ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
+Application.DisplayStatusBar = currentStatusBar
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 
