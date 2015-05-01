@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} ProgressBar 
    Caption         =   "Macro Progress"
-   ClientHeight    =   2070
+   ClientHeight    =   4770
    ClientLeft      =   45
    ClientTop       =   375
    ClientWidth     =   9345
@@ -14,9 +14,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
-
-
 Option Explicit
 
 '========================Progress bar================================.
@@ -102,7 +99,7 @@ End Property
 '-------------------------------------------------------------------------
 'This Procedure is Executed when the BarWidth Property is Set.
 Public Property Let BarWidth(value As Single)
-cBarWidth = value * Me.FrameProgress.Width
+cBarWidth = value * (Me.FrameProgress.Width - 21)
 Me.LabelProgress.Width = cBarWidth
 End Property
 

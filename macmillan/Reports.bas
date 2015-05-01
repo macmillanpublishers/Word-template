@@ -3,9 +3,11 @@ Option Explicit
 Option Base 1
 Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 Private Sub Doze(ByVal lngPeriod As Long)
+'This only works for PC
 DoEvents
 Sleep lngPeriod
-' Call it in desired location to sleep for 1 seconds like this:
+DoEvents
+ 'Call it in desired location to sleep for 1 seconds like this:
 ' Doze 1000
 End Sub
 Sub BookmakerReqs()
@@ -21,16 +23,16 @@ Sub BookmakerReqs()
 '           Added style report WITH character styles
 '3/20/2015: Added check if template is attached
 '3/17/2015: Added Illustrations List
-'3/16/2015: Fixed error creating text file, added title/author/isbn confirmation
+'3/16/32015: Fixed error creating text file, added title/author/isbn confirmation
 
 
 '=================================================
 '''''              Timer Start                  '|
-Dim StartTime As Double                         '|
-Dim SecondsElapsed As Double                    '|
+'Dim StartTime As Double                         '|
+'Dim SecondsElapsed As Double                    '|
                                                 '|
 '''''Remember time when macro starts            '|
-StartTime = Timer                               '|
+'StartTime = Timer                               '|
 '=================================================
 
 '-----------run preliminary error checks------------
@@ -38,23 +40,74 @@ Dim exitOnError As Boolean
 exitOnError = srErrorCheck()
 
 If exitOnError <> False Then
-Exit Sub
+    Exit Sub
 End If
 
 Application.ScreenUpdating = False
 
-Dim oProgressBkmkr As ProgressBar
-Set oProgressBkmkr = New ProgressBar
+'------------record status of current status bar and then turn on-------
+Dim currentStatusBar As Boolean
+currentStatusBar = Application.DisplayStatusBar
+Application.DisplayStatusBar = True
 
-oProgressBkmkr.Title = "Bookmaker Check Macro"
-oProgressBkmkr.Show
+'--------Progress Bar------------------------------
+'Percent complete and status for progress bar (PC) and status bar (Mac)
+'Requires ProgressBar custom UserForm and Class
+Dim sglPercentComplete As Single
+Dim strStatus As String
+Dim strTitle As String
 
-oProgressBkmkr.Increment 0.08, "Checking Content Controls and Track Changes..."
-'-------Delete content controls on PC------------------------
-'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
+'First status shown will be randomly pulled from array, for funzies
+Dim funArray() As String
+ReDim funArray(1 To 10)      'Declare bounds of array here
+
+funArray(1) = "* Is this thing on?..."
+funArray(2) = "* Are we there yet?..."
+funArray(3) = "* Zapping space invaders..."
+funArray(4) = "* Leaping over tall buildings in a single bound..."
+funArray(5) = "* Taking a quick nap..."
+funArray(6) = "* Taking the stairs..."
+funArray(7) = "* Partying like it's 1999..."
+funArray(8) = "* Waiting in line at Shake Shack..."
+funArray(9) = "* Revving engines..."
+funArray(10) = "* Thanks for running the Bookmaker Macro!"
+
+Dim x As Integer
+
+'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
+Randomize           'Sets seed for Rnd below to value of system timer
+x = Int(UBound(funArray()) * Rnd()) + 1
+
+'Debug.Print x
+
+strTitle = "Tor.com Bookmaker Requirements Macro"
+sglPercentComplete = 0.02
+strStatus = funArray(x)
+
+'All Progress Bar statements for PC only because won't run modeless on Mac
 Dim TheOS As String
 TheOS = System.OperatingSystem
 
+If Not TheOS Like "*Mac*" Then
+    Dim oProgressBkmkr As ProgressBar
+    Set oProgressBkmkr = New ProgressBar
+
+    oProgressBkmkr.Title = strTitle
+    oProgressBkmkr.Show
+
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
+'--------save the current cursor location in a bookmark---------------------------
+ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+
+'-------Delete content controls on PC------------------------
+'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
 If Not TheOS Like "*Mac*" Then
     Call DeleteContentControlPC
 End If
@@ -65,8 +118,18 @@ If FixTrackChanges = False Then
     Exit Sub
 End If
 
-oProgressBkmkr.Increment 0.12, "Counting required styles..."
 '-------Count number of occurences of each required style----
+sglPercentComplete = 0.05
+strStatus = "* Counting required styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim styleCount() As Variant
 
 styleCount = CountReqdStyles()
@@ -75,9 +138,19 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
     Application.ScreenUpdating = True
     Exit Sub
 End If
-            
-oProgressBkmkr.Increment 0.17, "Correcting heading styles..."
+
 '------------Convert unapproved headings to correct heading-------
+sglPercentComplete = 0.08
+strStatus = "* Correcting heading styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 ' If certain styles (oldStyle) appear by themselves, converts to
 ' the approved solo style (newStyle)
 
@@ -97,60 +170,131 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
     Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
 End If
 
-oProgressBkmkr.Increment 0.24, "Getting book metadata from manuscript..."
 '--------Get title/author/isbn/imprint text from document-----------
+sglPercentComplete = 0.11
+strStatus = "* Getting book metadata from manuscript..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim strMetadata As String
 strMetadata = GetMetadata
 
-oProgressBkmkr.Increment 0.3, "Getting list of illustrations..."
 '-------------------Get Illustrations List from Document-----------
+sglPercentComplete = 0.15
+strStatus = "* Getting list of illustrations..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
-oProgressBkmkr.Increment 0.35, "Getting list of styles in use..."
-'-------------------Get list of good and bad styles from document---------
+'-------------------Get list of good and bad styles from document---------I
+sglPercentComplete = 0.18
+strStatus = "* Getting list of styles in use..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim arrGoodBadStyles() As Variant
 Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
 'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr)
+arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
 
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
-oProgressBkmkr.Increment 0.95, "Checking styles for errors..."
 '-------------------Create error report----------------------------
+sglPercentComplete = 0.98
+strStatus = "* Checking styles for errors..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim strErrorList As String
 strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
 
-oProgressBkmkr.Increment 0.98, "Creating report file..."
 '------Create Report File-------------------------------
+sglPercentComplete = 0.99
+strStatus = "* Creating report file..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim strSuffix As String
 strSuffix = "BookmakerReport" ' suffix for the report file
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
-oProgressBkmkr.Increment 1, "Finishing up..."
+'-------------Go back to original settings-----------------
+sglPercentComplete = 1
+strStatus = "* Finishing up..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressBkmkr.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
+'return cursor to original position and delete bookmark
+Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
 Application.ScreenUpdating = True
+Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
+Application.ScreenRefresh
+
+If Not TheOS Like "*Mac*" Then
+    Unload oProgressBkmkr
+End If
 
 '============================================================================
 '----------------------Timer End-------------------------------------------
 ''''Determine how many seconds code took to run
-  SecondsElapsed = Round(Timer - StartTime, 2)
+  'SecondsElapsed = Round(Timer - StartTime, 2)
 
 ''''Notify user in seconds
-  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+  'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '============================================================================
-Unload oProgressBkmkr
+
 End Sub
 Sub MacmillanStyleReport()
 '=================================================
 '                  Timer Start                  '|
-Dim StartTime As Double                         '|
-Dim SecondsElapsed As Double                    '|
+'Dim StartTime As Double                         '|
+'Dim SecondsElapsed As Double                    '|
                                                 '|
 'Remember time when macro starts                '|
-StartTime = Timer                               '|
+'StartTime = Timer                               '|
 '=================================================
 
 '-----------run preliminary error checks------------
@@ -163,13 +307,69 @@ End If
 
 Application.ScreenUpdating = False
 
-Dim oProgressStyleRpt As ProgressBar
-Set oProgressStyleRpt = New ProgressBar
+'------------record status of current status bar and then turn on-------
+Dim currentStatusBar As Boolean
+currentStatusBar = Application.DisplayStatusBar
+Application.DisplayStatusBar = True
 
-oProgressStyleRpt.Title = "Macmillan Style Report"
-oProgressStyleRpt.Show
+'--------Progress Bar------------------------------
+'Percent complete and status for progress bar (PC) and status bar (Mac)
+'Requires ProgressBar custom UserForm and Class
+Dim sglPercentComplete As Single
+Dim strStatus As String
+Dim strTitle As String
 
-oProgressStyleRpt.Increment 0.05, "Pausing track changes and removing content controls..."
+'First status shown will be randomly pulled from array, for funzies
+Dim funArray() As String
+ReDim funArray(1 To 10)      'Declare bounds of array here
+
+funArray(1) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
+funArray(2) = "* What’s in a name? Word Styles by any name would smell as sweet..."
+funArray(3) = "* A horse! A horse! My Word Styles for a horse!"
+funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em...."
+funArray(5) = "* All the world’s a stage, and all the Word Styles merely players..."
+funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man...."
+funArray(7) = "* To Style, or not to Style: that is the question..."
+funArray(8) = "* Word Styles, Word Styles! Wherefore art thou Word Styles?..."
+funArray(9) = "* Some Cupid kills with arrows, some with Word Styles..."
+funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun....."
+
+Dim x As Integer
+
+'Rnd returns random numner between (0,1], rest of expression is to return an integer (1,10)
+Randomize           'Sets seed for Rnd below to value of system timer
+x = Int(UBound(funArray()) * Rnd()) + 1
+
+'Debug.Print x
+
+strTitle = "Macmillan Style Report Macro"
+sglPercentComplete = 0.02
+strStatus = funArray(x)
+
+'All Progress Bar statements for PC only because can't run modeless on Mac
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
+If Not TheOS Like "*Mac*" Then
+    Dim oProgressStyleRpt As ProgressBar
+    Set oProgressStyleRpt = New ProgressBar
+
+    oProgressStyleRpt.Title = strTitle
+    oProgressStyleRpt.Show
+
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
+
+'--------save the current cursor location in a bookmark---------------------------
+ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+
+
 '-----------Turn off track changes--------
 Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
@@ -178,15 +378,24 @@ ActiveDocument.TrackRevisions = False
 
 '-------Delete content controls on PC------------------------
 'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
-Dim TheOS As String
-TheOS = System.OperatingSystem
 
 If Not TheOS Like "*Mac*" Then
     Call DeleteContentControlPC
 End If
 
-oProgressStyleRpt.Increment 0.08, "Counting required styles..."
 '-------Count number of occurences of each required style----
+sglPercentComplete = 0.05
+strStatus = "* Counting required styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim styleCount() As Variant
 
 styleCount = CountReqdStyles()
@@ -196,8 +405,19 @@ If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to
     Exit Sub
 End If
             
-oProgressStyleRpt.Increment 0.15, "Checking for correct heading styles..."
 '------------Convert unapproved headings to correct heading-------
+sglPercentComplete = 0.09
+strStatus = "* Checking for correct heading styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 ' If certain styles (oldStyle) appear by themselves, converts to
 ' the approved solo style (newStyle)
 
@@ -217,60 +437,141 @@ If styleCount(13) > 0 And styleCount(12) = 0 Then
     Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
 End If
 
-oProgressStyleRpt.Increment 0.22, "Getting metadata from manuscript..."
 '--------Get title/author/isbn/imprint text from document-----------
+sglPercentComplete = 0.12
+strStatus = "* Getting title, author, ISBN from manuscript..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim strMetadata As String
 strMetadata = GetMetadata
 
-oProgressStyleRpt.Increment 0.3, "Generating illustration list..."
 '-------------------Get Illustrations List from Document-----------
+sglPercentComplete = 0.15
+strStatus = "* Generating illustration list..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
-oProgressStyleRpt.Increment 0.35, "Generating list of Macmillan styles..."
 '-------------------Get list of good and bad styles from document---------
+sglPercentComplete = 0.18
+strStatus = "* Generating list of Macmillan styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim arrGoodBadStyles() As Variant
 Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
 'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt)
+arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
 
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
 
-oProgressStyleRpt.Increment 0.95, "Checking styles for errors..."
 '-------------------Create error report----------------------------
+sglPercentComplete = 0.98
+strStatus = "* Checking styles for errors..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim strErrorList As String
 strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=False)
 
-oProgressStyleRpt.Increment 0.99, "Creating report file..."
 '-----------------------create text file------------------------------
+sglPercentComplete = 0.99
+strStatus = "* Creating report file..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Dim strSuffix As String
 strSuffix = "StyleReport"       'suffix for report file, no spaces
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
 '-----------------------return settings to original-----------------
+sglPercentComplete = 1
+strStatus = "* Finishing up" & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressStyleRpt.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
+'-------------Go back to original insertion point and delete bookmark-----------------
+Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
+Application.DisplayStatusBar = currentStatusBar             ' return status bar to original setting
+Application.ScreenRefresh
 
-oProgressStyleRpt.Increment 1, "Finishing up..."
+If Not TheOS Like "*Mac*" Then
+    Unload oProgressStyleRpt
+End If
 
 '================================================================================================
 '----------------------Timer End-------------------------------------------
 ''''Determine how many seconds code took to run
-  SecondsElapsed = Round(Timer - StartTime, 2)
+  'SecondsElapsed = Round(Timer - StartTime, 2)
 
 ''''Notify user in seconds
-  Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+  'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
 '================================================================================================
 
-Unload oProgressStyleRpt
-
 End Sub
-Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar) As Variant
+Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String) As Variant
 'Creates a list of Macmillan styles in use
 'And a separate list of non-Macmillan styles in use
+
+Application.ScreenUpdating = False
+'Debug.Print Application.ScreenUpdating
+
+Dim TheOS As String
+TheOS = System.OperatingSystem
+Dim sglPercentComplete As Single
+Dim strStatus As String
 
 Dim activeDoc As Document
 Set activeDoc = ActiveDocument
@@ -300,13 +601,22 @@ styleBadCount = 0
 styleBadOverflow = False
 activeParaCount = activeDoc.paragraphs.Count
 For J = 1 To activeParaCount
-    'Next two lines are for the status bar
+    
+    'All Progress Bar statements for PC only because won't run modeless on Mac
     If J Mod 100 = 0 Then
-        '(J/activeParaCount) is % complete of this loop,  0.3 is total % of whole progress bar this step
-        ' takes up, 0.35 is starting point of this step
-        ProgressBar.Increment (((J / activeParaCount) * 0.3) + 0.35), "Checking paragraph " & J & " of " & _
-            activeParaCount & " for Macmillan styles..."
-        Doze 500            'Wait half a second otherwise next line executes before progress bar is done and progress bar crashes
+    
+        'Percent complete and status for progress bar (PC) and status bar (Mac)
+        sglPercentComplete = (((J / activeParaCount) * 0.5) + 0.18)
+        strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
+
+        If Not TheOS Like "*Mac*" Then
+            ProgressBar.Increment sglPercentComplete, strStatus
+            Doze 50 'Wait 50 milliseconds for progress bar to update
+        Else
+            'Mac will just use status bar
+            Application.StatusBar = ProgTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
+            DoEvents
+        End If
     End If
     
     paraStyle = activeDoc.paragraphs(J).Style
@@ -339,6 +649,8 @@ For J = 1 To activeParaCount
         End If
     End If
 Next J
+
+Status = "* Checking paragraphs for Macmillan styles..." & vbCr & Status
 
 'Change Normal (Web) back (if you want to)
 ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
@@ -403,16 +715,33 @@ Selection.HomeKey Unit:=wdStory
 
 
 For M = 1 To UBound(styleNameM())
-    ProgressBar.Increment (((M / UBound(styleNameM())) * 0.1) + 0.65), "Checking for " & styleNameM(M) & " styles..."
+    
+        'Percent complete and status for progress bar (PC) and status bar (Mac)
+        sglPercentComplete = (((M / UBound(styleNameM())) * 0.1) + 0.68)
+        strStatus = "* Checking for " & styleNameM(M) & " styles..." & vbCr & Status
+
+        If Not TheOS Like "*Mac*" Then
+            ProgressBar.Increment sglPercentComplete, strStatus
+            Doze 50 'Wait 50 milliseconds for progress bar to update
+        Else
+            'Mac will just use status bar
+            Application.StatusBar = ProgTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
+            DoEvents
+        End If
+    
     With Selection.Find
         .Style = ActiveDocument.Styles(styleNameM(M))
         .Wrap = wdFindContinue
         .Format = True
     End With
+    'Debug.Print Application.ScreenUpdating
     If Selection.Find.Execute = True Then
         charStyles = charStyles & styleNameM(M) & vbNewLine
     End If
+
 Next M
+
+Status = "* Checking character styles..." & vbCr & Status
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
@@ -423,7 +752,7 @@ strGoodStyles = strGoodStyles & charStyles
 'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
 Dim strTorBadStyles As String
 If torDOTcom = True Then
-    strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar)
+    strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle)
     strBadStyles = strBadStyles & strTorBadStyles
 End If
 
@@ -442,10 +771,26 @@ GoodBadStyles = arrFinalLists
 End Function
 Private Function srErrorCheck() As Boolean
 
+Application.ScreenUpdating = False
+
 srErrorCheck = False
 Dim mainDoc As Document
 Set mainDoc = ActiveDocument
 Dim iReply As Integer
+
+'-----make sure document is saved
+Dim docSaved As Boolean
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK, and I will save the document and run the report." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
+        srErrorCheck = True
+        Exit Function
+    End If
+End If
 
 '-------Check if Macmillan template is attached--------------
 Dim currentTemplate As String
@@ -464,29 +809,21 @@ If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
         If currentTemplate <> ourTemplate3 Then
             MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+            srErrorCheck = True
             Exit Function
         End If
     End If
 End If
 
-'-----make sure document is saved
-Dim docSaved As Boolean
-docSaved = mainDoc.Saved
-If docSaved = False Then
-    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-        "Click OK, and I will save the document and run the report." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
-    If iReply = vbOK Then
-        mainDoc.Save
-    Else
-        srErrorCheck = True
-        Exit Function
-    End If
-End If
+
 
 End Function
 
 Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant, torDOTcom As Boolean) As String
 Dim errorList As String
+
+Application.ScreenUpdating = False
+
 errorList = ""
 
 '--------------For reference----------------------
@@ -578,9 +915,9 @@ If arrStyleCount(7) = 0 Then errorList = errorList & "** ERROR: No styled Imprin
 If arrStyleCount(7) > 1 Then errorList = errorList & "** ERROR: Too many Imprint Line paragraphs" _
     & " detected. Only 1 allowed." & vbNewLine & vbNewLine
 
-'If only CTs (either originally or converted by macro) check for a page break before
-If (arrStyleCount(4) > 0 And arrStyleCount(5) = 0) Or (arrStyleCount(4) = 0 And arrStyleCount(5) > 0) _
-    Then errorList = errorList & CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Page Break (pb)")
+'If only CTs because converted by macro check for a page break before
+If (arrStyleCount(4) > 0 And arrStyleCount(5) = 0) Then errorList = errorList & _
+    CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Page Break (pb)")
 
 'If only PTs (either originally or converted by macro) check for a page break before
 If (arrStyleCount(9) > 0 And arrStyleCount(8) = 0) Or (arrStyleCount(9) = 0 And arrStyleCount(8) > 0) _
@@ -597,18 +934,15 @@ If (arrStyleCount(13) > 0 And arrStyleCount(12) = 0) Or (arrStyleCount(13) = 0 A
 'If only CTNP, check for a page break before
 If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) > 0 Then errorList = errorList _
     & CheckPrevStyle(findStyle:="Chap Title Nonprinting (ctnp)", prevStyle:="Page Break (pb)")
+        
+'If CNs <= CTs, then check that those 3 styles are in order
+If arrStyleCount(4) <= arrStyleCount(5) And arrStyleCount(4) > 0 Then errorList = errorList & CheckPrev2Paras("Page Break (pb)", _
+    "Chap Number (cn)", "Chap Title (ct)")
 
-'If CNs are >= CTs, check for page break before CNs
-If arrStyleCount(4) >= arrStyleCount(5) Then errorList = errorList & CheckPrevStyle(findStyle:="Chap Number (cn)", _
-    prevStyle:="Page Break (pb)")
-
-'If CNs and CTs, check that CN always comes before CT
-If arrStyleCount(4) >= arrStyleCount(5) And arrStyleCount(5) <> 0 Then errorList = errorList _
-    & CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Chap Number (cn)")
-
-'If Illustrations and sources exist, check that source comes after
+'If Illustrations and sources exist, check that source comes after Ill and Cap
 If torDOTcom = True Then
-    If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & IllustrationErrors
+    If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & CheckPrev2Paras("Illustration holder (ill)", _
+        "Caption (cap)", "Illustration Source (is)")
 End If
 
 'Check that only heading styles follow page breaks
@@ -630,6 +964,8 @@ End Function
 Private Function GetText(styleName As String) As String
 Dim fString As String
 Dim fCount As Integer
+
+Application.ScreenUpdating = False
 
 fCount = 0
 
@@ -682,6 +1018,8 @@ Dim jString As String
 Dim jCount As Integer
 Dim pageNum As Integer
 Dim intCurrentPara As Integer
+
+Application.ScreenUpdating = False
 
 jCount = 0
 jString = ""
@@ -765,6 +1103,8 @@ Dim nextStyle As String
 Dim N As Integer
 Dim nCount As Integer
 
+Application.ScreenUpdating = False
+
 arrSecStartStyles(1) = "Chap Title (ct)"
 arrSecStartStyles(2) = "Chap Number (cn)"
 arrSecStartStyles(3) = "Chap Title Nonprinting (ctp)"
@@ -780,13 +1120,13 @@ arrSecStartStyles(12) = "Part Number (pn)"
 arrSecStartStyles(13) = "Front Sales Title (fst)"
 arrSecStartStyles(14) = "Front Sales Quote (fsq)"
 arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
-arrSecStartStyles(16) = "Epigraph – non-verse (epi)"
+arrSecStartStyles(16) = "Epigraph Ð non-verse (epi)"
 arrSecStartStyles(17) = "Epigraph - verse (epiv)"
 arrSecStartStyles(18) = "FM Head (fmh)"
 arrSecStartStyles(19) = "Illustration holder (ill)"
 arrSecStartStyles(20) = "Page Break (pb)"
 arrSecStartStyles(21) = "FM Epigraph - non-verse (fmepi)"
-arrSecStartStyles(22) = "FM Epigraph – verse (fmepiv)"
+arrSecStartStyles(22) = "FM Epigraph Ð verse (fmepiv)"
 arrSecStartStyles(23) = "FM Head ALT (afmh)"
 arrSecStartStyles(24) = "Part Number (pn)"
 arrSecStartStyles(25) = "Part Title (pt)"
@@ -870,6 +1210,8 @@ End Function
 Private Sub DeleteContentControlPC()
 Dim cc As ContentControl
 
+Application.ScreenUpdating = False
+
 For Each cc In ActiveDocument.ContentControls
     cc.Delete
 Next
@@ -878,6 +1220,8 @@ Private Function FixTrackChanges() As Boolean
 Dim N As Long
 Dim oComments As Comments
 Set oComments = ActiveDocument.Comments
+
+Application.ScreenUpdating = False
 
 FixTrackChanges = True
 
@@ -912,7 +1256,7 @@ On Error GoTo 0
 Application.DisplayAlerts = True
 
 End Function
-Private Function BadTorStyles(ProgressBar2 As ProgressBar) As String
+Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String) As String
 'Called from GoodBadStyles sub if torDOTcom parameter is set to True.
 
 Dim paraStyle As String
@@ -928,6 +1272,13 @@ Dim pageNumber As Integer
 Dim N As Integer
 Dim M As Integer
 Dim strBadStyles As String
+
+Dim TheOS As String
+TheOS = System.OperatingSystem
+Dim sglPercentComplete As Single
+Dim strStatus As String
+
+Application.ScreenUpdating = False
 
 'List of styles approved for use in Tor.com automated workflow
 'Organized by approximate frequency in manuscripts (most freq at top)
@@ -970,15 +1321,15 @@ arrTorStyles(35) = "Text - Std No-Indent Space Before (#tx1)"
 arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
 arrTorStyles(37) = "Dedication (ded)"
 arrTorStyles(38) = "Dedication Author (dedau)"
-arrTorStyles(39) = "Epigraph – non-verse (epi)"
-arrTorStyles(40) = "Epigraph – verse (epiv)"
+arrTorStyles(39) = "Epigraph Ð non-verse (epi)"
+arrTorStyles(40) = "Epigraph Ð verse (epiv)"
 arrTorStyles(41) = "Epigraph Source (eps)"
 arrTorStyles(42) = "Chap Epigraph Source (ceps)"
-arrTorStyles(43) = "Chap Epigraph – non-verse (cepi)"
-arrTorStyles(44) = "Chap Epigraph – verse (cepiv)"
+arrTorStyles(43) = "Chap Epigraph Ð non-verse (cepi)"
+arrTorStyles(44) = "Chap Epigraph Ð verse (cepiv)"
 arrTorStyles(45) = "Chap Title Nonprinting (ctp)"
-arrTorStyles(46) = "FM Epigraph – non-verse (fmepi)"
-arrTorStyles(47) = "FM Epigraph – verse (fmepiv)"
+arrTorStyles(46) = "FM Epigraph Ð non-verse (fmepi)"
+arrTorStyles(47) = "FM Epigraph Ð verse (fmepiv)"
 arrTorStyles(48) = "FM Epigraph Source (fmeps)"
 arrTorStyles(49) = "FM Head (fmh)"
 arrTorStyles(50) = "FM Subhead (fmsh)"
@@ -1019,11 +1370,19 @@ For N = 1 To activeParaCount
     paraStyle = ActiveDocument.paragraphs(N).Style
     
     If N Mod 100 = 0 Then
-        '(N/activeParaCount) is % complete of this loop,  0.1 is total % of whole progress bar this step
-        ' takes up, 0.75 is starting point of this step
-        ProgressBar2.Increment (((N / activeParaCount) * 0.1) + 0.75), "Checking paragraph " & N & " of " & activeParaCount _
-            & " for Tor.com approved styles..."
-        Doze 500            'Wait half a second otherwise next line executes before progress bar is done and progress bar crashes
+        'Percent complete and status for progress bar (PC) and status bar (Mac)
+        sglPercentComplete = (((N / activeParaCount) * 0.2) + 0.78)
+        strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for Tor.com approved styles..." & vbCr & StatusBar
+
+        'All Progress Bar statements for PC only because won't run modeless on Mac
+        If Not TheOS Like "*Mac*" Then
+            ProgressBar2.Increment sglPercentComplete, strStatus
+            Doze 50 'Wait 50 milliseconds for progress bar to update
+        Else
+            'Mac will just use status bar
+            Application.StatusBar = ProgressTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
+            DoEvents
+        End If
     End If
     
     If Right(paraStyle, 1) = ")" Then
@@ -1048,6 +1407,8 @@ For N = 1 To activeParaCount
 
 Next N
 
+StatusBar = "* Checking paragraphs for Tor.com approved styles..." & vbCr & StatusBar
+
 'Debug.Print strBadStyles
 
 BadTorStyles = strBadStyles
@@ -1060,6 +1421,8 @@ ReDim intStyleCount(1 To 15) As Variant                  ' Delcare items in arra
 
 Dim A As Long
 Dim xCount As Integer
+
+Application.ScreenUpdating = False
 
 arrStyleName(1) = "Titlepage Book Title (tit)"
 arrStyleName(2) = "Titlepage Author Name (au)"
@@ -1119,6 +1482,8 @@ CountReqdStyles = intStyleCount()
 End Function
 Private Sub FixSectionHeadings(oldStyle As String, newStyle As String)
 
+Application.ScreenUpdating = False
+
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
@@ -1148,6 +1513,8 @@ Dim styleNameB(4) As String         ' must declare number of items in array here
 Dim bString(4) As String            ' and here
 Dim b As Integer
 Dim strTitleData As String
+
+Application.ScreenUpdating = False
 
 styleNameB(1) = "Titlepage Book Title (tit)"
 styleNameB(2) = "Titlepage Author Name (au)"
@@ -1179,6 +1546,8 @@ Dim cCount As Integer
 Dim pageNumberC As Integer
 Dim strFullList As String
 Dim N As Integer
+
+Application.ScreenUpdating = False
 
 cCount = 0
 
@@ -1240,7 +1609,7 @@ IllustrationsList = strFullList
 
 
 End Function
-Function IllustrationErrors() As String
+Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) As String
 Dim strErrors As String
 Dim intCount As Integer
 Dim pageNum As Integer
@@ -1249,13 +1618,10 @@ Dim strStyle1 As String
 Dim strStyle2 As String
 Dim strStyle3 As String
 
+Application.ScreenUpdating = False
+
 strErrors = ""
-strStyle1 = "Illustration Source (is)"
-strStyle2 = "Illustration holder (ill)"
-strStyle3 = "Caption (cap)"
 
-
-'------------------Search for Illustration Source and check previous paragraph(s)-----------------
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
@@ -1267,7 +1633,7 @@ Selection.HomeKey Unit:=wdStory
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles(strStyle1)
+        .Style = ActiveDocument.Styles(StyleC)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
@@ -1281,13 +1647,10 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
     intCount = intCount + 1
     
     'Get number of current pagaraph, because we get an error if try to select before 1st para
-    Dim rParagraphs As Range
-    Dim CurPos As Long
-     
-    Selection.Range.Select  'select current range
-    CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
-    Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
-    intCurrentPara = rParagraphs.paragraphs.Count
+    
+    intCurrentPara = ActiveDocument.Range(0, Selection.paragraphs(1).Range.End).paragraphs.Count
+    
+    'Debug.Print intCurrentPara
     
     'Also determine if selection is the LAST paragraph of the document, for later
     Dim SelectionIncludesFinalParagraphMark As Boolean
@@ -1305,24 +1668,32 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
         pageNum = Selection.Information(wdActiveEndPageNumber)
     
             'Check if preceding paragraph style is correct
-            If Selection.Style <> strStyle2 Then
+            If Selection.Style <> StyleA Then
             
-                If Selection.Style = strStyle3 Then
+                If Selection.Style = StyleB Then
                     'select preceding paragraph again, see if it's prevStyle
                     Selection.Previous(Unit:=wdParagraph, Count:=1).Select
                     pageNum = Selection.Information(wdActiveEndPageNumber)
                     
-                        If Selection.Style <> strStyle2 Then
-                            strErrors = strErrors & "** ERROR: " & strStyle3 & " followed by " & strStyle1 & "" _
+                        If Selection.Style <> StyleA Then
+                            strErrors = strErrors & "** ERROR: " & StyleB & " followed by " & StyleC & "" _
                                 & " on" & vbNewLine & vbTab & "page " & pageNum & " must be preceded by " _
-                                & strStyle2 & "." & vbNewLine & vbNewLine
+                                & StyleA & "." & vbNewLine & vbNewLine
+                        Else
+                            'If you're searching for a page break before, also check if manual page break is in paragraph
+                            If StyleA = "Page Break (pb)" Then
+                                If InStr(Selection.Text, Chr(12)) = 0 Then
+                                    strErrors = strErrors & "** ERROR: Missing manual page break on page " & pageNum & "." _
+                                        & vbNewLine & vbNewLine
+                                End If
+                            End If
                         End If
                         
                     Selection.Next(Unit:=wdParagraph, Count:=1).Select
                 Else
                 
-                    strErrors = strErrors & "** ERROR: " & strStyle1 & " on page " _
-                        & pageNum & " must be used after an" & vbNewLine & vbTab & strStyle2 & "." _
+                    strErrors = strErrors & "** ERROR: " & StyleC & " on page " _
+                        & pageNum & " must be used after an" & vbNewLine & vbTab & StyleA & "." _
                             & vbNewLine & vbNewLine
                         
                 End If
@@ -1333,13 +1704,20 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
                     Selection.Next(Unit:=wdParagraph, Count:=2).Select
                     pageNum = Selection.Information(wdActiveEndPageNumber)
                         
-                        If Selection.Style = strStyle3 Then
-                            strErrors = strErrors & "** ERROR: " & strStyle1 & " style on page " & pageNum & " must" _
-                                & " come after " & strStyle3 & " style." & vbNewLine & vbNewLine
+                        If Selection.Style = StyleB Then
+                            strErrors = strErrors & "** ERROR: " & StyleC & " style on page " & pageNum & " must" _
+                                & " come after " & StyleB & " style." & vbNewLine & vbNewLine
                         End If
                     Selection.Previous(Unit:=wdParagraph, Count:=2).Select
                 End If
-            
+                
+                'If you're searching for a page break before, also check if manual page break is in paragraph
+                If StyleA = "Page Break (pb)" Then
+                    If InStr(Selection.Text, Chr(12)) = 0 Then
+                        strErrors = strErrors & "** ERROR: Missing manual page break on page " & pageNum & "." _
+                            & vbNewLine & vbNewLine
+                    End If
+                End If
             End If
         
             'Debug.Print strErrors
@@ -1349,7 +1727,7 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
         Selection.Next(Unit:=wdParagraph, Count:=1).Select
     
     Else 'Selection is first paragraph of the document
-        strErrors = strErrors & "** ERROR: " & strStyle1 & " cannot be first paragraph of document." & vbNewLine & vbNewLine
+        strErrors = strErrors & "** ERROR: " & StyleC & " cannot be first paragraph of document." & vbNewLine & vbNewLine
     End If
     
 Loop
@@ -1366,7 +1744,7 @@ Selection.HomeKey Unit:=wdStory
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles(strStyle2)
+        .Style = ActiveDocument.Styles(StyleA)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
@@ -1380,10 +1758,7 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
     intCount = intCount + 1
     
     'Get number of current pagaraph, because we get an error if try to select before 1st para
-    Selection.Range.Select  'select current range
-    CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
-    Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
-    intCurrentPara = rParagraphs.paragraphs.Count
+    intCurrentPara = ActiveDocument.Range(0, Selection.paragraphs(1).Range.End).paragraphs.Count
 
     If intCurrentPara > 1 Then      'NOT first paragraph of document
         'select preceding paragraph
@@ -1391,9 +1766,9 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
         pageNum = Selection.Information(wdActiveEndPageNumber)
     
             'Check if preceding paragraph style is a Caption, which is not allowed
-            If Selection.Style = strStyle3 Then
-                strErrors = strErrors & "** ERROR: " & strStyle3 & " on page " & pageNum & " must come after " _
-                                & strStyle2 & "." & vbNewLine & vbNewLine
+            If Selection.Style = StyleB Then
+                strErrors = strErrors & "** ERROR: " & StyleB & " on page " & pageNum & " must come after " _
+                                & StyleA & "." & vbNewLine & vbNewLine
             End If
             
         Selection.Next(Unit:=wdParagraph, Count:=1).Select
@@ -1402,13 +1777,16 @@ Loop
 
 'Debug.Print strErrors
 
-IllustrationErrors = strErrors
+CheckPrev2Paras = strErrors
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
 
 End Function
 Private Sub CreateReport(errorList As String, metadata As String, illustrations As String, goodStyles As String, suffix As String)
+
+Application.ScreenUpdating = False
+
 'Create report file
 Dim activeRng As Range
 Dim activeDoc As Document

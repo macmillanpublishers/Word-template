@@ -2,7 +2,13 @@ Attribute VB_Name = "CharacterStyles"
 Option Explicit
 Option Base 1
 Dim activeRng As Range
-
+Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Private Sub Doze(ByVal lngPeriod As Long)
+DoEvents
+Sleep lngPeriod
+' Call it in desired location to sleep for 1 seconds like this:
+' Doze 1000
+End Sub
 Sub MacmillanCharStyles()
 'Created by Erica Warren -- erica.warren@macmillan.com
 'Split off from MacmillanCleanupMacro: https://github.com/macmillanpublishers/Word-template/blob/master/macmillan/CleanupMacro.bas
@@ -14,75 +20,231 @@ Sub MacmillanCharStyles()
 'Remember time when macro starts
 'StartTime = Timer
 
-'-----------------Start Progress Bar----------
-Dim oProgress As ProgressBar
-Set oProgress = New ProgressBar
-
-oProgress.Title = "Character Styles Macro"
-oProgress.Show
-oProgress.Increment 0.05, "Verifying document is saved and template is attached..."
-
 ''-----------------Error checks---------------
 Dim exitOnError As Boolean
 
-exitOnError = zz_templateCheck()   '' template is attached?
-If exitOnError <> False Then
+exitOnError = zz_errorChecks()   ''Doc is unsaved, protected, or uses backtick character?
+If exitOnError = True Then
 Exit Sub
 End If
 
-exitOnError = zz_errorChecks()   ''Doc is unsaved, protected, or uses backtick character?
-If exitOnError <> False Then
+exitOnError = zz_templateCheck()   '' template is attached?
+If exitOnError = True Then
 Exit Sub
 End If
+
+'------------record status of current status bar and then turn on-------
+Dim currentStatusBar As Boolean
+currentStatusBar = Application.DisplayStatusBar
+Application.DisplayStatusBar = True
+
+'--------Progress Bar------------------------------
+'Percent complete and status for progress bar (PC) and status bar (Mac)
+'Requires ProgressBar custom UserForm and Class
+Dim sglPercentComplete As Single
+Dim strStatus As String
+Dim strTitle As String
+
+'First status shown will be randomly pulled from array, for funzies
+Dim funArray() As String
+ReDim funArray(1 To 10)      'Declare bounds of array here
+
+funArray(1) = "* Mixing metaphors..."
+funArray(2) = "* Arguing about the serial comma..."
+funArray(3) = "* Un-mixing metaphors..."
+funArray(4) = "* Avoiding the passive voice..."
+funArray(5) = "* Ending sentences in prepositions..."
+funArray(6) = "* Splitting infinitives..."
+funArray(7) = "* Ooh, what an interesting manuscript..."
+funArray(8) = "* Un-dangling modifiers..."
+funArray(9) = "* Jazzing up author bio..."
+funArray(10) = "* Filling in plot holes..."
+
+Dim x As Integer
+
+'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
+Randomize           'Sets seed for Rnd below to value of system timer
+x = Int(UBound(funArray()) * Rnd()) + 1
+
+'Debug.Print x
+
+strTitle = "Macmillan Character Styles Macro"
+sglPercentComplete = 0.05
+strStatus = funArray(x)
+
+'All Progress Bar statements for PC only because won't run modeless on Mac
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
+If Not TheOS Like "*Mac*" Then
+    Dim oProgressChar As ProgressBar
+    Set oProgressChar = New ProgressBar
+
+    oProgressChar.Title = strTitle
+    oProgressChar.Show
+
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
+
+'--------save the current cursor location in a bookmark---------------------------
+ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
 
 '-----------Turn off track changes--------
 Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
-'-----------Replace Local Styles-----------
+'===================== Replace Local Styles Start ========================
 Application.ScreenUpdating = False
 
+'-----------------------Tag space break styles----------------------------
 Call zz_clearFind                          'Clear find object
 
-oProgress.Increment 0.15, "Preserving styled whitespace..."
+sglPercentComplete = 0.15
+strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call PreserveWhiteSpaceinBrkStylesA     'Part A tags styled blank paragraphs so they don't get deleted
 Call zz_clearFind
 
-oProgress.Increment 0.25, "Applying styles to hyperlinks..."
+'----------------------------Fix hyperlinks---------------------------------------
+sglPercentComplete = 0.25
+strStatus = "* Applying styles to hyperlinks..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
 Call zz_clearFind
 
-oProgress.Increment 0.4, "Removing unstyled breaks..."
+'--------------------------Remove unstyled space breaks---------------------------
+sglPercentComplete = 0.4
+strStatus = "* Removing unstyled breaks..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
 Call zz_clearFind
 
-oProgress.Increment 0.55, "Tagging character styles..."
+'--------------------------Tag existing character styles------------------------
+sglPercentComplete = 0.55
+strStatus = "* Tagging character styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call TagExistingCharStyles            'tag existing styled items
 Call zz_clearFind
 
-oProgress.Increment 0.7, "Tagging and clearing local styles..."
+'-------------------------Tag direct formatting----------------------------------
+sglPercentComplete = 0.7
+strStatus = "* Tagging direct formatting..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call LocalStyleTag                 'tag local styling, reset local styling, remove text highlights
 Call zz_clearFind
 
-oProgress.Increment 0.85, "Applying Macmillan styles..."
+'----------------------------Apply Macmillan character styles to tagged text--------
+sglPercentComplete = 0.85
+strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call LocalStyleReplace            'reapply local styling through char styles
 Call zz_clearFind
 
-oProgress.Increment 0.95, "Cleaning up styled whitespace..."
+'---------------------------Remove tags from styled space breaks---------------------
+sglPercentComplete = 0.95
+strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies the styles
 Call zz_clearFind
 
-oProgress.Increment 1, "Finished!"
+'---------------------------Return settings to original------------------------------
+sglPercentComplete = 1
+strStatus = "* Finishing up..." & vbCr & strStatus
 
+If Not TheOS Like "*Mac*" Then
+    oProgressChar.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
+'Go back to original insertion point and delete bookmark
+Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
+ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
+Application.DisplayStatusBar = currentStatusBar
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 
-Unload oProgress
+If Not TheOS Like "*Mac*" Then
+    Unload oProgressChar
+End If
 
 MsgBox "Macmillan character styles have been applied throughout your manuscript."
 
-ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
 
 '----------------------Timer End-------------------------------------------
 'Determine how many seconds code took to run
@@ -597,11 +759,39 @@ If currentTemplate <> ourTemplate1 Then
     If currentTemplate <> ourTemplate2 Then
         If currentTemplate <> ourTemplate3 Then
             MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+            zz_templateCheck = True
             Exit Function
         End If
     End If
 End If
 
 End Function
+Function zz_errorChecks()
 
+zz_errorChecks = False
+Dim mainDoc As Document
+Set mainDoc = ActiveDocument
+Dim iReply As Integer
 
+'-----make sure document is saved
+Dim docSaved As Boolean                                                                                                 'v. 3.1 update
+docSaved = mainDoc.Saved
+If docSaved = False Then
+    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+        "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+    If iReply = vbOK Then
+        mainDoc.Save
+    Else
+        zz_errorChecks = True
+        Exit Function
+    End If
+End If
+
+'-----test protection
+If ActiveDocument.ProtectionType <> wdNoProtection Then
+    MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & "TIP: If you don't know the protection password, try pasting contents of this file into a new file, and run the macro on that.", , "Error 2"
+    zz_errorChecks = True
+    Exit Function
+End If
+
+End Function

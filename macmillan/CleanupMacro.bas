@@ -2,7 +2,13 @@ Attribute VB_Name = "CleanupMacro"
 Option Explicit
 Option Base 1
 Dim activeRng As Range
-
+Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Private Sub Doze(ByVal lngPeriod As Long)
+DoEvents
+Sleep lngPeriod
+' Call it in desired location to sleep for 1 seconds like this:
+' Doze 1000
+End Sub
 Sub MacmillanManuscriptCleanup()
 
 ''''''''''''''''''''''''''''''''
@@ -122,14 +128,6 @@ Sub MacmillanManuscriptCleanup()
 'Remember time when macro starts
 '  StartTime = Timer
 
-'-----------------Start Progress Bar----------
-Dim oProgress As ProgressBar
-Set oProgress = New ProgressBar
-
-oProgress.Title = "Manuscript Cleanup Macro"
-oProgress.Show
-oProgress.Increment 0.05, "Verifying document is saved and doing error checks..."
-
 '-----------run preliminary error checks------------
 Dim exitOnError As Boolean
 
@@ -138,47 +136,185 @@ If exitOnError <> False Then
 Exit Sub
 End If
 
+Application.ScreenUpdating = False
+
+'------------record status of current status bar and then turn on-------
+Dim currentStatusBar As Boolean
+currentStatusBar = Application.DisplayStatusBar
+Application.DisplayStatusBar = True
+
+'--------Progress Bar------------------------------
+'Percent complete and status for progress bar (PC) and status bar (Mac)
+'Requires ProgressBar custom UserForm and Class
+Dim sglPercentComplete As Single
+Dim strStatus As String
+Dim strTitle As String
+
+'First status shown will be randomly pulled from array, for funzies
+Dim funArray() As String
+ReDim funArray(1 To 10)      'Declare bounds of array here
+
+funArray(1) = "* Waving magic wand..."
+funArray(2) = "* Doing a little dance..."
+funArray(3) = "* Making plans for the weekend..."
+funArray(4) = "* Setting sail for the tropics..."
+funArray(5) = "* Making a cup of tea..."
+funArray(6) = "* Beep beep boop beep..."
+funArray(7) = "* Writing the next Great American Novel..."
+funArray(8) = "* My, don't you look nice today..."
+funArray(9) = "* Having a snack..."
+funArray(10) = "* Initiating launch sequence..."
+
+Dim x As Integer
+
+'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
+Randomize           'Sets seed for Rnd below to value of system timer
+x = Int(UBound(funArray()) * Rnd()) + 1
+
+'Debug.Print x
+
+strTitle = "Macmillan Manuscript Cleanup Macro"
+sglPercentComplete = 0.05
+strStatus = funArray(x)
+
+'All Progress Bar statements for PC only because won't run modeless on Mac
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
+If Not TheOS Like "*Mac*" Then
+    Dim oProgressCleanup As ProgressBar
+    Set oProgressCleanup = New ProgressBar
+
+    oProgressCleanup.Title = strTitle
+    oProgressCleanup.Show
+
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
+'--------save the current cursor location in a bookmark---------------------------
+ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+
 '-----------Turn off track changes--------
 Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
-'-----------Remove White Space------------
-Application.ScreenUpdating = False
 
-
+'-----------Find/Replace with Wildcards = False--------------------------------
 Call zz_clearFind                          'Clear find object
 
-oProgress.Increment 0.2, "Fixing quotes, unicode, section breaks..."
+sglPercentComplete = 0.2
+strStatus = "* Fixing quotes, unicode, section breaks..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call RmNonWildcardItems                     'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
 Call zz_clearFind
 
-oProgress.Increment 0.4, "Preserving styled whitespace characters..."
+'-------------Tag characters styled "span preserve characters"-----------------
+sglPercentComplete = 0.4
+strStatus = "* Preserving styled whitespace characters..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call PreserveStyledCharactersA              ' EW added v. 3.2, tags styled page breaks, tabs
 Call zz_clearFind
 
-oProgress.Increment 0.6, "Removing unstyled whitespace, fixing ellipses and dashes..."
+'---------------Find/Replace for rest of the typographic errors----------------------
+sglPercentComplete = 0.6
+strStatus = "* Removing unstyled whitespace, fixing ellipses and dashes..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call RmWhiteSpaceB                      'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
 Call zz_clearFind
 
-oProgress.Increment 0.8, "Cleaning up styled whitespace..."
+'---------------Remove tags from "span preserve characters"-------------------------
+sglPercentComplete = 0.8
+strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call PreserveStyledCharactersB              ' EW added v. 3.2, replaces character tags with actual character
 Call zz_clearFind
 
-oProgress.Increment 0.95, "Removing bookmarks..."
+'-------------Go back to original insertion point and delete bookmark-----------------
+Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+
+'--------------Remove other bookmarks------------------------------------------------
+sglPercentComplete = 0.95
+strStatus = "* Removing bookmarks..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
 Call zz_clearFind
 
-oProgress.Increment 1#, "Finished!"
+'-----------------Restore original settings--------------------------------------
+sglPercentComplete = 1#
+strStatus = "* Finishing up..." & vbCr & strStatus
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
 
 
+ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
+Application.DisplayStatusBar = currentStatusBar
 Application.ScreenUpdating = True
 Application.ScreenRefresh
 
-Unload oProgress
+If Not TheOS Like "*Mac*" Then
+    Unload oProgressCleanup
+End If
 
 MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
-ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 
 '----------------Timer End-----------------
 'Determine how many seconds code took to run
@@ -246,7 +382,7 @@ Set activeRng = ActiveDocument.Range
 Dim preserveCharFindArray(3) As String  ' declare number of items in array
 Dim preserveCharReplaceArray(3) As String   'delcare number of items in array
 Dim preserveCharStyleArray(3) As String ' ditto
-Dim m As Long
+Dim M As Long
 
 preserveCharFindArray(1) = "^t" 'tabs
 preserveCharFindArray(2) = "  "  ' two spaces
@@ -260,15 +396,15 @@ preserveCharStyleArray(1) = "span preserve characters (pre)"
 preserveCharStyleArray(2) = "span preserve characters (pre)"
 preserveCharStyleArray(3) = "span preserve characters (pre)"
 
-For m = 1 To UBound(preserveCharFindArray())
+For M = 1 To UBound(preserveCharFindArray())
 With activeRng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
-    .Text = preserveCharFindArray(m)
-    .Replacement.Text = preserveCharReplaceArray(m)
+    .Text = preserveCharFindArray(M)
+    .Replacement.Text = preserveCharReplaceArray(M)
     .Wrap = wdFindContinue
     .Format = True
-    .Style = preserveCharStyleArray(m)
+    .Style = preserveCharStyleArray(M)
     .MatchCase = False
     .MatchWholeWord = False
     .MatchWildcards = False
@@ -418,7 +554,7 @@ Set activeRng = ActiveDocument.Range
 Dim preserveCharFindArray(3) As String  ' declare number of items in array
 Dim preserveCharReplaceArray(3) As String   'declare number of items in array
 Dim preserveCharStyleArray(3) As String ' ditto
-Dim n As Long
+Dim N As Long
 
 preserveCharFindArray(1) = "`E|" 'tabs
 preserveCharFindArray(2) = "`G|"    ' two spaces
@@ -432,15 +568,15 @@ preserveCharStyleArray(1) = "span preserve characters (pre)"
 preserveCharStyleArray(2) = "span preserve characters (pre)"
 preserveCharStyleArray(3) = "span preserve characters (pre)"
 
-For n = 1 To UBound(preserveCharFindArray())
+For N = 1 To UBound(preserveCharFindArray())
 With activeRng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
-    .Text = preserveCharFindArray(n)
-    .Replacement.Text = preserveCharReplaceArray(n)
+    .Text = preserveCharFindArray(N)
+    .Replacement.Text = preserveCharReplaceArray(N)
     .Wrap = wdFindContinue
     .Format = True
-    .Style = preserveCharStyleArray(n)
+    .Style = preserveCharStyleArray(N)
     .MatchCase = False
     .MatchWholeWord = False
     .MatchWildcards = False
