@@ -138,13 +138,59 @@ If exitOnError <> False Then
 Exit Sub
 End If
 
-'-----------------Start Progress Bar----------
-Dim oProgress As ProgressBar
-Set oProgress = New ProgressBar
+'--------Progress Bar------------------------------
+'Percent complete and status for progress bar (PC) and status bar (Mac)
+'Requires ProgressBar custom UserForm and Class
+Dim sglPercentComplete As Single
+Dim strStatus As String
+Dim strTitle As String
 
-oProgress.Title = "Manuscript Cleanup Macro"
-oProgress.Show
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'First status shown will be randomly pulled from array, for funzies
+Dim funArray() As String
+ReDim funArray(1 To 10)      'Declare bounds of array here
+
+funArray(1) = "* ..."
+funArray(2) = "* ..."
+funArray(3) = "* ..."
+funArray(4) = "* ..."
+funArray(5) = "* ..."
+funArray(6) = "* ..."
+funArray(7) = "* ..."
+funArray(8) = "* ..."
+funArray(9) = "* ..."
+funArray(10) = "* ..."
+
+Dim x As Integer
+
+'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
+Randomize           'Sets seed for Rnd below to value of system timer
+x = Int(UBound(funArray()) * Rnd()) + 1
+
+'Debug.Print x
+
+strTitle = "Macmillan Manuscript Cleanup Macro"
+sglPercentComplete = 0.05
+strStatus = funArray(x)
+
+'All Progress Bar statements for PC only because won't run modeless on Mac
+Dim TheOS As String
+TheOS = System.OperatingSystem
+
+If Not TheOS Like "*Mac*" Then
+    Dim oProgressCleanup As ProgressBar
+    Set oProgressCleanup = New ProgressBar
+
+    oProgressCleanup.Title = strTitle
+    oProgressCleanup.Show
+
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 
 '--------save the current cursor location in a bookmark---------------------------
 ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
@@ -154,30 +200,72 @@ Dim currentTracking As Boolean
 currentTracking = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
-
-'-----------Remove White Space------------
 Application.ScreenUpdating = False
 
 
+'-----------Find/Replace with Wildcards = False--------------------------------
 Call zz_clearFind                          'Clear find object
 
-oProgress.Increment 0.2, "Fixing quotes, unicode, section breaks..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+sglPercentComplete = 0.2
+strStatus = "Fixing quotes, unicode, section breaks..."
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call RmNonWildcardItems                     'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
 Call zz_clearFind
 
-oProgress.Increment 0.4, "Preserving styled whitespace characters..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'-------------Tag characters styled "span preserve characters"-----------------
+sglPercentComplete = 0.4
+strStatus = "Preserving styled whitespace characters..."
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call PreserveStyledCharactersA              ' EW added v. 3.2, tags styled page breaks, tabs
 Call zz_clearFind
 
-oProgress.Increment 0.6, "Removing unstyled whitespace, fixing ellipses and dashes..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'---------------Find/Replace for rest of the typographic errors----------------------
+sglPercentComplete = 0.6
+strStatus = "Removing unstyled whitespace, fixing ellipses and dashes..."
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call RmWhiteSpaceB                      'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
 Call zz_clearFind
 
-oProgress.Increment 0.8, "Cleaning up styled whitespace..."
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'---------------Remove tags from "span preserve characters"-------------------------
+sglPercentComplete = 0.8
+strStatus = "Cleaning up styled whitespace..."
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
+
 Call PreserveStyledCharactersB              ' EW added v. 3.2, replaces character tags with actual character
 Call zz_clearFind
 
@@ -185,13 +273,24 @@ Call zz_clearFind
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
 
+'--------------Remove other bookmarks------------------------------------------------
 oProgress.Increment 0.95, "Removing bookmarks..."
 Doze 50         ' Pause for 50 milliseconds to let progress bar update
 Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
 Call zz_clearFind
 
-oProgress.Increment 1, "Finished!"
-Doze 50         ' Pause for 50 milliseconds to let progress bar update
+'-----------------Restore original settings--------------------------------------
+sglPercentComplete = 1#
+strStatus = "Finishing up..."
+
+If Not TheOS Like "*Mac*" Then
+    oProgressCleanup.Increment sglPercentComplete, strStatus
+    Doze 50 'Wait 50 milliseconds for progress bar to update
+Else
+    'Mac will just use status bar
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    DoEvents
+End If
 
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
