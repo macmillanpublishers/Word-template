@@ -915,9 +915,9 @@ If arrStyleCount(7) = 0 Then errorList = errorList & "** ERROR: No styled Imprin
 If arrStyleCount(7) > 1 Then errorList = errorList & "** ERROR: Too many Imprint Line paragraphs" _
     & " detected. Only 1 allowed." & vbNewLine & vbNewLine
 
-'If only CTs (either originally or converted by macro) check for a page break before
-If (arrStyleCount(4) > 0 And arrStyleCount(5) = 0) Or (arrStyleCount(4) = 0 And arrStyleCount(5) > 0) _
-    Then errorList = errorList & CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Page Break (pb)")
+'If only CTs because converted by macro check for a page break before
+If (arrStyleCount(4) > 0 And arrStyleCount(5) = 0) Then errorList = errorList & _
+    CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Page Break (pb)")
 
 'If only PTs (either originally or converted by macro) check for a page break before
 If (arrStyleCount(9) > 0 And arrStyleCount(8) = 0) Or (arrStyleCount(9) = 0 And arrStyleCount(8) > 0) _
@@ -934,18 +934,15 @@ If (arrStyleCount(13) > 0 And arrStyleCount(12) = 0) Or (arrStyleCount(13) = 0 A
 'If only CTNP, check for a page break before
 If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) > 0 Then errorList = errorList _
     & CheckPrevStyle(findStyle:="Chap Title Nonprinting (ctnp)", prevStyle:="Page Break (pb)")
+        
+'If CNs <= CTs, then check that those 3 styles are in order
+If arrStyleCount(4) <= arrStyleCount(5) And arrStyleCount(4) > 0 Then errorList = errorList & CheckPrev2Paras("Page Break (pb)", _
+    "Chap Number (cn)", "Chap Title (ct)")
 
-'If CNs are >= CTs, check for page break before CNs
-If arrStyleCount(4) >= arrStyleCount(5) Then errorList = errorList & CheckPrevStyle(findStyle:="Chap Number (cn)", _
-    prevStyle:="Page Break (pb)")
-
-'If CNs and CTs, check that CN always comes before CT
-If arrStyleCount(4) >= arrStyleCount(5) And arrStyleCount(5) <> 0 Then errorList = errorList _
-    & CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Chap Number (cn)")
-
-'If Illustrations and sources exist, check that source comes after
+'If Illustrations and sources exist, check that source comes after Ill and Cap
 If torDOTcom = True Then
-    If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & IllustrationErrors
+    If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & CheckPrev2Paras("Illustration holder (ill)", _
+        "Caption (cap)", "Illustration Source (is)")
 End If
 
 'Check that only heading styles follow page breaks
@@ -1612,7 +1609,7 @@ IllustrationsList = strFullList
 
 
 End Function
-Function IllustrationErrors() As String
+Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) As String
 Dim strErrors As String
 Dim intCount As Integer
 Dim pageNum As Integer
@@ -1624,12 +1621,7 @@ Dim strStyle3 As String
 Application.ScreenUpdating = False
 
 strErrors = ""
-strStyle1 = "Illustration Source (is)"
-strStyle2 = "Illustration holder (ill)"
-strStyle3 = "Caption (cap)"
 
-
-'------------------Search for Illustration Source and check previous paragraph(s)-----------------
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
@@ -1641,7 +1633,7 @@ Selection.HomeKey Unit:=wdStory
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles(strStyle1)
+        .Style = ActiveDocument.Styles(StyleC)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
@@ -1676,24 +1668,32 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
         pageNum = Selection.Information(wdActiveEndPageNumber)
     
             'Check if preceding paragraph style is correct
-            If Selection.Style <> strStyle2 Then
+            If Selection.Style <> StyleA Then
             
-                If Selection.Style = strStyle3 Then
+                If Selection.Style = StyleB Then
                     'select preceding paragraph again, see if it's prevStyle
                     Selection.Previous(Unit:=wdParagraph, Count:=1).Select
                     pageNum = Selection.Information(wdActiveEndPageNumber)
                     
-                        If Selection.Style <> strStyle2 Then
-                            strErrors = strErrors & "** ERROR: " & strStyle3 & " followed by " & strStyle1 & "" _
+                        If Selection.Style <> StyleA Then
+                            strErrors = strErrors & "** ERROR: " & StyleB & " followed by " & StyleC & "" _
                                 & " on" & vbNewLine & vbTab & "page " & pageNum & " must be preceded by " _
-                                & strStyle2 & "." & vbNewLine & vbNewLine
+                                & StyleA & "." & vbNewLine & vbNewLine
+                        Else
+                            'If you're searching for a page break before, also check if manual page break is in paragraph
+                            If StyleA = "Page Break (pb)" Then
+                                If InStr(Selection.Text, Chr(12)) = 0 Then
+                                    strErrors = strErrors & "** ERROR: Missing manual page break on page " & pageNum & "." _
+                                        & vbNewLine & vbNewLine
+                                End If
+                            End If
                         End If
                         
                     Selection.Next(Unit:=wdParagraph, Count:=1).Select
                 Else
                 
-                    strErrors = strErrors & "** ERROR: " & strStyle1 & " on page " _
-                        & pageNum & " must be used after an" & vbNewLine & vbTab & strStyle2 & "." _
+                    strErrors = strErrors & "** ERROR: " & StyleC & " on page " _
+                        & pageNum & " must be used after an" & vbNewLine & vbTab & StyleA & "." _
                             & vbNewLine & vbNewLine
                         
                 End If
@@ -1704,13 +1704,20 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
                     Selection.Next(Unit:=wdParagraph, Count:=2).Select
                     pageNum = Selection.Information(wdActiveEndPageNumber)
                         
-                        If Selection.Style = strStyle3 Then
-                            strErrors = strErrors & "** ERROR: " & strStyle1 & " style on page " & pageNum & " must" _
-                                & " come after " & strStyle3 & " style." & vbNewLine & vbNewLine
+                        If Selection.Style = StyleB Then
+                            strErrors = strErrors & "** ERROR: " & StyleC & " style on page " & pageNum & " must" _
+                                & " come after " & StyleB & " style." & vbNewLine & vbNewLine
                         End If
                     Selection.Previous(Unit:=wdParagraph, Count:=2).Select
                 End If
-            
+                
+                'If you're searching for a page break before, also check if manual page break is in paragraph
+                If StyleA = "Page Break (pb)" Then
+                    If InStr(Selection.Text, Chr(12)) = 0 Then
+                        strErrors = strErrors & "** ERROR: Missing manual page break on page " & pageNum & "." _
+                            & vbNewLine & vbNewLine
+                    End If
+                End If
             End If
         
             'Debug.Print strErrors
@@ -1720,7 +1727,7 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
         Selection.Next(Unit:=wdParagraph, Count:=1).Select
     
     Else 'Selection is first paragraph of the document
-        strErrors = strErrors & "** ERROR: " & strStyle1 & " cannot be first paragraph of document." & vbNewLine & vbNewLine
+        strErrors = strErrors & "** ERROR: " & StyleC & " cannot be first paragraph of document." & vbNewLine & vbNewLine
     End If
     
 Loop
@@ -1737,7 +1744,7 @@ Selection.HomeKey Unit:=wdStory
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles(strStyle2)
+        .Style = ActiveDocument.Styles(StyleA)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
@@ -1759,9 +1766,9 @@ Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 
         pageNum = Selection.Information(wdActiveEndPageNumber)
     
             'Check if preceding paragraph style is a Caption, which is not allowed
-            If Selection.Style = strStyle3 Then
-                strErrors = strErrors & "** ERROR: " & strStyle3 & " on page " & pageNum & " must come after " _
-                                & strStyle2 & "." & vbNewLine & vbNewLine
+            If Selection.Style = StyleB Then
+                strErrors = strErrors & "** ERROR: " & StyleB & " on page " & pageNum & " must come after " _
+                                & StyleA & "." & vbNewLine & vbNewLine
             End If
             
         Selection.Next(Unit:=wdParagraph, Count:=1).Select
@@ -1770,7 +1777,7 @@ Loop
 
 'Debug.Print strErrors
 
-IllustrationErrors = strErrors
+CheckPrev2Paras = strErrors
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
