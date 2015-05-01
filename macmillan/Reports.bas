@@ -62,15 +62,15 @@ Dim funArray() As String
 ReDim funArray(1 To 10)      'Declare bounds of array here
 
 funArray(1) = "* Is this thing on?..."
-funArray(2) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
+funArray(2) = "* Are we there yet?..."
 funArray(3) = "* Zapping space invaders..."
 funArray(4) = "* Leaping over tall buildings in a single bound..."
-funArray(5) = "* Are we there yet?..."
-funArray(6) = "* Take me to your leader..."
+funArray(5) = "* Taking a quick nap..."
+funArray(6) = "* Taking the stairs..."
 funArray(7) = "* Partying like it's 1999..."
-funArray(8) = "* Thanks for running the Bookmaker Macro!"
+funArray(8) = "* Waiting in line at Shake Shack..."
 funArray(9) = "* Revving engines..."
-funArray(10) = "* Dividing by zero..."
+funArray(10) = "* Thanks for running the Bookmaker Macro!"
 
 Dim x As Integer
 
@@ -80,7 +80,7 @@ x = Int(UBound(funArray()) * Rnd()) + 1
 
 'Debug.Print x
 
-strTitle = "Tor.com Bookmaker Check Macro"
+strTitle = "Tor.com Bookmaker Requirements Macro"
 sglPercentComplete = 0.02
 strStatus = funArray(x)
 
@@ -253,7 +253,7 @@ Dim strSuffix As String
 strSuffix = "BookmakerReport" ' suffix for the report file
 Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
-'-------------Go back to original insertion point and delete bookmark-----------------
+'-------------Go back to original settings-----------------
 sglPercentComplete = 1
 strStatus = "* Finishing up..." & vbCr & strStatus
 
@@ -323,16 +323,16 @@ Dim strTitle As String
 Dim funArray() As String
 ReDim funArray(1 To 10)      'Declare bounds of array here
 
-funArray(1) = "* Waving magic wand..."
-funArray(2) = "* Doing a little dance..."
-funArray(3) = "* Making plans for the weekend..."
-funArray(4) = "* Setting sail for the tropics..."
-funArray(5) = "* Making a cup of tea..."
-funArray(6) = "* Beep beep boop beep..."
-funArray(7) = "* Writing the next Great American Novel..."
-funArray(8) = "* My, don't you look nice today..."
-funArray(9) = "* Having a snack..."
-funArray(10) = "* Initiating launch sequence..."
+funArray(1) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
+funArray(2) = "* What’s in a name? Word Styles by any name would smell as sweet..."
+funArray(3) = "* A horse! A horse! My Word Styles for a horse!"
+funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em...."
+funArray(5) = "* All the world’s a stage, and all the Word Styles merely players..."
+funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man...."
+funArray(7) = "* To Style, or not to Style: that is the question..."
+funArray(8) = "* Word Styles, Word Styles! Wherefore art thou Word Styles?..."
+funArray(9) = "* Some Cupid kills with arrows, some with Word Styles..."
+funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun....."
 
 Dim x As Integer
 
@@ -340,7 +340,7 @@ Dim x As Integer
 Randomize           'Sets seed for Rnd below to value of system timer
 x = Int(UBound(funArray()) * Rnd()) + 1
 
-Debug.Print x
+'Debug.Print x
 
 strTitle = "Macmillan Style Report Macro"
 sglPercentComplete = 0.02

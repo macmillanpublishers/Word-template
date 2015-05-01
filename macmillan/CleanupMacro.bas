@@ -154,16 +154,16 @@ Dim strTitle As String
 Dim funArray() As String
 ReDim funArray(1 To 10)      'Declare bounds of array here
 
-funArray(1) = "* ..."
-funArray(2) = "* ..."
-funArray(3) = "* ..."
-funArray(4) = "* ..."
-funArray(5) = "* ..."
-funArray(6) = "* ..."
-funArray(7) = "* ..."
-funArray(8) = "* ..."
-funArray(9) = "* ..."
-funArray(10) = "* ..."
+funArray(1) = "* Waving magic wand..."
+funArray(2) = "* Doing a little dance..."
+funArray(3) = "* Making plans for the weekend..."
+funArray(4) = "* Setting sail for the tropics..."
+funArray(5) = "* Making a cup of tea..."
+funArray(6) = "* Beep beep boop beep..."
+funArray(7) = "* Writing the next Great American Novel..."
+funArray(8) = "* My, don't you look nice today..."
+funArray(9) = "* Having a snack..."
+funArray(10) = "* Initiating launch sequence..."
 
 Dim x As Integer
 

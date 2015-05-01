@@ -49,16 +49,16 @@ Dim strTitle As String
 Dim funArray() As String
 ReDim funArray(1 To 10)      'Declare bounds of array here
 
-funArray(1) = "* ..."
-funArray(2) = "* ..."
-funArray(3) = "* ..."
-funArray(4) = "* ..."
-funArray(5) = "* ..."
-funArray(6) = "* ..."
-funArray(7) = "* ..."
-funArray(8) = "* ..."
-funArray(9) = "* ..."
-funArray(10) = "* ..."
+funArray(1) = "* Mixing metaphors..."
+funArray(2) = "* Arguing about the serial comma..."
+funArray(3) = "* Un-mixing metaphors..."
+funArray(4) = "* Avoiding the passive voice..."
+funArray(5) = "* Ending sentences in prepositions..."
+funArray(6) = "* Splitting infinitives..."
+funArray(7) = "* Ooh, what an interesting manuscript..."
+funArray(8) = "* Un-dangling modifiers..."
+funArray(9) = "* Jazzing up author bio..."
+funArray(10) = "* Filling in plot holes..."
 
 Dim x As Integer
 
