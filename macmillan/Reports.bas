@@ -55,6 +55,7 @@ Application.DisplayStatusBar = True
 'Requires ProgressBar custom UserForm and Class
 Dim sglPercentComplete As Single
 Dim strStatus As String
+Dim strTitle As String
 
 'First status shown will be randomly pulled from array, for funzies
 Dim funArray() As String
@@ -79,6 +80,7 @@ x = Int(UBound(funArray()) * Rnd()) + 1
 
 'Debug.Print x
 
+strTitle = "Tor.com Bookmaker Check Macro"
 sglPercentComplete = 0.02
 strStatus = funArray(x)
 
@@ -90,14 +92,14 @@ If Not TheOS Like "*Mac*" Then
     Dim oProgressBkmkr As ProgressBar
     Set oProgressBkmkr = New ProgressBar
 
-    oProgressBkmkr.Title = "Bookmaker Check Macro"
+    oProgressBkmkr.Title = strTitle
     oProgressBkmkr.Show
 
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -124,7 +126,7 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -145,7 +147,7 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -176,7 +178,7 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -191,7 +193,7 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -206,7 +208,7 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -215,7 +217,7 @@ Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
 'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus)
+arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
 
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
@@ -228,7 +230,7 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -243,7 +245,7 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -259,7 +261,7 @@ If Not TheOS Like "*Mac*" Then
     oProgressBkmkr.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -315,6 +317,7 @@ Application.DisplayStatusBar = True
 'Requires ProgressBar custom UserForm and Class
 Dim sglPercentComplete As Single
 Dim strStatus As String
+Dim strTitle As String
 
 'First status shown will be randomly pulled from array, for funzies
 Dim funArray() As String
@@ -339,6 +342,7 @@ x = Int(UBound(funArray()) * Rnd()) + 1
 
 Debug.Print x
 
+strTitle = "Macmillan Style Report Macro"
 sglPercentComplete = 0.02
 strStatus = funArray(x)
 
@@ -350,14 +354,14 @@ If Not TheOS Like "*Mac*" Then
     Dim oProgressStyleRpt As ProgressBar
     Set oProgressStyleRpt = New ProgressBar
 
-    oProgressStyleRpt.Title = "Style Report Macro"
+    oProgressStyleRpt.Title = strTitle
     oProgressStyleRpt.Show
 
     oProgressStyleRpt.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -388,7 +392,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -410,7 +414,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -442,7 +446,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -458,7 +462,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -474,7 +478,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -483,7 +487,7 @@ Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
 'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, Status:=strStatus)
+arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
 
 strGoodStylesList = arrGoodBadStyles(1)
 strBadStylesList = arrGoodBadStyles(2)
@@ -497,7 +501,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -513,7 +517,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -530,7 +534,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Style Report Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -542,8 +546,6 @@ ActiveDocument.TrackRevisions = currentTracking         'Return track changes to
 Application.ScreenUpdating = True
 Application.DisplayStatusBar = currentStatusBar             ' return status bar to original setting
 Application.ScreenRefresh
-
-
 
 If Not TheOS Like "*Mac*" Then
     Unload oProgressStyleRpt
@@ -559,7 +561,7 @@ End If
 '================================================================================================
 
 End Sub
-Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar, Status As String) As Variant
+Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String) As Variant
 'Creates a list of Macmillan styles in use
 'And a separate list of non-Macmillan styles in use
 
@@ -612,7 +614,7 @@ For J = 1 To activeParaCount
             Doze 50 'Wait 50 milliseconds for progress bar to update
         Else
             'Mac will just use status bar
-            Application.StatusBar = "Bookmaker Check Macro " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
+            Application.StatusBar = ProgTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
             DoEvents
         End If
     End If
@@ -723,7 +725,7 @@ For M = 1 To UBound(styleNameM())
             Doze 50 'Wait 50 milliseconds for progress bar to update
         Else
             'Mac will just use status bar
-            Application.StatusBar = "Bookmaker Check Macro " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
+            Application.StatusBar = ProgTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
             DoEvents
         End If
     
@@ -750,7 +752,7 @@ strGoodStyles = strGoodStyles & charStyles
 'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
 Dim strTorBadStyles As String
 If torDOTcom = True Then
-    strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status)
+    strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle)
     strBadStyles = strBadStyles & strTorBadStyles
 End If
 
@@ -1257,7 +1259,7 @@ On Error GoTo 0
 Application.DisplayAlerts = True
 
 End Function
-Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String) As String
+Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String) As String
 'Called from GoodBadStyles sub if torDOTcom parameter is set to True.
 
 Dim paraStyle As String
@@ -1381,7 +1383,7 @@ For N = 1 To activeParaCount
             Doze 50 'Wait 50 milliseconds for progress bar to update
         Else
             'Mac will just use status bar
-            Application.StatusBar = "Bookmaker Check Macro " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
+            Application.StatusBar = ProgressTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
             DoEvents
         End If
     End If

@@ -38,6 +38,7 @@ End If
 'Requires ProgressBar custom UserForm and Class
 Dim sglPercentComplete As Single
 Dim strStatus As String
+Dim strTitle As String
 
 'First status shown will be randomly pulled from array, for funzies
 Dim funArray() As String
@@ -62,6 +63,7 @@ x = Int(UBound(funArray()) * Rnd()) + 1
 
 'Debug.Print x
 
+strTitle = "Macmillan Character Styles Macro"
 sglPercentComplete = 0.05
 strStatus = funArray(x)
 
@@ -73,14 +75,14 @@ If Not TheOS Like "*Mac*" Then
     Dim oProgressChar As ProgressBar
     Set oProgressChar = New ProgressBar
 
-    oProgressChar.Title = "Character Styles Macro"
+    oProgressChar.Title = strTitle
     oProgressChar.Show
 
     oProgressChar.Increment sglPercentComplete, strStatus
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -107,7 +109,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -123,7 +125,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -139,7 +141,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -155,7 +157,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -171,7 +173,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -187,7 +189,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -203,7 +205,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
@@ -219,7 +221,7 @@ If Not TheOS Like "*Mac*" Then
     Doze 50 'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
-    Application.StatusBar = "Bookmaker Check Macro " & (100 * sglPercentComplete) & "% complete | " & strStatus
+    Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
