@@ -1105,7 +1105,7 @@ End If
 End Function
 Function CheckAfterPB() As String
 Dim arrSecStartStyles() As String
-ReDim arrSecStartStyles(1 To 42)
+ReDim arrSecStartStyles(1 To 44)
 Dim kString As String
 Dim kCount As Integer
 Dim pageNumK As Integer
@@ -1130,13 +1130,13 @@ arrSecStartStyles(12) = "Part Number (pn)"
 arrSecStartStyles(13) = "Front Sales Title (fst)"
 arrSecStartStyles(14) = "Front Sales Quote (fsq)"
 arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
-arrSecStartStyles(16) = "Epigraph Ð non-verse (epi)"
+arrSecStartStyles(16) = "Epigraph – non-verse (epi)"
 arrSecStartStyles(17) = "Epigraph – verse (epiv)"
 arrSecStartStyles(18) = "FM Head (fmh)"
 arrSecStartStyles(19) = "Illustration holder (ill)"
 arrSecStartStyles(20) = "Page Break (pb)"
 arrSecStartStyles(21) = "FM Epigraph - non-verse (fmepi)"
-arrSecStartStyles(22) = "FM Epigraph Ð verse (fmepiv)"
+arrSecStartStyles(22) = "FM Epigraph - verse (fmepiv)"
 arrSecStartStyles(23) = "FM Head ALT (afmh)"
 arrSecStartStyles(24) = "Part Number (pn)"
 arrSecStartStyles(25) = "Part Title (pt)"
@@ -1157,6 +1157,8 @@ arrSecStartStyles(39) = "Colophon Text No-Indent (coltx1)"
 arrSecStartStyles(40) = "BOB Ad Title (bobt)"
 arrSecStartStyles(41) = "Series Page Heading (sh)"
 arrSecStartStyles(42) = "span small caps characters (sc)"
+arrSecStartStyles(43) = "span italic characters (ital)"
+arrSecStartStyles(44) = "Design Note (dn)"
 
 kCount = 0
 kString = ""
@@ -1339,7 +1341,7 @@ arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
 arrTorStyles(37) = "Dedication (ded)"
 arrTorStyles(38) = "Dedication Author (dedau)"
 arrTorStyles(39) = "Epigraph - non-verse (epi)"
-arrTorStyles(40) = "Epigraph - verse (epiv)"
+arrTorStyles(40) = "Epigraph – verse (epiv)"
 arrTorStyles(41) = "Epigraph Source (eps)"
 arrTorStyles(42) = "Chap Epigraph Source (ceps)"
 arrTorStyles(43) = "Chap Epigraph - non-verse (cepi)"
