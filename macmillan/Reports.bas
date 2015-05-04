@@ -266,8 +266,10 @@ Else
 End If
 
 'return cursor to original position and delete bookmark
-Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+    ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+End If
 
 Application.ScreenUpdating = True
 Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
@@ -326,13 +328,13 @@ ReDim funArray(1 To 10)      'Declare bounds of array here
 funArray(1) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
 funArray(2) = "* What’s in a name? Word Styles by any name would smell as sweet..."
 funArray(3) = "* A horse! A horse! My Word Styles for a horse!"
-funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em...."
+funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em..."
 funArray(5) = "* All the world’s a stage, and all the Word Styles merely players..."
-funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man...."
+funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man..."
 funArray(7) = "* To Style, or not to Style: that is the question..."
 funArray(8) = "* Word Styles, Word Styles! Wherefore art thou Word Styles?..."
 funArray(9) = "* Some Cupid kills with arrows, some with Word Styles..."
-funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun....."
+funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun..."
 
 Dim x As Integer
 
@@ -539,8 +541,10 @@ Else
 End If
 
 '-------------Go back to original insertion point and delete bookmark-----------------
-Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+    ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+End If
 
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
@@ -743,8 +747,10 @@ Next M
 
 Status = "* Checking character styles..." & vbCr & Status
 
-'Move selection back to start of document
-Selection.HomeKey Unit:=wdStory
+'Move selection back to original starting point, added in parent Sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 'Add character styles to Good styles list
 strGoodStyles = strGoodStyles & charStyles
@@ -1003,8 +1009,10 @@ Do While Selection.Find.Execute = True And fCount < 1000            'fCount < 10
     Selection.MoveEndWhile Cset:=Chr(13), Count:=wdForward
 Loop
 
-'Move selection back to start of document
-Selection.HomeKey Unit:=wdStory
+'Move selection back to original starting point, added in parent sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 If fCount = 0 Then
     GetText = ""
@@ -1089,8 +1097,10 @@ Loop
 
 CheckPrevStyle = jString
 
-'Move selection back to start of document
-Selection.HomeKey Unit:=wdStory
+'Move selection back to original starting point, added in parent sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 End Function
 Function CheckAfterPB() As String
@@ -1203,8 +1213,10 @@ Loop
 
 CheckAfterPB = kString
 
-'Move selection back to start of document
-Selection.HomeKey Unit:=wdStory
+'Move selection back to original cursor position, bookmark added in parent Sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 End Function
 Private Sub DeleteContentControlPC()
@@ -1254,6 +1266,11 @@ End If
 
 On Error GoTo 0
 Application.DisplayAlerts = True
+
+'Move cursor back to original starting point, added in parent Sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 End Function
 Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String) As String
