@@ -1006,7 +1006,9 @@ Do While Selection.Find.Execute = True And fCount < 1000            'fCount < 10
     
     'If the next character is a paragraph return, add that to the selection
     'Otherwise the next Find will just select the same text with the paragraph return
-    Selection.MoveEndWhile Cset:=Chr(13), Count:=wdForward
+    If InStr(styleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
+        Selection.MoveEndWhile Cset:=Chr(13), Count:=wdForward
+    End If
 Loop
 
 'Move selection back to original starting point, added in parent sub
