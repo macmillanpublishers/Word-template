@@ -1107,7 +1107,7 @@ End If
 End Function
 Function CheckAfterPB() As String
 Dim arrSecStartStyles() As String
-ReDim arrSecStartStyles(1 To 44)
+ReDim arrSecStartStyles(1 To 43)
 Dim kString As String
 Dim kCount As Integer
 Dim pageNumK As Integer
@@ -1137,30 +1137,29 @@ arrSecStartStyles(17) = "Epigraph – verse (epiv)"
 arrSecStartStyles(18) = "FM Head (fmh)"
 arrSecStartStyles(19) = "Illustration holder (ill)"
 arrSecStartStyles(20) = "Page Break (pb)"
-arrSecStartStyles(21) = "FM Epigraph - non-verse (fmepi)"
+arrSecStartStyles(21) = "FM Epigraph – non-verse (fmepi)"
 arrSecStartStyles(22) = "FM Epigraph – verse (fmepiv)"
 arrSecStartStyles(23) = "FM Head ALT (afmh)"
-arrSecStartStyles(24) = "Part Number (pn)"
-arrSecStartStyles(25) = "Part Title (pt)"
-arrSecStartStyles(26) = "Part Epigraph - non-verse (pepi)"
-arrSecStartStyles(27) = "Part Epigraph - verse (pepiv)"
-arrSecStartStyles(28) = "Part Contents Main Head (pcmh)"
-arrSecStartStyles(29) = "Poem Title (vt)"
-arrSecStartStyles(30) = "Recipe Head (rh)"
-arrSecStartStyles(31) = "Sub-Recipe Head (srh)"
-arrSecStartStyles(32) = "BM Head (bmh)"
-arrSecStartStyles(33) = "BM Head ALT (abmh)"
-arrSecStartStyles(34) = "Appendix Head (aph)"
-arrSecStartStyles(35) = "About Author Text (atatx)"
-arrSecStartStyles(36) = "About Author Text No-Indent (atatx1)"
-arrSecStartStyles(37) = "About Author Text Head (atah)"
-arrSecStartStyles(38) = "Colophon Text (coltx)"
-arrSecStartStyles(39) = "Colophon Text No-Indent (coltx1)"
-arrSecStartStyles(40) = "BOB Ad Title (bobt)"
-arrSecStartStyles(41) = "Series Page Heading (sh)"
-arrSecStartStyles(42) = "span small caps characters (sc)"
-arrSecStartStyles(43) = "span italic characters (ital)"
-arrSecStartStyles(44) = "Design Note (dn)"
+arrSecStartStyles(24) = "Part Epigraph – non-verse (pepi)"
+arrSecStartStyles(25) = "Part Epigraph – verse (pepiv)"
+arrSecStartStyles(26) = "Part Contents Main Head (pcmh)"
+arrSecStartStyles(27) = "Poem Title (vt)"
+arrSecStartStyles(28) = "Recipe Head (rh)"
+arrSecStartStyles(29) = "Sub-Recipe Head (srh)"
+arrSecStartStyles(30) = "BM Head (bmh)"
+arrSecStartStyles(31) = "BM Head ALT (abmh)"
+arrSecStartStyles(32) = "Appendix Head (aph)"
+arrSecStartStyles(33) = "About Author Text (atatx)"
+arrSecStartStyles(34) = "About Author Text No-Indent (atatx1)"
+arrSecStartStyles(35) = "About Author Text Head (atah)"
+arrSecStartStyles(36) = "Colophon Text (coltx)"
+arrSecStartStyles(37) = "Colophon Text No-Indent (coltx1)"
+arrSecStartStyles(38) = "BOB Ad Title (bobt)"
+arrSecStartStyles(39) = "Series Page Heading (sh)"
+arrSecStartStyles(40) = "span small caps characters (sc)"
+arrSecStartStyles(41) = "span italic characters (ital)"
+arrSecStartStyles(42) = "Design Note (dn)"
+arrSecStartStyles(43) = "Front Sales Quote Head (fsqh)"
 
 kCount = 0
 kString = ""
@@ -1213,7 +1212,7 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
     Selection.Previous(Unit:=wdParagraph, Count:=1).Select
 Loop
 
-'Debug.Print kString
+Debug.Print kString
 
 CheckAfterPB = kString
 
@@ -1347,9 +1346,9 @@ arrTorStyles(40) = "Epigraph – verse (epiv)"
 arrTorStyles(41) = "Epigraph Source (eps)"
 arrTorStyles(42) = "Chap Epigraph Source (ceps)"
 arrTorStyles(43) = "Chap Epigraph – non-verse (cepi)"
-arrTorStyles(44) = "Chap Epigraph - verse (cepiv)"
+arrTorStyles(44) = "Chap Epigraph – verse (cepiv)"
 arrTorStyles(45) = "Chap Title Nonprinting (ctp)"
-arrTorStyles(46) = "FM Epigraph - non-verse (fmepi)"
+arrTorStyles(46) = "FM Epigraph – non-verse (fmepi)"
 arrTorStyles(47) = "FM Epigraph – verse (fmepiv)"
 arrTorStyles(48) = "FM Epigraph Source (fmeps)"
 arrTorStyles(49) = "FM Head (fmh)"
