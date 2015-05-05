@@ -67,12 +67,8 @@ Private Sub Mac_BestStylesView()
 ' added by EW for v. 3.2
 ' Setup for Mac
 
-'opens the Styles Toolbox! Hurray!
-If Application.Dialogs(1755).Display = False Then
-    Application.Dialogs(1755).Display
-Else
-    Application.Dialogs(1755).Hide
-End If
+'toggles the Styles Toolbox! Hurray!
+Application.Dialogs(1755).Show
 
 'Shows nonprinting characters and hidden text
 If ActiveDocument.ActiveWindow.View.ShowAll = False Then
