@@ -104,6 +104,7 @@ Else
 End If
 
 '--------save the current cursor location in a bookmark---------------------------
+Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
 ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
 
 '-------Delete content controls on PC------------------------
@@ -266,8 +267,10 @@ Else
 End If
 
 'return cursor to original position and delete bookmark
-Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+    ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+End If
 
 Application.ScreenUpdating = True
 Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
@@ -324,15 +327,15 @@ Dim funArray() As String
 ReDim funArray(1 To 10)      'Declare bounds of array here
 
 funArray(1) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
-funArray(2) = "* What’s in a name? Word Styles by any name would smell as sweet..."
+funArray(2) = "* WhatÕs in a name? Word Styles by any name would smell as sweet..."
 funArray(3) = "* A horse! A horse! My Word Styles for a horse!"
-funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em...."
-funArray(5) = "* All the world’s a stage, and all the Word Styles merely players..."
-funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man...."
+funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em..."
+funArray(5) = "* All the worldÕs a stage, and all the Word Styles merely players..."
+funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man..."
 funArray(7) = "* To Style, or not to Style: that is the question..."
 funArray(8) = "* Word Styles, Word Styles! Wherefore art thou Word Styles?..."
 funArray(9) = "* Some Cupid kills with arrows, some with Word Styles..."
-funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun....."
+funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun..."
 
 Dim x As Integer
 
@@ -367,6 +370,7 @@ End If
 
 
 '--------save the current cursor location in a bookmark---------------------------
+Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
 ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
 
 
@@ -507,6 +511,7 @@ End If
 
 Dim strErrorList As String
 strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=False)
+'strErrorList = "testing"
 
 '-----------------------create text file------------------------------
 sglPercentComplete = 0.99
@@ -538,9 +543,11 @@ Else
     DoEvents
 End If
 
-'-------------Go back to original insertion point and delete bookmark-----------------
-Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+'return cursor to original position and delete bookmark
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+    ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+End If
 
 ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
 Application.ScreenUpdating = True
@@ -565,8 +572,6 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
 'Creates a list of Macmillan styles in use
 'And a separate list of non-Macmillan styles in use
 
-Application.ScreenUpdating = False
-'Debug.Print Application.ScreenUpdating
 
 Dim TheOS As String
 TheOS = System.OperatingSystem
@@ -743,8 +748,10 @@ Next M
 
 Status = "* Checking character styles..." & vbCr & Status
 
-'Move selection back to start of document
-Selection.HomeKey Unit:=wdStory
+'Move selection back to original starting point, added in parent Sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 'Add character styles to Good styles list
 strGoodStyles = strGoodStyles & charStyles
@@ -770,8 +777,6 @@ GoodBadStyles = arrFinalLists
 
 End Function
 Private Function srErrorCheck() As Boolean
-
-Application.ScreenUpdating = False
 
 srErrorCheck = False
 Dim mainDoc As Document
@@ -822,8 +827,6 @@ End Function
 Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant, torDOTcom As Boolean) As String
 Dim errorList As String
 
-Application.ScreenUpdating = False
-
 errorList = ""
 
 '--------------For reference----------------------
@@ -832,7 +835,7 @@ errorList = ""
 'arrStyleCount(3) = "span ISBN (isbn)"
 'arrStyleCount(4) = "Chap Number (cn)"
 'arrStyleCount(5) = "Chap Title (ct)"
-'arrStyleCount(6) = "Chap Title Nonprinting (ctnp)"
+'arrStyleCount(6) = "Chap Title Nonprinting (ctp)"
 'arrStyleCount(7) = "Titlepage Imprint Line (imp)"
 'arrStyleCount(8) = "Part Title (pt)"
 'arrStyleCount(9) = "Part Number (pn)"
@@ -899,7 +902,7 @@ If arrStyleCount(13) > 0 And arrStyleCount(12) = 0 Then errorList = errorList & 
 If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) = 0 Then errorList = errorList _
     & "** ERROR: No tagged chapter openers detected. If your book does" & vbNewLine _
     & vbTab & "not have chapter openers, use the Chap Title Nonprinting" & vbNewLine _
-    & vbTab & "(ctnp) style at the start of each section." & vbNewLine & vbNewLine
+    & vbTab & "(ctp) style at the start of each section." & vbNewLine & vbNewLine
 
 'If CN > CT and CT > 0 (i.e., Not a CT for every CN)
 If arrStyleCount(4) > arrStyleCount(5) And arrStyleCount(5) > 0 Then errorList = errorList & _
@@ -931,9 +934,9 @@ If (arrStyleCount(11) > 0 And arrStyleCount(10) = 0) Or (arrStyleCount(11) = 0 A
 If (arrStyleCount(13) > 0 And arrStyleCount(12) = 0) Or (arrStyleCount(13) = 0 And arrStyleCount(12) > 0) _
     Then errorList = errorList & CheckPrevStyle(findStyle:="BM Head (bmh)", prevStyle:="Page Break (pb)")
 
-'If only CTNP, check for a page break before
+'If only CTP, check for a page break before
 If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) > 0 Then errorList = errorList _
-    & CheckPrevStyle(findStyle:="Chap Title Nonprinting (ctnp)", prevStyle:="Page Break (pb)")
+    & CheckPrevStyle(findStyle:="Chap Title Nonprinting (ctp)", prevStyle:="Page Break (pb)")
         
 'If CNs <= CTs, then check that those 3 styles are in order
 If arrStyleCount(4) <= arrStyleCount(5) And arrStyleCount(4) > 0 Then errorList = errorList & CheckPrev2Paras("Page Break (pb)", _
@@ -1000,11 +1003,15 @@ Do While Selection.Find.Execute = True And fCount < 1000            'fCount < 10
     
     'If the next character is a paragraph return, add that to the selection
     'Otherwise the next Find will just select the same text with the paragraph return
-    Selection.MoveEndWhile Cset:=Chr(13), Count:=wdForward
+    If InStr(styleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
+        Selection.MoveEndWhile Cset:=Chr(13), Count:=wdForward
+    End If
 Loop
 
-'Move selection back to start of document
-Selection.HomeKey Unit:=wdStory
+'Move selection back to original starting point, added in parent sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 If fCount = 0 Then
     GetText = ""
@@ -1089,13 +1096,15 @@ Loop
 
 CheckPrevStyle = jString
 
-'Move selection back to start of document
-Selection.HomeKey Unit:=wdStory
+'Move selection back to original starting point, added in parent sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 End Function
 Function CheckAfterPB() As String
 Dim arrSecStartStyles() As String
-ReDim arrSecStartStyles(1 To 42)
+ReDim arrSecStartStyles(1 To 43)
 Dim kString As String
 Dim kCount As Integer
 Dim pageNumK As Integer
@@ -1121,32 +1130,33 @@ arrSecStartStyles(13) = "Front Sales Title (fst)"
 arrSecStartStyles(14) = "Front Sales Quote (fsq)"
 arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
 arrSecStartStyles(16) = "Epigraph Ð non-verse (epi)"
-arrSecStartStyles(17) = "Epigraph - verse (epiv)"
+arrSecStartStyles(17) = "Epigraph Ð verse (epiv)"
 arrSecStartStyles(18) = "FM Head (fmh)"
 arrSecStartStyles(19) = "Illustration holder (ill)"
 arrSecStartStyles(20) = "Page Break (pb)"
-arrSecStartStyles(21) = "FM Epigraph - non-verse (fmepi)"
+arrSecStartStyles(21) = "FM Epigraph Ð non-verse (fmepi)"
 arrSecStartStyles(22) = "FM Epigraph Ð verse (fmepiv)"
 arrSecStartStyles(23) = "FM Head ALT (afmh)"
-arrSecStartStyles(24) = "Part Number (pn)"
-arrSecStartStyles(25) = "Part Title (pt)"
-arrSecStartStyles(26) = "Part Epigraph - non-verse (pepi)"
-arrSecStartStyles(27) = "Part Epigraph - verse (pepiv)"
-arrSecStartStyles(28) = "Part Contents Main Head (pcmh)"
-arrSecStartStyles(29) = "Poem Title (vt)"
-arrSecStartStyles(30) = "Recipe Head (rh)"
-arrSecStartStyles(31) = "Sub-Recipe Head (srh)"
-arrSecStartStyles(32) = "BM Head (bmh)"
-arrSecStartStyles(33) = "BM Head ALT (abmh)"
-arrSecStartStyles(34) = "Appendix Head (aph)"
-arrSecStartStyles(35) = "About Author Text (atatx)"
-arrSecStartStyles(36) = "About Author Text No-Indent (atatx1)"
-arrSecStartStyles(37) = "About Author Text Head (atah)"
-arrSecStartStyles(38) = "Colophon Text (coltx)"
-arrSecStartStyles(39) = "Colophon Text No-Indent (coltx1)"
-arrSecStartStyles(40) = "BOB Ad Title (bobt)"
-arrSecStartStyles(41) = "Series Page Heading (sh)"
-arrSecStartStyles(42) = "span small caps characters (sc)"
+arrSecStartStyles(24) = "Part Epigraph Ð non-verse (pepi)"
+arrSecStartStyles(25) = "Part Epigraph Ð verse (pepiv)"
+arrSecStartStyles(26) = "Part Contents Main Head (pcmh)"
+arrSecStartStyles(27) = "Poem Title (vt)"
+arrSecStartStyles(28) = "Recipe Head (rh)"
+arrSecStartStyles(29) = "Sub-Recipe Head (srh)"
+arrSecStartStyles(30) = "BM Head (bmh)"
+arrSecStartStyles(31) = "BM Head ALT (abmh)"
+arrSecStartStyles(32) = "Appendix Head (aph)"
+arrSecStartStyles(33) = "About Author Text (atatx)"
+arrSecStartStyles(34) = "About Author Text No-Indent (atatx1)"
+arrSecStartStyles(35) = "About Author Text Head (atah)"
+arrSecStartStyles(36) = "Colophon Text (coltx)"
+arrSecStartStyles(37) = "Colophon Text No-Indent (coltx1)"
+arrSecStartStyles(38) = "BOB Ad Title (bobt)"
+arrSecStartStyles(39) = "Series Page Heading (sh)"
+arrSecStartStyles(40) = "span small caps characters (sc)"
+arrSecStartStyles(41) = "span italic characters (ital)"
+arrSecStartStyles(42) = "Design Note (dn)"
+arrSecStartStyles(43) = "Front Sales Quote Head (fsqh)"
 
 kCount = 0
 kString = ""
@@ -1178,7 +1188,7 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
     nextStyle = Selection.Style
     pageNumK = Selection.Information(wdActiveEndPageNumber)
         
-        For N = LBound(arrSecStartStyles()) To UBound(arrSecStartStyles())
+       For N = LBound(arrSecStartStyles()) To UBound(arrSecStartStyles())
             'Check if preceding paragraph style is correct
             If nextStyle <> arrSecStartStyles(N) Then
                 nCount = nCount + 1
@@ -1203,8 +1213,10 @@ Loop
 
 CheckAfterPB = kString
 
-'Move selection back to start of document
-Selection.HomeKey Unit:=wdStory
+'Move selection back to original cursor position, bookmark added in parent Sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 End Function
 Private Sub DeleteContentControlPC()
@@ -1254,6 +1266,11 @@ End If
 
 On Error GoTo 0
 Application.DisplayAlerts = True
+
+'Move cursor back to original starting point, added in parent Sub
+If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+End If
 
 End Function
 Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String) As String
@@ -1429,7 +1446,7 @@ arrStyleName(2) = "Titlepage Author Name (au)"
 arrStyleName(3) = "span ISBN (isbn)"
 arrStyleName(4) = "Chap Number (cn)"
 arrStyleName(5) = "Chap Title (ct)"
-arrStyleName(6) = "Chap Title Nonprinting (ctnp)"
+arrStyleName(6) = "Chap Title Nonprinting (ctp)"
 arrStyleName(7) = "Titlepage Imprint Line (imp)"
 arrStyleName(8) = "Part Title (pt)"
 arrStyleName(9) = "Part Number (pn)"

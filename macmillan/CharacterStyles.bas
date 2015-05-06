@@ -91,6 +91,7 @@ Else
     DoEvents
 End If
 
+Application.ScreenUpdating = False
 
 '--------save the current cursor location in a bookmark---------------------------
 ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
@@ -101,7 +102,7 @@ currentTracking = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
 '===================== Replace Local Styles Start ========================
-Application.ScreenUpdating = False
+
 
 '-----------------------Tag space break styles----------------------------
 Call zz_clearFind                          'Clear find object
@@ -150,24 +151,29 @@ Else
     DoEvents
 End If
 
+Application.ScreenUpdating = False
 Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
 Call zz_clearFind
-
+Application.ScreenUpdating = True
 '--------------------------Tag existing character styles------------------------
 sglPercentComplete = 0.55
 strStatus = "* Tagging character styles..." & vbCr & strStatus
 
 If Not TheOS Like "*Mac*" Then
     oProgressChar.Increment sglPercentComplete, strStatus
-    Doze 50 'Wait 50 milliseconds for progress bar to update
+    Doze 50     'Wait 50 milliseconds for progress bar to update
 Else
     'Mac will just use status bar
     Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
 End If
 
+Application.ScreenUpdating = False
+DoEvents
 Call TagExistingCharStyles            'tag existing styled items
 Call zz_clearFind
+Application.ScreenUpdating = True
+DoEvents
 
 '-------------------------Tag direct formatting----------------------------------
 sglPercentComplete = 0.7
@@ -437,6 +443,7 @@ End Sub
 Private Sub RemoveBreaks()
 'Created v. 3.7
 
+
 Set activeRng = ActiveDocument.Range
 
 Dim wsFindArray(3) As String              'number of items in array should be declared here
@@ -482,6 +489,8 @@ End Sub
 Private Sub PreserveWhiteSpaceinBrkStylesB()
 Set activeRng = ActiveDocument.Range
 
+
+
 Dim tagArrayB(12) As String                                   ' number of items in array should be declared here
 Dim f As Long
 
@@ -518,6 +527,7 @@ End Sub
 
 Private Sub TagExistingCharStyles()
 Set activeRng = ActiveDocument.Range                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
+
 
 Dim tagCharStylesArray(13) As String                                   ' number of items in array should be declared here
 Dim CharStylePreserveArray(13) As String              ' number of items in array should be declared here
@@ -577,6 +587,7 @@ End Sub
 
 Private Sub LocalStyleTag()
 Set activeRng = ActiveDocument.Range
+
 
 '------------tag key styles
 Dim tagStyleFindArray(10) As Boolean              ' number of items in array should be declared here
@@ -640,6 +651,7 @@ End Sub
 
 Private Sub LocalStyleReplace()
 Set activeRng = ActiveDocument.Range
+
 
 '-------------apply styles to tags
 Dim tagFindArray(22) As String              ' number of items in array should be declared here
