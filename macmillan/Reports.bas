@@ -936,7 +936,7 @@ If (arrStyleCount(13) > 0 And arrStyleCount(12) = 0) Or (arrStyleCount(13) = 0 A
 
 'If only CTP, check for a page break before
 If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) > 0 Then errorList = errorList _
-    & CheckPrevStyle(findStyle:="Chap Title Nonprinting (ctp)", prevStyle:="Page Break (pb)")
+    & CheckPrevStyle(findStyle:="Chap Title Nonprinting (ctnp)", prevStyle:="Page Break (pb)")
         
 'If CNs <= CTs, then check that those 3 styles are in order
 If arrStyleCount(4) <= arrStyleCount(5) And arrStyleCount(4) > 0 Then errorList = errorList & CheckPrev2Paras("Page Break (pb)", _
@@ -1116,7 +1116,7 @@ Application.ScreenUpdating = False
 
 arrSecStartStyles(1) = "Chap Title (ct)"
 arrSecStartStyles(2) = "Chap Number (cn)"
-arrSecStartStyles(3) = "Chap Title Nonprinting (ctp)"
+arrSecStartStyles(3) = "Chap Title Nonprinting (ctnp)"
 arrSecStartStyles(4) = "Halftitle Book Title (htit)"
 arrSecStartStyles(5) = "Titlepage Book Title (tit)"
 arrSecStartStyles(6) = "Copyright Text single space (crtx)"
@@ -1344,7 +1344,7 @@ arrTorStyles(41) = "Epigraph Source (eps)"
 arrTorStyles(42) = "Chap Epigraph Source (ceps)"
 arrTorStyles(43) = "Chap Epigraph – non-verse (cepi)"
 arrTorStyles(44) = "Chap Epigraph – verse (cepiv)"
-arrTorStyles(45) = "Chap Title Nonprinting (ctp)"
+arrTorStyles(45) = "Chap Title Nonprinting (ctnp)"
 arrTorStyles(46) = "FM Epigraph – non-verse (fmepi)"
 arrTorStyles(47) = "FM Epigraph – verse (fmepiv)"
 arrTorStyles(48) = "FM Epigraph Source (fmeps)"
