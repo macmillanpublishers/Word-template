@@ -1280,7 +1280,7 @@ Dim paraStyle As String
 Dim activeParaCount As Integer
 
 Dim arrTorStyles() As String
-ReDim arrTorStyles(1 To 79)
+ReDim arrTorStyles(1 To 93)
 
 Dim intBadCount As Integer
 Dim activeParaRange As Range
@@ -1379,6 +1379,20 @@ arrTorStyles(76) = "Chap Ornament ALT (corn2)"
 arrTorStyles(77) = "Chap Opening Text (cotx)"
 arrTorStyles(78) = "Chap Opening Text Space After (cotx#)"
 arrTorStyles(79) = "Design Note (dn)"
+arrTorStyles(80) = "BM Head (bmh)"
+arrTorStyles(81) = "BM Subhead (bmsh)"
+arrTorStyles(82) = "BM Text (bmtx)"
+arrTorStyles(83) = "BM Text No-Indent (bmtx1)"
+arrTorStyles(84) = "BM Text No-Indent Space After (bmtx1#)"
+arrTorStyles(85) = "BM Text No-Indent Space Around (#bmtx1#)"
+arrTorStyles(86) = "BM Text No-Indent Space Before (#bmtx1)"
+arrTorStyles(87) = "BM Text Space After (bmtx#)"
+arrTorStyles(88) = "BM Text Space Around (#bmtx#)"
+arrTorStyles(89) = "BM Text Space Before (#bmtx)"
+arrTorStyles(90) = "BM Title (bmt)"
+arrTorStyles(91) = "Appendix Head (aph)"
+arrTorStyles(92) = "Appendix Text (aptx)"
+arrTorStyles(93) = "Appendix Text No-Indent (aptx1)"
 
 activeParaCount = ActiveDocument.paragraphs.Count
 
