@@ -778,48 +778,68 @@ GoodBadStyles = arrFinalLists
 End Function
 Private Function srErrorCheck() As Boolean
 
-srErrorCheck = False
-Dim mainDoc As Document
-Set mainDoc = ActiveDocument
-Dim iReply As Integer
+    srErrorCheck = False
+    Dim mainDoc As Document
+    Set mainDoc = ActiveDocument
+    Dim iReply As Integer
 
-'-----make sure document is saved
-Dim docSaved As Boolean
-docSaved = mainDoc.Saved
-If docSaved = False Then
-    iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-        "Click OK, and I will save the document and run the report." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
-    If iReply = vbOK Then
-        mainDoc.Save
-    Else
-        srErrorCheck = True
-        Exit Function
-    End If
-End If
+    '-----make sure document is saved---------------------------------------------------------------------
+    Dim docSaved As Boolean
+    docSaved = mainDoc.Saved
 
-'-------Check if Macmillan template is attached--------------
-Dim currentTemplate As String
-Dim ourTemplate1 As String
-Dim ourTemplate2 As String
-Dim ourTemplate3 As String
-
-currentTemplate = ActiveDocument.BuiltInDocumentProperties(wdPropertyTemplate)
-ourTemplate1 = "macmillan.dotm"
-ourTemplate2 = "macmillan_NoColor.dotm"
-ourTemplate3 = "MacmillanCoverCopy.dotm"
-
-'Debug.Print "Current template is " & currentTemplate & vbNewLine
-
-If currentTemplate <> ourTemplate1 Then
-    If currentTemplate <> ourTemplate2 Then
-        If currentTemplate <> ourTemplate3 Then
-            MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+    If docSaved = False Then
+        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+            "Click OK, and I will save the document and run the report." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
+        If iReply = vbOK Then
+            mainDoc.Save
+        Else
             srErrorCheck = True
             Exit Function
         End If
     End If
-End If
 
+    '-----this way is more reliable even though it doesn't check template directly--------------------
+    Dim keyStyle As Word.Style
+    Dim styleCheck As Boolean
+
+    On Error Resume Next
+
+    Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
+    styleCheck = keyStyle Is Nothing
+    
+    If styleCheck Then
+        MsgBox "Oops! Required Macmillan styles are not present. Please attach the Macmillan template and run the macro again.", , "Error"
+        srErrorCheck = True
+    End If
+    
+'    '--Checking template this way would be better but wasn't always working for users------------------
+'    'Check if Macmillan template is attached
+'    Dim currentTemplate As String
+'    Dim ourTemplate1 As String
+'    Dim ourTemplate2 As String
+'    Dim ourTemplate3 As String
+
+'    currentTemplate = mainDoc.BuiltInDocumentProperties(wdPropertyTemplate)
+'    ourTemplate1 = "macmillan.dotm"
+'    ourTemplate2 = "macmillan_NoColor.dotm"
+'    ourTemplate3 = "MacmillanCoverCopy.dotm"
+
+'    Debug.Print "Current template is " & currentTemplate & vbNewLine
+
+'    If currentTemplate <> ourTemplate1 Then
+'       If currentTemplate <> ourTemplate2 Then
+'           If currentTemplate <> ourTemplate3 Then
+'               MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
+'               srErrorCheck = True
+'               Exit Function
+'           End If
+'       End If
+'    End If
+
+
+''''Could also try
+''ActiveDocument.AttachedTemplate.FullName
+''-------------------------------------------------------------------------------------------------------
 
 
 End Function
