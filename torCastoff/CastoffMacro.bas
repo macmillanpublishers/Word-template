@@ -167,8 +167,29 @@ Private Function GetCSV_PC(Publisher As String) As String
 
 End Function
 
-Private Function GetCSV_Mac()
-
+Private Function GetCSV_Mac(Publisher As String) As String
+    Dim dirNameMac As String
+    Dim dirNameBash As String
+    Dim strCastoffFile As String
+    Dim dlUrl As String
+    
+    dirNameMac = "Macintosh HD:private:tmp:"
+    dirNameBash = "/private/tmp/"
+    strCastoffFile = "Castoff_" & Publisher & ".csv"
+    dlUrl = "http://confluence.macmillan.com/download/attachments/9044274/"
+    
+    'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
+    If ShellAndWaitMac("ping -o confluence.macmillan.com &> /dev/null ; echo $?") <> 0 Then
+        GetCSV_Mac = ""
+        Exit Function
+    End If
+    
+    'download CSV file to temp
+    ShellAndWaitMac ("rm -f " & dirNameBash & strCastoffFile & " ; curl -o " & dirNameBash & strCastoffFile & " " & dlUrl & strCastoffFile)
+    
+    'return full path to CSV file
+    GetCSV_Mac = dirNameMac & strCastoffFile
+    
 End Function
 
 Private Function LoadCSVtoArray(Path As String) As Variant
@@ -285,4 +306,14 @@ Private Function Castoff(Design As Long) As Variant
 
     Castoff = arrResult
 
+End Function
+
+Private Function ShellAndWaitMac(cmd As String) As String
+
+Dim result As String
+Dim scriptCmd As String ' Macscript command
+'
+scriptCmd = "do shell script """ & cmd & """"
+result = MacScript(scriptCmd) ' result contains stdout, should you care
+ShellAndWaitMac = result
 End Function
