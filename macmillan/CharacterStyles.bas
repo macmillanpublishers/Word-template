@@ -28,10 +28,11 @@ If exitOnError = True Then
 Exit Sub
 End If
 
-exitOnError = zz_templateCheck()   '' template is attached?
-If exitOnError = True Then
-Exit Sub
-End If
+'don't need to check for template now that missing styles errors are trapped
+'exitOnError = zz_templateCheck()   '' template is attached?
+'If exitOnError = True Then
+'Exit Sub
+'End If
 
 '------------record status of current status bar and then turn on-------
 Dim currentStatusBar As Boolean
@@ -151,10 +152,9 @@ Else
     DoEvents
 End If
 
-Application.ScreenUpdating = False
 Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
 Call zz_clearFind
-Application.ScreenUpdating = True
+
 '--------------------------Tag existing character styles------------------------
 sglPercentComplete = 0.55
 strStatus = "* Tagging character styles..." & vbCr & strStatus
@@ -168,12 +168,9 @@ Else
     DoEvents
 End If
 
-Application.ScreenUpdating = False
-DoEvents
 Call TagExistingCharStyles            'tag existing styled items
 Call zz_clearFind
-Application.ScreenUpdating = True
-DoEvents
+
 
 '-------------------------Tag direct formatting----------------------------------
 sglPercentComplete = 0.7
@@ -237,8 +234,10 @@ Else
 End If
 
 'Go back to original insertion point and delete bookmark
+On Error Resume Next
 Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+On Error GoTo 0
 
 ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
 Application.DisplayStatusBar = currentStatusBar
@@ -283,6 +282,8 @@ End With
 Dim HyperlinkStyleArray(3) As String
 Dim p As Long
 
+On Error GoTo LinksErrorHandler:
+
 HyperlinkStyleArray(1) = "Hyperlink"        'built-in style applied automatically to links
 HyperlinkStyleArray(2) = "FollowedHyperlink"    'built-in style applied automatically
 HyperlinkStyleArray(3) = "span hyperlink (url)" 'Macmillan template style for links
@@ -305,10 +306,10 @@ For p = 1 To UBound(HyperlinkStyleArray())
         .MatchAllWordForms = False
         .Execute Replace:=wdReplaceAll
     End With
-    Next
+Next
 
 '--------------------------------------------------
-' converts all URLs to hyperlinks with Hyperlink style
+' converts all URLs to hyperlinks with built-in "Hyperlink" style
 ' because some show up as plain text
 ' Note this also removes all blank paragraphs regardless of style, so needs to come after sub PreserveWhiteSpaceinBrkA
 
@@ -385,6 +386,20 @@ While .Hyperlinks.Count > 0
 Wend
 End With
 
+On Error GoTo 0
+Exit Sub
+
+LinksErrorHandler:
+    If Err = 5834 Then  '5824 means style is not present in doc
+        'If style is not present, add style
+        Dim myStyle As Style
+        Set myStyle = ActiveDocument.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
+        'If missing style was Macmillan built-in style, add character highlighting
+        If myStyle = "span hyperlink (url)" Then
+            ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
+        End If
+    End If
+Resume
 End Sub
 
 Private Sub PreserveWhiteSpaceinBrkStylesA()
@@ -420,6 +435,7 @@ tagArray(10) = "`0`^&`0``"
 tagArray(11) = "`L`^&`L``"
 tagArray(12) = "`R`^&`R``"
 
+On Error GoTo BreaksStyleError:
 
 For e = 1 To UBound(StylePreserveArray())
 With activeRng.Find
@@ -437,7 +453,20 @@ With activeRng.Find
   .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
 End With
+
+NextLoop:
 Next
+
+On Error GoTo 0
+Exit Sub
+
+BreaksStyleError:
+    ' skips tagging that style if it's missing from doc; if missing, obv nothing has that style
+    'Debug.Print StylePreserveArray(e)
+    If Err = 5834 Then   '5834 "Item with specified name does not exist" i.e. style not present in doc
+        Resume NextLoop:
+    End If
+
 End Sub
 
 Private Sub RemoveBreaks()
@@ -563,6 +592,7 @@ tagCharStylesArray(11) = "`Q|^&|Q`"
 tagCharStylesArray(12) = "`E|^&|E`"
 tagCharStylesArray(13) = "`G|^&|G`"
 
+On Error GoTo CharStyleError:
 
 For d = 1 To UBound(CharStylePreserveArray())
 With activeRng.Find
@@ -580,7 +610,19 @@ With activeRng.Find
   .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
 End With
+
+NextLoop:
 Next
+
+On Error GoTo 0
+Exit Sub
+
+CharStyleError:
+    ' skips tagging that style if it's missing from doc; if missing, obv nothing has that style
+    'Debug.Print CharStylePreserveArray(d)
+    If Err = 5834 Then   '5834 "Item with specified name does not exist" i.e. style not present in doc
+        Resume NextLoop:
+    End If
 
 
 End Sub
@@ -654,6 +696,7 @@ Set activeRng = ActiveDocument.Range
 
 
 '-------------apply styles to tags
+'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
 Dim tagFindArray(22) As String              ' number of items in array should be declared here
 Dim tagReplaceArray(22) As String         'and here
 Dim h As Long
@@ -681,30 +724,31 @@ tagFindArray(20) = "`Q|(*)|Q`"          'v. 3.7 added
 tagFindArray(21) = "`E|(*)|E`"
 tagFindArray(22) = "`G|(*)|G`"          'v. 3.8 added
 
-tagReplaceArray(1) = ActiveDocument.Styles("span boldface characters (bf)")
-tagReplaceArray(2) = ActiveDocument.Styles("span italic characters (ital)")
-tagReplaceArray(3) = ActiveDocument.Styles("span underscore characters (us)")
-tagReplaceArray(4) = ActiveDocument.Styles("span small caps characters (sc)")
-tagReplaceArray(5) = ActiveDocument.Styles("span hyperlink (url)")
-tagReplaceArray(6) = ActiveDocument.Styles("span subscript characters (sub)")
-tagReplaceArray(7) = ActiveDocument.Styles("span superscript characters (sup)")
-tagReplaceArray(8) = ActiveDocument.Styles("span symbols (sym)")
+tagReplaceArray(1) = "span boldface characters (bf)"
+tagReplaceArray(2) = "span italic characters (ital)"
+tagReplaceArray(3) = "span underscore characters (us)"
+tagReplaceArray(4) = "span small caps characters (sc)"
+tagReplaceArray(5) = "span hyperlink (url)"
+tagReplaceArray(6) = "span subscript characters (sub)"
+tagReplaceArray(7) = "span superscript characters (sup)"
+tagReplaceArray(8) = "span symbols (sym)"
 ' the last 9 items here are of course v. 3.1 patches
-tagReplaceArray(9) = ActiveDocument.Styles("span accent characters (acc)")
-tagReplaceArray(10) = ActiveDocument.Styles("span cross-reference (xref)")
-tagReplaceArray(11) = ActiveDocument.Styles("span material to come (tk)")
-tagReplaceArray(12) = ActiveDocument.Styles("span carry query (cq)")
-tagReplaceArray(13) = ActiveDocument.Styles("span key phrase (kp)")
-tagReplaceArray(14) = ActiveDocument.Styles("span bold ital (bem)")
-tagReplaceArray(15) = ActiveDocument.Styles("span smcap bold (scbold)")
-tagReplaceArray(16) = ActiveDocument.Styles("span smcap ital (scital)")
-tagReplaceArray(17) = ActiveDocument.Styles("span preserve characters (pre)")
-tagReplaceArray(18) = ActiveDocument.Styles("bookmaker keep together (kt)")          'v. 3.7 added
-tagReplaceArray(19) = ActiveDocument.Styles("bookmaker force page break (br)")          'v. 3.7 added
-tagReplaceArray(20) = ActiveDocument.Styles("span ISBN (isbn)")          'v. 3.7 added
-tagReplaceArray(21) = ActiveDocument.Styles("span symbols ital (symi)")         ' v. 3.8 added
-tagReplaceArray(22) = ActiveDocument.Styles("span symbols bold (symb)")         ' v. 3.8 added
+tagReplaceArray(9) = "span accent characters (acc)"
+tagReplaceArray(10) = "span cross-reference (xref)"
+tagReplaceArray(11) = "span material to come (tk)"
+tagReplaceArray(12) = "span carry query (cq)"
+tagReplaceArray(13) = "span key phrase (kp)"
+tagReplaceArray(14) = "span bold ital (bem)"
+tagReplaceArray(15) = "span smcap bold (scbold)"
+tagReplaceArray(16) = "span smcap ital (scital)"
+tagReplaceArray(17) = "span preserve characters (pre)"
+tagReplaceArray(18) = "bookmaker keep together (kt)"            'v. 3.7 added
+tagReplaceArray(19) = "bookmaker force page break (br)"          'v. 3.7 added
+tagReplaceArray(20) = "span ISBN (isbn)"                        'v. 3.7 added
+tagReplaceArray(21) = "span symbols ital (symi)"                ' v. 3.8 added
+tagReplaceArray(22) = "span symbols bold (symb)"                ' v. 3.8 added
 
+On Error GoTo ErrorHandler:
 
 For h = 1 To UBound(tagFindArray())
 With activeRng.Find
@@ -722,8 +766,103 @@ With activeRng.Find
   .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
 End With
+
+NextLoop:
 Next
 
+On Error GoTo 0
+
+Exit Sub
+
+ErrorHandler:
+    'Debug.Print tagReplaceArray(h)
+    Dim myStyle As Style
+    
+    If Err = 5834 Then '5834 is style not present in doc
+        Select Case tagReplaceArray(h)
+            
+            'If style from LocalStyleTag is not present, add style
+            Case "span boldface characters (bf)":
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .Bold = True
+                End With
+                Resume
+            
+            Case "span italic characters (ital)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .Italic = True
+                End With
+                Resume
+                
+            Case "span underscore characters (us)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .Underline = wdUnderlineSingle
+                End With
+                Resume
+            
+            Case "span small caps characters (sc)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .SmallCaps = True
+                End With
+                Resume
+            
+            Case "span subscript characters (sub)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .Subscript = True
+                End With
+                Resume
+                
+            Case "span superscript characters (sup)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .Superscript = True
+                End With
+                Resume
+
+            Case "span bold ital (bem)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .Bold = True
+                    .Italic = True
+                End With
+                Resume
+                
+            Case "span smcap bold (scbold)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .SmallCaps = True
+                    .Bold = True
+                End With
+                Resume
+
+            Case "span smcap ital (scital)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .SmallCaps = True
+                    .Italic = True
+                End With
+                Resume
+            
+            'Else just skip if not from direct formatting
+            Case Else
+                Resume NextLoop:
+        
+        End Select
+    End If
 
 End Sub
 
