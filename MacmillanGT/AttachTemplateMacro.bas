@@ -410,7 +410,7 @@ LogInformation logFileMac, logString
             Exit Function
     Else
             'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
-            If ShellAndWaitMac("ping -o confluence.macmillan.com &> /dev/null ; echo $?") <> 0 Then
+            If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then
                     LogInformation logFileMac, Now & " -- tried update; unable to connect to Confluence website (check network connectivity)"
                     Exit Function
             Else
