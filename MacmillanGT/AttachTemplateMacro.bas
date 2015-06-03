@@ -233,7 +233,7 @@ Else ' updateCheck is still True
     Dim oStream As Object
     Dim templateURL As String
     
-    templateURL = "http://confluence.macmillan.com/download/attachments/9044274/"  'this is download link, actual page housing template is http://confluence.macmillan.com/display/PBL/Test
+    templateURL = "https://confluence.macmillan.com/download/attachments/9044274/"  'this is download link, actual page housing template is http://confluence.macmillan.com/display/PBL/Test
     myURL = templateURL & versionFile
 
     Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
@@ -364,8 +364,8 @@ MacUpdateCheck = True
 updateCheck = True                                      'default
 updateFrequency = 1                                     'number of days between update checks
 logString = "created logfile: " & Now               'for first run ; any other outcome results in this string being reset
-cvUrl = "http://confluence.macmillan.com/display/PBL/Test"
-dlUrl = "http://confluence.macmillan.com/download/attachments/9044274"
+cvUrl = "https://confluence.macmillan.com/display/PBL/Test"
+dlUrl = "https://confluence.macmillan.com/download/attachments/9044274"
 installedVersionST = "(none installed)"         'default
 
 '''set Mac vars
@@ -410,7 +410,7 @@ LogInformation logFileMac, logString
             Exit Function
     Else
             'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
-            If ShellAndWaitMac("ping -o confluence.macmillan.com &> /dev/null ; echo $?") <> 0 Then
+            If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then
                     LogInformation logFileMac, Now & " -- tried update; unable to connect to Confluence website (check network connectivity)"
                     Exit Function
             Else
