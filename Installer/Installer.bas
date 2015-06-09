@@ -1,5 +1,7 @@
 Attribute VB_Name = "Installer"
 Option Explicit
+Option Compare Text
+
 
 Sub AutoOpen()
 'created by Erica Warren - erica.warren@macmillan.com
@@ -199,7 +201,7 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
     End If
 
     'If final dir = Startup, disable template
-    If InStr(FinalPath, "STARTUP") > 0 Then
+    If InStr(LCase(FinalPath), LCase("startup")) > 0 Then
         On Error Resume Next            'Error = add-in not available, don't need to uninstall
             AddIns(FinalPath).Installed = False
         On Error GoTo 0
