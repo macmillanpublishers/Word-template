@@ -45,12 +45,19 @@ Else                             'I am a Mac
         myFile = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:" & template
     End If
 End If
-
-    'Apply template with Styles
-    With ActiveDocument
-        .UpdateStylesOnOpen = True
-        .AttachedTemplate = myFile
-    End With
+    
+    'Check that file exists
+    If FileOrDirExists(myFile) = True Then
+    
+        'Apply template with Styles
+        With ActiveDocument
+            .UpdateStylesOnOpen = True
+            .AttachedTemplate = myFile
+        End With
+    Else
+        MsgBox "There was a problem attaching the template to your document." & vbNewLine & vbNewLine & _
+                "Please contact workflows@macmillan.com for assistance.", vbCritical, "Oh no!"
+    End If
     
 End Sub
 Sub zz_AttachBoundMSTemplate()
@@ -87,11 +94,17 @@ Else                             'I am a Mac
     End If
 End If
 
-    'Apply template with Styles
-    With ActiveDocument
-        .UpdateStylesOnOpen = True
-        .AttachedTemplate = myFile
-    End With
+    If FileOrDirExists(myFile) = True Then
+    
+        'Apply template with Styles
+        With ActiveDocument
+            .UpdateStylesOnOpen = True
+            .AttachedTemplate = myFile
+        End With
+    Else
+        MsgBox "There was a problem attaching the template to your document." & vbNewLine & vbNewLine & _
+                "Please contact workflows@macmillan.com for assistance.", vbCritical, "Oh no!"
+    End If
     
 End Sub
 Sub zz_AttachCoverTemplate()
@@ -128,11 +141,17 @@ Else                             'I am a Mac
     End If
 End If
 
-    'Apply template with Styles
-    With ActiveDocument
-        .UpdateStylesOnOpen = True
-        .AttachedTemplate = myFile
-    End With
+    If FileOrDirExists(myFile) = True Then
+    
+        'Apply template with Styles
+        With ActiveDocument
+            .UpdateStylesOnOpen = True
+            .AttachedTemplate = myFile
+        End With
+    Else
+        MsgBox "There was a problem attaching the template to your document." & vbNewLine & vbNewLine & _
+                "Please contact workflows@macmillan.com for assistance.", vbCritical, "Oh no!"
+    End If
     
 End Sub
 
