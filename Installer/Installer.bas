@@ -14,14 +14,16 @@ Sub AutoOpen()
             "on a Mac, please do the following:" & vbNewLine & vbNewLine & _
             "In-house: Install from Self Service, Digital Workflow category." & vbNewLine & _
             "External: Follow the instructions at confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template."
+            ActiveDocument.Close (wdDoNotSaveChanges)
     Else
         'Alert user to install
         Dim strWelcome As String
     
         strWelcome = "Welcome to the Macmillan Style Template Installer!" & vbNewLine & vbNewLine & _
-            "Please click OK to begin the installation. It should take less than a minute."
+            "Please click OK to begin the installation. It should only take a few seconds."
     
         If MsgBox(strWelcome, vbOKCancel, "Macmillan Style Template") = vbCancel Then
+            ActiveDocument.Close (wdDoNotSaveChanges)
             Exit Sub
         End If
         
@@ -29,8 +31,6 @@ Sub AutoOpen()
         'For MacmillanGT.dotm
         Dim strGtFile As String
         Dim strStartupDir As String
-        Dim strTmpDir As String
-        Dim strGtTmpPath As String
         Dim strGtFinalPath As String
         
         'For style templates
@@ -43,13 +43,8 @@ Sub AutoOpen()
         Dim logString As String
 
         strGtFile = "MacmillanGT.dotm"
-    
         strStartupDir = Application.StartupPath
             'Debug.Print "STARTUP: " & strStartupDir
-        strTmpDir = Environ("TEMP")
-            'Debug.Print "TEMP: " & strTmpDir
-        strGtTmpPath = strTmpDir & "\" & strGtFile
-            'Debug.Print "Full TEMP path: " & strGtTmpPath
         strGtFinalPath = strStartupDir & "\" & strGtFile
             'Debug.Print "Full STARTUP path: " & strGtFinalPath
         
@@ -65,7 +60,7 @@ Sub AutoOpen()
         
         '----------------Check for and create log file----------------------------------------
         If Dir(strLogDir, vbDirectory) <> vbNullString Then                 'If log dir already exists
-            logString = "-- log dir already exists."
+            logString = "-- log directory already exists."
         Else
             If Dir(strStyleDir, vbDirectory) = vbNullString Then            'If MacmillanStyleTemplate dir doesn't exist, then create
                 MkDir (strStyleDir)
@@ -121,7 +116,7 @@ Sub AutoOpen()
             
     End If
     
-    'Display installation complete message and close doc (ending sub)
+    '------Display installation complete message and close doc (ending sub)---------------
     Dim strComplete As String
     strComplete = "The Macmillan templates have been installed on your computer." & vbNewLine & vbNewLine & _
         "Close all Word files, then open Word again for the new templates to take effect."
@@ -134,6 +129,7 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
         
     Dim logString As String
     Dim strTmpPath As String
+    Dim strErrMsg As String
         
     logString = ""
     strTmpPath = Environ("TEMP") & "\" & FileName
@@ -157,8 +153,9 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
                 'Debug.Print WinHttpReq.Status
                 logString = "-- could not connect to Confluence site: Error " & Err.Number & ". Exiting installation."
                 LogInformation LogFile, logString
-                MsgBox "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
+                strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
                     "Please check your internet connection or contact workflows@macmillan.com for help."
+                MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FileName & ")"
                 DownloadFromConfluence = False
                 On Error GoTo 0
                 Exit Function
@@ -180,8 +177,9 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
     Else
         logString = "-- Http status is " & WinHttpReq.Status & ". Cannot download file, exiting installer."
         LogInformation LogFile, logString
-        MsgBox "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
+        strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
             "Please check your internet connection or contact workflows@macmillan.com for help."
+        MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FileName & ")"
         DownloadFromConfluence = False
         Exit Function
     End If
@@ -190,8 +188,9 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
     If Dir(strTmpPath) = vbNullString Then
         logString = "-- " & FileName & " file download to Temp was not successful. Exiting installer."
         LogInformation LogFile, logString
-        MsgBox "There was an error downloading the Macmillan template." & vbNewLine & _
+        strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
             "Please contact workflows@macmillan.com for assitance."
+        MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FileName & ")"
         DownloadFromConfluence = False
         Exit Function
     Else
@@ -201,11 +200,16 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
 
     'If final dir = Startup, disable template
     If InStr(FinalPath, "STARTUP") > 0 Then
-        AddIns(FinalPath).Installed = False
+        On Error Resume Next            'Error = add-in not available, don't need to uninstall
+            AddIns(FinalPath).Installed = False
+        On Error GoTo 0
     End If
     
-    'If file exists already, delete it
+    'If file exists already, log it and delete it
     If Dir(FinalPath) <> vbNullString Then
+        logString = "-- Previous version file in final directory."
+        LogInformation LogFile, logString
+        
         On Error Resume Next
             Kill FinalPath
         
@@ -213,12 +217,17 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
             If Err.Number <> 0 Then 'Add actual error number?
                 logString = "-- old " & FileName & " file is open, can't delete/replace. Alerting user, exiting sub."
                 LogInformation LogFile, logString
-                MsgBox "Please close all open Word documents and try again.", vbCritical, "Action Required!"
+                strErrMsg = "Please close all other Word documents and try again."
+                MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
                 DownloadFromConfluence = False
                 On Error GoTo 0
                 Exit Function
             End If
         On Error GoTo 0
+        
+    Else
+        logString = "No previous version file in final directory."
+        LogInformation LogFile, logString
     End If
         
     'If delete was successful, move downloaded file to Startup folder
@@ -229,8 +238,9 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
     Else
         logString = "-- old " & FileName & " file not cleared from Final directory. Exiting installer."
         LogInformation LogFile, logString
-        MsgBox "There was an error installing the Macmillan template." & vbNewLine & _
+        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
             "Please close all other Word documents and try again, or contact workflows@macmillan.com."
+        MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FileName & ")"
         DownloadFromConfluence = False
         Exit Function
     End If
@@ -242,8 +252,9 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
     Else
         logString = "-- " & FileName & " file not saved to final directory."
         LogInformation LogFile, logString
-        MsgBox "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
+        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
             "Please cotact workflows@macmillan.com for assistance."
+        MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FileName & ")"
         DownloadFromConfluence = False
         Exit Function
     End If
