@@ -279,3 +279,5 @@ Dim FileNum As Integer
     Print #FileNum, LogMessage ' write information at the end of the text file
     Close #FileNum ' close the file
 End Sub
+
+
