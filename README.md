@@ -6,9 +6,9 @@ The Macmillan template files collect the Microsoft Word style sets, macros, and 
 
 Contains the following macro, which launches when the user opens the file:
 
-###Installer.bas
+###ThisDocument.cls
 
-PC ONLY. Installs MacmillanGT.dotm in the Word Startup directory, creates MacmillanStyleTemplate directory (if needed) and installs macmillan.dotm, macmillan_NoColor.dotm, and MacmillanCoverCopy.dotm there.
+PC ONLY. Should be loaded into the ThisDocument module. Installs MacmillanGT.dotm in the Word Startup directory, creates MacmillanStyleTemplate directory (if needed) and installs macmillan.dotm, macmillan_NoColor.dotm, and MacmillanCoverCopy.dotm there.
 
 ## MacmillanGT.dotm
 
