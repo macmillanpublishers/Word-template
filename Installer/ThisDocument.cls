@@ -1,7 +1,15 @@
-Attribute VB_Name = "Installer"
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ThisDocument"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
 Option Explicit
 
-Sub AutoOpen()
+Private Sub Document_Open()
 'created by Erica Warren - erica.warren@macmillan.com
 'installs the MacmillanGT.dotm template in STARTUP dir
     
@@ -25,6 +33,34 @@ Sub AutoOpen()
         If MsgBox(strWelcome, vbOKCancel, "Macmillan Style Template") = vbCancel Then
             ActiveDocument.Close (wdDoNotSaveChanges)
             Exit Sub
+        End If
+        
+        '-------------Check for/close open documents---------------------------------------------
+        Dim strInstallerName As String
+        Dim strSaveWarning As String
+        Dim objDocument As Document
+        Dim b As Long
+        
+        strInstallerName = ThisDocument.Name
+            'Debug.Print "Installer Name: " & strInstallerName
+            'Debug.Print "Open docs: " & Documents.Count
+            
+        If Documents.Count > 1 Then
+            strSaveWarning = "All other Word documents must be closed to run the installer." & vbNewLine & vbNewLine & _
+                "Click OK and I will save and close your documents." & vbNewLine & vbNewLine & _
+                "Click Cancel to exit without installing and close the documents yourself."
+            If MsgBox(strSaveWarning, vbOKCancel, "Close documents?") = vbCancel Then
+                ActiveDocument.Close
+                Exit Sub
+            Else
+                For b = 1 To Documents.Count
+                    'Debug.Print "Current doc " & b & ": " & Documents(b).Name
+                    If Documents(b).Name <> strInstallerName Then
+                        Documents(b).Save   'separate step to trigger Save As prompt for previously unsaved docs
+                        Documents(b).Close SaveChanges:=wdSaveChanges
+                    End If
+                Next b
+            End If
         End If
         
         '-----------------Define variables--------------------------------------------------
@@ -199,7 +235,7 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
     End If
 
     'If final dir = Startup, disable template
-    If InStr(FinalPath, "STARTUP") > 0 Then
+    If InStr(LCase(FinalPath), LCase("startup")) > 0 Then
         On Error Resume Next            'Error = add-in not available, don't need to uninstall
             AddIns(FinalPath).Installed = False
         On Error GoTo 0
@@ -271,3 +307,5 @@ Dim FileNum As Integer
     Print #FileNum, LogMessage ' write information at the end of the text file
     Close #FileNum ' close the file
 End Sub
+
+
