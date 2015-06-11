@@ -18,7 +18,7 @@ Sub UniversalCastoff()
     Dim strDesign As String
     Dim strPub As String
 
-    Debug.Print CastoffForm.tabPublisher.SelectedItem.Caption
+    'Debug.Print CastoffForm.tabPublisher.SelectedItem.Caption
 
     'Get trim size.
     '0 = 5-1/2 x 8-1/4
@@ -98,7 +98,7 @@ Sub UniversalCastoff()
     'tight  | (2,0)         | (2,1)
     '--------------------------------------------------
 
-    Debug.Print lngDesignCount
+    'Debug.Print lngDesignCount
 
 '---------Calculate Page Count--------------------------------------
     Dim arrCastoffResult() As Variant
@@ -112,7 +112,7 @@ Sub UniversalCastoff()
     lngBlankPgs = arrCastoffResult(1)
     lngActualCount = arrCastoffResult(2)
 
-    Debug.Print lngFinalCount
+    'Debug.Print lngFinalCount
     
     Unload CastoffForm
     
@@ -141,7 +141,7 @@ Private Function GetCSV_PC(Publisher As String) As String
     myURL = strCastoffURL & strCastoffFile
     dirNamePC = Environ("TEMP") & "\" & strCastoffFile
 
-    Debug.Print dirNamePC
+    'Debug.Print dirNamePC
     
     'Attempt to download file
     On Error Resume Next
@@ -159,7 +159,7 @@ Private Function GetCSV_PC(Publisher As String) As String
         End If
     On Error GoTo 0
 
-    Debug.Print WinHttpReq.Status
+    'Debug.Print WinHttpReq.Status
 
     If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
     
@@ -253,13 +253,13 @@ Private Function LoadCSVtoArray(Path As String) As Variant
     
         ' Prove we have the data loaded.
 
-        For R = 0 To num_rows
-            For c = 0 To num_cols
-                Debug.Print the_array(R, c) & "|";
-            Next c
-            Debug.Print
-        Next R
-        Debug.Print "======="
+        'For R = 0 To num_rows
+        '    For c = 0 To num_cols
+        '        Debug.Print the_array(R, c) & "|";
+        '    Next c
+        '    Debug.Print
+        'Next R
+        'Debug.Print "======="
         
         'Delete the .csv file 'cuz we don't need it any more
         If Len(Dir$(Path)) > 0 Then
@@ -279,7 +279,7 @@ Private Function Castoff(Design As Long) As Variant
     lngCharacterCount = ActiveDocument.Range.ComputeStatistics(wdStatisticCharactersWithSpaces)
     lngActualPageCount = lngCharacterCount / Design
 
-    Debug.Print "Starting page count: " & lngActualPageCount
+    'Debug.Print "Starting page count: " & lngActualPageCount
     
     lngFinalPageCount = lngActualPageCount
 
@@ -304,12 +304,12 @@ Private Function Castoff(Design As Long) As Variant
     Loop
     End With
 
-    Debug.Print "Page count with page breaks: " & lngFinalPageCount
+    'Debug.Print "Page count with page breaks: " & lngFinalPageCount
     
     'Add any missing pages indicated by user
     lngFinalPageCount = lngFinalPageCount + CastoffForm.txtMissingPages.Text
     
-    Debug.Print "Page count with missing added: " & lngFinalPageCount
+    'Debug.Print "Page count with missing added: " & lngFinalPageCount
     
     'Determine next 16-page signature and blank pages
     Dim lngBlanks As Long
@@ -325,8 +325,8 @@ Private Function Castoff(Design As Long) As Variant
         lngBlanks = 0
     End If
 
-    Debug.Print "Final page count: " & lngFinalPageCount
-    Debug.Print "Final blank pages: " & lngBlanks
+    'Debug.Print "Final page count: " & lngFinalPageCount
+    'Debug.Print "Final blank pages: " & lngBlanks
 
 
     Dim arrResult() As Variant
