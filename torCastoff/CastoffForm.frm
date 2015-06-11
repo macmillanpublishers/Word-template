@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} CastoffForm 
    Caption         =   "Castoff Macro"
-   ClientHeight    =   4725
+   ClientHeight    =   6510
    ClientLeft      =   45
    ClientTop       =   -60
    ClientWidth     =   6240
@@ -53,22 +53,20 @@ Private Sub tabPublisher_Change()
 
     Select Case i
         Case "SMP"
-            optTrim5x8.Visible = True
-            optTrim6x9.Visible = True
+            optTrim5x8.Enabled = True
+            optTrim6x9.Enabled = True
         
-            optDesignLoose.Visible = True
-            optDesignAverage.Visible = True
-            optDesignTight.Visible = True
+            optDesignLoose.Enabled = True
+            optDesignAverage.Enabled = True
+            optDesignTight.Enabled = True
             
         Case "torDOTcom"
-            optTrim5x8.Value = True
-            optTrim5x8.Visible = True
-            optTrim6x9.Visible = False
+            optTrim5x8.Enabled = True
+            optTrim6x9.Enabled = False
         
-            optDesignLoose.Value = True
-            optDesignLoose.Visible = True
-            optDesignAverage.Visible = False
-            optDesignTight.Visible = False
+            optDesignLoose.Enabled = True
+            optDesignAverage.Enabled = False
+            optDesignTight.Enabled = False
     End Select
 
 End Sub
@@ -86,5 +84,20 @@ Private Sub UserForm_Initialize()
     fraTrimSize.BackColor = lngHexVal
     labReminder.BackColor = lngHexVal
     tabPublisher.BackColor = lngHexVal
+    optTrim5x8.BackColor = lngHexVal
+    optTrim6x9.BackColor = lngHexVal
+    optDesignLoose.BackColor = lngHexVal
+    optDesignAverage.BackColor = lngHexVal
+    optDesignTight.BackColor = lngHexVal
+    fraMissingPages.BackColor = lngHexVal
+    labMissingPages.BackColor = lngHexVal
+    
+    'set all option buttons to not selected
+    txtMissingPages.Text = "0"
+    optTrim5x8.Value = False
+    optTrim6x9.Value = False
+    optDesignLoose.Value = False
+    optDesignAverage.Value = False
+    optDesignTight.Value = False
 
 End Sub
