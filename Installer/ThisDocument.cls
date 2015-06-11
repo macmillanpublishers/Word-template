@@ -55,10 +55,12 @@ Private Sub Document_Open()
             Else
                 For b = 1 To Documents.Count
                     'Debug.Print "Current doc " & b & ": " & Documents(b).Name
-                    If Documents(b).Name <> strInstallerName Then
-                        Documents(b).Save   'separate step to trigger Save As prompt for previously unsaved docs
-                        Documents(b).Close SaveChanges:=wdSaveChanges
-                    End If
+                    On Error Resume Next        'To trap error if user is prompted to save new doc and clicks Cancel
+                        If Documents(b).Name <> strInstallerName Then
+                            Documents(b).Save   'separate step to trigger Save As prompt for previously unsaved docs
+                            Documents(b).Close
+                        End If
+                    On Error GoTo 0
                 Next b
             End If
         End If
