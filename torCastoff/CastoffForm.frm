@@ -73,7 +73,18 @@ Private Sub tabPublisher_Change()
 
 End Sub
 
+Private Sub UserForm_Initialize()
 
-Private Sub UserForm_Click()
+    'To ensure consistent appearance on different OS
+    Dim lngHexVal As Long
+    lngHexVal = &HF3F3F3
+
+    CastoffForm.BackColor = lngHexVal
+    cmdNoCastoff.BackColor = lngHexVal
+    cmdYesCastoff.BackColor = lngHexVal
+    fraDesign.BackColor = lngHexVal
+    fraTrimSize.BackColor = lngHexVal
+    labReminder.BackColor = lngHexVal
+    tabPublisher.BackColor = lngHexVal
 
 End Sub
