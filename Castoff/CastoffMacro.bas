@@ -112,16 +112,33 @@ Sub UniversalCastoff()
     lngBlankPgs = arrCastoffResult(1)
     lngActualCount = arrCastoffResult(2)
 
-    'Debug.Print lngFinalCount
+    'Add extra space if blanks less than 10
+    Dim strExtraSpace As String
     
-    Unload CastoffForm
+    If lngBlankPgs < 10 Then
+        strExtraSpace = " "
+    Else
+        strExtraSpace = ""
+    End If
+    
+    'Warning about sub-48-page saddle stiched tor.com books
+    Dim strWarning As String
+    
+    If strPub = "torDOTcom" And lngFinalCount < 56 Then
+        strWarning = vbNewLine & vbNewLine & _
+                    "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
+    Else
+        strWarning = ""
+    End If
     
     MsgBox "Your " & strPub & " title will be approximately " & lngFinalCount & " pages" & vbNewLine & _
             "at " & strTrim & " trim size with a " & strDesign & " design." & vbNewLine & vbNewLine & _
             vbTab & lngActualCount & " text pages" & vbNewLine & _
-            vbTab & "  " & lngBlankPgs & " blank pages" & vbNewLine & _
+            vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
             vbTab & "____________________" & vbNewLine & _
-            vbTab & lngFinalCount & " total pages"
+            vbTab & lngFinalCount & " total pages" & strWarning
+    
+    Unload CastoffForm
             
 End Sub
 
