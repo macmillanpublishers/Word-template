@@ -60,18 +60,20 @@ Sub UniversalCastoff()
     'Need separate PC and Mac subs to download file
     Dim TheOS As String
     Dim strPath As String
+    Dim strInfoType As String
 
     TheOS = System.OperatingSystem
+    strInfoType = "Castoff"
 
     If Not TheOS Like "*Mac*" Then
-        strPath = GetCSV_PC(strPub)
+        strPath = GetCSV_PC(strInfoType, strPub)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection."
                 Unload CastoffForm
                 Exit Sub
             End If
     Else
-        strPath = GetCSV_Mac(strPub)
+        strPath = GetCSV_Mac(strInfoType, strPub)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection."
                 Unload CastoffForm
@@ -124,6 +126,8 @@ Sub UniversalCastoff()
     'Tor.com POD exceptions
     Dim strWarning As String
     strWarning = ""
+    Dim strSpineSize As String
+    strSpineSize = ""
     
     If strPub = "torDOTcom" Then
         
@@ -141,6 +145,17 @@ Sub UniversalCastoff()
             strWarning = vbNewLine & vbNewLine & _
                 "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
         End If
+        
+        'Get spine size
+        If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
+            strSpineSize = SpineSize(lngFinalCount, strPub)
+            strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches" & _
+                                                vbNewLine & "at this page count."
+            Debug.Print strSpineSize
+        Else
+            strSpineSize = vbNewLine & vbNewLine & "Your page count of " & lngFinalCount & _
+                            " is out of range of the spine-size table."
+        End If
     
     End If
     
@@ -149,13 +164,13 @@ Sub UniversalCastoff()
             vbTab & lngActualCount & " text pages" & vbNewLine & _
             vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
             vbTab & "____________________" & vbNewLine & _
-            vbTab & lngFinalCount & " total pages" & strWarning
+            vbTab & lngFinalCount & " total pages" & strWarning & strSpineSize
     
     Unload CastoffForm
             
 End Sub
 
-Private Function GetCSV_PC(Publisher As String) As String
+Private Function GetCSV_PC(InfoType As String, Publisher As String) As String
 
     Dim WinHttpReq As Object
     Dim oStream As Object
@@ -167,7 +182,7 @@ Private Function GetCSV_PC(Publisher As String) As String
     'this is download link, actual page housing file is https://confluence.macmillan.com/display/PBL/Test
     strCastoffURL = "https://confluence.macmillan.com/download/attachments/9044274/"
     'CSV on Confluence page must match this format:
-    strCastoffFile = "Castoff_" & Publisher & ".csv"
+    strCastoffFile = InfoType & "_" & Publisher & ".csv"
     myURL = strCastoffURL & strCastoffFile
     dirNamePC = Environ("TEMP") & "\" & strCastoffFile
 
@@ -218,7 +233,7 @@ Private Function GetCSV_PC(Publisher As String) As String
 
 End Function
 
-Private Function GetCSV_Mac(Publisher As String) As String
+Private Function GetCSV_Mac(InfoType As String, Publisher As String) As String
     Dim dirNameMac As String
     Dim dirNameBash As String
     Dim strCastoffFile As String
@@ -226,7 +241,7 @@ Private Function GetCSV_Mac(Publisher As String) As String
     
     dirNameMac = "Macintosh HD:private:tmp:"
     dirNameBash = "/private/tmp/"
-    strCastoffFile = "Castoff_" & Publisher & ".csv"
+    strCastoffFile = InfoType & "_" & Publisher & ".csv"
     dlUrl = "https://confluence.macmillan.com/download/attachments/9044274/"
     
     'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
@@ -369,7 +384,58 @@ Private Function Castoff(Design As Long) As Variant
     Castoff = arrResult
 
 End Function
-Private Function TorDOTcomSpine(PageCount As Long)
+Private Function SpineSize(PageCount As Long, Publisher As String)
+
+'----Download CSV with spine sizes from Confluence site----------
+
+    'Need separate PC and Mac subs to download file
+    Dim TheOS As String
+    Dim strPath As String
+    Dim strInfoType As String
+    Dim strPub As String
+
+    TheOS = System.OperatingSystem
+    strInfoType = "Spine"
+
+    If Not TheOS Like "*Mac*" Then
+        strPath = GetCSV_PC(strInfoType, Publisher)
+            If strPath = vbNullString Then
+                MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
+                Unload CastoffForm
+                Exit Function
+            End If
+    Else
+        strPath = GetCSV_Mac(strInfoType, strPub)
+            If strPath = vbNullString Then
+                MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
+                Unload CastoffForm
+                Exit Function
+            End If
+    End If
+
+'---------Load CSV into an array-----------------------------------
+    Dim arrDesign() As Variant
+    arrDesign = LoadCSVtoArray(strPath)
+    
+'---------Lookup spine size in array-------------------------------
+    Dim strSpine As String
+    Dim c As Long
+    
+    'Debug.Print LBound(arrDesign, 2)
+    'Debug.Print UBound(arrDesign, 2)
+    
+    Debug.Print arrDesign(0, 14)
+    Debug.Print arrDesign(0, 517)
+    
+    
+    For c = 0 To UBound(arrDesign, 2)
+        If arrDesign(c, 0) = PageCount Then
+            strSpine = arrDesign(c, 2)
+            Exit For
+        End If
+    Next c
+    
+    SpineSize = strSpine
 
 End Function
 Private Function ShellAndWaitMac(cmd As String) As String
