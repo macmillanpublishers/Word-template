@@ -121,14 +121,27 @@ Sub UniversalCastoff()
         strExtraSpace = ""
     End If
     
-    'Warning about sub-48-page saddle stiched tor.com books
+    'Tor.com POD exceptions
     Dim strWarning As String
+    strWarning = ""
     
-    If strPub = "torDOTcom" And lngFinalCount < 56 Then
-        strWarning = vbNewLine & vbNewLine & _
-                    "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
-    Else
-        strWarning = ""
+    If strPub = "torDOTcom" Then
+        
+        'POD only has to be even, not 16-page sig
+        If (lngActualCount Mod 2) = 0 Then      'page count is even
+            lngFinalCount = lngActualCount
+            lngBlankPgs = 0
+        Else                                    'page count is odd
+            lngFinalCount = lngActualCount + 1
+            lngBlankPgs = 1
+        End If
+        
+        'Warning about sub 48 page saddle-stitched tor.com books
+        If lngFinalCount < 56 Then
+            strWarning = vbNewLine & vbNewLine & _
+                "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
+        End If
+    
     End If
     
     MsgBox "Your " & strPub & " title will be approximately " & lngFinalCount & " pages" & vbNewLine & _
@@ -356,7 +369,9 @@ Private Function Castoff(Design As Long) As Variant
     Castoff = arrResult
 
 End Function
+Private Function TorDOTcomSpine(PageCount As Long)
 
+End Function
 Private Function ShellAndWaitMac(cmd As String) As String
 
 Dim result As String
