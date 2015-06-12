@@ -182,7 +182,7 @@ Private Function DownloadFromConfluence(FileName As String, FinalPath As String,
         
     'Attempt to download file
     On Error Resume Next
-        Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
+        Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
         WinHttpReq.Open "GET", myURL, False
         WinHttpReq.Send
 
