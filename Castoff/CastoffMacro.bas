@@ -190,7 +190,7 @@ Sub UniversalCastoff()
             vbTab & lngActualCount & " text pages" & vbNewLine & _
             vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
             vbTab & "------------------" & vbNewLine & _
-            vbTab & lngFinalCount & " total pages" & strWarning & strSpineSize & vbNewLine & vbNewLine
+            vbTab & lngFinalCount & " total pages" & vbNewLine & vbNewLine
     Next d
 
 
