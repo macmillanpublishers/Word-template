@@ -1,6 +1,7 @@
 Attribute VB_Name = "CastoffMacro"
 Option Explicit
 Sub UniversalCastoff()
+'created by Erica Warren - erica.warren@macmillan.com
 
 '----------Load userform to get user inputs------------------------
     Load CastoffForm
@@ -14,13 +15,15 @@ Sub UniversalCastoff()
 '----------Get user inputs from Userform---------------------------
     Dim intTrim As Integer
     Dim strTrim As String
-    Dim intDesign As Integer
-    Dim strDesign As String
+    Dim intDesign() As Integer
+    Dim strDesign() As String
+    Dim intDim As Integer
     Dim strPub As String
 
     'Debug.Print CastoffForm.tabPublisher.SelectedItem.Caption
 
     'Get trim size.
+    'Number assigned is column index in design array
     '0 = 5-1/2 x 8-1/4
     '1 = 6-1/8 x 9-1/4
     If CastoffForm.optTrim5x8 Then
@@ -34,21 +37,37 @@ Sub UniversalCastoff()
         CastoffForm.Show
     End If
         
-    'Get design.
-    '0 = loose
-    '1 = average
-    '2 = tight
-    If CastoffForm.optDesignLoose Then
-        intDesign = 0
-        strDesign = "Loose"
-    ElseIf CastoffForm.optDesignAverage Then
-        intDesign = 1
-        strDesign = "Average"
-    ElseIf CastoffForm.optDesignTight Then
-        intDesign = 2
-        strDesign = "Tight"
-    Else
-        MsgBox "You must select a Design to run the Castoff Macro."
+    'Get designs selected.
+    'Number for intDesign is row index in design array
+    intDim = 0
+    
+    If CastoffForm.chkDesignLoose Then
+        intDim = intDim + 1
+        ReDim intDesign(1 To intDim)
+        ReDim strDesign(1 To intDim)
+        intDesign(intDim) = 0
+        strDesign(intDim) = CastoffForm.chkDesignLoose.Caption
+    End If
+    
+    If CastoffForm.chkDesignAverage Then
+        intDim = intDim + 1
+        ReDim intDesign(1 To intDim)
+        ReDim strDesign(1 To intDim)
+        intDesign(intDim) = 1
+        strDesign(intDim) = CastoffForm.chkDesignAverage.Caption
+    End If
+    
+    If CastoffForm.chkDesignTight Then
+        intDim = intDim + 1
+        ReDim intDesign(1 To intDim)
+        ReDim strDesign(1 To intDim)
+        intDesign(intDim) = 2
+        strDesign(intDim) = CastoffForm.chkDesignTight.Caption
+    End If
+    
+    'Make sure at least one design is selected
+    If intDim = 0 Then
+        MsgBox "You must select at least one Design to run the Castoff Macro."
         CastoffForm.Show
     End If
     
@@ -86,86 +105,102 @@ Sub UniversalCastoff()
     arrDesign = LoadCSVtoArray(strPath)
 
             
-'---------Get design character count-------------------------------
+'------------Get castoff for each Design selected-------------------
     Dim lngDesignCount As Long
-
-    lngDesignCount = arrDesign(intDesign, intTrim)
+    Dim strWarning As String
+    Dim strSpineSize As String
+    Dim d As Long
     
-    '--------------------------------------------------
-    'For Reference: Index numbers in array (base 0)
-    '
-    '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
-    'loose  | (0,0)         | (0,1)
-    'average| (1,0)         | (1,1)
-    'tight  | (2,0)         | (2,1)
-    '--------------------------------------------------
-
-    'Debug.Print lngDesignCount
-
-'---------Calculate Page Count--------------------------------------
-    Dim arrCastoffResult() As Variant
-    Dim lngFinalCount As Long
-    Dim lngBlankPgs As Long
-    Dim lngActualCount As Long
-
-    arrCastoffResult = Castoff(lngDesignCount)
-
-    lngFinalCount = arrCastoffResult(0)
-    lngBlankPgs = arrCastoffResult(1)
-    lngActualCount = arrCastoffResult(2)
-
-    'Add extra space if blanks less than 10
-    Dim strExtraSpace As String
+    strWarning = ""
+    strSpineSize = ""
     
-    If lngBlankPgs < 10 Then
-        strExtraSpace = " "
-    Else
-        strExtraSpace = ""
-    End If
+    For d = LBound(intDesign()) To UBound(intDesign())
+    
+        '---------Get design character count-------------------------------
+        lngDesignCount = arrDesign(intDesign(d), intTrim)
+    
+        '--------------------------------------------------
+        'For Reference: Index numbers in array (base 0)
+        '
+        '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
+        'loose  | (0,0)         | (0,1)
+        'average| (1,0)         | (1,1)
+        'tight  | (2,0)         | (2,1)
+        '--------------------------------------------------
+
+        'Debug.Print lngDesignCount
+
+        '---------Calculate Page Count--------------------------------------
+        Dim arrCastoffResult() As Variant
+        Dim lngFinalCount As Long
+        Dim lngBlankPgs As Long
+        Dim lngActualCount As Long
+
+        arrCastoffResult = Castoff(lngDesignCount)
+
+        lngFinalCount = arrCastoffResult(0)
+        lngBlankPgs = arrCastoffResult(1)
+        lngActualCount = arrCastoffResult(2)
+
+        'Add extra space if blanks less than 10
+        Dim strExtraSpace As String
+    
+        If lngBlankPgs < 10 Then
+            strExtraSpace = "  "
+        Else
+            strExtraSpace = ""
+        End If
     
 '---------Tor.com POD exceptions----------------------------------
-    Dim strWarning As String
-    strWarning = ""
-    Dim strSpineSize As String
+        
     
-    If strPub = "torDOTcom" Then
+        If strPub = "torDOTcom" Then
         
-        'POD only has to be even, not 16-page sig
-        If (lngActualCount Mod 2) = 0 Then      'page count is even
-            lngFinalCount = lngActualCount
-            lngBlankPgs = 0
-        Else                                    'page count is odd
-            lngFinalCount = lngActualCount + 1
-            lngBlankPgs = 1
-        End If
+            'POD only has to be even, not 16-page sig
+            If (lngActualCount Mod 2) = 0 Then      'page count is even
+                lngFinalCount = lngActualCount
+                lngBlankPgs = 0
+            Else                                    'page count is odd
+                lngFinalCount = lngActualCount + 1
+                lngBlankPgs = 1
+            End If
         
-        'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
-        If lngFinalCount < 56 Then
-            strWarning = vbNewLine & vbNewLine & _
-                "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
-        End If
+            'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
+            If lngFinalCount < 56 Then
+                strWarning = vbNewLine & vbNewLine & _
+                    "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
+            End If
         
-        'Get spine size
-        If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-            strSpineSize = SpineSize(lngFinalCount, strPub)
-            Debug.Print "spine size = " & strSpineSize
-            strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches " & _
+            'Get spine size
+            If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
+                strSpineSize = SpineSize(lngFinalCount, strPub)
+                'Debug.Print "spine size = " & strSpineSize
+                strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches " & _
                                             "at this page count."
-        Else
-            strSpineSize = vbNewLine & vbNewLine & "Your page count of " & lngFinalCount & _
+            Else
+                strSpineSize = vbNewLine & vbNewLine & "Your page count of " & lngFinalCount & _
                             " is out of range of the spine-size table."
+            End If
+    
         End If
     
-    End If
-    
-'-------------Report castoff info to user----------------------------------------------------------------
-
-    MsgBox "Your " & strPub & " title will be approximately " & lngFinalCount & " pages" & vbNewLine & _
-            "at " & strTrim & " trim size with a " & strDesign & " design." & vbNewLine & vbNewLine & _
+        Dim strMessage As String
+        Debug.Print strDesign(d)
+        strMessage = strMessage & vbTab & "---- " & UCase(strDesign(d)) & " ----" & vbNewLine & _
             vbTab & lngActualCount & " text pages" & vbNewLine & _
             vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
-            vbTab & "____________________" & vbNewLine & _
-            vbTab & lngFinalCount & " total pages" & strWarning & strSpineSize
+            vbTab & "------------------" & vbNewLine & _
+            vbTab & lngFinalCount & " total pages" & strWarning & strSpineSize & vbNewLine & vbNewLine
+    Next d
+
+
+'-------------Report castoff info to user----------------------------------------------------------------
+
+    MsgBox "Your " & strPub & " title will have the following approximate page count" & vbNewLine & _
+            "at the " & strTrim & " trim size:" & vbNewLine & vbNewLine & _
+            strMessage & strWarning & strSpineSize, _
+            vbOKCancel, "Castoff"
+            
     
     Unload CastoffForm
             
@@ -422,27 +457,15 @@ Private Function SpineSize(PageCount As Long, Publisher As String)
     Dim strSpine As String
     Dim c As Long
     
-    'Debug.Print LBound(arrDesign, 1)
-    'Debug.Print LBound(arrDesign, 2)
-    
-    'Debug.Print UBound(arrDesign, 1)
-    'Debug.Print UBound(arrDesign, 2)
-    
-    'Debug.Print "0,0: " & arrDesign(0, 0) & " | " & "0,1: " & arrDesign(0, 1)
-    'Debug.Print "1,0: " & arrDesign(1, 0) & " | " & "1,1: " & arrDesign(1, 1)
-    'Debug.Print "516,0: " & arrDesign(516, 0) & " | " & "516,1: " & arrDesign(516, 1)
-    'Debug.Print "517,0: " & arrDesign(517, 0) & " | " & "517,1: " & arrDesign(517, 1)
-    
-    
     For c = LBound(arrDesign, 1) To UBound(arrDesign, 1)
-        Debug.Print arrDesign(c, 0) & " = " & PageCount
+        'Debug.Print arrDesign(c, 0) & " = " & PageCount
         If arrDesign(c, 0) = PageCount Then
             strSpine = arrDesign(c, 1)
             Exit For
         End If
     Next c
     
-    Debug.Print strSpine
+    'Debug.Print strSpine
     SpineSize = strSpine
 
 End Function
