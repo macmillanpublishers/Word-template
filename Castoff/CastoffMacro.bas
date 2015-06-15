@@ -123,11 +123,10 @@ Sub UniversalCastoff()
         strExtraSpace = ""
     End If
     
-    'Tor.com POD exceptions
+'---------Tor.com POD exceptions----------------------------------
     Dim strWarning As String
     strWarning = ""
     Dim strSpineSize As String
-    strSpineSize = ""
     
     If strPub = "torDOTcom" Then
         
@@ -140,7 +139,7 @@ Sub UniversalCastoff()
             lngBlankPgs = 1
         End If
         
-        'Warning about sub 48 page saddle-stitched tor.com books
+        'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
         If lngFinalCount < 56 Then
             strWarning = vbNewLine & vbNewLine & _
                 "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
@@ -149,9 +148,9 @@ Sub UniversalCastoff()
         'Get spine size
         If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
             strSpineSize = SpineSize(lngFinalCount, strPub)
-            strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches" & _
-                                                vbNewLine & "at this page count."
-            Debug.Print strSpineSize
+            Debug.Print "spine size = " & strSpineSize
+            strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches " & _
+                                            "at this page count."
         Else
             strSpineSize = vbNewLine & vbNewLine & "Your page count of " & lngFinalCount & _
                             " is out of range of the spine-size table."
@@ -159,6 +158,8 @@ Sub UniversalCastoff()
     
     End If
     
+'-------------Report castoff info to user----------------------------------------------------------------
+
     MsgBox "Your " & strPub & " title will be approximately " & lngFinalCount & " pages" & vbNewLine & _
             "at " & strTrim & " trim size with a " & strDesign & " design." & vbNewLine & vbNewLine & _
             vbTab & lngActualCount & " text pages" & vbNewLine & _
@@ -421,20 +422,27 @@ Private Function SpineSize(PageCount As Long, Publisher As String)
     Dim strSpine As String
     Dim c As Long
     
+    'Debug.Print LBound(arrDesign, 1)
     'Debug.Print LBound(arrDesign, 2)
+    
+    'Debug.Print UBound(arrDesign, 1)
     'Debug.Print UBound(arrDesign, 2)
     
-    Debug.Print arrDesign(0, 14)
-    Debug.Print arrDesign(0, 517)
+    'Debug.Print "0,0: " & arrDesign(0, 0) & " | " & "0,1: " & arrDesign(0, 1)
+    'Debug.Print "1,0: " & arrDesign(1, 0) & " | " & "1,1: " & arrDesign(1, 1)
+    'Debug.Print "516,0: " & arrDesign(516, 0) & " | " & "516,1: " & arrDesign(516, 1)
+    'Debug.Print "517,0: " & arrDesign(517, 0) & " | " & "517,1: " & arrDesign(517, 1)
     
     
-    For c = 0 To UBound(arrDesign, 2)
+    For c = LBound(arrDesign, 1) To UBound(arrDesign, 1)
+        Debug.Print arrDesign(c, 0) & " = " & PageCount
         If arrDesign(c, 0) = PageCount Then
-            strSpine = arrDesign(c, 2)
+            strSpine = arrDesign(c, 1)
             Exit For
         End If
     Next c
     
+    Debug.Print strSpine
     SpineSize = strSpine
 
 End Function
