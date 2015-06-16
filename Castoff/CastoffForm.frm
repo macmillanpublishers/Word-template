@@ -28,7 +28,7 @@ Private Sub cmdYesCastoff_Click()
         blnTrimStatus = True
     End If
     
-    If Me.optDesignLoose Or Me.optDesignAverage Or Me.optDesignTight Then
+    If Me.chkDesignLoose Or Me.chkDesignAverage Or Me.chkDesignTight Then
         blnDesignStatus = True
     End If
     
@@ -36,7 +36,7 @@ Private Sub cmdYesCastoff_Click()
         blnCancel = False
         Me.Hide
     Else
-        MsgBox "You must select one Trim Size and one Design to generate a castoff."
+        MsgBox "You must select one Trim Size and at least one Design to generate a castoff."
     End If
 End Sub
 
@@ -46,7 +46,7 @@ Private Sub cmdNoCastoff_Click()
 End Sub
 
 Private Sub tabPublisher_Change()
-
+    
     Dim i As String
     
     i = Me.tabPublisher.SelectedItem.Caption
@@ -54,19 +54,28 @@ Private Sub tabPublisher_Change()
     Select Case i
         Case "SMP"
             optTrim5x8.Enabled = True
+            optTrim5x8.Value = True
             optTrim6x9.Enabled = True
         
-            optDesignLoose.Enabled = True
-            optDesignAverage.Enabled = True
-            optDesignTight.Enabled = True
+            chkDesignLoose.Enabled = True
+            chkDesignLoose.Value = True
+            chkDesignAverage.Enabled = True
+            chkDesignAverage.Value = True
+            chkDesignTight.Enabled = True
+            chkDesignTight.Value = True
             
         Case "torDOTcom"
             optTrim5x8.Enabled = True
+            optTrim5x8.Value = True
             optTrim6x9.Enabled = False
+            optTrim6x9.Value = False
         
-            optDesignLoose.Enabled = True
-            optDesignAverage.Enabled = False
-            optDesignTight.Enabled = False
+            chkDesignLoose.Enabled = False
+            chkDesignLoose.Value = False
+            chkDesignAverage.Enabled = True
+            chkDesignAverage.Value = True
+            chkDesignTight.Enabled = False
+            chkDesignTight.Value = False
     End Select
 
 End Sub
@@ -77,7 +86,7 @@ Private Sub UserForm_Initialize()
     Dim lngHexVal As Long
     lngHexVal = &HF3F3F3
 
-    CastoffForm.BackColor = lngHexVal
+    Me.BackColor = lngHexVal
     cmdNoCastoff.BackColor = lngHexVal
     cmdYesCastoff.BackColor = lngHexVal
     fraDesign.BackColor = lngHexVal
@@ -86,18 +95,19 @@ Private Sub UserForm_Initialize()
     tabPublisher.BackColor = lngHexVal
     optTrim5x8.BackColor = lngHexVal
     optTrim6x9.BackColor = lngHexVal
-    optDesignLoose.BackColor = lngHexVal
-    optDesignAverage.BackColor = lngHexVal
-    optDesignTight.BackColor = lngHexVal
+    chkDesignLoose.BackColor = lngHexVal
+    chkDesignAverage.BackColor = lngHexVal
+    chkDesignTight.BackColor = lngHexVal
     fraMissingPages.BackColor = lngHexVal
     labMissingPages.BackColor = lngHexVal
     
     'set all option buttons to not selected
     txtMissingPages.Text = "0"
-    optTrim5x8.Value = False
+    optTrim5x8.Value = True
     optTrim6x9.Value = False
-    optDesignLoose.Value = False
-    optDesignAverage.Value = False
-    optDesignTight.Value = False
+    chkDesignLoose.Value = True
+    chkDesignAverage.Value = True
+    chkDesignTight.Value = True
 
 End Sub
+

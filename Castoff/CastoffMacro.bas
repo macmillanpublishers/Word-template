@@ -178,7 +178,7 @@ Sub UniversalCastoff()
         
             'Get spine size
             If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-                strSpineSize = SpineSize(lngFinalCount, strPub)
+                strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm)
                 'Debug.Print "spine size = " & strSpineSize
                 strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches " & _
                                             "at this page count."
@@ -425,7 +425,7 @@ Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
     Castoff = arrResult
 
 End Function
-Private Function SpineSize(PageCount As Long, Publisher As String)
+Private Function SpineSize(PageCount As Long, Publisher As String, objForm As CastoffForm)
 
 '----Download CSV with spine sizes from Confluence site----------
 
@@ -442,14 +442,14 @@ Private Function SpineSize(PageCount As Long, Publisher As String)
         strPath = GetCSV_PC(strInfoType, Publisher)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
-                Unload objCastoffForm
+                Unload objForm
                 Exit Function
             End If
     Else
         strPath = GetCSV_Mac(strInfoType, strPub)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
-                Unload objCastoffForm
+                Unload objForm
                 Exit Function
             End If
     End If
