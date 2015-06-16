@@ -1,131 +1,238 @@
 Attribute VB_Name = "CastoffMacro"
 Option Explicit
 Sub UniversalCastoff()
+'created by Erica Warren - erica.warren@macmillan.com
 
-'----------Load userform to get user inputs------------------------
-    Load CastoffForm
-    CastoffForm.Show
+    '----------Load userform to get user inputs------------------------
+    Dim objCastoffForm As CastoffForm
+    Set objCastoffForm = New CastoffForm
     
-    If CastoffForm.blnCancel = True Then
-        Unload CastoffForm
+    objCastoffForm.Show
+    
+    If objCastoffForm.blnCancel = True Then
+        Unload objCastoffForm
         Exit Sub
     End If
 
-'----------Get user inputs from Userform---------------------------
+    '----------Get user inputs from Userform---------------------------
     Dim intTrim As Integer
     Dim strTrim As String
-    Dim intDesign As Integer
-    Dim strDesign As String
+    Dim intDesign() As Integer
+    Dim strDesign() As String
+    Dim intDim As Integer
     Dim strPub As String
 
-    'Debug.Print CastoffForm.tabPublisher.SelectedItem.Caption
+    'Debug.Print objCastoffForm.tabPublisher.SelectedItem.Caption
 
     'Get trim size.
+    'Number assigned is column index in design array
     '0 = 5-1/2 x 8-1/4
     '1 = 6-1/8 x 9-1/4
-    If CastoffForm.optTrim5x8 Then
+    If objCastoffForm.optTrim5x8 Then
         intTrim = 0
         strTrim = "5-1/2 x 8-1/4"
-    ElseIf CastoffForm.optTrim6x9 Then
+    ElseIf objCastoffForm.optTrim6x9 Then
         intTrim = 1
         strTrim = "6-1/8 x 9-1/4"
     Else
         MsgBox "You must select a Trim Size to run the Castoff Macro."
-        CastoffForm.Show
+        objCastoffForm.Show
     End If
         
-    'Get design.
-    '0 = loose
-    '1 = average
-    '2 = tight
-    If CastoffForm.optDesignLoose Then
-        intDesign = 0
-        strDesign = "Loose"
-    ElseIf CastoffForm.optDesignAverage Then
-        intDesign = 1
-        strDesign = "Average"
-    ElseIf CastoffForm.optDesignTight Then
-        intDesign = 2
-        strDesign = "Tight"
-    Else
-        MsgBox "You must select a Design to run the Castoff Macro."
-        CastoffForm.Show
+    'Get designs selected.
+    'Number for intDesign is row index in design array
+    intDim = 0
+    
+    If objCastoffForm.chkDesignLoose Then
+        intDim = intDim + 1
+        ReDim Preserve intDesign(1 To intDim)
+        ReDim Preserve strDesign(1 To intDim)
+        intDesign(intDim) = 0
+        strDesign(intDim) = objCastoffForm.chkDesignLoose.Caption
+    End If
+    
+    If objCastoffForm.chkDesignAverage Then
+        intDim = intDim + 1
+        ReDim Preserve intDesign(1 To intDim)
+        ReDim Preserve strDesign(1 To intDim)
+        intDesign(intDim) = 1
+        strDesign(intDim) = objCastoffForm.chkDesignAverage.Caption
+    End If
+    
+    If objCastoffForm.chkDesignTight Then
+        intDim = intDim + 1
+        ReDim Preserve intDesign(1 To intDim)
+        ReDim Preserve strDesign(1 To intDim)
+        intDesign(intDim) = 2
+        strDesign(intDim) = objCastoffForm.chkDesignTight.Caption
+    End If
+    
+    'Make sure at least one design is selected
+    If intDim = 0 Then
+        MsgBox "You must select at least one Design to run the Castoff Macro."
+        objCastoffForm.Show
     End If
     
     'Get publisher name from tab of userform
-    strPub = CastoffForm.tabPublisher.SelectedItem.Caption
+    strPub = objCastoffForm.tabPublisher.SelectedItem.Caption
     
-'---------Download CSV with design specs from Confluence site-------
+    '---------Download CSV with design specs from Confluence site-------
 
     'Need separate PC and Mac subs to download file
     Dim TheOS As String
     Dim strPath As String
+    Dim strInfoType As String
 
     TheOS = System.OperatingSystem
+    strInfoType = "Castoff"
 
     If Not TheOS Like "*Mac*" Then
-        strPath = GetCSV_PC(strPub)
+        strPath = GetCSV_PC(strInfoType, strPub)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection."
-                Unload CastoffForm
+                Unload objCastoffForm
                 Exit Sub
             End If
     Else
-        strPath = GetCSV_Mac(strPub)
+        strPath = GetCSV_Mac(strInfoType, strPub)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection."
-                Unload CastoffForm
+                Unload objCastoffForm
                 Exit Sub
             End If
     End If
 
-'---------Load CSV into an array-----------------------------------
+    '---------Load CSV into an array-----------------------------------
     Dim arrDesign() As Variant
     arrDesign = LoadCSVtoArray(strPath)
 
             
-'---------Get design character count-------------------------------
+    '------------Get castoff for each Design selected-------------------
     Dim lngDesignCount As Long
-
-    lngDesignCount = arrDesign(intDesign, intTrim)
+    Dim strWarning As String
+    Dim strSpineSize As String
+    Dim d As Long
     
-    '--------------------------------------------------
-    'For Reference: Index numbers in array (base 0)
-    '
-    '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
-    'loose  | (0,0)         | (0,1)
-    'average| (1,0)         | (1,1)
-    'tight  | (2,0)         | (2,1)
-    '--------------------------------------------------
-
-    'Debug.Print lngDesignCount
-
-'---------Calculate Page Count--------------------------------------
-    Dim arrCastoffResult() As Variant
-    Dim lngFinalCount As Long
-    Dim lngBlankPgs As Long
-    Dim lngActualCount As Long
-
-    arrCastoffResult = Castoff(lngDesignCount)
-
-    lngFinalCount = arrCastoffResult(0)
-    lngBlankPgs = arrCastoffResult(1)
-    lngActualCount = arrCastoffResult(2)
-
-    'Debug.Print lngFinalCount
+    strWarning = ""
+    strSpineSize = ""
     
-    Unload CastoffForm
+    For d = LBound(intDesign()) To UBound(intDesign())
+        'Debug.Print _
+        UBound(arrDesign(), 1) & " >= " & intDesign(d) & vbNewLine & _
+        UBound(arrDesign(), 2) & " >= "; intTrim
+        
+        'Error handling: intDesign(d) must be in range of design array
+        If UBound(arrDesign(), 1) >= intDesign(d) And UBound(arrDesign(), 2) >= intTrim Then
+        
+            '---------Get design character count-------------------------------
+            lngDesignCount = arrDesign(intDesign(d), intTrim)
     
-    MsgBox "Your " & strPub & " title will be approximately " & lngFinalCount & " pages" & vbNewLine & _
-            "at " & strTrim & " trim size with a " & strDesign & " design." & vbNewLine & vbNewLine & _
-            vbTab & lngActualCount & " text pages" & vbNewLine & _
-            vbTab & "  " & lngBlankPgs & " blank pages" & vbNewLine & _
-            vbTab & "____________________" & vbNewLine & _
-            vbTab & lngFinalCount & " total pages"
+            '--------------------------------------------------
+            'For Reference: Index numbers in array (base 0)
+            '
+            '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
+            'loose  | (0,0)         | (0,1)
+            'average| (1,0)         | (1,1)
+            'tight  | (2,0)         | (2,1)
+            '--------------------------------------------------
+
+            'Debug.Print lngDesignCount
+
+            '---------Calculate Page Count--------------------------------------
+            Dim arrCastoffResult() As Variant
+            Dim lngFinalCount As Long
+            Dim lngBlankPgs As Long
+            Dim lngActualCount As Long
+
+            arrCastoffResult = Castoff(lngDesignCount, objCastoffForm)
+
+            lngFinalCount = arrCastoffResult(0)
+            lngBlankPgs = arrCastoffResult(1)
+            lngActualCount = arrCastoffResult(2)
+
+            'Add extra space if blanks less than 10
+            Dim strExtraSpace As String
+    
+            If lngBlankPgs < 10 Then
+                strExtraSpace = "  "
+            Else
+                strExtraSpace = ""
+            End If
+    
+            '---------Tor.com POD exceptions---------------------------------
+            If strPub = "torDOTcom" Then
+        
+                'POD only has to be even, not 16-page sig
+                If (lngActualCount Mod 2) = 0 Then      'page count is even
+                    lngFinalCount = lngActualCount
+                    lngBlankPgs = 0
+                Else                                    'page count is odd
+                    lngFinalCount = lngActualCount + 1
+                    lngBlankPgs = 1
+                End If
+        
+                'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
+                If lngFinalCount < 56 Then
+                    strWarning = "NOTE: Tor.com titles less than 48 pages will be saddle-stitched." & _
+                                    vbNewLine & vbNewLine
+                End If
+        
+                'Get spine size
+                If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
+                    strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm)
+                    'Debug.Print "spine size = " & strSpineSize
+                    strSpineSize = "Your spine size will be " & strSpineSize & " inches " & _
+                                            "at this page count."
+                Else
+                    strSpineSize = "Your page count of " & lngFinalCount & _
+                            " is out of range of the spine-size table."
+                End If
+    
+            End If
+    
+            Dim strLine1 As String
+            Dim strLine2 As String
+            Dim strLine3 As String
+            Dim strLine4 As String
+            Dim strLine5 As String
+
+            strLine1 = strLine1 & UCase(strDesign(d)) & vbTab & vbTab
+            strLine2 = strLine2 & lngActualCount & " text pages" & vbTab
+            strLine3 = strLine3 & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbTab
+            strLine4 = strLine4 & "------------------" & vbTab
+            strLine5 = strLine5 & lngFinalCount & " total pages" & vbTab
+        Else
+            MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
+                vbCritical, "Error 1: Design Count Out of Range"
+            Unload objCastoffForm
+            Exit Sub
+        End If
+    
+    Next d
+    
+    '-------------Create final message-----------------------------------------------------------------------
+    Dim strMessage As String
+    
+    If strLine1 <> vbNullString Then
+        strMessage = "Your " & strPub & " title will have the these approximate page counts" & vbNewLine & _
+            "at the " & strTrim & " trim size:" & vbNewLine & vbNewLine & _
+            strLine1 & vbNewLine & _
+            strLine2 & vbNewLine & _
+            strLine3 & vbNewLine & _
+            strLine4 & vbNewLine & _
+            strLine5 & vbNewLine & vbNewLine
+    Else
+        strMessage = "There was a problem generating your castoff. Please contact workflows@macmillan.com for assistance."
+    End If
+
+    '-------------Report castoff info to user----------------------------------------------------------------
+    MsgBox strMessage & strWarning & strSpineSize, vbOKOnly, "Castoff"
+
+    Unload objCastoffForm
             
 End Sub
 
-Private Function GetCSV_PC(Publisher As String) As String
+Private Function GetCSV_PC(InfoType As String, Publisher As String) As String
 
     Dim WinHttpReq As Object
     Dim oStream As Object
@@ -137,7 +244,7 @@ Private Function GetCSV_PC(Publisher As String) As String
     'this is download link, actual page housing file is https://confluence.macmillan.com/display/PBL/Test
     strCastoffURL = "https://confluence.macmillan.com/download/attachments/9044274/"
     'CSV on Confluence page must match this format:
-    strCastoffFile = "Castoff_" & Publisher & ".csv"
+    strCastoffFile = InfoType & "_" & Publisher & ".csv"
     myURL = strCastoffURL & strCastoffFile
     dirNamePC = Environ("TEMP") & "\" & strCastoffFile
 
@@ -188,7 +295,7 @@ Private Function GetCSV_PC(Publisher As String) As String
 
 End Function
 
-Private Function GetCSV_Mac(Publisher As String) As String
+Private Function GetCSV_Mac(InfoType As String, Publisher As String) As String
     Dim dirNameMac As String
     Dim dirNameBash As String
     Dim strCastoffFile As String
@@ -196,7 +303,7 @@ Private Function GetCSV_Mac(Publisher As String) As String
     
     dirNameMac = "Macintosh HD:private:tmp:"
     dirNameBash = "/private/tmp/"
-    strCastoffFile = "Castoff_" & Publisher & ".csv"
+    strCastoffFile = InfoType & "_" & Publisher & ".csv"
     dlUrl = "https://confluence.macmillan.com/download/attachments/9044274/"
     
     'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
@@ -270,7 +377,7 @@ Private Function LoadCSVtoArray(Path As String) As Variant
     
 End Function
 
-Private Function Castoff(Design As Long) As Variant
+Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
     Dim lngCharacterCount As Long
     Dim lngActualPageCount As Long
     Dim lngFinalPageCount As Long
@@ -307,7 +414,7 @@ Private Function Castoff(Design As Long) As Variant
     'Debug.Print "Page count with page breaks: " & lngFinalPageCount
     
     'Add any missing pages indicated by user
-    lngFinalPageCount = lngFinalPageCount + CastoffForm.txtMissingPages.Text
+    lngFinalPageCount = lngFinalPageCount + objForm.txtMissingPages.Text
     
     'Debug.Print "Page count with missing added: " & lngFinalPageCount
     
@@ -339,7 +446,55 @@ Private Function Castoff(Design As Long) As Variant
     Castoff = arrResult
 
 End Function
+Private Function SpineSize(PageCount As Long, Publisher As String, objForm As CastoffForm)
 
+'----Download CSV with spine sizes from Confluence site----------
+
+    'Need separate PC and Mac subs to download file
+    Dim TheOS As String
+    Dim strPath As String
+    Dim strInfoType As String
+    Dim strPub As String
+
+    TheOS = System.OperatingSystem
+    strInfoType = "Spine"
+
+    If Not TheOS Like "*Mac*" Then
+        strPath = GetCSV_PC(strInfoType, Publisher)
+            If strPath = vbNullString Then
+                MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
+                Unload objForm
+                Exit Function
+            End If
+    Else
+        strPath = GetCSV_Mac(strInfoType, strPub)
+            If strPath = vbNullString Then
+                MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
+                Unload objForm
+                Exit Function
+            End If
+    End If
+
+'---------Load CSV into an array-----------------------------------
+    Dim arrDesign() As Variant
+    arrDesign = LoadCSVtoArray(strPath)
+    
+'---------Lookup spine size in array-------------------------------
+    Dim strSpine As String
+    Dim c As Long
+    
+    For c = LBound(arrDesign, 1) To UBound(arrDesign, 1)
+        'Debug.Print arrDesign(c, 0) & " = " & PageCount
+        If arrDesign(c, 0) = PageCount Then
+            strSpine = arrDesign(c, 1)
+            Exit For
+        End If
+    Next c
+    
+    'Debug.Print strSpine
+    SpineSize = strSpine
+
+End Function
 Private Function ShellAndWaitMac(cmd As String) As String
 
 Dim result As String
