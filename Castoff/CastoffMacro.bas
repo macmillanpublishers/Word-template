@@ -3,7 +3,7 @@ Option Explicit
 Sub UniversalCastoff()
 'created by Erica Warren - erica.warren@macmillan.com
 
-'----------Load userform to get user inputs------------------------
+    '----------Load userform to get user inputs------------------------
     Dim objCastoffForm As CastoffForm
     Set objCastoffForm = New CastoffForm
     
@@ -14,7 +14,7 @@ Sub UniversalCastoff()
         Exit Sub
     End If
 
-'----------Get user inputs from Userform---------------------------
+    '----------Get user inputs from Userform---------------------------
     Dim intTrim As Integer
     Dim strTrim As String
     Dim intDesign() As Integer
@@ -76,7 +76,7 @@ Sub UniversalCastoff()
     'Get publisher name from tab of userform
     strPub = objCastoffForm.tabPublisher.SelectedItem.Caption
     
-'---------Download CSV with design specs from Confluence site-------
+    '---------Download CSV with design specs from Confluence site-------
 
     'Need separate PC and Mac subs to download file
     Dim TheOS As String
@@ -102,12 +102,12 @@ Sub UniversalCastoff()
             End If
     End If
 
-'---------Load CSV into an array-----------------------------------
+    '---------Load CSV into an array-----------------------------------
     Dim arrDesign() As Variant
     arrDesign = LoadCSVtoArray(strPath)
 
             
-'------------Get castoff for each Design selected-------------------
+    '------------Get castoff for each Design selected-------------------
     Dim lngDesignCount As Long
     Dim strWarning As String
     Dim strSpineSize As String
@@ -159,9 +159,7 @@ Sub UniversalCastoff()
                 strExtraSpace = ""
             End If
     
-            '---------Tor.com POD exceptions----------------------------------
-        
-    
+            '---------Tor.com POD exceptions---------------------------------
             If strPub = "torDOTcom" Then
         
                 'POD only has to be even, not 16-page sig
@@ -175,30 +173,34 @@ Sub UniversalCastoff()
         
                 'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
                 If lngFinalCount < 56 Then
-                    strWarning = vbNewLine & vbNewLine & _
-                        "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
+                    strWarning = "NOTE: Tor.com titles less than 48 pages will be saddle-stitched." & _
+                                    vbNewLine & vbNewLine
                 End If
         
                 'Get spine size
                 If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
                     strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm)
                     'Debug.Print "spine size = " & strSpineSize
-                    strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches " & _
+                    strSpineSize = "Your spine size will be " & strSpineSize & " inches " & _
                                             "at this page count."
                 Else
-                    strSpineSize = vbNewLine & vbNewLine & "Your page count of " & lngFinalCount & _
+                    strSpineSize = "Your page count of " & lngFinalCount & _
                             " is out of range of the spine-size table."
                 End If
     
             End If
     
-            Dim strMessage As String
-            'Debug.Print strDesign(d)
-            strMessage = strMessage & vbTab & "---- " & UCase(strDesign(d)) & " ----" & vbNewLine & _
-                vbTab & lngActualCount & " text pages" & vbNewLine & _
-                vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
-                vbTab & "------------------" & vbNewLine & _
-                vbTab & lngFinalCount & " total pages"
+            Dim strLine1 As String
+            Dim strLine2 As String
+            Dim strLine3 As String
+            Dim strLine4 As String
+            Dim strLine5 As String
+
+            strLine1 = strLine1 & UCase(strDesign(d)) & vbTab & vbTab
+            strLine2 = strLine2 & lngActualCount & " text pages" & vbTab
+            strLine3 = strLine3 & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbTab
+            strLine4 = strLine4 & "------------------" & vbTab
+            strLine5 = strLine5 & lngFinalCount & " total pages" & vbTab
         Else
             MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
                 vbCritical, "Error 1: Design Count Out of Range"
@@ -207,14 +209,25 @@ Sub UniversalCastoff()
         End If
     
     Next d
-'-------------Report castoff info to user----------------------------------------------------------------
-
-    MsgBox "Your " & strPub & " title will have the following approximate page count" & vbNewLine & _
-            "at the " & strTrim & " trim size:" & vbNewLine & vbNewLine & _
-            strMessage & strWarning & strSpineSize, _
-            vbOKCancel, "Castoff"
-            
     
+    '-------------Create final message-----------------------------------------------------------------------
+    Dim strMessage As String
+    
+    If strLine1 <> vbNullString Then
+        strMessage = "Your " & strPub & " title will have the these approximate page counts" & vbNewLine & _
+            "at the " & strTrim & " trim size:" & vbNewLine & vbNewLine & _
+            strLine1 & vbNewLine & _
+            strLine2 & vbNewLine & _
+            strLine3 & vbNewLine & _
+            strLine4 & vbNewLine & _
+            strLine5 & vbNewLine & vbNewLine
+    Else
+        strMessage = "There was a problem generating your castoff. Please contact workflows@macmillan.com for assistance."
+    End If
+
+    '-------------Report castoff info to user----------------------------------------------------------------
+    MsgBox strMessage & strWarning & strSpineSize, vbOKOnly, "Castoff"
+
     Unload objCastoffForm
             
 End Sub
