@@ -117,6 +117,9 @@ Sub UniversalCastoff()
     strSpineSize = ""
     
     For d = LBound(intDesign()) To UBound(intDesign())
+        'Debug.Print _
+        UBound(arrDesign(), 1) & " >= " & intDesign(d) & vbNewLine & _
+        UBound(arrDesign(), 2) & " >= "; intTrim
         
         'Error handling: intDesign(d) must be in range of design array
         If UBound(arrDesign(), 1) >= intDesign(d) And UBound(arrDesign(), 2) >= intTrim Then
@@ -195,7 +198,7 @@ Sub UniversalCastoff()
                 vbTab & lngActualCount & " text pages" & vbNewLine & _
                 vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
                 vbTab & "------------------" & vbNewLine & _
-                vbTab & lngFinalCount & " total pages" & vbNewLine & vbNewLine
+                vbTab & lngFinalCount & " total pages"
         Else
             MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
                 vbCritical, "Error 1: Design Count Out of Range"
