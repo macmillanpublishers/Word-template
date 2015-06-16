@@ -116,89 +116,94 @@ Sub UniversalCastoff()
     strWarning = ""
     strSpineSize = ""
     
-    'Debug.Print LBound(intDesign())
-    'Debug.Print UBound(intDesign())
-    
     For d = LBound(intDesign()) To UBound(intDesign())
-    
-        '---------Get design character count-------------------------------
-        lngDesignCount = arrDesign(intDesign(d), intTrim)
-    
-        '--------------------------------------------------
-        'For Reference: Index numbers in array (base 0)
-        '
-        '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
-        'loose  | (0,0)         | (0,1)
-        'average| (1,0)         | (1,1)
-        'tight  | (2,0)         | (2,1)
-        '--------------------------------------------------
-
-        'Debug.Print lngDesignCount
-
-        '---------Calculate Page Count--------------------------------------
-        Dim arrCastoffResult() As Variant
-        Dim lngFinalCount As Long
-        Dim lngBlankPgs As Long
-        Dim lngActualCount As Long
-
-        arrCastoffResult = Castoff(lngDesignCount, objCastoffForm)
-
-        lngFinalCount = arrCastoffResult(0)
-        lngBlankPgs = arrCastoffResult(1)
-        lngActualCount = arrCastoffResult(2)
-
-        'Add extra space if blanks less than 10
-        Dim strExtraSpace As String
-    
-        If lngBlankPgs < 10 Then
-            strExtraSpace = "  "
-        Else
-            strExtraSpace = ""
-        End If
-    
-'---------Tor.com POD exceptions----------------------------------
         
+        'Error handling: intDesign(d) must be in range of design array
+        If UBound(arrDesign(), 1) >= intDesign(d) And UBound(arrDesign(), 2) >= intTrim Then
+        
+            '---------Get design character count-------------------------------
+            lngDesignCount = arrDesign(intDesign(d), intTrim)
     
-        If strPub = "torDOTcom" Then
-        
-            'POD only has to be even, not 16-page sig
-            If (lngActualCount Mod 2) = 0 Then      'page count is even
-                lngFinalCount = lngActualCount
-                lngBlankPgs = 0
-            Else                                    'page count is odd
-                lngFinalCount = lngActualCount + 1
-                lngBlankPgs = 1
-            End If
-        
-            'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
-            If lngFinalCount < 56 Then
-                strWarning = vbNewLine & vbNewLine & _
-                    "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
-            End If
-        
-            'Get spine size
-            If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-                strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm)
-                'Debug.Print "spine size = " & strSpineSize
-                strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches " & _
-                                            "at this page count."
+            '--------------------------------------------------
+            'For Reference: Index numbers in array (base 0)
+            '
+            '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
+            'loose  | (0,0)         | (0,1)
+            'average| (1,0)         | (1,1)
+            'tight  | (2,0)         | (2,1)
+            '--------------------------------------------------
+
+            'Debug.Print lngDesignCount
+
+            '---------Calculate Page Count--------------------------------------
+            Dim arrCastoffResult() As Variant
+            Dim lngFinalCount As Long
+            Dim lngBlankPgs As Long
+            Dim lngActualCount As Long
+
+            arrCastoffResult = Castoff(lngDesignCount, objCastoffForm)
+
+            lngFinalCount = arrCastoffResult(0)
+            lngBlankPgs = arrCastoffResult(1)
+            lngActualCount = arrCastoffResult(2)
+
+            'Add extra space if blanks less than 10
+            Dim strExtraSpace As String
+    
+            If lngBlankPgs < 10 Then
+                strExtraSpace = "  "
             Else
-                strSpineSize = vbNewLine & vbNewLine & "Your page count of " & lngFinalCount & _
-                            " is out of range of the spine-size table."
+                strExtraSpace = ""
             End If
     
+            '---------Tor.com POD exceptions----------------------------------
+        
+    
+            If strPub = "torDOTcom" Then
+        
+                'POD only has to be even, not 16-page sig
+                If (lngActualCount Mod 2) = 0 Then      'page count is even
+                    lngFinalCount = lngActualCount
+                    lngBlankPgs = 0
+                Else                                    'page count is odd
+                    lngFinalCount = lngActualCount + 1
+                    lngBlankPgs = 1
+                End If
+        
+                'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
+                If lngFinalCount < 56 Then
+                    strWarning = vbNewLine & vbNewLine & _
+                        "NOTE: Tor.com titles less than 48 pages will be saddle-stitched."
+                End If
+        
+                'Get spine size
+                If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
+                    strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm)
+                    'Debug.Print "spine size = " & strSpineSize
+                    strSpineSize = vbNewLine & vbNewLine & "Your spine size will be " & strSpineSize & " inches " & _
+                                            "at this page count."
+                Else
+                    strSpineSize = vbNewLine & vbNewLine & "Your page count of " & lngFinalCount & _
+                            " is out of range of the spine-size table."
+                End If
+    
+            End If
+    
+            Dim strMessage As String
+            'Debug.Print strDesign(d)
+            strMessage = strMessage & vbTab & "---- " & UCase(strDesign(d)) & " ----" & vbNewLine & _
+                vbTab & lngActualCount & " text pages" & vbNewLine & _
+                vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
+                vbTab & "------------------" & vbNewLine & _
+                vbTab & lngFinalCount & " total pages" & vbNewLine & vbNewLine
+        Else
+            MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
+                vbCritical, "Error 1: Design Count Out of Range"
+            Unload objCastoffForm
+            Exit Sub
         End If
     
-        Dim strMessage As String
-        'Debug.Print strDesign(d)
-        strMessage = strMessage & vbTab & "---- " & UCase(strDesign(d)) & " ----" & vbNewLine & _
-            vbTab & lngActualCount & " text pages" & vbNewLine & _
-            vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
-            vbTab & "------------------" & vbNewLine & _
-            vbTab & lngFinalCount & " total pages" & vbNewLine & vbNewLine
     Next d
-
-
 '-------------Report castoff info to user----------------------------------------------------------------
 
     MsgBox "Your " & strPub & " title will have the following approximate page count" & vbNewLine & _
