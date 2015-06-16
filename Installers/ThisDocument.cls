@@ -125,7 +125,7 @@ Private Sub Document_Open()
         
         'If False, error in download; user was notified in DownloadFromConfluence function
         If DownloadFromConfluence(strGtFinalPath, strLogPath) = False Then
-            ActiveDocument.Close (wdDoNotSaveChanges)
+            ActiveDocument.Quit (wdDoNotSaveChanges)
             Exit Sub
         End If
     End If
@@ -134,10 +134,16 @@ Private Sub Document_Open()
     Dim strComplete As String
     
     strComplete = "The " & strTemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
-        "Close all Word files, then open Word again for it to take effect."
+        "Click OK to close Word. When you restart Word, the template will be available."
         
     MsgBox strComplete, vbOKOnly, "Installation Successful"
-    ActiveDocument.Close (wdDoNotSaveChanges)          'DEBUG: comment out this line
+    
+    '------Close and restart Word for template changes to take effect---------------------
+    'Would love to get restart to work...
+    'Dim restartTime As Variant
+    'restartTime = Now + TimeValue("00:00:01")
+    'Application.OnTime When:=restartTime, Name:="Restart"
+    Application.Quit SaveChanges:=wdDoNotSaveChanges          'DEBUG: comment out this line
     
 End Sub
 Private Function DownloadFromConfluence(FinalPath As String, LogFile As String) As Boolean
@@ -284,6 +290,11 @@ Dim FileNum As Integer
     Open LogFile For Append As #FileNum ' creates the file if it doesn't exist
     Print #FileNum, LogMessage ' write information at the end of the text file
     Close #FileNum ' close the file
+End Sub
+
+Sub Restart()
+    Documents.Add
+    MsgBox "The installation has been successful."
 End Sub
 
 
