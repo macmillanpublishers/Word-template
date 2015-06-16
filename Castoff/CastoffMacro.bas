@@ -120,8 +120,8 @@ Sub UniversalCastoff()
     
     For d = LBound(intDesign()) To UBound(intDesign())
         'Debug.Print _
-        UBound(arrDesign(), 1) & " >= " & intDesign(d) & vbNewLine & _
-        UBound(arrDesign(), 2) & " >= "; intTrim
+        UBound(arrDesign(), 1) & " < " & intDesign(d) & vbNewLine & _
+        UBound(arrDesign(), 2) & " < "; intTrim
         
         'Error handling: intDesign(d) must be in range of design array
         If UBound(arrDesign(), 1) < intDesign(d) And UBound(arrDesign(), 2) < intTrim Then
