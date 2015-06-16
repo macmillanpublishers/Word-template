@@ -89,14 +89,16 @@ Sub UniversalCastoff()
     If Not TheOS Like "*Mac*" Then
         strPath = GetCSV_PC(strInfoType, strPub)
             If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection."
+                MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection.", _
+                    vbCritical, "Error 3: Path to CSV Is Null"
                 Unload objCastoffForm
                 Exit Sub
             End If
     Else
         strPath = GetCSV_Mac(strInfoType, strPub)
             If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection."
+                MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection.", _
+                    vbCritical, "Error 3: Path to CSV Is Null"
                 Unload objCastoffForm
                 Exit Sub
             End If
@@ -122,8 +124,12 @@ Sub UniversalCastoff()
         UBound(arrDesign(), 2) & " >= "; intTrim
         
         'Error handling: intDesign(d) must be in range of design array
-        If UBound(arrDesign(), 1) >= intDesign(d) And UBound(arrDesign(), 2) >= intTrim Then
-        
+        If UBound(arrDesign(), 1) < intDesign(d) And UBound(arrDesign(), 2) < intTrim Then
+             MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
+                vbCritical, "Error 1: Design Count Out of Range"
+            Unload objCastoffForm
+            Exit Sub
+        Else
             '---------Get design character count-------------------------------
             lngDesignCount = arrDesign(intDesign(d), intTrim)
     
@@ -154,9 +160,9 @@ Sub UniversalCastoff()
             Dim strExtraSpace As String
     
             If lngBlankPgs < 10 Then
-                strExtraSpace = "  "
+                strExtraSpace = "    "
             Else
-                strExtraSpace = ""
+                strExtraSpace = "  "
             End If
     
             '---------Tor.com POD exceptions---------------------------------
@@ -198,39 +204,25 @@ Sub UniversalCastoff()
             End If
             
             '------------------Create output for this castoff---------------------
-            Dim strLine1 As String
-            Dim strLine2 As String
-            Dim strLine3 As String
-            Dim strLine4 As String
-            Dim strLine5 As String
-
-            strLine1 = strLine1 & UCase(strDesign(d)) & vbTab & vbTab
-            strLine2 = strLine2 & lngActualCount & " text pages" & vbTab
-            strLine3 = strLine3 & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbTab
-            strLine4 = strLine4 & "------------------" & vbTab
-            strLine5 = strLine5 & lngFinalCount & " total pages" & vbTab
-        Else
-            MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
-                vbCritical, "Error 1: Design Count Out of Range"
-            Unload objCastoffForm
-            Exit Sub
+            Dim strMessage As String
+            
+            strMessage = strMessage & _
+                vbTab & UCase(strDesign(d)) & ": " & lngFinalCount & vbNewLine & _
+                vbTab & lngActualCount & " text pages" & vbNewLine & _
+                vbTab & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
+                vbTab & lngFinalCount & " total pages" & vbNewLine & vbNewLine
         End If
     
     Next d
     
-    '-------------Create final message-----------------------------------------------------------------------
-    Dim strMessage As String
-    
-    If strLine1 <> vbNullString Then
-        strMessage = "Your " & strPub & " title will have the these approximate page counts" & vbNewLine & _
-            "at the " & strTrim & " trim size:" & vbNewLine & vbNewLine & _
-            strLine1 & vbNewLine & _
-            strLine2 & vbNewLine & _
-            strLine3 & vbNewLine & _
-            strLine4 & vbNewLine & _
-            strLine5 & vbNewLine & vbNewLine
+    '-------------Create final message---------------------------------------------------
+    If strMessage <> vbNullString Then
+        strMessage = "Your " & strPub & " title will have these approximate page counts" _
+            & vbNewLine & "at the " & strTrim & " trim size:" & vbNewLine & vbNewLine & _
+            strMessage
     Else
-        strMessage = "There was a problem generating your castoff. Please contact workflows@macmillan.com for assistance."
+        strMessage = "Error 4: There was a problem generating your castoff." & _
+            " Please contact workflows@macmillan.com for assistance."
     End If
 
     '-------------Report castoff info to user----------------------------------------------------------------
