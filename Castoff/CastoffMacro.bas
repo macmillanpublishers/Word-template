@@ -45,24 +45,24 @@ Sub UniversalCastoff()
     
     If objCastoffForm.chkDesignLoose Then
         intDim = intDim + 1
-        ReDim intDesign(1 To intDim)
-        ReDim strDesign(1 To intDim)
+        ReDim Preserve intDesign(1 To intDim)
+        ReDim Preserve strDesign(1 To intDim)
         intDesign(intDim) = 0
         strDesign(intDim) = objCastoffForm.chkDesignLoose.Caption
     End If
     
     If objCastoffForm.chkDesignAverage Then
         intDim = intDim + 1
-        ReDim intDesign(1 To intDim)
-        ReDim strDesign(1 To intDim)
+        ReDim Preserve intDesign(1 To intDim)
+        ReDim Preserve strDesign(1 To intDim)
         intDesign(intDim) = 1
         strDesign(intDim) = objCastoffForm.chkDesignAverage.Caption
     End If
     
     If objCastoffForm.chkDesignTight Then
         intDim = intDim + 1
-        ReDim intDesign(1 To intDim)
-        ReDim strDesign(1 To intDim)
+        ReDim Preserve intDesign(1 To intDim)
+        ReDim Preserve strDesign(1 To intDim)
         intDesign(intDim) = 2
         strDesign(intDim) = objCastoffForm.chkDesignTight.Caption
     End If
@@ -116,15 +116,14 @@ Sub UniversalCastoff()
     strWarning = ""
     strSpineSize = ""
     
-    Debug.Print LBound(intDesign())
-    Debug.Print UBound(intDesign())
+    'Debug.Print LBound(intDesign())
+    'Debug.Print UBound(intDesign())
     
     For d = LBound(intDesign()) To UBound(intDesign())
     
         '---------Get design character count-------------------------------
         lngDesignCount = arrDesign(intDesign(d), intTrim)
-        Debug.Print intDesign(d)
-        Debug.Print lngDesignCount
+    
         '--------------------------------------------------
         'For Reference: Index numbers in array (base 0)
         '
@@ -191,7 +190,7 @@ Sub UniversalCastoff()
         End If
     
         Dim strMessage As String
-        Debug.Print strDesign(d)
+        'Debug.Print strDesign(d)
         strMessage = strMessage & vbTab & "---- " & UCase(strDesign(d)) & " ----" & vbNewLine & _
             vbTab & lngActualCount & " text pages" & vbNewLine & _
             vbTab & "  " & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
