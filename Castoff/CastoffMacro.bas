@@ -4,11 +4,13 @@ Sub UniversalCastoff()
 'created by Erica Warren - erica.warren@macmillan.com
 
 '----------Load userform to get user inputs------------------------
-    Load CastoffForm
-    CastoffForm.Show
+    Dim objCastoffForm As CastoffForm
+    Set objCastoffForm = New CastoffForm
     
-    If CastoffForm.blnCancel = True Then
-        Unload CastoffForm
+    objCastoffForm.Show
+    
+    If objCastoffForm.blnCancel = True Then
+        Unload objCastoffForm
         Exit Sub
     End If
 
@@ -20,59 +22,59 @@ Sub UniversalCastoff()
     Dim intDim As Integer
     Dim strPub As String
 
-    'Debug.Print CastoffForm.tabPublisher.SelectedItem.Caption
+    'Debug.Print objCastoffForm.tabPublisher.SelectedItem.Caption
 
     'Get trim size.
     'Number assigned is column index in design array
     '0 = 5-1/2 x 8-1/4
     '1 = 6-1/8 x 9-1/4
-    If CastoffForm.optTrim5x8 Then
+    If objCastoffForm.optTrim5x8 Then
         intTrim = 0
         strTrim = "5-1/2 x 8-1/4"
-    ElseIf CastoffForm.optTrim6x9 Then
+    ElseIf objCastoffForm.optTrim6x9 Then
         intTrim = 1
         strTrim = "6-1/8 x 9-1/4"
     Else
         MsgBox "You must select a Trim Size to run the Castoff Macro."
-        CastoffForm.Show
+        objCastoffForm.Show
     End If
         
     'Get designs selected.
     'Number for intDesign is row index in design array
     intDim = 0
     
-    If CastoffForm.chkDesignLoose Then
+    If objCastoffForm.chkDesignLoose Then
         intDim = intDim + 1
         ReDim intDesign(1 To intDim)
         ReDim strDesign(1 To intDim)
         intDesign(intDim) = 0
-        strDesign(intDim) = CastoffForm.chkDesignLoose.Caption
+        strDesign(intDim) = objCastoffForm.chkDesignLoose.Caption
     End If
     
-    If CastoffForm.chkDesignAverage Then
+    If objCastoffForm.chkDesignAverage Then
         intDim = intDim + 1
         ReDim intDesign(1 To intDim)
         ReDim strDesign(1 To intDim)
         intDesign(intDim) = 1
-        strDesign(intDim) = CastoffForm.chkDesignAverage.Caption
+        strDesign(intDim) = objCastoffForm.chkDesignAverage.Caption
     End If
     
-    If CastoffForm.chkDesignTight Then
+    If objCastoffForm.chkDesignTight Then
         intDim = intDim + 1
         ReDim intDesign(1 To intDim)
         ReDim strDesign(1 To intDim)
         intDesign(intDim) = 2
-        strDesign(intDim) = CastoffForm.chkDesignTight.Caption
+        strDesign(intDim) = objCastoffForm.chkDesignTight.Caption
     End If
     
     'Make sure at least one design is selected
     If intDim = 0 Then
         MsgBox "You must select at least one Design to run the Castoff Macro."
-        CastoffForm.Show
+        objCastoffForm.Show
     End If
     
     'Get publisher name from tab of userform
-    strPub = CastoffForm.tabPublisher.SelectedItem.Caption
+    strPub = objCastoffForm.tabPublisher.SelectedItem.Caption
     
 '---------Download CSV with design specs from Confluence site-------
 
@@ -88,14 +90,14 @@ Sub UniversalCastoff()
         strPath = GetCSV_PC(strInfoType, strPub)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection."
-                Unload CastoffForm
+                Unload objCastoffForm
                 Exit Sub
             End If
     Else
         strPath = GetCSV_Mac(strInfoType, strPub)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection."
-                Unload CastoffForm
+                Unload objCastoffForm
                 Exit Sub
             End If
     End If
@@ -114,11 +116,15 @@ Sub UniversalCastoff()
     strWarning = ""
     strSpineSize = ""
     
+    Debug.Print LBound(intDesign())
+    Debug.Print UBound(intDesign())
+    
     For d = LBound(intDesign()) To UBound(intDesign())
     
         '---------Get design character count-------------------------------
         lngDesignCount = arrDesign(intDesign(d), intTrim)
-    
+        Debug.Print intDesign(d)
+        Debug.Print lngDesignCount
         '--------------------------------------------------
         'For Reference: Index numbers in array (base 0)
         '
@@ -136,7 +142,7 @@ Sub UniversalCastoff()
         Dim lngBlankPgs As Long
         Dim lngActualCount As Long
 
-        arrCastoffResult = Castoff(lngDesignCount)
+        arrCastoffResult = Castoff(lngDesignCount, objCastoffForm)
 
         lngFinalCount = arrCastoffResult(0)
         lngBlankPgs = arrCastoffResult(1)
@@ -202,7 +208,7 @@ Sub UniversalCastoff()
             vbOKCancel, "Castoff"
             
     
-    Unload CastoffForm
+    Unload objCastoffForm
             
 End Sub
 
@@ -351,7 +357,7 @@ Private Function LoadCSVtoArray(Path As String) As Variant
     
 End Function
 
-Private Function Castoff(Design As Long) As Variant
+Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
     Dim lngCharacterCount As Long
     Dim lngActualPageCount As Long
     Dim lngFinalPageCount As Long
@@ -388,7 +394,7 @@ Private Function Castoff(Design As Long) As Variant
     'Debug.Print "Page count with page breaks: " & lngFinalPageCount
     
     'Add any missing pages indicated by user
-    lngFinalPageCount = lngFinalPageCount + CastoffForm.txtMissingPages.Text
+    lngFinalPageCount = lngFinalPageCount + objForm.txtMissingPages.Text
     
     'Debug.Print "Page count with missing added: " & lngFinalPageCount
     
@@ -437,14 +443,14 @@ Private Function SpineSize(PageCount As Long, Publisher As String)
         strPath = GetCSV_PC(strInfoType, Publisher)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
-                Unload CastoffForm
+                Unload objCastoffForm
                 Exit Function
             End If
     Else
         strPath = GetCSV_Mac(strInfoType, strPub)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
-                Unload CastoffForm
+                Unload objCastoffForm
                 Exit Function
             End If
     End If
