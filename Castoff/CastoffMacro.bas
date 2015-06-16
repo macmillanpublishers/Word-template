@@ -176,20 +176,28 @@ Sub UniversalCastoff()
                     strWarning = "NOTE: Tor.com titles less than 48 pages will be saddle-stitched." & _
                                     vbNewLine & vbNewLine
                 End If
-        
+            
+                Debug.Print strPub
+                
                 'Get spine size
                 If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
                     strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm)
                     'Debug.Print "spine size = " & strSpineSize
-                    strSpineSize = "Your spine size will be " & strSpineSize & " inches " & _
+                    If strSpineSize = vbNullString Then
+                        strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
+                            "Contact workflows@macmillan.com for assistance."
+                    Else
+                        strSpineSize = "Your spine size will be " & strSpineSize & " inches " & _
                                             "at this page count."
+                    End If
                 Else
                     strSpineSize = "Your page count of " & lngFinalCount & _
                             " is out of range of the spine-size table."
                 End If
     
             End If
-    
+            
+            '------------------Create output for this castoff---------------------
             Dim strLine1 As String
             Dim strLine2 As String
             Dim strLine3 As String
@@ -305,6 +313,8 @@ Private Function GetCSV_Mac(InfoType As String, Publisher As String) As String
     dirNameBash = "/private/tmp/"
     strCastoffFile = InfoType & "_" & Publisher & ".csv"
     dlUrl = "https://confluence.macmillan.com/download/attachments/9044274/"
+    
+    'Debug.Print strCastoffFile
     
     'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
     If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then
@@ -467,7 +477,7 @@ Private Function SpineSize(PageCount As Long, Publisher As String, objForm As Ca
                 Exit Function
             End If
     Else
-        strPath = GetCSV_Mac(strInfoType, strPub)
+        strPath = GetCSV_Mac(strInfoType, Publisher)
             If strPath = vbNullString Then
                 MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
                 Unload objForm
