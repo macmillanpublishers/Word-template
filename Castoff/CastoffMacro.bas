@@ -506,3 +506,7 @@ scriptCmd = "do shell script """ & cmd & """"
 result = MacScript(scriptCmd) ' result contains stdout, should you care
 ShellAndWaitMac = result
 End Function
+Sub Restart()
+    Documents.Add
+    MsgBox "It worked!"
+End Sub
