@@ -122,7 +122,7 @@ Private Sub Document_Open()
         
         'Download GT file
         If DownloadFromConfluence(strGtFile, strGtFinalPath, strLogPath) = False Then
-            ActiveDocument.Close (wdDoNotSaveChanges)
+            Application.Quit (wdDoNotSaveChanges)
             Exit Sub
         End If
         
@@ -147,7 +147,7 @@ Private Sub Document_Open()
             strTemplateFinalPath = strStyleDir & "\" & arrStyleTemplates(a)
             
             If DownloadFromConfluence(arrStyleTemplates(a), strTemplateFinalPath, strLogPath) = False Then
-                ActiveDocument.Close (wdDoNotSaveChanges)       'If ANY templates do not download correctly, sub will end.
+                Application.Quit (wdDoNotSaveChanges)       'If ANY templates do not download correctly, sub will end.
                 Exit Sub
             End If
         Next a
@@ -157,9 +157,9 @@ Private Sub Document_Open()
     '------Display installation complete message and close doc (ending sub)---------------
     Dim strComplete As String
     strComplete = "The Macmillan templates have been installed on your computer." & vbNewLine & vbNewLine & _
-        "Close all Word files, then open Word again for the new templates to take effect."
+        "Click OK to close Word. When you restart Word, the template will be available."
     MsgBox strComplete, vbOKOnly, "Installation Successful"
-    ActiveDocument.Close (wdDoNotSaveChanges)          'DEBUG: comment out this line
+    Application.Quit (wdDoNotSaveChanges)          'DEBUG: comment out this line
     
     
 End Sub
