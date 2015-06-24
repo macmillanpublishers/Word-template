@@ -996,6 +996,8 @@ fCount = 0
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
+On Error GoTo ErrHandler
+
     Selection.Find.ClearFormatting
     With Selection.Find
         .Text = ""
@@ -1039,6 +1041,13 @@ If fCount = 0 Then
 Else
     GetText = fString
 End If
+
+Exit Function
+
+ErrHandler:
+    If Err.Number = 5941 Then   ' The style is not present in the document
+        GetText = ""
+    End If
 
 End Function
 Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
@@ -1598,18 +1607,15 @@ styleNameB(4) = "Titlepage Imprint Line (imp)"
 
 For b = 1 To UBound(styleNameB())
     bString(b) = GetText(styleNameB(b))
+    If bString(b) <> vbNullString Then
+        bString(b) = "** " & styleNameB(b) & " **" & vbNewLine & _
+                    bString(b) & vbNewLine
+    End If
 Next b
 
-strTitleData = "** Title **" & vbNewLine & _
-            bString(1) & vbNewLine & _
-            "** Author **" & vbNewLine & _
-            bString(2) & vbNewLine & _
-            "** ISBN **" & vbNewLine & _
-            bString(3) & vbNewLine & _
-            "** Imprint **" & vbNewLine & _
-            bString(4) & vbNewLine
+strTitleData = bString(1) & bString(2) & bString(3) & bString(4)
             
-'Debug.Print strTitleData
+Debug.Print strTitleData
 
 GetMetadata = strTitleData
 
