@@ -406,6 +406,7 @@ styleCount = CountReqdStyles()
 
 If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to user in last function
     Application.ScreenUpdating = True
+    Unload oProgressStyleRpt
     Exit Sub
 End If
             
@@ -425,7 +426,7 @@ End If
 ' If certain styles (oldStyle) appear by themselves, converts to
 ' the approved solo style (newStyle)
 
-If styleCount(4) > 0 And styleCount(5) = 0 Then
+If styleCount(4) = 0 And styleCount(5) = 0 Then
     Call FixSectionHeadings(oldStyle:="Chap Number (cn)", newStyle:="Chap Title (ct)")
 End If
 
@@ -799,18 +800,18 @@ Private Function srErrorCheck() As Boolean
     End If
 
     '-----this way is more reliable even though it doesn't check template directly--------------------
-    Dim keyStyle As Word.Style
-    Dim styleCheck As Boolean
+    'Dim keyStyle As Word.Style
+    'Dim styleCheck As Boolean
 
-    On Error Resume Next
+    'On Error Resume Next
 
-    Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
-    styleCheck = keyStyle Is Nothing
+    'Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
+    'styleCheck = keyStyle Is Nothing
     
-    If styleCheck Then
-        MsgBox "Oops! Required Macmillan styles are not present. Please attach the Macmillan template and run the macro again.", , "Error"
-        srErrorCheck = True
-    End If
+    'If styleCheck Then
+    '    MsgBox "Oops! Required Macmillan styles are not present. Please attach the Macmillan template and run the macro again.", , "Error"
+        'srErrorCheck = True
+    'End If
     
 '    '--Checking template this way would be better but wasn't always working for users------------------
 '    'Check if Macmillan template is attached
@@ -1491,9 +1492,10 @@ arrStyleName(13) = "BM Title (bmt)"
 arrStyleName(14) = "Illustration holder (ill)"
 arrStyleName(15) = "Illustration Source (is)"
 
+
+
 For A = 1 To UBound(arrStyleName())
-    xCount = 0
-    
+    On Error GoTo ErrHandler
     With ActiveDocument.Range.Find
         .ClearFormatting
         .Text = ""
@@ -1507,15 +1509,15 @@ For A = 1 To UBound(arrStyleName())
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
-    Do While .Execute(Forward:=True) = True And xCount < 100   'xCount < 100 to precent infinite loop, especially if content controls in title or author blocks
+    Do While .Execute(Forward:=True) = True And intStyleCount(A) < 100   ' < 100 to precent infinite loop, especially if content controls in title or author blocks
         intStyleCount(A) = intStyleCount(A) + 1
-        xCount = xCount + 1
     Loop
     End With
+ErrResume:
 Next
 
             
-'------------Exit Sub if exactly 10 Titles styled, suggests hidden content controls-----
+'------------Exit Sub if exactly 100 Titles counted, suggests hidden content controls-----
 If intStyleCount(1) = 100 Then
     
     MsgBox "Something went wrong!" & vbCr & vbCr & "It looks like you might have content controls (form fields or drop downs) in your document, but Word for Mac doesn't play nicely with these." _
@@ -1525,37 +1527,59 @@ If intStyleCount(1) = 100 Then
 End If
 
 'For A = 1 To UBound(arrStyleName())
- '   Debug.Print arrStyleName(A) & ": " & intStyleCount(A) & vbNewLine
+'    Debug.Print arrStyleName(A) & ": " & intStyleCount(A) & vbNewLine
 'Next A
 
 CountReqdStyles = intStyleCount()
+Exit Function
 
+ErrHandler:
+    If Err.Number = 5941 Then
+        intStyleCount(A) = 0
+        Resume ErrResume
+    End If
+        
 End Function
 Private Sub FixSectionHeadings(oldStyle As String, newStyle As String)
 
-Application.ScreenUpdating = False
+    Application.ScreenUpdating = False
 
-'Move selection to start of document
-Selection.HomeKey Unit:=wdStory
+    
+    'check if styles exist, else exit sub
+    On Error GoTo ErrHandler:
+    Dim keyStyle As Word.Style
 
-'Find paras styles as CN and change to CT style
-    Selection.Find.ClearFormatting
-    Selection.Find.Style = ActiveDocument.Styles(oldStyle)
-    Selection.Find.Replacement.ClearFormatting
-    Selection.Find.Replacement.Style = ActiveDocument.Styles(newStyle)
-    With Selection.Find
-        .Text = ""
-        .Replacement.Text = ""
-        .Forward = True
-        .Wrap = wdFindContinue
-        .Format = True
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = False
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
+    Set keyStyle = ActiveDocument.Styles(oldStyle)
+    Set keyStyle = ActiveDocument.Styles(newStyle)
+
+    'Move selection to start of document
+    Selection.HomeKey Unit:=wdStory
+
+        'Find paras styles as CN and change to CT style
+        Selection.Find.ClearFormatting
+        Selection.Find.Style = ActiveDocument.Styles(oldStyle)
+        Selection.Find.Replacement.ClearFormatting
+        Selection.Find.Replacement.Style = ActiveDocument.Styles(newStyle)
+        With Selection.Find
+            .Text = ""
+            .Replacement.Text = ""
+            .Forward = True
+            .Wrap = wdFindContinue
+            .Format = True
+            .MatchCase = False
+            .MatchWholeWord = False
+            .MatchWildcards = False
+            .MatchSoundsLike = False
+            .MatchAllWordForms = False
+        End With
+        Selection.Find.Execute Replace:=wdReplaceAll
+
+Exit Sub
+    
+ErrHandler:
+    If Err.Number = 5941 Then 'the requested member of the collection does not exist (i.e., style doesn't exist)
+        Exit Sub
+    End If
     
 End Sub
 
