@@ -116,6 +116,7 @@ End If
 '-------Deal with Track Changes and Comments----------------
 If FixTrackChanges = False Then
     Application.ScreenUpdating = True
+    Unload oProgressBkmkr
     Exit Sub
 End If
 
@@ -1131,6 +1132,13 @@ Dim intCurrentPara As Integer
 
 Application.ScreenUpdating = False
 
+    'check if styles exist, else exit sub
+    On Error GoTo ErrHandler:
+    Dim keyStyle As Word.Style
+
+    Set keyStyle = ActiveDocument.Styles(findStyle)
+    Set keyStyle = ActiveDocument.Styles(prevStyle)
+
 jCount = 0
 jString = ""
 
@@ -1203,7 +1211,12 @@ CheckPrevStyle = jString
 If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
     Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 End If
+Exit Function
 
+ErrHandler:
+    If Err.Number = 5941 Then       'style doesn't exist in document
+        Exit Function
+    End If
 End Function
 Function CheckAfterPB() As String
 Dim arrSecStartStyles() As String
@@ -1267,6 +1280,8 @@ kString = ""
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
+On Error GoTo ErrHandler1
+
 'select paragraph styled as Page Break with manual page break inserted
     Selection.Find.ClearFormatting
     With Selection.Find
@@ -1306,6 +1321,8 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
         End If
                 
     'Debug.Print kString
+ 
+Err2Resume:
     
     'move the selection back to original paragraph, so it won't be
     'selected again on next search
@@ -1321,6 +1338,17 @@ If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
     Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 End If
 
+Exit Function
+
+ErrHandler1:
+    If Err.Number = 5941 Then       'Style doesn't exist in document
+        Exit Function
+    End If
+    
+ErrHandler2:
+    If Err.Number = 5941 Then       ' Style doesn't exist in document
+        Resume Err2Resume
+    End If
 End Function
 Private Sub DeleteContentControlPC()
 Dim cc As ContentControl
@@ -1797,6 +1825,15 @@ Dim strStyle3 As String
 
 Application.ScreenUpdating = False
 
+    'check if styles exist, else exit sub
+    On Error GoTo ErrHandler:
+    Dim keyStyle As Word.Style
+
+    Set keyStyle = ActiveDocument.Styles(StyleA)
+    Set keyStyle = ActiveDocument.Styles(StyleB)
+    Set keyStyle = ActiveDocument.Styles(StyleC)
+
+
 strErrors = ""
 
 'Move selection to start of document
@@ -1958,7 +1995,12 @@ CheckPrev2Paras = strErrors
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
+Exit Function
 
+ErrHandler:
+    If Err.Number = 5941 Then       'Style doesn't exist in document
+        Exit Function
+    End If
 End Function
 Private Sub CreateReport(TemplateUsed As Boolean, errorList As String, metadata As String, illustrations As String, goodStyles As String, suffix As String)
 
