@@ -116,6 +116,7 @@ End If
 '-------Deal with Track Changes and Comments----------------
 If FixTrackChanges = False Then
     Application.ScreenUpdating = True
+    Unload oProgressBkmkr
     Exit Sub
 End If
 
@@ -201,6 +202,31 @@ End If
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
+'-------------------Test if template is attached--------------------------
+Dim blnTemplateUsed As Boolean
+
+If styleCount(1) = 0 And _
+    styleCount(2) = 0 And _
+    styleCount(3) = 0 And _
+    styleCount(4) = 0 And _
+    styleCount(5) = 0 And _
+    styleCount(6) = 0 And _
+    styleCount(7) = 0 And _
+    styleCount(8) = 0 And _
+    styleCount(9) = 0 And _
+    styleCount(10) = 0 And _
+    styleCount(11) = 0 And _
+    styleCount(12) = 0 And _
+    styleCount(13) = 0 And _
+    styleCount(14) = 0 And _
+    styleCount(15) = 0 And _
+    strMetadata = "" And _
+    strIllustrationsList = "" Then
+        blnTemplateUsed = False
+Else
+        blnTemplateUsed = True
+End If
+    
 '-------------------Get list of good and bad styles from document---------I
 sglPercentComplete = 0.18
 strStatus = "* Getting list of styles in use..." & vbCr & strStatus
@@ -217,11 +243,17 @@ Dim arrGoodBadStyles() As Variant
 Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
-'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
+If blnTemplateUsed = True Then
+    'returns array with 2 elements, 1: good styles list, 2: bad styles list
+    arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
 
-strGoodStylesList = arrGoodBadStyles(1)
-strBadStylesList = arrGoodBadStyles(2)
+    strGoodStylesList = arrGoodBadStyles(1)
+    strBadStylesList = arrGoodBadStyles(2)
+Else
+    'just returns list of styles in use
+    strGoodStylesList = StylesInUse(ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
+    strBadStylesList = ""
+End If
 
 '-------------------Create error report----------------------------
 sglPercentComplete = 0.98
@@ -236,7 +268,13 @@ Else
 End If
 
 Dim strErrorList As String
-strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
+
+If blnTemplateUsed = True Then
+    strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
+    'strErrorList = "testing"
+Else
+    strErrorList = ""
+End If
 
 '------Create Report File-------------------------------
 sglPercentComplete = 0.99
@@ -252,7 +290,7 @@ End If
 
 Dim strSuffix As String
 strSuffix = "BookmakerReport" ' suffix for the report file
-Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
+Call CreateReport(blnTemplateUsed, strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
 '-------------Go back to original settings-----------------
 sglPercentComplete = 1
@@ -406,6 +444,7 @@ styleCount = CountReqdStyles()
 
 If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to user in last function
     Application.ScreenUpdating = True
+    Unload oProgressStyleRpt
     Exit Sub
 End If
             
@@ -473,6 +512,31 @@ End If
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
 
+'-------------------Test if template is attached--------------------------
+Dim blnTemplateUsed As Boolean
+
+If styleCount(1) = 0 And _
+    styleCount(2) = 0 And _
+    styleCount(3) = 0 And _
+    styleCount(4) = 0 And _
+    styleCount(5) = 0 And _
+    styleCount(6) = 0 And _
+    styleCount(7) = 0 And _
+    styleCount(8) = 0 And _
+    styleCount(9) = 0 And _
+    styleCount(10) = 0 And _
+    styleCount(11) = 0 And _
+    styleCount(12) = 0 And _
+    styleCount(13) = 0 And _
+    styleCount(14) = 0 And _
+    styleCount(15) = 0 And _
+    strMetadata = "" And _
+    strIllustrationsList = "" Then
+        blnTemplateUsed = False
+Else
+        blnTemplateUsed = True
+End If
+    
 '-------------------Get list of good and bad styles from document---------
 sglPercentComplete = 0.18
 strStatus = "* Generating list of Macmillan styles..." & vbCr & strStatus
@@ -490,11 +554,17 @@ Dim arrGoodBadStyles() As Variant
 Dim strGoodStylesList As String
 Dim strBadStylesList As String
 
-'returns array with 2 elements, 1: good styles list, 2: bad styles list
-arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
+If blnTemplateUsed = True Then
+    'returns array with 2 elements, 1: good styles list, 2: bad styles list
+    arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
 
-strGoodStylesList = arrGoodBadStyles(1)
-strBadStylesList = arrGoodBadStyles(2)
+    strGoodStylesList = arrGoodBadStyles(1)
+    strBadStylesList = arrGoodBadStyles(2)
+Else
+    'just returns list of styles in use
+    strGoodStylesList = StylesInUse(ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
+    strBadStylesList = ""
+End If
 
 '-------------------Create error report----------------------------
 sglPercentComplete = 0.98
@@ -510,8 +580,13 @@ Else
 End If
 
 Dim strErrorList As String
-strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=False)
-'strErrorList = "testing"
+
+If blnTemplateUsed = True Then
+    strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=False)
+    'strErrorList = "testing"
+Else
+    strErrorList = ""
+End If
 
 '-----------------------create text file------------------------------
 sglPercentComplete = 0.99
@@ -528,7 +603,7 @@ End If
 
 Dim strSuffix As String
 strSuffix = "StyleReport"       'suffix for report file, no spaces
-Call CreateReport(strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
+Call CreateReport(blnTemplateUsed, strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
 
 '-----------------------return settings to original-----------------
 sglPercentComplete = 1
@@ -641,7 +716,7 @@ For J = 1 To activeParaCount
         For L = 1 To styleBadCount
             'If paraStyle = stylesBad(L) Then Exit For                  'Not needed, since we want EVERY instance of bad style
         Next L
-        If L > 100 Then
+        If L > 100 Then                                                 ' Exits if more than 100 bad paragraphs
                 styleBadOverflow = True
             Exit For
         End If
@@ -799,18 +874,18 @@ Private Function srErrorCheck() As Boolean
     End If
 
     '-----this way is more reliable even though it doesn't check template directly--------------------
-    Dim keyStyle As Word.Style
-    Dim styleCheck As Boolean
+    'Dim keyStyle As Word.Style
+    'Dim styleCheck As Boolean
 
-    On Error Resume Next
+    'On Error Resume Next
 
-    Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
-    styleCheck = keyStyle Is Nothing
+    'Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
+    'styleCheck = keyStyle Is Nothing
     
-    If styleCheck Then
-        MsgBox "Oops! Required Macmillan styles are not present. Please attach the Macmillan template and run the macro again.", , "Error"
-        srErrorCheck = True
-    End If
+    'If styleCheck Then
+    '    MsgBox "Oops! Required Macmillan styles are not present. Please attach the Macmillan template and run the macro again.", , "Error"
+        'srErrorCheck = True
+    'End If
     
 '    '--Checking template this way would be better but wasn't always working for users------------------
 '    'Check if Macmillan template is attached
@@ -995,6 +1070,8 @@ fCount = 0
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
+On Error GoTo ErrHandler
+
     Selection.Find.ClearFormatting
     With Selection.Find
         .Text = ""
@@ -1039,6 +1116,13 @@ Else
     GetText = fString
 End If
 
+Exit Function
+
+ErrHandler:
+    If Err.Number = 5941 Then   ' The style is not present in the document
+        GetText = ""
+    End If
+
 End Function
 Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
 Dim jString As String
@@ -1047,6 +1131,13 @@ Dim pageNum As Integer
 Dim intCurrentPara As Integer
 
 Application.ScreenUpdating = False
+
+    'check if styles exist, else exit sub
+    On Error GoTo ErrHandler:
+    Dim keyStyle As Word.Style
+
+    Set keyStyle = ActiveDocument.Styles(findStyle)
+    Set keyStyle = ActiveDocument.Styles(prevStyle)
 
 jCount = 0
 jString = ""
@@ -1120,7 +1211,12 @@ CheckPrevStyle = jString
 If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
     Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 End If
+Exit Function
 
+ErrHandler:
+    If Err.Number = 5941 Then       'style doesn't exist in document
+        Exit Function
+    End If
 End Function
 Function CheckAfterPB() As String
 Dim arrSecStartStyles() As String
@@ -1184,6 +1280,8 @@ kString = ""
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
 
+On Error GoTo ErrHandler1
+
 'select paragraph styled as Page Break with manual page break inserted
     Selection.Find.ClearFormatting
     With Selection.Find
@@ -1223,6 +1321,8 @@ Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 10
         End If
                 
     'Debug.Print kString
+ 
+Err2Resume:
     
     'move the selection back to original paragraph, so it won't be
     'selected again on next search
@@ -1238,6 +1338,17 @@ If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
     Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
 End If
 
+Exit Function
+
+ErrHandler1:
+    If Err.Number = 5941 Then       'Style doesn't exist in document
+        Exit Function
+    End If
+    
+ErrHandler2:
+    If Err.Number = 5941 Then       ' Style doesn't exist in document
+        Resume Err2Resume
+    End If
 End Function
 Private Sub DeleteContentControlPC()
 Dim cc As ContentControl
@@ -1437,7 +1548,9 @@ For N = 1 To activeParaCount
     End If
     
     If Right(paraStyle, 1) = ")" Then
-    
+        
+        On Error GoTo ErrHandler
+        
         For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
             If paraStyle <> arrTorStyles(M) Then
                 intBadCount = intBadCount + 1
@@ -1455,6 +1568,7 @@ For N = 1 To activeParaCount
     
     End If
 
+ErrResume:
 
 Next N
 
@@ -1463,6 +1577,12 @@ StatusBar = "* Checking paragraphs for Tor.com approved styles..." & vbCr & Stat
 'Debug.Print strBadStyles
 
 BadTorStyles = strBadStyles
+Exit Function
+
+ErrHandler:
+    If Err.Number = 5941 Then       'style is not in document
+        Resume ErrResume
+    End If
 
 End Function
 Private Function CountReqdStyles() As Variant
@@ -1492,8 +1612,8 @@ arrStyleName(14) = "Illustration holder (ill)"
 arrStyleName(15) = "Illustration Source (is)"
 
 For A = 1 To UBound(arrStyleName())
-    xCount = 0
-    
+    On Error GoTo ErrHandler
+    intStyleCount(A) = 0
     With ActiveDocument.Range.Find
         .ClearFormatting
         .Text = ""
@@ -1507,15 +1627,15 @@ For A = 1 To UBound(arrStyleName())
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
-    Do While .Execute(Forward:=True) = True And xCount < 100   'xCount < 100 to precent infinite loop, especially if content controls in title or author blocks
+    Do While .Execute(Forward:=True) = True And intStyleCount(A) < 100   ' < 100 to precent infinite loop, especially if content controls in title or author blocks
         intStyleCount(A) = intStyleCount(A) + 1
-        xCount = xCount + 1
     Loop
     End With
+ErrResume:
 Next
 
             
-'------------Exit Sub if exactly 10 Titles styled, suggests hidden content controls-----
+'------------Exit Sub if exactly 100 Titles counted, suggests hidden content controls-----
 If intStyleCount(1) = 100 Then
     
     MsgBox "Something went wrong!" & vbCr & vbCr & "It looks like you might have content controls (form fields or drop downs) in your document, but Word for Mac doesn't play nicely with these." _
@@ -1525,37 +1645,59 @@ If intStyleCount(1) = 100 Then
 End If
 
 'For A = 1 To UBound(arrStyleName())
- '   Debug.Print arrStyleName(A) & ": " & intStyleCount(A) & vbNewLine
+'    Debug.Print arrStyleName(A) & ": " & intStyleCount(A) & vbNewLine
 'Next A
 
 CountReqdStyles = intStyleCount()
+Exit Function
 
+ErrHandler:
+    If Err.Number = 5941 Then
+        intStyleCount(A) = 0
+        Resume ErrResume
+    End If
+        
 End Function
 Private Sub FixSectionHeadings(oldStyle As String, newStyle As String)
 
-Application.ScreenUpdating = False
+    Application.ScreenUpdating = False
 
-'Move selection to start of document
-Selection.HomeKey Unit:=wdStory
+    
+    'check if styles exist, else exit sub
+    On Error GoTo ErrHandler:
+    Dim keyStyle As Word.Style
 
-'Find paras styles as CN and change to CT style
-    Selection.Find.ClearFormatting
-    Selection.Find.Style = ActiveDocument.Styles(oldStyle)
-    Selection.Find.Replacement.ClearFormatting
-    Selection.Find.Replacement.Style = ActiveDocument.Styles(newStyle)
-    With Selection.Find
-        .Text = ""
-        .Replacement.Text = ""
-        .Forward = True
-        .Wrap = wdFindContinue
-        .Format = True
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = False
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-    End With
-    Selection.Find.Execute Replace:=wdReplaceAll
+    Set keyStyle = ActiveDocument.Styles(oldStyle)
+    Set keyStyle = ActiveDocument.Styles(newStyle)
+
+    'Move selection to start of document
+    Selection.HomeKey Unit:=wdStory
+
+        'Find paras styles as CN and change to CT style
+        Selection.Find.ClearFormatting
+        Selection.Find.Style = ActiveDocument.Styles(oldStyle)
+        Selection.Find.Replacement.ClearFormatting
+        Selection.Find.Replacement.Style = ActiveDocument.Styles(newStyle)
+        With Selection.Find
+            .Text = ""
+            .Replacement.Text = ""
+            .Forward = True
+            .Wrap = wdFindContinue
+            .Format = True
+            .MatchCase = False
+            .MatchWholeWord = False
+            .MatchWildcards = False
+            .MatchSoundsLike = False
+            .MatchAllWordForms = False
+        End With
+        Selection.Find.Execute Replace:=wdReplaceAll
+
+Exit Sub
+    
+ErrHandler:
+    If Err.Number = 5941 Then 'the requested member of the collection does not exist (i.e., style doesn't exist)
+        Exit Sub
+    End If
     
 End Sub
 
@@ -1574,18 +1716,15 @@ styleNameB(4) = "Titlepage Imprint Line (imp)"
 
 For b = 1 To UBound(styleNameB())
     bString(b) = GetText(styleNameB(b))
+    If bString(b) <> vbNullString Then
+        bString(b) = "** " & styleNameB(b) & " **" & vbNewLine & _
+                    bString(b) & vbNewLine
+    End If
 Next b
 
-strTitleData = "** Title **" & vbNewLine & _
-            bString(1) & vbNewLine & _
-            "** Author **" & vbNewLine & _
-            bString(2) & vbNewLine & _
-            "** ISBN **" & vbNewLine & _
-            bString(3) & vbNewLine & _
-            "** Imprint **" & vbNewLine & _
-            bString(4) & vbNewLine
+strTitleData = bString(1) & bString(2) & bString(3) & bString(4)
             
-'Debug.Print strTitleData
+Debug.Print strTitleData
 
 GetMetadata = strTitleData
 
@@ -1597,13 +1736,21 @@ Dim cCount As Integer
 Dim pageNumberC As Integer
 Dim strFullList As String
 Dim N As Integer
+Dim strSearchStyle As String
 
 Application.ScreenUpdating = False
 
+strSearchStyle = "Illustration holder (ill)"
 cCount = 0
 
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
+    
+    ' Check if search style exists in document
+    On Error GoTo ErrHandler
+    Dim keyStyle As Style
+    
+    Set keyStyle = ActiveDocument.Styles(strSearchStyle)
 
     Selection.Find.ClearFormatting
     With Selection.Find
@@ -1612,7 +1759,7 @@ Selection.HomeKey Unit:=wdStory
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles("Illustration holder (ill)")
+        .Style = ActiveDocument.Styles(strSearchStyle)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
@@ -1658,6 +1805,13 @@ Next N
 
 IllustrationsList = strFullList
 
+Exit Function
+
+ErrHandler:
+    If Err.Number = 5941 Then
+        IllustrationsList = ""
+        Exit Function
+    End If
 
 End Function
 Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) As String
@@ -1670,6 +1824,15 @@ Dim strStyle2 As String
 Dim strStyle3 As String
 
 Application.ScreenUpdating = False
+
+    'check if styles exist, else exit sub
+    On Error GoTo ErrHandler:
+    Dim keyStyle As Word.Style
+
+    Set keyStyle = ActiveDocument.Styles(StyleA)
+    Set keyStyle = ActiveDocument.Styles(StyleB)
+    Set keyStyle = ActiveDocument.Styles(StyleC)
+
 
 strErrors = ""
 
@@ -1832,9 +1995,14 @@ CheckPrev2Paras = strErrors
 
 'Move selection back to start of document
 Selection.HomeKey Unit:=wdStory
+Exit Function
 
+ErrHandler:
+    If Err.Number = 5941 Then       'Style doesn't exist in document
+        Exit Function
+    End If
 End Function
-Private Sub CreateReport(errorList As String, metadata As String, illustrations As String, goodStyles As String, suffix As String)
+Private Sub CreateReport(TemplateUsed As Boolean, errorList As String, metadata As String, illustrations As String, goodStyles As String, suffix As String)
 
 Application.ScreenUpdating = False
 
@@ -1871,47 +2039,56 @@ End If
 
 'set and open file for output
 Dim e As Integer
-
 fnum = FreeFile()
 Open reqReportDoc For Output As fnum
-If errorList = "" Then
-    Print #fnum, vbCr
-    Print #fnum, "                 CONGRATULATIONS! YOU PASSED!" & vbCr
-    Print #fnum, " But you're not done yet. Please check the info listed below." & vbCr
-    Print #fnum, vbCr
 
+If TemplateUsed = False Then
+    Print #fnum, vbCr
+    Print #fnum, "------------------------STYLES IN USE--------------------------" & vbCr
+    Print #fnum, "It looks like you aren't using the Macmillan style template." & vbCr
+    Print #fnum, "That's OK, but if you would like more info about your document," & vbCr
+    Print #fnum, "just attach the Macmillan style template and apply the styles" & vbCr
+    Print #fnum, "throughout the document." & vbCr
+    Print #fnum, vbCr
+    Print #fnum, goodStyles
 Else
-    Print #fnum, vbCr
-    Print #fnum, "                             OOPS!" & vbCr
-    Print #fnum, "     Problems were found with the styles in your document." & vbCr
-    Print #fnum, vbCr
-    Print #fnum, vbCr
-    Print #fnum, "--------------------------- ERRORS ---------------------------" & vbCr
-    Print #fnum, errorList
-    Print #fnum, vbCr
-    Print #fnum, vbCr
-End If
-    Print #fnum, "--------------------------- METADATA -------------------------" & vbCr
-    Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
-    Print #fnum, "associated styles in the manuscript." & vbCr
-    Print #fnum, vbCr
-    Print #fnum, metadata
-    Print #fnum, vbCr
-    Print #fnum, vbCr
-    Print #fnum, "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
-    
-    If illustrations <> "no illustrations detected" & vbNewLine Then
-        Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
-        Print #fnum, "names of your illustrations." & vbCr
+    If errorList = "" Then
+        Print #fnum, vbCr
+        Print #fnum, "                 CONGRATULATIONS! YOU PASSED!" & vbCr
+        Print #fnum, " But you're not done yet. Please check the info listed below." & vbCr
+        Print #fnum, vbCr
+    Else
+        Print #fnum, vbCr
+        Print #fnum, "                             OOPS!" & vbCr
+        Print #fnum, "     Problems were found with the styles in your document." & vbCr
+        Print #fnum, vbCr
+        Print #fnum, vbCr
+        Print #fnum, "--------------------------- ERRORS ---------------------------" & vbCr
+        Print #fnum, errorList
+        Print #fnum, vbCr
         Print #fnum, vbCr
     End If
+        Print #fnum, "--------------------------- METADATA -------------------------" & vbCr
+        Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
+        Print #fnum, "associated styles in the manuscript." & vbCr
+        Print #fnum, vbCr
+        Print #fnum, metadata
+        Print #fnum, vbCr
+        Print #fnum, vbCr
+        Print #fnum, "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
     
-    Print #fnum, illustrations
-    Print #fnum, vbCr
-    Print #fnum, vbCr
-    Print #fnum, "----------------------- MACMILLAN STYLES IN USE --------------------" & vbCr
-    Print #fnum, goodStyles
-
+        If illustrations <> "no illustrations detected" & vbNewLine Then
+            Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
+            Print #fnum, "names of your illustrations." & vbCr
+            Print #fnum, vbCr
+        End If
+    
+        Print #fnum, illustrations
+        Print #fnum, vbCr
+        Print #fnum, vbCr
+        Print #fnum, "----------------------- MACMILLAN STYLES IN USE --------------------" & vbCr
+        Print #fnum, goodStyles
+End If
 Close #fnum
 
 ''''for 32 char Mc OS bug-<PART 2
@@ -1933,4 +2110,84 @@ Else
     "end tell" & vbCr)
 End If
 End Sub
+Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgTitle As String) As String
+'Creates a list of all styles in use, not just Macmillan styles
+'No list of bad styles
+'For use when no Macmillan template is attached
 
+Dim TheOS As String
+TheOS = System.OperatingSystem
+Dim sglPercentComplete As Single
+Dim strStatus As String
+
+Dim activeDoc As Document
+Set activeDoc = ActiveDocument
+Dim stylesGood() As String
+Dim stylesGoodLong As Long
+stylesGoodLong = 400                                    'could maybe reduce this number
+ReDim stylesGood(stylesGoodLong)
+'Dim stylesBad() As String
+'ReDim stylesBad(1 To 100) 'could maybe reduce this number too
+Dim styleGoodCount As Integer
+'Dim styleBadCount As Integer
+'Dim styleBadOverflow As Boolean
+Dim activeParaCount As Integer
+Dim J As Integer, K As Integer, L As Integer
+Dim paraStyle As String
+'''''''''''''''''''''
+Dim activeParaRange As Range
+Dim pageNumber As Integer
+
+'----------Collect all styles being used-------------------------------
+styleGoodCount = 0
+activeParaCount = activeDoc.paragraphs.Count
+For J = 1 To activeParaCount
+    
+    'All Progress Bar statements for PC only because won't run modeless on Mac
+    If J Mod 100 = 0 Then
+    
+        'Percent complete and status for progress bar (PC) and status bar (Mac)
+        sglPercentComplete = (((J / activeParaCount) * 0.8) + 0.18)
+        strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
+
+        If Not TheOS Like "*Mac*" Then
+            ProgressBar.Increment sglPercentComplete, strStatus
+            Doze 50 'Wait 50 milliseconds for progress bar to update
+        Else
+            'Mac will just use status bar
+            Application.StatusBar = ProgTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
+            DoEvents
+        End If
+    End If
+    
+    paraStyle = activeDoc.paragraphs(J).Style
+
+        For K = 1 To styleGoodCount
+            If paraStyle = stylesGood(K) Then                   'stylereport bug fix #1  v. 3.1
+                K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                Exit For                                        'stylereport bug fix #1   v. 3.1
+            End If                                              'stylereport bug fix #1   v. 3.1
+        Next K
+        If K = styleGoodCount + 1 Then
+            styleGoodCount = K
+            stylesGood(styleGoodCount) = paraStyle
+        End If
+Next J
+
+'Sort good styles
+If K <> 0 Then
+ReDim Preserve stylesGood(1 To styleGoodCount)
+WordBasic.SortArray stylesGood()
+End If
+
+'Create single string for good styles
+Dim strGoodStyles As String
+For K = LBound(stylesGood()) To UBound(stylesGood())
+    strGoodStyles = strGoodStyles & stylesGood(K) & vbNewLine
+Next K
+
+'Debug.Print strGoodStyles
+
+StylesInUse = strGoodStyles
+
+End Function
