@@ -473,7 +473,10 @@ End If
 
 Dim strIllustrationsList As String
 strIllustrationsList = IllustrationsList
+'-------------------Test if template is attached--------------------------
+Dim blnTemplateUsed As Boolean
 
+If
 '-------------------Get list of good and bad styles from document---------
 sglPercentComplete = 0.18
 strStatus = "* Generating list of Macmillan styles..." & vbCr & strStatus
@@ -1627,13 +1630,21 @@ Dim cCount As Integer
 Dim pageNumberC As Integer
 Dim strFullList As String
 Dim N As Integer
+Dim strSearchStyle As String
 
 Application.ScreenUpdating = False
 
+strSearchStyle = "Illustration holder (ill)"
 cCount = 0
 
 'Move selection to start of document
 Selection.HomeKey Unit:=wdStory
+    
+    ' Check if search style exists in document
+    On Error GoTo ErrHandler
+    Dim keyStyle As Style
+    
+    Set keyStyle = ActiveDocument.Styles(strSearchStyle)
 
     Selection.Find.ClearFormatting
     With Selection.Find
@@ -1642,7 +1653,7 @@ Selection.HomeKey Unit:=wdStory
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles("Illustration holder (ill)")
+        .Style = ActiveDocument.Styles(strSearchStyle)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
@@ -1688,6 +1699,13 @@ Next N
 
 IllustrationsList = strFullList
 
+Exit Function
+
+ErrHandler:
+    If Err.Number = 5941 Then
+        IllustrationList = ""
+        Exit Function
+    End If
 
 End Function
 Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) As String
