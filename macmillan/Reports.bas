@@ -203,31 +203,7 @@ Sub BookmakerReqs()
     
     Dim strIllustrationsList As String
     strIllustrationsList = IllustrationsList
-    
-    '-------------------Test if template is attached--------------------------
-    Dim blnTemplateUsed As Boolean
-    
-    If styleCount(1) = 0 And _
-        styleCount(2) = 0 And _
-        styleCount(3) = 0 And _
-        styleCount(4) = 0 And _
-        styleCount(5) = 0 And _
-        styleCount(6) = 0 And _
-        styleCount(7) = 0 And _
-        styleCount(8) = 0 And _
-        styleCount(9) = 0 And _
-        styleCount(10) = 0 And _
-        styleCount(11) = 0 And _
-        styleCount(12) = 0 And _
-        styleCount(13) = 0 And _
-        styleCount(14) = 0 And _
-        styleCount(15) = 0 And _
-        strMetadata = "" And _
-        strIllustrationsList = "" Then
-            blnTemplateUsed = False
-    Else
-            blnTemplateUsed = True
-    End If
+
         
     '-------------------Get list of good and bad styles from document---------I
     sglPercentComplete = 0.18
@@ -244,17 +220,23 @@ Sub BookmakerReqs()
     Dim arrGoodBadStyles() As Variant
     Dim strGoodStylesList As String
     Dim strBadStylesList As String
+                
+    'returns array with 2 elements, 1: good styles list, 2: bad styles list
+    arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
+    strGoodStylesList = arrGoodBadStyles(1)
+    strBadStylesList = arrGoodBadStyles(2)
+        
+    'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
+    Dim blnTemplateUsed As Boolean
     
-    If blnTemplateUsed = True Then
-        'returns array with 2 elements, 1: good styles list, 2: bad styles list
-        arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
-    
-        strGoodStylesList = arrGoodBadStyles(1)
-        strBadStylesList = arrGoodBadStyles(2)
-    Else
+    If strGoodStylesList = vbNullString Then
+        blnTemplateUsed = False
+        
         'just returns list of styles in use
         strGoodStylesList = StylesInUse(ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
         strBadStylesList = ""
+    Else
+        blnTemplateUsed = True
     End If
     
     '-------------------Create error report----------------------------
@@ -514,31 +496,6 @@ Sub MacmillanStyleReport()
     
     Dim strIllustrationsList As String
     strIllustrationsList = IllustrationsList
-    
-    '-------------------Test if template is attached--------------------------
-    Dim blnTemplateUsed As Boolean
-    
-    If styleCount(1) = 0 And _
-        styleCount(2) = 0 And _
-        styleCount(3) = 0 And _
-        styleCount(4) = 0 And _
-        styleCount(5) = 0 And _
-        styleCount(6) = 0 And _
-        styleCount(7) = 0 And _
-        styleCount(8) = 0 And _
-        styleCount(9) = 0 And _
-        styleCount(10) = 0 And _
-        styleCount(11) = 0 And _
-        styleCount(12) = 0 And _
-        styleCount(13) = 0 And _
-        styleCount(14) = 0 And _
-        styleCount(15) = 0 And _
-        strMetadata = "" And _
-        strIllustrationsList = "" Then
-            blnTemplateUsed = False
-    Else
-            blnTemplateUsed = True
-    End If
         
     '-------------------Get list of good and bad styles from document---------
     sglPercentComplete = 0.18
@@ -557,18 +514,18 @@ Sub MacmillanStyleReport()
     Dim strGoodStylesList As String
     Dim strBadStylesList As String
     
-    If blnTemplateUsed = True Then
-        'returns array with 2 elements, 1: good styles list, 2: bad styles list
-        arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
+    'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
+    Dim blnTemplateUsed As Boolean
     
-        strGoodStylesList = arrGoodBadStyles(1)
-        strBadStylesList = arrGoodBadStyles(2)
-    Else
+    If strGoodStylesList = vbNullString Then
+        blnTemplateUsed = False
+        
         'just returns list of styles in use
-        strGoodStylesList = StylesInUse(ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
+        strGoodStylesList = StylesInUse(ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
         strBadStylesList = ""
+    Else
+        blnTemplateUsed = True
     End If
-    
     '-------------------Create error report----------------------------
     sglPercentComplete = 0.98
     strStatus = "* Checking styles for errors..." & vbCr & strStatus
@@ -585,7 +542,7 @@ Sub MacmillanStyleReport()
     Dim strErrorList As String
     
     If blnTemplateUsed = True Then
-        strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=False)
+        strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
         'strErrorList = "testing"
     Else
         strErrorList = ""
@@ -1675,7 +1632,6 @@ Private Sub FixSectionHeadings(oldStyle As String, newStyle As String)
 
     Application.ScreenUpdating = False
 
-    
     'check if styles exist, else exit sub
     On Error GoTo ErrHandler:
     Dim keyStyle As Word.Style
