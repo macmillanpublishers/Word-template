@@ -516,10 +516,10 @@ Private Sub RemoveBreaks()
     ''' the bit below to remove the last paragraph if it's blank
     Dim MyRange As Range
     Set MyRange = ActiveDocument.paragraphs(1).Range
-        If MyRange.Text = vbCr Then MyRange.Delete
+        If MyRange.Text = Chr(13) Then MyRange.Delete
     
     Set MyRange = ActiveDocument.paragraphs.Last.Range
-        If MyRange.Text = vbCr Then MyRange.Delete
+        If MyRange.Text = Chr(13) Then MyRange.Delete
 
 End Sub
 
