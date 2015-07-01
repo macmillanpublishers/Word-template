@@ -769,6 +769,8 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
                 DoEvents
             End If
         
+        On Error GoTo ErrHandler
+        
         With Selection.Find
             .Style = ActiveDocument.Styles(styleNameM(M))
             .Wrap = wdFindContinue
@@ -778,7 +780,7 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
         If Selection.Find.Execute = True Then
             charStyles = charStyles & styleNameM(M) & vbNewLine
         End If
-    
+NextLoop:
     Next M
     
     Status = "* Checking character styles..." & vbCr & Status
@@ -809,7 +811,14 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
     arrFinalLists(2) = strBadStyles
     
     GoodBadStyles = arrFinalLists
-
+    
+    Exit Function
+    
+ErrHandler:
+    If Err.Number = 5834 Or Err.Number = 5941 Then
+        Resume NextLoop
+    End If
+    
 End Function
 
 Private Function srErrorCheck() As Boolean
@@ -1992,7 +2001,7 @@ Private Sub CreateReport(TemplateUsed As Boolean, errorList As String, metadata 
     TheOS = System.OperatingSystem
     
     'activeDocName below works for .doc and .docx
-    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".doc") - 1)
+    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
     activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
     
     'create text file
