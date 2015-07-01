@@ -521,7 +521,7 @@ Sub MacmillanStyleReport()
         blnTemplateUsed = False
         
         'just returns list of styles in use
-        strGoodStylesList = StylesInUse(ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
+        strGoodStylesList = StylesInUse(ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
         strBadStylesList = ""
     Else
         blnTemplateUsed = True
