@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Custom Ribbon XML added using Custom UI Editor for Microsoft Office -->
+<!-- Available here: http://openxmldeveloper.org/blog/b/openxmldeveloper/archive/2009/08/07/7293.aspx -->
+<!-- RibbonControl is a VBA module in same template as this ribbon.xml code -->
+
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="RibbonControl.Onload">
+	<ribbon>
+		<tabs>
+			<tab id="CustomTab1" label="Macmillan Tools" insertAfterMso="TabHome">
+				<group id="CustGrp1" label="Macmillan Styles" >
+					<button id="BtnAttachTemplate" label="Import Manuscript Styles" image="import" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCoverCopy" label="Import Cover Copy Styles" image="star" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnRemoveColor" label="Remove Color Guides" image="notepad" size="normal" onAction="RibbonControl.LaunchMacros" />	
+					<button id="BtnViewStyles" size="normal" image="eye" onAction="RibbonControl.LaunchMacros" label="View Styles"/>
+				</group>
+				<group id="CustGrp2" label="Editorial Tools" >
+					<button id="BtnCastoff" label="Castoff" image="calculator" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCleanup" label="Manuscript Cleanup" image="quotes" size="large" onAction="RibbonControl.LaunchMacros" />
+				</group>
+				<group id="CustGrp3" label="Style Tools" >
+					<button id="BtnCharStyles" label="Apply Character Styles" image="wand" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnStyleReport" label="Style Report" image="document" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnBkmkrCheck" label="Bookmaker Check" image="thumbsup" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnLocTags" label="CIP Application Tags" image="tags" size="normal" onAction="RibbonControl.LaunchMacros" />
+				</group>
+				<group id="CustGrp4" label="Help" >
+					<button id="BtnGtVersion" label="Macmillan Tools Version" image="Check" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnStyleVersion" label="Macmillan Styles Version" image="Check" size="normal" onAction="RibbonControl.LaunchMacros" />
+				</group>
+			</tab>
+		</tabs>
+	</ribbon>
+</customUI>
