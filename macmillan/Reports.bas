@@ -203,9 +203,8 @@ Sub BookmakerReqs()
     
     Dim strIllustrationsList As String
     strIllustrationsList = IllustrationsList
-
         
-    '-------------------Get list of good and bad styles from document---------I
+    '-------------------Get list of good and bad styles from document---------
     sglPercentComplete = 0.18
     strStatus = "* Getting list of styles in use..." & vbCr & strStatus
     
@@ -224,6 +223,7 @@ Sub BookmakerReqs()
     'returns array with 2 elements, 1: good styles list, 2: bad styles list
     arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
     strGoodStylesList = arrGoodBadStyles(1)
+    Debug.Print strGoodStylesList
     strBadStylesList = arrGoodBadStyles(2)
         
     'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
@@ -670,6 +670,8 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
             Next K
             If K = styleGoodCount + 1 Then
                 styleGoodCount = K
+               ' ReDim Preserve stylesGood(1 To styleGoodCount)
+                
                 stylesGood(styleGoodCount) = paraStyle
             End If
         Else
@@ -703,15 +705,20 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
     
     'Create single string for good styles
     Dim strGoodStyles As String
-    For K = LBound(stylesGood()) To UBound(stylesGood())
-        strGoodStyles = strGoodStyles & stylesGood(K) & vbNewLine
-    Next K
+    
+    If styleGoodCount = 0 Then
+        strGoodStyles = ""
+    Else
+        For K = LBound(stylesGood()) To UBound(stylesGood())
+            strGoodStyles = strGoodStyles & stylesGood(K) & vbNewLine
+        Next K
+    End If
     
     'Debug.Print strGoodStyles
     
     If styleBadCount > 0 Then
-    'Create single string for bad styles
-    Dim strBadStyles As String
+        'Create single string for bad styles
+        Dim strBadStyles As String
         ReDim Preserve stylesBad(1 To styleBadCount)
         For L = LBound(stylesBad()) To UBound(stylesBad())
             strBadStyles = strBadStyles & stylesBad(L)
