@@ -89,7 +89,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
                 Exit Sub
             ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
                 'check version number
-                installCheck(b) = NeedUpdate(Directory:=FinalDir(b), File:=FileName(b), Log:=strFullLogPath(b))
+                installCheck(b) = NeedUpdate(strTemplatePath(b), strFullLogPath(b))
             Else ' blnTemplateExists = False, just download new template
                  installCheck(b) = True
             End If
@@ -209,7 +209,7 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
                 ' Exit sub if error in connecting to website
                 If Err.Number <> 0 Then 'HTTP request is not OK
                     'Debug.Print WinHttpReq.Status
-                    logString = Now & " -- could not connect to Confluence site: Error " & Err.Number & ". Exiting installation."
+                    logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
                     LogInformation LogFile, logString
                     strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
                         "Please check your internet connection or contact workflows@macmillan.com for help."
@@ -233,7 +233,7 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
             Set oStream = Nothing
             Set WinHttpReq = Nothing
         Else
-            logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file, exiting installer."
+            logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
             LogInformation LogFile, logString
             strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
                 "Please check your internet connection or contact workflows@macmillan.com for help."
@@ -275,7 +275,7 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
             Kill strFinalPath
             
             If Err.Number = 70 Then         'File is open and can't be replaced
-                logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user, exiting sub."
+                logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user."
                 LogInformation LogFile, logString
                 strErrMsg = "Please close all other Word documents and try again."
                 MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
@@ -402,20 +402,22 @@ Private Function IsTemplateThere(Directory As String, FileName As String, Log As
     LogInformation Log, logString
 End Function
 
-Private Function NeedUpdate(Directory As String, File As String, Log As String) As Boolean
+Private Function NeedUpdate(FullTemplatePath As String, Log As String) As Boolean
 'Directory argument should be the final directory the template should go in.
 'File should be the template file name
 'Log argument should be full path to log file
 
     '------------------------- Get installed version number -----------------------------------
+    
+    
     If NeedUpdate = True Then
         Exit Function
     Else
         'Get version number of installed template
         Dim strInstalledVersion As String
-        Documents.Open FileName:=strTemplatePath, ReadOnly:=True, Visible:=False
-        strInstalledVersion = Documents(strTemplatePath).CustomDocumentProperties("version")
-        Documents(strTemplatePath).Close
+        Documents.Open FileName:=FullTemplatePath, ReadOnly:=True, Visible:=False
+        strInstalledVersion = Documents(FullTemplatePath).CustomDocumentProperties("version")
+        Documents(FullTemplatePath).Close
         logString = Now & " -- installed version is " & strInstalledVersion
     End If
     
