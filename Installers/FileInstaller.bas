@@ -9,7 +9,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
 'Downloads and installs an array of template files & logs the downloads
 
 '======== USE =======================================
-'This is Part 1 of 2. Must be called from a sub in another module that declares file names and locations.
+'This is Part 2 of 2. Must be called from a sub in another module that declares file names and locations.
 'The template file needs to be uploaded as an attachment to https://confluence.macmillan.com/display/PBL/Test
 'If this is an installer file, The Part 1 code needs to reside in the ThisDocument module as a sub called
 'Documents_Open in a .docm file so that it will launch when users open the file.
@@ -184,24 +184,38 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
 
     Dim logString As String
     Dim strTmpPath As String
+    Dim strBashTmp As String
     Dim strFinalPath As String
     Dim strErrMsg As String
-        
+    Dim myURL As String
+
     logString = ""
-    strTmpPath = Environ("TEMP") & "\" & FileName
+    strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too?
+    strBashTmp = Replace(strTmpPath, "\", "/")
+    Debug.Print strBashTmp
     strFinalPath = FinalDir & Application.PathSeparator & FileName
     
+    'this is download link, actual page housing files is https://confluence.macmillan.com/display/PBL/Test
+    myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
+            
     #If Mac Then
-        'Download code for Mac
+        'check for network.
+        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then   'can't connect to internet
+            logString = Now & " -- Tried update; unable to connect to network."
+            LogInformation LogFile, logString
+            strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
+                        "Please check your internet connection or contact workflows@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FileName & ")"
+            DownloadFromConfluence = False
+            Exit Function
+        Else 'internet is working, download file
+            ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
+        End If
     #Else
     'try to download the file from Public Confluence page
-        Dim myURL As String
         Dim WinHttpReq As Object
         Dim oStream As Object
         
-        'this is download link, actual page housing files is https://confluence.macmillan.com/display/PBL/Test
-        myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
-            
         'Attempt to download file
         On Error Resume Next
             Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
@@ -557,6 +571,7 @@ End Function
 Private Function IsArrayEmpty(Arr As Variant) As Boolean
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' By Chip Pearson, http://www.cpearson.com/excel/vbaarrays.htm
+'
 ' IsArrayEmpty
 ' This function tests whether the array is empty (unallocated). Returns TRUE or FALSE.
 '
@@ -602,5 +617,16 @@ Private Function IsArrayEmpty(Arr As Variant) As Boolean
             IsArrayEmpty = False
         End If
     End If
+
+End Function
+
+Private Function ShellAndWaitMac(cmd As String) As String
+
+    Dim result As String
+    Dim scriptCmd As String ' Macscript command
+    
+    scriptCmd = "do shell script """ & cmd & """"
+    result = MacScript(scriptCmd) ' result contains stdout, should you care
+    ShellAndWaitMac = result
 
 End Function
