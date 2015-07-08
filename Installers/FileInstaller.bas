@@ -261,7 +261,7 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
     End If
 
     'If final dir = Startup, disable template
-    Debug.Print strFinalPath
+    'Debug.Print strFinalPath
     If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
         On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
             AddIns(strFinalPath).Installed = False
