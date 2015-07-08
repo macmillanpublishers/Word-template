@@ -9,13 +9,13 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
 'Downloads and installs an array of template files & logs the downloads
 
 '======== USE =======================================
-'This is Part 2 of 2. Must be called from a sub in another module that declares file names and locations.
+'This is Part 1 of 2. Must be called from a sub in another module that declares file names and locations.
 'The template file needs to be uploaded as an attachment to https://confluence.macmillan.com/display/PBL/Test
-'If this is an installer file, The Part 1 code needs to reside in the ThisDocument module of a .docm file so that
-'it will launch when users open the file.
+'If this is an installer file, The Part 1 code needs to reside in the ThisDocument module as a sub called
+'Documents_Open in a .docm file so that it will launch when users open the file.
 
 '"Installer" argument = True if this is for a standalone installtion file.
-'"Installer" argument = False is this is part of a daily check of the current file and only update if out of date.
+'"Installer" argument = False is this is part of a daily check of the current file and only updates if out of date.
     
     '' --------------- Check that variables were passed correctly -------------------------
     'Dim x As Long
@@ -23,116 +23,147 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     '    Debug.Print & " " & FileName(x) & " " & FinalDir(x) & vbNewLine
     'Next x
     
-    '' Create logfile names and check if need update (for updater)
+    '' --------------- Set up variable names ----------------------------------------------
+    '' Create style directory and logfile names
     Dim a As Long
     Dim strLogFile() As String
     ReDim strLogFile(LBound(FileName()) To UBound(FileName()))
-    Dim installCheck() As Boolean
-    ReDim installCheck(LBound(FileName()) To UBound(FileName()))
     Dim strFullLogPath() As String
     ReDim strFullLogPath(LBound(FileName()) To UBound(FileName()))
+    Dim strStyleDir As String
+    Dim strLogDir As String
 
     For a = LBound(FileName()) To UBound(FileName())
+        ' Remove trailing path separator from dir if it's there, so we know we won't duplicate below
+        If Right(FinalDir(a), 1) = Application.PathSeparator Then
+            FinalDir(a) = Left(FinalDir(a), Len(FinalDir(a)) - 1)
+        End If
+        
+        ' Create full path to template file
+        Dim strTemplatePath() As String
+        ReDim strTemplatePath(LBound(FileName()) To UBound(FileName()))
+        strTemplatePath(a) = FinalDir(a) & Application.PathSeparator & FileName(a)
+        
         'Create logfile name
         strLogFile(a) = Left(FileName(a), InStrRev(FileName(a), ".do") - 1)
+        strLogFile(a) = strLogFile(a) & "_updates.log"
+        
+        'Create directory names based on OS
         #If Mac Then
             Dim strUser As String
             strUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
                 "return (name of current user)" & Chr(13) & "end tell")
-            strFullLogPath(a) = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate:log:" & strLogFile(a) & "_updates.log"
+            strStyleDir = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
+            strLogDir = strStyleDir & Application.PathSeparator & "log"
+            strFullLogPath(a) = strLogDir & Application.PathSeparator & strLogFile(a)
         #Else
-            strFullLogPath(a) = Environ("ProgramData") & "\MacmillanStyleTemplate\log\" & strLogFile(a) & "_updates.log"
+            strStyleDir = Environ("ProgramData") & "\MacmillanStyleTemplate"
+            strLogDir = strStyleDir & Application.PathSeparator & "log"
+            strFullLogPath(a) = strLogDir & Application.PathSeparator & strLogFile(a)
         #End If
         'Debug.Print strFullLogPath(a)
-        
-        'If this is an updated (not an installer) check if has been checked today, if no check version number
-        If Installer = False Then
-            installCheck(a) = NeedUpdate(Directory:=FinalDir(a), File:=FileName(a), Log:=strLogFile(a))
-        End If
     Next a
     
-    'If all installCheck are false, Exit Sub
-    'Else, create new array for file names and directories (or combine?) for just installCheck=true
+    ' ------------- Check if we need to do an installation ---------------------------
+    ' Check if template exists
+    Dim installCheck() As Boolean
+    ReDim installCheck(LBound(FileName()) To UBound(FileName()))
+    Dim blnTemplateExists() As Boolean
+    ReDim blnTemplateExists(LBound(FileName()) To UBound(FileName()))
+    Dim blnLogUpToDate() As Boolean
+    ReDim blnLogUpToDate(LBound(FileName()) To UBound(FileName()))
+    Dim b As Long
     
+    For b = LBound(FileName()) To UBound(FileName())
     
-    
-    
-    
-    
-    
-    ' ---------------- Alert user that installation is happening --------------------------
-    Dim strWelcome As String
-
-    strWelcome = "Welcome to the " & TemplateName & " Installer!" & vbNewLine & vbNewLine & _
-        "You need to install the newest version of the " & TemplateName & "." & vbNewLine & vbNewLine & _
-        "Please click OK to begin the installation. It should only take a few seconds."
-
-    If MsgBox(strWelcome, vbOKCancel, TemplateName) = vbCancel Then
-        ActiveDocument.Close (wdDoNotSaveChanges)
-        Exit Sub
-    End If
-    
-    Call CloseOpenDocs
+        'Check if log dir/file exists, create if it doesn't, check last mod date if it does
+        ' If last mod date less than 1 day ago, CheckLog = True
+        blnLogUpToDate(b) = CheckLog(strStyleDir, strLogDir, strFullLogPath(b))
         
-    '-----------------Define variables--------------------------------------------------
-    'For template file
-    Dim strStartupDir As String
-    Dim strGtFinalPath As String
-    
-    'For style templates & log file
-    Dim strStyleDir As String
-    
-    'For log files
-    Dim strLogDir As String
-    'Dim strLogFile As String
-    Dim strLogPath As String
-    Dim logString As String
-
-    strStartupDir = Application.StartupPath
-    strGtFinalPath = strStartupDir & "\" & FileName(1)
-    
-    strStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
-    
-    strLogDir = strStyleDir & "\log"
-    strLogFile = "mac_templates_" & Format(Date, "yyyy-mm-dd") & "_" & Format(Time, "hh-mm-ss") & ".log"
-    strLogPath = strLogDir & "\" & strLogFile(1)
-    logString = ""
+        ' Check if template exists, if not create any missing directories
+        blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
+        Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
+                
+        If Installer = False Then 'Because if it's an installer, we just want to install the file
+            If blnLogUpToDate(b) = True And blnTemplateExists(b) = True Then ' already checked today, already exists
+                Exit Sub
+            ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
+                'check version number
+                installCheck(b) = NeedUpdate(Directory:=FinalDir(b), File:=FileName(b), Log:=strFullLogPath(b))
+            Else ' blnTemplateExists = False, just download new template
+                 installCheck(b) = True
+            End If
+        Else
+            installCheck(b) = True
+        End If
         
-    '----------------Check for and create log file----------------------------------------
-    If Dir(strLogDir, vbDirectory) <> vbNullString Then                 'If log dir already exists
-        logString = "-- log directory already exists."
-    Else
-        If Dir(strStyleDir, vbDirectory) = vbNullString Then            'If MacmillanStyleTemplate dir doesn't exist, then create
-            MkDir (strStyleDir)
-            MkDir (strLogDir)
-            logString = "-- created MacmillanStyleTemplate directory and log file."
-        Else                                                            'MacStyleTemplate exists but log dir doesn't
-            MkDir (strLogDir)
-            logString = "-- created log directory and log file."
+    Next b
+
+    ' ---------------- Create new array of template files we need to install -----------------
+    Dim strInstallMe() As String
+    Dim c As Long
+    Dim x As Long
+    
+    x = 0
+    
+    For c = LBound(FileName()) To UBound(FileName())
+        If installCheck(c) = True Then
+            x = x + 1
+            ReDim Preserve strInstallMe(1 To x)
+            strInstallMe(x) = strTemplatePath(c)
+        End If
+    Next c
+    
+    ' ---------------- Check if new array is allocated -----------------------------------
+    If IsArrayEmpty(strInstallMe()) = True Then
+        If Installer = True Then
+            'Application.Quit (wdDoNotSaveChanges)
+        Else
+            Exit Sub
+        End If
+    Else ' There are values in the array and we need to install them
+    
+        ' Alert user that installation is happening
+        Dim strWelcome As String
+    
+        strWelcome = "Welcome to the " & TemplateName & " Installer!" & vbNewLine & vbNewLine & _
+            "You need to install the newest version of the " & TemplateName & "." & vbNewLine & vbNewLine & _
+            "Please click OK to begin the installation. It should only take a few seconds."
+    
+        If MsgBox(strWelcome, vbOKCancel, TemplateName) = vbCancel Then
+            MsgBox "Please try to install the files at a later time."
+            
+            If Installer = True Then
+                'Application.Quit (wdDoNotSaveChanges)
+            End If
+            
+            Exit Sub
         End If
     End If
     
-    'write logString to log file
-    LogInformation strLogPath, logString
+    ' ---------------- Close any open docs (with prompt) -----------------------------------
+    Call CloseOpenDocs
         
-    '-------------download template file------------------------------------------
-    'Log attempt to download
-    logString = "------------------------------------------" & vbNewLine & _
-                "DOWNLOAD " & FileName(1) & vbNewLine & _
-                "------------------------------------------"
-    LogInformation strLogPath, logString
+    '----------------- download template files ------------------------------------------
+    Dim logString As String
+    Dim d As Long
     
-    'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(strGtFinalPath, strLogPath, FileName(1)) = False Then
-        ActiveDocument.Quit (wdDoNotSaveChanges)
-        Exit Sub
-    End If
+    For d = LBound(strInstallMe()) To UBound(strInstallMe())
+        'If False, error in download; user was notified in DownloadFromConfluence function
+        If DownloadFromConfluence(FinalDir(d), strFullLogPath(d), FileName(d)) = False Then
+            If Installer = True Then
+                'Application.Quit (wdDoNotSaveChanges)
+            Else
+                Exit Sub
+            End If
+        End If
+    Next d
     
     '------Display installation complete message and close doc (ending sub)---------------
     Dim strComplete As String
     
     strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
-        "Click OK to close Word. When you restart Word, the template will be available."
+        "When you restart Word, the template will be available."
         
     MsgBox strComplete, vbOKOnly, "Installation Successful"
     
@@ -141,99 +172,110 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     'Dim restartTime As Variant
     'restartTime = Now + TimeValue("00:00:01")
     'Application.OnTime When:=restartTime, Name:="Restart"
-    Application.Quit SaveChanges:=wdDoNotSaveChanges          'DEBUG: comment out this line
-    
-End Sub
-Private Function DownloadFromConfluence(FinalPath As String, LogFile As String, FileName As String) As Boolean
+    If Installer = True Then
+        'Application.Quit SaveChanges:=wdDoNotSaveChanges          'DEBUG: comment out this line
+    End If
         
+End Sub
+Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String) As Boolean
+'FinalPath is directory w/o file name
+
     Dim logString As String
     Dim strTmpPath As String
+    Dim strFinalPath As String
     Dim strErrMsg As String
         
     logString = ""
     strTmpPath = Environ("TEMP") & "\" & FileName
-        
+    strFinalPath = FinalDir & Application.PathSeparator & FileName
+    
+    #If Mac Then
+        'Download code for Mac
+    #Else
     'try to download the file from Public Confluence page
-    Dim myURL As String
-    Dim WinHttpReq As Object
-    Dim oStream As Object
-    
-    'this is download link, actual page housing files is https://confluence.macmillan.com/display/PBL/Test
-    myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
+        Dim myURL As String
+        Dim WinHttpReq As Object
+        Dim oStream As Object
         
-    'Attempt to download file
-    On Error Resume Next
-        Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-        WinHttpReq.Open "GET", myURL, False
-        WinHttpReq.Send
-
-            ' Exit sub if error in connecting to website
-            If Err.Number <> 0 Then 'HTTP request is not OK
-                'Debug.Print WinHttpReq.Status
-                logString = "-- could not connect to Confluence site: Error " & Err.Number & ". Exiting installation."
-                LogInformation LogFile, logString
-                strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
-                    "Please check your internet connection or contact workflows@macmillan.com for help."
-                MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FileName & ")"
-                DownloadFromConfluence = False
-                On Error GoTo 0
-                Exit Function
-            End If
-    On Error GoTo 0
-
-    If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
+        'this is download link, actual page housing files is https://confluence.macmillan.com/display/PBL/Test
+        myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
+            
+        'Attempt to download file
+        On Error Resume Next
+            Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
+            WinHttpReq.Open "GET", myURL, False
+            WinHttpReq.Send
     
-        'if connection OK, download file to temp dir
-        myURL = WinHttpReq.responseBody
-        Set oStream = CreateObject("ADODB.Stream")
-        oStream.Open
-        oStream.Type = 1
-        oStream.Write WinHttpReq.responseBody
-        oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
-        oStream.Close
-        Set oStream = Nothing
-        Set WinHttpReq = Nothing
-    Else
-        logString = "-- Http status is " & WinHttpReq.Status & ". Cannot download file, exiting installer."
-        LogInformation LogFile, logString
-        strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
-            "Please check your internet connection or contact workflows@macmillan.com for help."
-        MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FileName & ")"
-        DownloadFromConfluence = False
-        Exit Function
-    End If
+                ' Exit sub if error in connecting to website
+                If Err.Number <> 0 Then 'HTTP request is not OK
+                    'Debug.Print WinHttpReq.Status
+                    logString = Now & " -- could not connect to Confluence site: Error " & Err.Number & ". Exiting installation."
+                    LogInformation LogFile, logString
+                    strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
+                        "Please check your internet connection or contact workflows@macmillan.com for help."
+                    MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FileName & ")"
+                    DownloadFromConfluence = False
+                    On Error GoTo 0
+                    Exit Function
+                End If
+        On Error GoTo 0
+    
+        If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
+        
+            'if connection OK, download file to temp dir
+            myURL = WinHttpReq.responseBody
+            Set oStream = CreateObject("ADODB.Stream")
+            oStream.Open
+            oStream.Type = 1
+            oStream.Write WinHttpReq.responseBody
+            oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
+            oStream.Close
+            Set oStream = Nothing
+            Set WinHttpReq = Nothing
+        Else
+            logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file, exiting installer."
+            LogInformation LogFile, logString
+            strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
+                "Please check your internet connection or contact workflows@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FileName & ")"
+            DownloadFromConfluence = False
+            Exit Function
+        End If
+    #End If
         
     'Error if download was not successful
-    If Dir(strTmpPath) = vbNullString Then
-        logString = "-- " & FileName & " file download to Temp was not successful. Exiting installer."
+    If IsItThere(strTmpPath) = False Then
+        logString = Now & " -- " & FileName & " file download to Temp was not successful."
         LogInformation LogFile, logString
         strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
             "Please contact workflows@macmillan.com for assitance."
         MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FileName & ")"
         DownloadFromConfluence = False
+        On Error GoTo 0
         Exit Function
     Else
-        logString = "-- " & FileName & " file download to Temp was successful."
+        logString = Now & " -- " & FileName & " file download to Temp was successful."
         LogInformation LogFile, logString
     End If
 
     'If final dir = Startup, disable template
-    If InStr(LCase(FinalPath), LCase("startup")) > 0 Then           'LCase cause startup was staying in all caps for some reason
+    Debug.Print strFinalPath
+    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
         On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
-            AddIns(FinalPath).Installed = False
+            AddIns(strFinalPath).Installed = False
         On Error GoTo 0
     End If
     
     'If file exists already, log it and delete it
-    If Dir(FinalPath) <> vbNullString Then
-        logString = "-- Previous version file in final directory."
+    If IsItThere(strFinalPath) = True Then
+        logString = Now & " -- Previous version file in final directory."
         LogInformation LogFile, logString
         
         On Error Resume Next
-            Kill FinalPath
+            Kill strFinalPath
             
             If Err.Number = 70 Then         'File is open and can't be replaced
-                logString = "-- old " & FileName & " file is open, can't delete/replace. Alerting user, exiting sub."
+                logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user, exiting sub."
                 LogInformation LogFile, logString
                 strErrMsg = "Please close all other Word documents and try again."
                 MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
@@ -244,37 +286,44 @@ Private Function DownloadFromConfluence(FinalPath As String, LogFile As String, 
         On Error GoTo 0
         
     Else
-        logString = "No previous version file in final directory."
+        logString = Now & "No previous version file in final directory."
         LogInformation LogFile, logString
     End If
         
-    'If delete was successful, move downloaded file to Startup folder
-    If Dir(FinalPath) = vbNullString Then
-        logString = "-- Final directory clear of " & FileName & " file."
+    'If delete was successful, move downloaded file to final folder
+    If IsItThere(strFinalPath) = False Then
+        logString = Now & " -- Final directory clear of " & FileName & " file."
         LogInformation LogFile, logString
-        Name strTmpPath As FinalPath
+        Name strTmpPath As strFinalPath
     Else
-        logString = "-- old " & FileName & " file not cleared from Final directory. Exiting installer."
+        logString = Now & " -- old " & FileName & " file not cleared from Final directory."
         LogInformation LogFile, logString
         strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
             "Please close all other Word documents and try again, or contact workflows@macmillan.com."
         MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FileName & ")"
         DownloadFromConfluence = False
+        On Error GoTo 0
         Exit Function
     End If
     
     'If move was successful, yay! Else, :(
-    If Dir(FinalPath) <> vbNullString Then
-        logString = "-- " & FileName & " file successfully saved to final directory."
+    If IsItThere(strFinalPath) = True Then
+        logString = Now & " -- " & FileName & " file successfully saved to final directory."
         LogInformation LogFile, logString
     Else
-        logString = "-- " & FileName & " file not saved to final directory."
+        logString = Now & " -- " & FileName & " file not saved to final directory."
         LogInformation LogFile, logString
         strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
             "Please cotact workflows@macmillan.com for assistance."
         MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FileName & ")"
         DownloadFromConfluence = False
+        On Error GoTo 0
         Exit Function
+    End If
+    
+    'Cleanup: Get rid of temp file if downloaded correctly
+    If IsItThere(strTmpPath) = True Then
+        Kill strTmpPath
     End If
     
     DownloadFromConfluence = True
@@ -290,94 +339,74 @@ Dim FileNum As Integer
     Close #FileNum ' close the file
 End Sub
 
-Private Function NeedUpdate(Directory As String, File As String, Log As String) As Boolean
-    
-    '------------------- Create full path to template file ----------------------------------
-    'Remove trailing path separator from dir if it's there, so we know we won't duplicate below
-    If Right(Directory, 1) = Application.PathSeparator Then
-        Directory = Left(Directory, Len(Directory) - 1)
-    End If
-    
-    Dim strTemplatePath As String
-    strTemplatePath = Directory & Application.PathSeparator & File
-    
-    '------------------- Create path to log file --------------------------------------------
-    Dim strStyleDir As String
-    Dim strLogDir As String
-    Dim strLogPath As String
-    
-    #If Mac Then
-        Dim strUser As String
-        strUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-                "return (name of current user)" & Chr(13) & "end tell")
-        strStyleDir = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
-    #Else
-        strStyleDir = Environ("ProgramData") & "\MacmillanStyleTemplate"
-    #End If
-    
-    strLogDir = strStyleDir & Application.PathSeparator & "log"
-    strLogPath = strLogDir & Application.PathSeparator & Log
+Private Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
     
     Dim logString As String
     
     '------------------ Check log file --------------------------------------------
     'Check if logfile/directory exists
-    If IsItThere(strLogPath) = False Then
-        NeedUpdate = True
-        logString = Now & "-- Creating logfile."
-        If IsItThere(strLogDir) = False Then
-            If IsItThere(strStyleDir) = False Then
-                MkDir (strStyleDir)
-                MkDir (strLogDir)
-                logString = Now & "-- Creating MacmillanStyleTemplate directory."
+    If IsItThere(LogPath) = False Then
+        CheckLog = False
+        logString = Now & "----------------------------" & vbNewLine & Now & " -- Creating logfile."
+        If IsItThere(LogDir) = False Then
+            If IsItThere(StyleDir) = False Then
+                MkDir (StyleDir)
+                MkDir (LogDir)
+                logString = "----------------------------" & vbNewLine & Now & " -- Creating MacmillanStyleTemplate directory."
             Else
-                MkDir (strLogDir)
-                logString = Now & "-- Creating log directory."
+                MkDir (LogDir)
+                logString = "----------------------------" & vbNewLine & Now & " -- Creating log directory."
             End If
         End If
     Else    'logfile exists, so check last modified date
         Dim lastModDate As Date
-        lastModDate = FileDateTime(strLogPath)
+        lastModDate = FileDateTime(LogPath)
         If DateDiff("d", lastModDate, Date) < 1 Then       'i.e. 1 day
-            NeedUpdate = False
-            logString = Now & "-- Already checked less than 1 day ago. Exiting updater."
+            CheckLog = True
+            logString = "----------------------------" & vbNewLine & Now & " -- Already checked less than 1 day ago."
         Else
-            NeedUpdate = True
-            logString = Now & "-- >= 1 day since last update check."
+            CheckLog = False
+            logString = "----------------------------" & vbNewLine & Now & " -- >= 1 day since last update check."
         End If
     End If
     
     'Log that info!
-    LogInformation strLogPath, logString
+    LogInformation LogPath, logString
     
-    '===========================
-    ' Debugging: Set to True
-    NeedUpdate = True
-    '===========================
+End Function
+
+Private Function IsTemplateThere(Directory As String, FileName As String, Log As String)
+    
+    'Create full path to template
+    Dim strFullPath As String
+    Dim logString As String
+    strFullPath = Directory & Application.PathSeparator & FileName
     
     '------------------------- Check if template exists ----------------------------------
-    'If we already checked today, don't need to update.
-    If NeedUpdate = False Then
-        Exit Function
-    Else ' Let's check the version number
-        ' Create directory if it doesn't exist
-        If IsItThere(Directory) = False Then
-            MkDir (Directory)
-            NeedUpdate = True
-            logString = Now & "-- Creating template directory."
+    ' Create directory if it doesn't exist
+    If IsItThere(Directory) = False Then
+        MkDir (Directory)
+        IsTemplateThere = False
+        logString = Now & " -- Creating template directory."
+    Else
+        ' Check if template file exists
+        If IsItThere(strFullPath) = False Then
+            IsTemplateThere = False
+            logString = Now & " -- " & FileName & " doesn't exist in " & Directory
         Else
-            ' Check if template file exists
-            If IsItThere(strTemplatePath) = False Then
-                NeedUpdate = True
-                logString = Now & "-- " & File & " doesn't exist in " & Directory
-            Else
-                NeedUpdate = False
-                logString = Now & "-- " & File & " already exists. Checking version number."
-            End If
+            IsTemplateThere = True
+            logString = Now & " -- " & FileName & " already exists."
+        End If
     End If
 
-    LogInformation strLogPath, logString
-    
+    LogInformation Log, logString
+End Function
+
+Private Function NeedUpdate(Directory As String, File As String, Log As String) As Boolean
+'Directory argument should be the final directory the template should go in.
+'File should be the template file name
+'Log argument should be full path to log file
+
     '------------------------- Get installed version number -----------------------------------
     If NeedUpdate = True Then
         Exit Function
@@ -387,72 +416,31 @@ Private Function NeedUpdate(Directory As String, File As String, Log As String) 
         Documents.Open FileName:=strTemplatePath, ReadOnly:=True, Visible:=False
         strInstalledVersion = Documents(strTemplatePath).CustomDocumentProperties("version")
         Documents(strTemplatePath).Close
-        logString = Now & "-- installed version is " & strInstalledVersion
+        logString = Now & " -- installed version is " & strInstalledVersion
     End If
     
-    LogInformation strLogPath, logString
+    LogInformation Log, logString
     
     '------------------------- Try to get current version's number from Confluence ------------
     Dim strVersion As String
-    Dim strTempPath As String
         
     strVersion = Left(File(, InStrRev(FileName), ".do") - 1)
     strVersion = strVersion & ".txt"
-    strTempPath = Environ("TEMP") & Application.PathSeparator & strVersion
+    strFullVersionPath = Directory & Application.Path & strVersion
     
-    #If Mac Then
-        'Mac way of getting
-    #Else
-        Dim myURL As String
-        Dim WinHttpReq As Object
-        Dim oStream As Object
-        Dim templateURL As String
-        
-        'this is download link, actual page housing template is http://confluence.macmillan.com/display/PBL/Test
-        templateURL = "https://confluence.macmillan.com/download/attachments/9044274/"
-        myURL = templateURL & strVersion
-    
-        Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
-        WinHttpReq.Open "GET", myURL, False
-        
-        On Error Resume Next
-        WinHttpReq.Send
-    
-            ' Exit function if error in connecting to website
-            If Err.Number <> 0 Then 'HTTP request is not OK
-                logString = Now & " -- tried to update " & templateFile & "; unable to connect to Confluence website."
-                LogInformation strLogPath, logString
-                NeedUpdate = False 'can't update template :(
-                Exit Function
-            End If
-        
-        On Error GoTo 0
-    
-        Debug.Print WinHttpReq.Status
-    
-        If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
-        
-            'if connection OK, download file and save to temp directory
-            myURL = WinHttpReq.responseBody
-            Set oStream = CreateObject("ADODB.Stream")
-            oStream.Open
-            oStream.Type = 1
-            oStream.Write WinHttpReq.responseBody
-            oStream.SaveToFile strTempPath, 2 ' 1 = no overwrite, 2 = overwrite
-            oStream.Close
-            Set oStream = Nothing
-            Set WinHttpReq = Nothing
-        End If
-    #End If
+    'If False, error in download; user was notified in DownloadFromConfluence function
+    If DownloadFromConfluence(Directory, Log, strVersion) = False Then
+        NeedUpdate = False
+    End If
         
     '-------------------- Get version number of current template ---------------------
-    If IsItThere(strTempPath) = True Then
+    If IsItThere(strFullVersionPath) = True Then
         Dim strCurrentVersion As String
         strCurrentVersion = ImportVariable(strTempPath)
-        logString = Now & "current version is " & strCurrentVersion
+        logString = Now & " -- Current version is " & strCurrentVersion
     Else
         NeedUpdate = False
-        logString = Now & "-- download of version file for " & File & " failed."
+        logString = Now & " -- Download of version file for " & File & " failed."
     End If
         
     LogInformation strLogPath, logString
@@ -461,31 +449,30 @@ Private Function NeedUpdate(Directory As String, File As String, Log As String) 
     
     If strInstalledVersion >= strCurrentVersion Then
         NeedUpdate = False
-        logString = Now & "-- Current version matches installed version."
+        logString = Now & " -- Current version matches installed version."
     Else
         NeedUpdate = True
-        logString = Now & "-- Current version greater than installed version."
+        logString = Now & " -- Current version greater than installed version."
     End If
     
 End Function
 
 Private Function IsItThere(Path)
 ' Check if file or directory exists
-' Need error handler because on Mac 2011 if file/dir doesn't exist, it throws an error
-' If checking for directory, path must include trailing separator
     
-    'Remove trailing path separator from dir if it's there, so we know we won't duplicate below
+    'Remove trailing path separator from dir if it's there
     If Right(Path, 1) = Application.PathSeparator Then
         Path = Left(Path, Len(Path) - 1)
     End If
-
-    'Now that we know there ISN'T a trailing separator, we'll add it so we know there is one there
-    Path = Path & Application.PathSeparator
     
     Dim CheckDir As String
-    On Error GoTo ErrHandler
+    Dim lngAttributes As Long
+    On Error GoTo ErrHandler            ' Because Dir(Path) throws an error on Mac if not existant
     
-    CheckDir = Dir(Path)
+    'Includes checks for read-only, hidden, or system files, or for directories
+    lngAttributes = (vbReadOnly Or vbHidden Or vbSystem Or vbDirectory)
+    
+    CheckDir = Dir(Path, lngAttributes)
     
     If CheckDir = vbNullString Then
         IsItThere = False
@@ -541,4 +528,55 @@ Private Function ImportVariable(strFile As String) As String
     Line Input #1, ImportVariable
     Close #1
  
+End Function
+
+Private Function IsArrayEmpty(Arr As Variant) As Boolean
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' By Chip Pearson, http://www.cpearson.com/excel/vbaarrays.htm
+' IsArrayEmpty
+' This function tests whether the array is empty (unallocated). Returns TRUE or FALSE.
+'
+' The VBA IsArray function indicates whether a variable is an array, but it does not
+' distinguish between allocated and unallocated arrays. It will return TRUE for both
+' allocated and unallocated arrays. This function tests whether the array has actually
+' been allocated.
+'
+' This function is really the reverse of IsArrayAllocated.
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+    Dim LB As Long
+    Dim UB As Long
+    
+    Err.Clear
+    On Error Resume Next
+    If IsArray(Arr) = False Then
+        ' we weren't passed an array, return True
+        IsArrayEmpty = True
+    End If
+    
+    ' Attempt to get the UBound of the array. If the array is
+    ' unallocated, an error will occur.
+    UB = UBound(Arr, 1)
+    If (Err.Number <> 0) Then
+        IsArrayEmpty = True
+    Else
+        ''''''''''''''''''''''''''''''''''''''''''
+        ' On rare occassion, under circumstances I
+        ' cannot reliably replictate, Err.Number
+        ' will be 0 for an unallocated, empty array.
+        ' On these occassions, LBound is 0 and
+        ' UBoung is -1.
+        ' To accomodate the weird behavior, test to
+        ' see if LB > UB. If so, the array is not
+        ' allocated.
+        ''''''''''''''''''''''''''''''''''''''''''
+        Err.Clear
+        LB = LBound(Arr)
+        If LB > UB Then
+            IsArrayEmpty = True
+        Else
+            IsArrayEmpty = False
+        End If
+    End If
+
 End Function
