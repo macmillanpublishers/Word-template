@@ -43,6 +43,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
         Dim strTemplatePath() As String
         ReDim strTemplatePath(LBound(FileName()) To UBound(FileName()))
         strTemplatePath(a) = FinalDir(a) & Application.PathSeparator & FileName(a)
+        'Debug.Print "Full template path: " & strTemplatePath(a)
         
         'Create logfile name
         strLogFile(a) = Left(FileName(a), InStrRev(FileName(a), ".do") - 1)
@@ -79,17 +80,18 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
         'Check if log dir/file exists, create if it doesn't, check last mod date if it does
         ' If last mod date less than 1 day ago, CheckLog = True
         blnLogUpToDate(b) = CheckLog(strStyleDir, strLogDir, strFullLogPath(b))
+        'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
         
         ' Check if template exists, if not create any missing directories
         blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
-        Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
+        'Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
                 
         If Installer = False Then 'Because if it's an installer, we just want to install the file
             If blnLogUpToDate(b) = True And blnTemplateExists(b) = True Then ' already checked today, already exists
                 installCheck(b) = False
             ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
                 'check version number
-                installCheck(b) = NeedUpdate(strTemplatePath(b), strFullLogPath(b))
+                installCheck(b) = NeedUpdate(FinalDir(b), FileName(b), strFullLogPath(b))
             Else ' blnTemplateExists = False, just download new template
                  installCheck(b) = True
             End If
@@ -402,20 +404,24 @@ Private Function IsTemplateThere(Directory As String, FileName As String, Log As
     LogInformation Log, logString
 End Function
 
-Private Function NeedUpdate(FullTemplatePath As String, Log As String) As Boolean
+Private Function NeedUpdate(Directory As String, FileName As String, Log As String) As Boolean
 'Directory argument should be the final directory the template should go in.
 'File should be the template file name
 'Log argument should be full path to log file
 
     '------------------------- Get installed version number -----------------------------------
     Dim logString As String
+    Dim strFullTemplatePath As String
+    
+    strFullTemplatePath = Directory & Application.PathSeparator & FileName
+    'Debug.Print "NeedUpdate Path: " & strFullTemplatePath
     
     'Get version number of installed template
     Dim strInstalledVersion As String
-    If IsItThere(FullTemplatePath) = True Then
-        Documents.Open FileName:=FullTemplatePath, ReadOnly:=True, Visible:=False
-        strInstalledVersion = Documents(FullTemplatePath).CustomDocumentProperties("version")
-        Documents(FullTemplatePath).Close
+    If IsItThere(strFullTemplatePath) = True Then
+        Documents.Open FileName:=strFullTemplatePath, ReadOnly:=True, Visible:=False
+        strInstalledVersion = Documents(strFullTemplatePath).CustomDocumentProperties("Version")
+        Documents(strFullTemplatePath).Close
         logString = Now & " -- installed version is " & strInstalledVersion
     Else
         strInstalledVersion = 0     ' Template is not installed
@@ -427,27 +433,35 @@ Private Function NeedUpdate(FullTemplatePath As String, Log As String) As Boolea
     '------------------------- Try to get current version's number from Confluence ------------
     Dim strVersion As String
     Dim strFullVersionPath As String
-        
-    strVersion = Left(InStrRev(FullTemplatePath, ".do"), -1)
+    
+    'Debug.Print FileName
+    'Debug.Print InStrRev(FileName, ".do")
+    strVersion = Left(FileName, InStrRev(FileName, ".do") - 1)
     strVersion = strVersion & ".txt"
-    strFullVersionPath = FullTemplatePath & Application.Path & strVersion
+    strFullVersionPath = Directory & Application.PathSeparator & strVersion
+    'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(FullTemplatePath, Log, strVersion) = False Then
+    If DownloadFromConfluence(Directory, Log, strVersion) = False Then
         NeedUpdate = False
     End If
         
     '-------------------- Get version number of current template ---------------------
     If IsItThere(strFullVersionPath) = True Then
+        NeedUpdate = True
         Dim strCurrentVersion As String
-        strCurrentVersion = ImportVariable(FullTemplatePath)
+        strCurrentVersion = ImportVariable(strFullTemplatePath)
         logString = Now & " -- Current version is " & strCurrentVersion
     Else
         NeedUpdate = False
-        logString = Now & " -- Download of version file for " & FullTemplatePath & " failed."
+        logString = Now & " -- Download of version file for " & FileName & " failed."
     End If
         
     LogInformation Log, logString
+    
+    If NeedUpdate = False Then
+        Exit Function
+    End If
     
     '--------------------- Compare version numbers -----------------------------------
     
@@ -459,10 +473,14 @@ Private Function NeedUpdate(FullTemplatePath As String, Log As String) As Boolea
         logString = Now & " -- Current version greater than installed version."
     End If
     
+    LogInformation Log, logString
+    
 End Function
 
 Private Function IsItThere(Path)
 ' Check if file or directory exists
+    
+    'Debug.Print Path
     
     'Remove trailing path separator from dir if it's there
     If Right(Path, 1) = Application.PathSeparator Then
@@ -489,6 +507,8 @@ Exit Function
 ErrHandler:
     If Err.Number = 68 Then     ' "Device unavailable"
         IsItThere = False
+    Else
+        Debug.Print Err.Number & ": " & Err.Description
     End If
 End Function
 
