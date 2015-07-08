@@ -86,7 +86,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
                 
         If Installer = False Then 'Because if it's an installer, we just want to install the file
             If blnLogUpToDate(b) = True And blnTemplateExists(b) = True Then ' already checked today, already exists
-                Exit Sub
+                installCheck(b) = False
             ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
                 'check version number
                 installCheck(b) = NeedUpdate(strTemplatePath(b), strFullLogPath(b))
@@ -408,44 +408,46 @@ Private Function NeedUpdate(FullTemplatePath As String, Log As String) As Boolea
 'Log argument should be full path to log file
 
     '------------------------- Get installed version number -----------------------------------
+    Dim logString As String
     
-    
-    If NeedUpdate = True Then
-        Exit Function
-    Else
-        'Get version number of installed template
-        Dim strInstalledVersion As String
+    'Get version number of installed template
+    Dim strInstalledVersion As String
+    If IsItThere(FullTemplatePath) = True Then
         Documents.Open FileName:=FullTemplatePath, ReadOnly:=True, Visible:=False
         strInstalledVersion = Documents(FullTemplatePath).CustomDocumentProperties("version")
         Documents(FullTemplatePath).Close
         logString = Now & " -- installed version is " & strInstalledVersion
+    Else
+        strInstalledVersion = 0     ' Template is not installed
+        logString = Now & " -- No template installed, version number is 0."
     End If
     
     LogInformation Log, logString
     
     '------------------------- Try to get current version's number from Confluence ------------
     Dim strVersion As String
+    Dim strFullVersionPath As String
         
-    strVersion = Left(File(, InStrRev(FileName), ".do") - 1)
+    strVersion = Left(InStrRev(FullTemplatePath, ".do"), -1)
     strVersion = strVersion & ".txt"
-    strFullVersionPath = Directory & Application.Path & strVersion
+    strFullVersionPath = FullTemplatePath & Application.Path & strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(Directory, Log, strVersion) = False Then
+    If DownloadFromConfluence(FullTemplatePath, Log, strVersion) = False Then
         NeedUpdate = False
     End If
         
     '-------------------- Get version number of current template ---------------------
     If IsItThere(strFullVersionPath) = True Then
         Dim strCurrentVersion As String
-        strCurrentVersion = ImportVariable(strTempPath)
+        strCurrentVersion = ImportVariable(FullTemplatePath)
         logString = Now & " -- Current version is " & strCurrentVersion
     Else
         NeedUpdate = False
-        logString = Now & " -- Download of version file for " & File & " failed."
+        logString = Now & " -- Download of version file for " & FullTemplatePath & " failed."
     End If
         
-    LogInformation strLogPath, logString
+    LogInformation Log, logString
     
     '--------------------- Compare version numbers -----------------------------------
     
