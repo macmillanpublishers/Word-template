@@ -102,7 +102,8 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     Next b
 
     ' ---------------- Create new array of template files we need to install -----------------
-    Dim strInstallMe() As String
+    Dim strInstallFile() As String
+    Dim strInstallDir() As String
     Dim c As Long
     Dim x As Long
     
@@ -111,13 +112,17 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     For c = LBound(FileName()) To UBound(FileName())
         If installCheck(c) = True Then
             x = x + 1
-            ReDim Preserve strInstallMe(1 To x)
-            strInstallMe(x) = strTemplatePath(c)
+            ReDim Preserve strInstallFile(1 To x)
+                strInstallFile(x) = FileName(c)
+            ReDim Preserve strInstallDir(1 To x)
+                strInstallDir(x) = FinalDir(c)
         End If
     Next c
     
+    'Debug.Print strInstallFile(1) & vbNewLine & strInstallDir(1)
+    
     ' ---------------- Check if new array is allocated -----------------------------------
-    If IsArrayEmpty(strInstallMe()) = True Then
+    If IsArrayEmpty(strInstallFile()) = True Then
         If Installer = True Then
             'Application.Quit (wdDoNotSaveChanges)
         Else
@@ -152,9 +157,9 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     Dim logString As String
     Dim d As Long
     
-    For d = LBound(strInstallMe()) To UBound(strInstallMe())
+    For d = LBound(strInstallFile()) To UBound(strInstallFile())
         'If False, error in download; user was notified in DownloadFromConfluence function
-        If DownloadFromConfluence(FinalDir(d), strFullLogPath(d), FileName(d)) = False Then
+        If DownloadFromConfluence(strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
             If Installer = True Then
                 'Application.Quit (wdDoNotSaveChanges)
             Else
@@ -166,7 +171,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     '------Display installation complete message and close doc (ending sub)---------------
     Dim strComplete As String
     
-    strComplete = "The " & TemplateName & " have been installed on your computer." & vbNewLine & vbNewLine & _
+    strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
         "When you restart Word, the template will be available."
         
     MsgBox strComplete, vbOKOnly, "Installation Successful"
