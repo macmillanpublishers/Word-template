@@ -124,7 +124,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     ' ---------------- Check if new array is allocated -----------------------------------
     If IsArrayEmpty(strInstallFile()) = True Then
         If Installer = True Then
-            'Application.Quit (wdDoNotSaveChanges)
+            Application.Quit (wdDoNotSaveChanges)
         Else
             Exit Sub
         End If
@@ -143,7 +143,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
             MsgBox "Please try to install the files at a later time."
             
             If Installer = True Then
-                'Application.Quit (wdDoNotSaveChanges)
+                Application.Quit (wdDoNotSaveChanges)
             End If
             
             Exit Sub
@@ -161,7 +161,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
         'If False, error in download; user was notified in DownloadFromConfluence function
         If DownloadFromConfluence(strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
             If Installer = True Then
-                'Application.Quit (wdDoNotSaveChanges)
+                Application.Quit (wdDoNotSaveChanges)
             Else
                 Exit Sub
             End If
@@ -182,7 +182,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     'restartTime = Now + TimeValue("00:00:01")
     'Application.OnTime When:=restartTime, Name:="Restart"
     If Installer = True Then
-        'Application.Quit SaveChanges:=wdDoNotSaveChanges          'DEBUG: comment out this line
+        Application.Quit SaveChanges:=wdDoNotSaveChanges          'DEBUG: comment out this line
     End If
         
 End Sub
