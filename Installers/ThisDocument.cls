@@ -34,20 +34,18 @@ Private Sub Document_Open()
     Dim strMacUser As String
     
     ' ==========================================================================================
-    ' Enter the home directories for your templates here
-    
-    strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
-    strPcStartupDir = Environ("APPDATA") & "\Microsoft\Word\STARTUP"
+    ' Enter the home directories for your templates here, for Mac AND PC
     
     #If Mac Then
         strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
                 "return (name of current user)" & Chr(13) & "end tell")
+        strMacStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+        strMacStartupDir = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word"
+    #Else
+        strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
+        strPcStartupDir = Environ("APPDATA") & "\Microsoft\Word\STARTUP"
     #End If
     
-    strMacStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
-    strMacStartupDir = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word"
-    
-    '============================================================================================
     'Update array lengths and template file names here
     
     strTemplateName = "Macmillan Tools and Style Template"           ''Plain English name of what you're installing/updating, should be singular
@@ -77,15 +75,14 @@ Private Sub Document_Open()
         strFileDir(4) = strPcStyleDir
         'strFileDir(5) = strPcStartupDir
     #End If
-
-    '============================================================================================
-    
+        
+    'Check that same number of file names and directories
     If UBound(strFileName()) <> UBound(strFileDir()) Then
         MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
         Exit Sub
     End If
     
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call FileInstaller.Installer(Installer:=False, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call FileInstaller.Installer(Installer:=True, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
 End Sub
