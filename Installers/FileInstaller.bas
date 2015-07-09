@@ -43,7 +43,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
         Dim strTemplatePath() As String
         ReDim strTemplatePath(LBound(FileName()) To UBound(FileName()))
         strTemplatePath(a) = FinalDir(a) & Application.PathSeparator & FileName(a)
-        Debug.Print "Full template path: " & strTemplatePath(a)
+        'Debug.Print "Full template path: " & strTemplatePath(a)
         
         'Create logfile name
         strLogFile(a) = Left(FileName(a), InStrRev(FileName(a), ".do") - 1)
@@ -80,11 +80,11 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
         'Check if log dir/file exists, create if it doesn't, check last mod date if it does
         ' If last mod date less than 1 day ago, CheckLog = True
         blnLogUpToDate(b) = CheckLog(strStyleDir, strLogDir, strFullLogPath(b))
-        Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
+        'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
         
         ' Check if template exists, if not create any missing directories
         blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
-        Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
+        'Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
                 
         If Installer = False Then 'Because if it's an installer, we just want to install the file
             If blnLogUpToDate(b) = True And blnTemplateExists(b) = True Then ' already checked today, already exists
@@ -127,10 +127,12 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     
         ' Alert user that installation is happening
         Dim strWelcome As String
-    
-        strWelcome = "Welcome to the " & TemplateName & " Installer!" & vbNewLine & vbNewLine & _
-            "You need to install the newest version of the " & TemplateName & "." & vbNewLine & vbNewLine & _
-            "Please click OK to begin the installation. It should only take a few seconds."
+        If Installer = True Then
+            strWelcome = "Welcome to the " & TemplateName & " Installer!" & vbNewLine & vbNewLine & _
+                "Please click OK to begin the installation. It should only take a few seconds."
+        Else
+            strWelcome = "Your " & TemplateName & " is out of date. Click OK to update automatically."
+        End If
     
         If MsgBox(strWelcome, vbOKCancel, TemplateName) = vbCancel Then
             MsgBox "Please try to install the files at a later time."
@@ -200,7 +202,7 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
         strMacHD = "Macintosh HD"
         strTmpPath = strMacHD & ":private:tmp" & Application.PathSeparator & FileName
         strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - Len(strMacHD)), ":", "/")
-        Debug.Print strBashTmp
+        'Debug.Print strBashTmp
         
         'check for network
         If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then   'can't connect to internet
@@ -514,7 +516,7 @@ End Function
 Private Function IsItThere(Path)
 ' Check if file or directory exists
     
-    Debug.Print Path
+    'Debug.Print Path
     
     'Remove trailing path separator from dir if it's there
     If Right(Path, 1) = Application.PathSeparator Then
@@ -522,12 +524,8 @@ Private Function IsItThere(Path)
     End If
     
     Dim CheckDir As String
-    Dim lngAttributes As Long
     On Error GoTo ErrHandler            ' Because Dir(Path) throws an error on Mac if not existant
-    
-    'Includes checks for read-only, hidden, or system files, or for directories
-    'lngAttributes = (vbReadOnly Or vbHidden Or vbSystem Or vbDirectory)
-    
+        
     CheckDir = Dir(Path, vbDirectory)
     
     If CheckDir = vbNullString Then
@@ -542,7 +540,7 @@ ErrHandler:
     If Err.Number = 68 Then     ' "Device unavailable"
         IsItThere = False
     Else
-        Debug.Print "IsItThere Error " & Err.Number & ": " & Err.Description
+        'Debug.Print "IsItThere Error " & Err.Number & ": " & Err.Description
     End If
 End Function
 
