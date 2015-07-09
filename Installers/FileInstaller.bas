@@ -164,7 +164,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     '------Display installation complete message and close doc (ending sub)---------------
     Dim strComplete As String
     
-    strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
+    strComplete = "The " & TemplateName & " have been installed on your computer." & vbNewLine & vbNewLine & _
         "When you restart Word, the template will be available."
         
     MsgBox strComplete, vbOKOnly, "Installation Successful"
@@ -313,11 +313,24 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
         LogInformation LogFile, logString
     End If
         
-    'If delete was successful, move downloaded file to final folder
+    'If delete was successful, move downloaded file to final directory
     If IsItThere(strFinalPath) = False Then
         logString = Now & " -- Final directory clear of " & FileName & " file."
         LogInformation LogFile, logString
-        Name strTmpPath As strFinalPath
+        
+        'Mac won't load macros from a template downloaded from the internet to Startup. Need to open and save as to final location for macros to work.
+        #If Mac Then
+            If InStr(1, FileName, ".dotm") > 0 And InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then      'File is a template being saved in startup dir
+                Documents.Open FileName:=strTmpPath, ReadOnly:=True ', Visible:=False
+                Documents(strTmpPath).SaveAs (strFinalPath)
+                Documents(strFinalPath).Close
+            Else
+                Name strTmpPath As strFinalPath
+            End If
+        #Else
+            Name strTmpPath As strFinalPath
+        #End If
+    
     Else
         logString = Now & " -- old " & FileName & " file not cleared from Final directory."
         LogInformation LogFile, logString
@@ -440,7 +453,7 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
     'Get version number of installed template
     Dim strInstalledVersion As String
     If IsItThere(strFullTemplatePath) = True Then
-        Documents.Open FileName:=strFullTemplatePath, ReadOnly:=True, Visible:=False
+        Documents.Open FileName:=strFullTemplatePath, ReadOnly:=True ', Visible:=False      'Mac Word 2011 doesn't allow Visible as an argument :(
         strInstalledVersion = Documents(strFullTemplatePath).CustomDocumentProperties("Version")
         Documents(strFullTemplatePath).Close
         logString = Now & " -- installed version is " & strInstalledVersion
