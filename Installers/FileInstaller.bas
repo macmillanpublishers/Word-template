@@ -185,21 +185,24 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
     Dim logString As String
     Dim strTmpPath As String
     Dim strBashTmp As String
+    Dim strMacHD As String
     Dim strFinalPath As String
     Dim strErrMsg As String
     Dim myURL As String
-
-    logString = ""
-    strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too?
-    strBashTmp = Replace(strTmpPath, "\", "/")
-    Debug.Print strBashTmp
+    
     strFinalPath = FinalDir & Application.PathSeparator & FileName
     
     'this is download link, actual page housing files is https://confluence.macmillan.com/display/PBL/Test
     myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
             
     #If Mac Then
-        'check for network.
+        'set tmp dir
+        strMacHD = "Macintosh HD"
+        strTmpPath = strMacHD & ":private:tmp" & Application.PathSeparator & FileName
+        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - Len(strMacHD)), ":", "/")
+        Debug.Print strBashTmp
+        
+        'check for network
         If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then   'can't connect to internet
             logString = Now & " -- Tried update; unable to connect to network."
             LogInformation LogFile, logString
@@ -210,9 +213,13 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
             Exit Function
         Else 'internet is working, download file
             ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
+            'ShellAndWaitMac ("rm -f /private/tmp/MacmillanGT.dotm ; curl -o /private/tmp/MacmillanGT.dotm " & myURL)
         End If
     #Else
-    'try to download the file from Public Confluence page
+        'set tmp dir
+        strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too?
+    
+        'try to download the file from Public Confluence page
         Dim WinHttpReq As Object
         Dim oStream As Object
         
@@ -522,7 +529,7 @@ ErrHandler:
     If Err.Number = 68 Then     ' "Device unavailable"
         IsItThere = False
     Else
-        Debug.Print Err.Number & ": " & Err.Description
+        Debug.Print "IsItThere Error " & Err.Number & ": " & Err.Description
     End If
 End Function
 
