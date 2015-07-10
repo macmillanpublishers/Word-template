@@ -296,35 +296,22 @@ Private Function GetCSV_PC(InfoType As String, Publisher As String) As String
 End Function
 
 Private Function GetCSV_Mac(InfoType As String, Publisher As String) As String
+    
     Dim dirNameMac As String
-    Dim dirNameBash As String
     Dim strCastoffFile As String
-    Dim dlUrl As String
+    Dim strFullLogPath As String
     
+    dirNameMac = "Macintosh HD:tmp:"
     strCastoffFile = InfoType & "_" & Publisher & ".csv"
-    dirNameMac = "Macintosh HD:private:tmp:" & strCastoffFile
-    dirNameBash = "/private/tmp/" & strCastoffFile
-    dlUrl = "https://confluence.macmillan.com/download/attachments/9044274/"
+    strFullLogPath = "" 'need to declare based on OS. create a separate public sub to define?
     
-    'Debug.Print strCastoffFile
-    
-    'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
-    If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then
+    'If False, error in download; user was notified in DownloadFromConfluence function
+    If DownloadFromConfluence(dirNameMac, strFullLogPath, strCastoffFile) = False Then
         GetCSV_Mac = ""
         Exit Function
+    Else
+        GetCSV_Mac = dirNameMac & strCastoffFile
     End If
-    
-    'download CSV file to temp
-    ShellAndWaitMac ("rm -f " & dirNameBash & " ; curl -o " & dirNameBash & " " & dlUrl & strCastoffFile)
-    
-        'Check if download was successful
-    If IsItThere(dirNameMac) = False Then
-        GetCSV_Mac = ""
-        Exit Function
-    End If
-    
-    'return full path to CSV file
-    GetCSV_Mac = dirNameMac
     
 End Function
 
