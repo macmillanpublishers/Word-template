@@ -286,7 +286,7 @@ Private Function GetCSV_PC(InfoType As String, Publisher As String) As String
     End If
     
     'Check if download was successful
-    If Dir(dirNamePC) = vbNullString Then
+    If IsItThere(dirNamePC) = False Then
         GetCSV_PC = ""
         Exit Function
     End If
@@ -301,9 +301,9 @@ Private Function GetCSV_Mac(InfoType As String, Publisher As String) As String
     Dim strCastoffFile As String
     Dim dlUrl As String
     
-    dirNameMac = "Macintosh HD:private:tmp:"
-    dirNameBash = "/private/tmp/"
     strCastoffFile = InfoType & "_" & Publisher & ".csv"
+    dirNameMac = "Macintosh HD:private:tmp:" & strCastoffFile
+    dirNameBash = "/private/tmp/" & strCastoffFile
     dlUrl = "https://confluence.macmillan.com/download/attachments/9044274/"
     
     'Debug.Print strCastoffFile
@@ -315,10 +315,16 @@ Private Function GetCSV_Mac(InfoType As String, Publisher As String) As String
     End If
     
     'download CSV file to temp
-    ShellAndWaitMac ("rm -f " & dirNameBash & strCastoffFile & " ; curl -o " & dirNameBash & strCastoffFile & " " & dlUrl & strCastoffFile)
+    ShellAndWaitMac ("rm -f " & dirNameBash & " ; curl -o " & dirNameBash & " " & dlUrl & strCastoffFile)
+    
+        'Check if download was successful
+    If IsItThere(dirNameMac) = False Then
+        GetCSV_Mac = ""
+        Exit Function
+    End If
     
     'return full path to CSV file
-    GetCSV_Mac = dirNameMac & strCastoffFile
+    GetCSV_Mac = dirNameMac
     
 End Function
 

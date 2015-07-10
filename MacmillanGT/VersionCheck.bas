@@ -76,57 +76,28 @@ Sub CheckMacmillan()
     End If
 
 End Sub
-Private Sub VersionCheck(fullPath As String, fileName As String)
+Private Sub VersionCheck(fullPath As String, FileName As String)
 
     '------------------------------
     'created by Erica Warren 2014-04-08         erica.warren@macmillan.com
     'Alerts user to the version number of the template file
     
     Dim installedVersion As String
-    Debug.Print fullPath
+    'Debug.Print fullPath
     
-    If FileOrDirExists(fullPath) = False Then           ' the template file is not installed, or is not in the correct place
+    If IsItThere(fullPath) = False Then           ' the template file is not installed, or is not in the correct place
         installedVersion = "none"
     Else                                                                'the template file is installed in the correct place
-        Documents.Open fileName:=fullPath, ReadOnly:=True                   ' Note can't set Visible:=False because that's not an argument in Word Mac VBA :(
+        Documents.Open FileName:=fullPath, ReadOnly:=True                   ' Note can't set Visible:=False because that's not an argument in Word Mac VBA :(
         installedVersion = Documents(fullPath).CustomDocumentProperties("version")
         Documents(fullPath).Close
     End If
     
     'Now we tell the user what version they have
     If installedVersion <> "none" Then
-        MsgBox "You currently have version " & installedVersion & " of the file " & fileName & " installed."
+        MsgBox "You currently have version " & installedVersion & " of the file " & FileName & " installed."
     Else
-        MsgBox "You do not have " & fileName & " installed on your computer."
+        MsgBox "You do not have " & FileName & " installed on your computer."
     End If
 
 End Sub
-Function FileOrDirExists(PathName As String) As Boolean
-     ' From here: http://www.vbaexpress.com/kb/getarticle.php?kb_id=559
-     'Macro Purpose: Function returns TRUE if the specified file
-     '               or folder exists, false if not.
-     'PathName     : Supports Windows mapped drives or UNC
-     '             : Supports Macintosh paths
-     'File usage   : Provide full file path and extension
-     'Folder usage : Provide full folder path
-     '               Accepts with/without trailing "\" (Windows)
-     '               Accepts with/without trailing ":" (Macintosh)
-     
-    Dim iTemp As Integer
-     
-     'Ignore errors to allow for error evaluation
-    On Error Resume Next
-    iTemp = GetAttr(PathName)
-     
-     'Check if error exists and set response appropriately
-    Select Case Err.Number
-    Case Is = 0
-        FileOrDirExists = True
-    Case Else
-        FileOrDirExists = False
-    End Select
-     
-     'Resume error checking
-    On Error GoTo 0
-End Function
-
