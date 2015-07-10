@@ -50,15 +50,15 @@ Private Sub Document_Open()
     
     strTemplateName = "Macmillan Tools and Style Template"           ''Plain English name of what you're installing/updating, should be singular
     
-    ReDim strFileName(1 To 4)               'Declare number of files here
-    ReDim strFileDir(1 To 4)                'And here
+    ReDim strFileName(1 To 5)               'Declare number of files here
+    ReDim strFileDir(1 To 5)                'And here
     
     'File 1
     strFileName(1) = "MacmillanGT.dotm"                                 'File name you're installing/updating
     strFileName(2) = "macmillan.dotm"
     strFileName(3) = "macmillan_NoColor.dotm"
     strFileName(4) = "MacmillanCoverCopy.dotm"
-    'strFileName(5) = "GtUpdater.dotm"
+    strFileName(5) = "GtUpdater.dotm"
     
     '=============================================================================================
     
@@ -67,13 +67,13 @@ Private Sub Document_Open()
         strFileDir(2) = strMacStyleDir
         strFileDir(3) = strMacStyleDir
         strFileDir(4) = strMacStyleDir
-        'strFileDir(5) = strMacStartupDir
+        strFileDir(5) = strMacStartupDir
     #Else
         strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
         strFileDir(2) = strPcStyleDir
         strFileDir(3) = strPcStyleDir
         strFileDir(4) = strPcStyleDir
-        'strFileDir(5) = strPcStartupDir
+        strFileDir(5) = strPcStartupDir
     #End If
         
     'Check that same number of file names and directories
