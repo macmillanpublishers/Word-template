@@ -24,7 +24,7 @@ Sub AutoExec()
 ' and be saved in the STARTUP directory.
         
     ' For testing / debugging
-    'MsgBox "I am GtUpdater and I am running!"
+    MsgBox "I am GtUpdater and I am running!"
             
     Dim strTemplateName As String
     Dim strFileName() As String
@@ -53,13 +53,13 @@ Sub AutoExec()
     
     'Update array lengths and template file names here
     
-    strTemplateName = "Macmillan Tools and Style Template"           ''Plain English name of what you're installing/updating, should be singular
+    strTemplateName = "Macmillan Tools Template"           ''Plain English name of what you're installing/updating, should be singular
     
     ReDim strFileName(1 To 1)               'Declare number of files here
     ReDim strFileDir(1 To 1)                'And here
     
     'File 1
-    strFileName(1) = "MacmillanGT2.dotm"                                 'File name you're installing/updating
+    strFileName(1) = "MacmillanGT.dotm"                                 'File name you're installing/updating
     'strFileName(2) = "macmillan.dotm"
     'strFileName(3) = "macmillan_NoColor.dotm"
     'strFileName(4) = "MacmillanCoverCopy.dotm"
