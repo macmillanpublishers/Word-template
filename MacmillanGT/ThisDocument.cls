@@ -24,7 +24,7 @@ Sub AutoExec()
 ' and be saved in the STARTUP directory.
         
     ' For testing / debugging
-    MsgBox "I am MacmillanGT and I am running!"
+    ' MsgBox "I am MacmillanGT and I am running!"
             
     Dim strTemplateName As String
     Dim strFileName() As String
