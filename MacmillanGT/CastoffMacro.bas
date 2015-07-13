@@ -102,7 +102,7 @@ Sub UniversalCastoff()
     strLogFile = arrLogInfo(3)
     strPath = strDir & Application.PathSeparator & strCastoffFile
         
-    'Check if log file already exists; if not, create it
+    'Check if log file already exists; if not, create it then download CSV file
     If CheckLog(strStyleDir, strDir, strLogFile) = True Or CheckLog(strStyleDir, strDir, strLogFile) = False Then
         If DownloadFromConfluence(strDir, strLogFile, strCastoffFile) = False Then
             Unload objCastoffForm
@@ -377,38 +377,43 @@ Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
     Castoff = arrResult
 
 End Function
-Private Function SpineSize(PageCount As Long, Publisher As String, objForm As CastoffForm)
+Private Function SpineSize(PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
 
+'----Get Log dir to save spines CSV to --------------------------
+    Dim strLogDir As String
+    strLogDir = Left(FileName, InStrRev(FileName, Application.PathSeparator) - 1)
+
+'----Define spine chart file name--------------------------------
+    Dim strSpineFile As String
+    strSpineFile = "Spine_" & Publisher & ".csv"
+    
+'----Define full path to where CSV will be----------------------
+    Dim strFullPath As String
+    strFullPath = strLogDir & Application.PathSeparator & strSpineFile
+    
 '----Download CSV with spine sizes from Confluence site----------
 
-    'Need separate PC and Mac subs to download file
-    Dim TheOS As String
-    Dim strPath As String
-    Dim strInfoType As String
-    Dim strPub As String
-
-    TheOS = System.OperatingSystem
-    strInfoType = "Spine"
-
-    If Not TheOS Like "*Mac*" Then
-        strPath = GetCSV_PC(strInfoType, Publisher)
-            If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
-                Unload objForm
-                Exit Function
-            End If
-    Else
-        strPath = GetCSV_Mac(strInfoType, Publisher)
-            If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
-                Unload objForm
-                Exit Function
-            End If
+    'Check if log file already exists; if not, create it then download CSV file
+    If ItItThere(LogFile) = True Then
+        If DownloadFromConfluence(strLogDir, LogFile, strSpineFile) = False Then
+            Unload objCastoffForm
+            Exit Function
+        End If
     End If
+                        
+    'Make sure CSV is there
+    If IsItThere(strFullPath) = False Then
+        strMessage = "The Castoff macro is unable to access the spine size file right now. Please check your internet " & _
+                    "connection and try again, or contact workflows@macmillan.com."
+        MsgBox strMessage, vbCritical, "Error 4: Spine CSV doesn't exist"
+        Unload objCastoffForm
+        Exit Function
+    End If
+
 
 '---------Load CSV into an array-----------------------------------
     Dim arrDesign() As Variant
-    arrDesign = LoadCSVtoArray(strPath)
+    arrDesign = LoadCSVtoArray(strFullPath)
     
 '---------Lookup spine size in array-------------------------------
     Dim strSpine As String
