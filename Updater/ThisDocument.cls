@@ -7,10 +7,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
-Option Explicit
-Option Base 1
-
-Sub AutoExec()
 '=======================================
 ' By Erica Warren - erica.warren@macmillan.com
 '
@@ -22,9 +18,17 @@ Sub AutoExec()
 ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
 ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
 ' and be saved in the STARTUP directory.
+
+' This requires that the SharedMacros module be saved in the same template
+
+Option Explicit
+Option Base 1
+
+Sub AutoExec()
+
         
     ' For testing / debugging
-    MsgBox "I am GtUpdater and I am running!"
+    ' MsgBox "I am GtUpdater and I am running!"
             
     Dim strTemplateName As String
     Dim strFileName() As String
