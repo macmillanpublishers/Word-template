@@ -33,7 +33,7 @@ ErrHandler:
     End If
 End Function
 
-Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String) As Boolean
+Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String) As Boolean
 'FinalPath is directory w/o file name
 
     Dim logString As String
