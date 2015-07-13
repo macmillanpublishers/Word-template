@@ -57,7 +57,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     
         'Check if log dir/file exists, create if it doesn't, check last mod date if it does
         ' If last mod date less than 1 day ago, CheckLog = True
-        blnLogUpToDate(b) = CheckLog(strStyleDir, strLogDir, strFullLogPath(b))
+        blnLogUpToDate(b) = CheckLog(strStyleDir(b), strLogDir(b), strFullLogPath(b))
         'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
         
         ' Check if template exists, if not create any missing directories

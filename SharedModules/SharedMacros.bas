@@ -246,9 +246,9 @@ Public Function CreateLogFileInfo(FileName As String) As Variant
 
     Dim strLogFile As String
     Dim strUser As String
-    Dim strStyleDir As String
-    Dim strLogDir As String
-    Dim strFullLogPaths As String
+    Dim strStyle As String
+    Dim strLogFolder As String
+    Dim strLogPath As String
     
     'Create logfile name
     strLogFile = Left(FileName, InStrRev(FileName, ".") - 1)
@@ -259,22 +259,22 @@ Public Function CreateLogFileInfo(FileName As String) As Variant
         Dim strUser As String
         strUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
             "return (name of current user)" & Chr(13) & "end tell")
-        strStyleDir = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
-        strLogDir = strStyleDir & Application.PathSeparator & "log"
-        strFullLogPath = strLogDir & Application.PathSeparator & strLogFile
+        strStyle = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
+        strLogFolder = strStyleDir & Application.PathSeparator & "log"
+        strLogPath = strLogDir & Application.PathSeparator & strLogFile
     #Else
-        strStyleDir = Environ("ProgramData") & "\MacmillanStyleTemplate"
-        strLogDir = strStyleDir & Application.PathSeparator & "log"
-        strFullLogPath = strLogDir & Application.PathSeparator & strLogFile
+        strStyle = Environ("ProgramData") & "\MacmillanStyleTemplate"
+        strLogFolder = strStyleDir & Application.PathSeparator & "log"
+        strLogPath = strLogDir & Application.PathSeparator & strLogFile
     #End If
     'Debug.Print strFullLogPath(a)
 
     Dim arrFinalDirs() As Variant
     ReDim arrFinalDirs(1 To 3)
     
-    arrFinalDirs(1) = strStyleDir
-    arrFinalDirs(2) = strLogDir
-    arrFinalDirs(3) = strFullLogPath
+    arrFinalDirs(1) = strStyle
+    arrFinalDirs(2) = strLogFolder
+    arrFinalDirs(3) = strLogPath
     
     CreateLogFileInfo = arrFinalDirs
 
