@@ -240,6 +240,46 @@ Dim FileNum As Integer
     Close #FileNum ' close the file
 End Sub
 
+Public Function CreateLogFileInfo(FileName As String) As Variant
+' Creates the style dir, log dir, and log file name variables for use in other subs.
+' File name should not contain periods other than before file type
+
+    Dim strLogFile As String
+    Dim strUser As String
+    Dim strStyleDir As String
+    Dim strLogDir As String
+    Dim strFullLogPaths As String
+    
+    'Create logfile name
+    strLogFile = Left(FileName, InStrRev(FileName, ".") - 1)
+    strLogFile = strLogFile & "_updates.log"
+    
+    'Create directory names based on OS
+    #If Mac Then
+        Dim strUser As String
+        strUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
+            "return (name of current user)" & Chr(13) & "end tell")
+        strStyleDir = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
+        strLogDir = strStyleDir & Application.PathSeparator & "log"
+        strFullLogPath = strLogDir & Application.PathSeparator & strLogFile
+    #Else
+        strStyleDir = Environ("ProgramData") & "\MacmillanStyleTemplate"
+        strLogDir = strStyleDir & Application.PathSeparator & "log"
+        strFullLogPath = strLogDir & Application.PathSeparator & strLogFile
+    #End If
+    'Debug.Print strFullLogPath(a)
+
+    Dim arrFinalDirs() As Variant
+    ReDim arrFinalDirs(1 To 3)
+    
+    arrFinalDirs(1) = strStyleDir
+    arrFinalDirs(2) = strLogDir
+    arrFinalDirs(3) = strFullLogPath
+    
+    CreateLogFileInfo = arrFinalDirs
+
+End Function
+
 Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
 'LogPath is full path to log file.
 
