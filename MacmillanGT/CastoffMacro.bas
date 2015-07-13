@@ -21,6 +21,8 @@ Sub UniversalCastoff()
     Dim strDesign() As String
     Dim intDim As Integer
     Dim strPub As String
+    Dim strCastoffFile As String
+    Dim strInfoType As String
 
     'Debug.Print objCastoffForm.tabPublisher.SelectedItem.Caption
 
@@ -76,34 +78,43 @@ Sub UniversalCastoff()
     'Get publisher name from tab of userform
     strPub = objCastoffForm.tabPublisher.SelectedItem.Caption
     
-    '---------Download CSV with design specs from Confluence site-------
-
-    'Need separate PC and Mac subs to download file
-    Dim TheOS As String
-    Dim strPath As String
-    Dim strInfoType As String
-
-    TheOS = System.OperatingSystem
+    'Create name of castoff csv file to download
     strInfoType = "Castoff"
-
-    If Not TheOS Like "*Mac*" Then
-        strPath = GetCSV_PC(strInfoType, strPub)
-            If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection.", _
-                    vbCritical, "Error 3: Path to CSV Is Null"
-                Unload objCastoffForm
-                Exit Sub
-            End If
-    Else
-        strPath = GetCSV_Mac(strInfoType, strPub)
-            If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection.", _
-                    vbCritical, "Error 3: Path to CSV Is Null"
-                Unload objCastoffForm
-                Exit Sub
-            End If
+    strCastoffFile = InfoType & "_" & Publisher & ".csv"
+    
+    '---------Download CSV with design specs from Confluence site-------
+    'Create log file name
+    Dim arrLogInfo() As Variant
+    ReDim arrLogInfo(1 To 3)
+    
+    arrLogInfo() = CreateLogFileInfo(strCastoffFile)
+      
+    'Create final path for downloaded CSV file (in log directory)
+    'not in temp dir because that is where DownloadFromConfluence downloads it to, and it cleans that file up when done
+    Dim strPath As String
+    Dim strLogFile As String
+    Dim strMessage As String
+    
+    strPath = arrLogInfo(2)
+    strLogFile = arrLogInfo(3)
+        
+    'Check if log file already exists; if not, create it
+    If CheckLog(arrLogInfo(1), arrLogInfo(2), arrLogInfo(3)) = True Or CheckLog(arrLogInfo(1), arrLogInfo(2), arrLogInfo(3)) = False Then
+        If DownloadFromConfluence(strPath, arrLogInfo(3), strCastoffFile) = False Then
+            Unload objCastoffForm
+            Exit Sub
+        End If
     End If
-
+                        
+    'Make sure CSV is there
+    If IsItThere(strPath) = False Then
+        strMessage = "The Castoff macro is unable to access the design count file right now. Please check your internet " & _
+                    "connection and try again, or contact workflows@macmillan.com."
+        MsgBox strMessage, vbCritical, "Error 3: Design CSV doesn't exist"
+        Unload objCastoffForm
+        Exit Sub
+    End If
+    
     '---------Load CSV into an array-----------------------------------
     Dim arrDesign() As Variant
     arrDesign = LoadCSVtoArray(strPath)
