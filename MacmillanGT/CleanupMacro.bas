@@ -1,16 +1,17 @@
 Attribute VB_Name = "CleanupMacro"
+' by Erica Warren - erica.warren@macmillan.com
+
+' ======== PURPOSE ============================
+' Performs standard typographic cleanup in current document
+
+' ======== DEPENDENCIES =======================
+' 1. Requires ProgressBar userform module
+
 Option Explicit
 Option Base 1
 
 Dim activeRng As Range
-Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 
-Private Sub Doze(ByVal lngPeriod As Long)
-    DoEvents
-    Sleep lngPeriod
-    ' Call it in desired location to sleep for 1 seconds like this:
-    ' Doze 1000
-End Sub
 Sub MacmillanManuscriptCleanup()
 
     ''''''''''''''''''''''''''''''''

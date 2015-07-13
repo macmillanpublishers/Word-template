@@ -1,7 +1,16 @@
 Attribute VB_Name = "CastoffMacro"
 Option Explicit
 Sub UniversalCastoff()
-'created by Erica Warren - erica.warren@macmillan.com
+' created by Erica Warren - erica.warren@macmillan.com
+
+' ========== PUROPOSE ========================
+' Takes user inputs from userform to calculate a castoff (estimated print page count) based on
+' the current text of the document.
+
+' ========== DEPENDENCIES ====================
+' 1. Requires SharedMacros module to be installed in same template
+' 2. Requires design character count CSV files and spine size files be saved to Confluence Test page
+' 3. Requires CastoffForm userform module
 
     '----------Load userform to get user inputs------------------------
     Dim objCastoffForm As CastoffForm
@@ -21,6 +30,8 @@ Sub UniversalCastoff()
     Dim strDesign() As String
     Dim intDim As Integer
     Dim strPub As String
+    Dim strCastoffFile As String
+    Dim strInfoType As String
 
     'Debug.Print objCastoffForm.tabPublisher.SelectedItem.Caption
 
@@ -76,34 +87,47 @@ Sub UniversalCastoff()
     'Get publisher name from tab of userform
     strPub = objCastoffForm.tabPublisher.SelectedItem.Caption
     
-    '---------Download CSV with design specs from Confluence site-------
-
-    'Need separate PC and Mac subs to download file
-    Dim TheOS As String
-    Dim strPath As String
-    Dim strInfoType As String
-
-    TheOS = System.OperatingSystem
+    'Create name of castoff csv file to download
     strInfoType = "Castoff"
-
-    If Not TheOS Like "*Mac*" Then
-        strPath = GetCSV_PC(strInfoType, strPub)
-            If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection.", _
-                    vbCritical, "Error 3: Path to CSV Is Null"
-                Unload objCastoffForm
-                Exit Sub
-            End If
-    Else
-        strPath = GetCSV_Mac(strInfoType, strPub)
-            If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source design count file right now. Please check your internet connection.", _
-                    vbCritical, "Error 3: Path to CSV Is Null"
-                Unload objCastoffForm
-                Exit Sub
-            End If
+    strCastoffFile = strInfoType & "_" & strPub & ".csv"
+    
+    '---------Download CSV with design specs from Confluence site-------
+    'Create log file name
+    Dim arrLogInfo() As Variant
+    ReDim arrLogInfo(1 To 3)
+    
+    arrLogInfo() = CreateLogFileInfo(strCastoffFile)
+      
+    'Create final path for downloaded CSV file (in log directory)
+    'not in temp dir because that is where DownloadFromConfluence downloads it to, and it cleans that file up when done
+    Dim strStyleDir As String
+    Dim strPath As String
+    Dim strLogFile As String
+    Dim strMessage As String
+    Dim strDir As String
+    
+    strStyleDir = arrLogInfo(1)
+    strDir = arrLogInfo(2)
+    strLogFile = arrLogInfo(3)
+    strPath = strDir & Application.PathSeparator & strCastoffFile
+        
+    'Check if log file already exists; if not, create it then download CSV file
+    If CheckLog(strStyleDir, strDir, strLogFile) = True Or CheckLog(strStyleDir, strDir, strLogFile) = False Then
+        If DownloadFromConfluence(strDir, strLogFile, strCastoffFile) = False Then
+            Unload objCastoffForm
+            Exit Sub
+        End If
     End If
-
+                        
+    'Make sure CSV is there
+    If IsItThere(strPath) = False Then
+        strMessage = "The Castoff macro is unable to access the design count file right now. Please check your internet " & _
+                    "connection and try again, or contact workflows@macmillan.com."
+        MsgBox strMessage, vbCritical, "Error 3: Design CSV doesn't exist"
+        Unload objCastoffForm
+        Exit Sub
+    End If
+    
     '---------Load CSV into an array-----------------------------------
     Dim arrDesign() As Variant
     arrDesign = LoadCSVtoArray(strPath)
@@ -187,7 +211,7 @@ Sub UniversalCastoff()
                 
                 'Get spine size
                 If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-                    strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm)
+                    strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm, strLogFile)
                     'Debug.Print "spine size = " & strSpineSize
                     If strSpineSize = vbNullString Then
                         strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
@@ -204,8 +228,6 @@ Sub UniversalCastoff()
             End If
             
             '------------------Create output for this castoff---------------------
-            Dim strMessage As String
-            
             strMessage = strMessage & _
                 vbTab & UCase(strDesign(d)) & ": " & lngFinalCount & vbNewLine & _
                 vbTab & lngActualCount & " text pages" & vbNewLine & _
@@ -232,96 +254,6 @@ Sub UniversalCastoff()
             
 End Sub
 
-Private Function GetCSV_PC(InfoType As String, Publisher As String) As String
-
-    Dim WinHttpReq As Object
-    Dim oStream As Object
-    Dim strCastoffURL As String
-    Dim strCastoffFile As String
-    Dim dirNamePC As String
-    Dim myURL As String
-    
-    'this is download link, actual page housing file is https://confluence.macmillan.com/display/PBL/Test
-    strCastoffURL = "https://confluence.macmillan.com/download/attachments/9044274/"
-    'CSV on Confluence page must match this format:
-    strCastoffFile = InfoType & "_" & Publisher & ".csv"
-    myURL = strCastoffURL & strCastoffFile
-    dirNamePC = Environ("TEMP") & "\" & strCastoffFile
-
-    'Debug.Print dirNamePC
-    
-    'Attempt to download file
-    On Error Resume Next
-    Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
-    WinHttpReq.Open "GET", myURL, False
-    WinHttpReq.Send
-    While WinHttpReq.readyState <> 4
-        DoEvents
-    Wend
-
-        ' Exit if error in connecting to website
-        If Err.Number <> 0 Then 'HTTP request is not OK
-            GetCSV_PC = ""
-            Exit Function
-        End If
-    On Error GoTo 0
-
-    'Debug.Print WinHttpReq.Status
-
-    If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
-    
-        'if connection OK, download file and save to log directory
-        strCastoffURL = WinHttpReq.responseBody
-        Set oStream = CreateObject("ADODB.Stream")
-        oStream.Open
-        oStream.Type = 1
-        oStream.Write WinHttpReq.responseBody
-        oStream.SaveToFile dirNamePC, 2 ' 1 = no overwrite, 2 = overwrite
-        oStream.Close
-        Set oStream = Nothing
-        Set WinHttpReq = Nothing
-    Else
-        GetCSV_PC = ""
-        Exit Function
-    End If
-    
-    'Check if download was successful
-    If Dir(dirNamePC) = vbNullString Then
-        GetCSV_PC = ""
-        Exit Function
-    End If
-    
-    GetCSV_PC = dirNamePC
-
-End Function
-
-Private Function GetCSV_Mac(InfoType As String, Publisher As String) As String
-    Dim dirNameMac As String
-    Dim dirNameBash As String
-    Dim strCastoffFile As String
-    Dim dlUrl As String
-    
-    dirNameMac = "Macintosh HD:private:tmp:"
-    dirNameBash = "/private/tmp/"
-    strCastoffFile = InfoType & "_" & Publisher & ".csv"
-    dlUrl = "https://confluence.macmillan.com/download/attachments/9044274/"
-    
-    'Debug.Print strCastoffFile
-    
-    'check for network.  Skipping domain since we are looking at confluence, but would test ping hbpub.net or mpl.root-domain.org
-    If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then
-        GetCSV_Mac = ""
-        Exit Function
-    End If
-    
-    'download CSV file to temp
-    ShellAndWaitMac ("rm -f " & dirNameBash & strCastoffFile & " ; curl -o " & dirNameBash & strCastoffFile & " " & dlUrl & strCastoffFile)
-    
-    'return full path to CSV file
-    GetCSV_Mac = dirNameMac & strCastoffFile
-    
-End Function
-
 Private Function LoadCSVtoArray(Path As String) As Variant
 
 '------Load CSV into 2d array, NOTE!!: base 0---------
@@ -334,6 +266,12 @@ Private Function LoadCSVtoArray(Path As String) As Variant
     Dim the_array() As Variant
     Dim R As Long
     Dim c As Long
+    
+        If IsItThere(Path) = False Then
+            MsgBox "There was a problem with your Castoff.", vbCritical, "Error"
+            Exit Function
+        End If
+        Debug.Print Path
 
         ' Load the csv file.
         fnum = FreeFile
@@ -448,38 +386,43 @@ Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
     Castoff = arrResult
 
 End Function
-Private Function SpineSize(PageCount As Long, Publisher As String, objForm As CastoffForm)
+Private Function SpineSize(PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
 
+'----Get Log dir to save spines CSV to --------------------------
+    Dim strLogDir As String
+    strLogDir = Left(LogFile, InStrRev(LogFile, Application.PathSeparator) - 1)
+    Debug.Print strLogDir
+
+'----Define spine chart file name--------------------------------
+    Dim strSpineFile As String
+    strSpineFile = "Spine_" & Publisher & ".csv"
+    
+'----Define full path to where CSV will be----------------------
+    Dim strFullPath As String
+    strFullPath = strLogDir & Application.PathSeparator & strSpineFile
+    
 '----Download CSV with spine sizes from Confluence site----------
 
-    'Need separate PC and Mac subs to download file
-    Dim TheOS As String
-    Dim strPath As String
-    Dim strInfoType As String
-    Dim strPub As String
-
-    TheOS = System.OperatingSystem
-    strInfoType = "Spine"
-
-    If Not TheOS Like "*Mac*" Then
-        strPath = GetCSV_PC(strInfoType, Publisher)
-            If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
-                Unload objForm
-                Exit Function
-            End If
-    Else
-        strPath = GetCSV_Mac(strInfoType, Publisher)
-            If strPath = vbNullString Then
-                MsgBox "The Castoff Macro can't access the source spine size file right now. Please check your internet connection."
-                Unload objForm
-                Exit Function
-            End If
+    'Check if log file already exists; if not, create it then download CSV file
+    If IsItThere(LogFile) = True Then
+        If DownloadFromConfluence(strLogDir, LogFile, strSpineFile) = False Then
+            Exit Function
+        End If
     End If
+                        
+    'Make sure CSV is there
+    Dim strMessage As String
+    If IsItThere(strFullPath) = False Then
+        strMessage = "The Castoff macro is unable to access the spine size file right now. Please check your internet " & _
+                    "connection and try again, or contact workflows@macmillan.com."
+        MsgBox strMessage, vbCritical, "Error 4: Spine CSV doesn't exist"
+        Exit Function
+    End If
+
 
 '---------Load CSV into an array-----------------------------------
     Dim arrDesign() As Variant
-    arrDesign = LoadCSVtoArray(strPath)
+    arrDesign = LoadCSVtoArray(strFullPath)
     
 '---------Lookup spine size in array-------------------------------
     Dim strSpine As String
@@ -495,16 +438,5 @@ Private Function SpineSize(PageCount As Long, Publisher As String, objForm As Ca
     
     'Debug.Print strSpine
     SpineSize = strSpine
-
-End Function
-
-Private Function ShellAndWaitMac(cmd As String) As String
-
-    Dim result As String
-    Dim scriptCmd As String ' Macscript command
-
-    scriptCmd = "do shell script """ & cmd & """"
-    result = MacScript(scriptCmd) ' result contains stdout, should you care
-    ShellAndWaitMac = result
 
 End Function

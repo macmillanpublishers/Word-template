@@ -1,21 +1,17 @@
 Attribute VB_Name = "LOCtagsMacro"
+' ======= PURPOSE ============================
+' Produces a text file of the manuscript with tags added for CIP application
+
+' ======= DEPENDENCIES =======================
+' 1. Requires ProgressBar userform
+' 2. Manuscript must be tagged with Macmillan styles.
+      
 Option Explicit
 Option Base 1
 Dim activeRng As Range
-Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
-
-Private Sub Doze(ByVal lngPeriod As Long)
-    'This only works for PC
-    DoEvents
-    Sleep lngPeriod
-    DoEvents
-     'Call it in desired location to sleep for 1 seconds like this:
-    ' Doze 1000
-End Sub
 
 Sub LibraryOfCongressTags()
-    'This sub must remain public as it is called from the UserForm (progress bar)
-    
+
     '''''''''''''''''''''''''''''''''
     '''created by Matt Retzer  - matthew.retzer@macmillan.com
     '''2/25/15
@@ -1181,10 +1177,20 @@ Private Sub SaveAsTextFile()
     
         'Copy text of active document and paste into a new document
         'Because otherwise open document is converted to .txt, and we want it to stay .doc*
+
         ActiveDocument.Select
         Selection.Copy
+
+        'Debug.Print Len(Selection)
+        'Because if Len = 1, then no text in doc (only a paragraph return) and causes an error
+        If Len(Selection) > 1 Then
         'PasteSpecial because otherwise gives a warning about too many styles being pasted
-        Documents.Add.Content.PasteSpecial DataType:=wdPasteText
+            Documents.Add.Content.PasteSpecial DataType:=wdPasteText
+        Else
+            MsgBox "Your document doesn't appear to have any content. " & _
+                    "This macro needs a styled manuscript to run correctly.", vbCritical, "Oops!"
+            Exit Sub
+        End If
         
     ' Set different text encoding based on OS
     ' And Mac can't create file with line breaks
@@ -1202,7 +1208,7 @@ Private Sub SaveAsTextFile()
     Application.DisplayAlerts = wdAlertsNone
     
         'Save new document as a text file. Encoding/Line Breaks/Substitutions per LOC info
-        ActiveDocument.SaveAs fileName:=strDocName, _
+        ActiveDocument.SaveAs FileName:=strDocName, _
             FileFormat:=wdFormatEncodedText, _
             Encoding:=encodingFmt, _
             InsertLineBreaks:=lineBreak, _
@@ -1348,17 +1354,17 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
     Dim iReply As Integer
     
     '-----make sure Style template is attached
-    Dim keyStyle As Word.Style
-    Dim styleCheck As Boolean
-    On Error Resume Next
-    Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
-    styleCheck = keyStyle Is Nothing
+'    Dim keyStyle As Word.Style
+'    Dim styleCheck As Boolean
+'    On Error Resume Next
+'    Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
+'    styleCheck = keyStyle Is Nothing
     
-    If styleCheck Then
-        MsgBox "Oops! Required Macmillan style template is not attached.", , "Error"
-        zz_errorChecksB = True
-        Exit Function
-    End If
+'    If styleCheck Then
+'        MsgBox "Oops! Required Macmillan style template is not attached.", , "Error"
+'        zz_errorChecksB = True
+'        Exit Function
+'    End If
     
     '-----make sure document is saved
     Dim docSaved As Boolean                                                                                                 'v. 3.1 update

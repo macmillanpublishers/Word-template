@@ -1,82 +1,89 @@
 # Macmillan Word Styles and Templates
 
-The Macmillan template files collect the Microsoft Word style sets, macros, and macro launch buttons for editorial production work. Except for the PC Installer macro (which launches on file open), all macros are launched from custom Quick Access Toolbar buttons (Windows) and custom toolbars (Mac) saved in each template.
+The Macmillan template files collect the Microsoft Word style sets, macros, and custom Ribbon tab or toolbar for editorial production work. Except for the Installer macro (which launches on file open), all macros are launched from a custom Ribbon tab (Windows) or a custom toolbar (Mac) saved in the MacmillanGT.dotm template. There are manu dependencies among the different modules so it is suggested that all be installed in the appropriate templates.
 
-##MacmillanTemplateInstallerPC.docm
 
-Contains the following macro, which launches when the user opens the file:
+## Installers/
 
-###ThisDocument.cls
+### MacmillanTemplateInstallerPC.docm
 
-PC ONLY. Should be loaded into the ThisDocument module. Installs MacmillanGT.dotm in the Word Startup directory, creates MacmillanStyleTemplate directory (if needed) and installs macmillan.dotm, macmillan_NoColor.dotm, and MacmillanCoverCopy.dotm there.
+Installs MacmillanGT.dotm and GtUpdater.dotm in the Word Startup directory, creates MacmillanStyleTemplate directory (if needed), and installs macmillan.dotm, macmillan_NoColor.dotm, and MacmillanCoverCopy.dotm there. Contains the following macro, which launches when the user opens the file:
 
-## MacmillanGT.dotm
+### ThisDocument.cls
 
-MacmillanGT.dotm (GT = Global Template) is a Word startup item. It contains the following macros:
+Should be loaded into the ThisDocument module of MacmillanTemplateInstallerPC.docm as a sub titled Document_Open(). Requires FileInstaller module. 
+
+
+## macmillan/
+
+### macmillan.dotm
+
+The primary Macmillan style template. It contains all of the [custom styles](https://confluence.macmillan.com/display/PBL/Word+Template+Styles+List) for use in Macmillan manuscripts.
+
+### macmillan_NoColor.dotm
+
+Contains all of the same styles and macros as macmillan.dotm but without colored shading and borders.
+
+### MacmillanCoverCopy.dotm
+
+Contains custom styles for jacket and cover copy.
+
+
+
+## MacmillanGT/
+
+### MacmillanGT.dotm
+
+MacmillanGT.dotm (GT = Global Template) is a Word startup item. It contains the icons for the custom Ribbon tab, added with the [Custom UI Editor for Microsoft Office](http://openxmldeveloper.org/blog/b/openxmldeveloper/archive/2009/08/07/7293.aspx). It also contains the following items:
+
+### MacmillanCustomRibbonPC2007-2013.xml
+
+Contains the code for the custom Ribbon tab, which should be added with the Custom UI Editor. Requires the RibbonControl module to be imported into the same template.
 
 ### AttachTemplateMacros.bas
 
-Attaches the Macmillan style templates (macmillan.dotm, macmillan_NoColor.dotm, MacmillanCoverCopy.dotm) & loads their styles and macros into the current document. [More info.](https://confluence.macmillan.com/display/PBL/Attach+the+Macmillan+Template)
+Attaches the Macmillan style templates (macmillan.dotm, macmillan_NoColor.dotm, MacmillanCoverCopy.dotm) to load their styles into the current document. [More info.](https://confluence.macmillan.com/display/PBL/Attach+the+Macmillan+Template)
+
+### CastoffForm.bas, CastoffForm.frm, CastoffForm.frx
+
+Creates a castoff for either SMP or Tor.com titles. Downloads design character counts from [Confluence page.](https://confluence.macmillan.com/display/PBL/Test) Also contains CastoffForm.frm, a userform to allow user to select trim size and relative type design (loose, average, tight).
+
+### CharacterStyles.bas
+
+Converts direct formatting of italics, bold, small caps, etc. to Macmillan character styles and removes unstyled page breaks and blank paragraphs. [More info.](https://confluence.macmillan.com/display/PBL/Macmillan+Character+Styles+Macro) Requires ProgressBar.frm.
+
+### CleanupMacro.bas
+
+Fixes common typographics errors. [More info.](https://confluence.macmillan.com/display/PBL/Macmillan+Manuscript+Cleanup+Macro). Requires ProgresBar.frm.
+
+### LOCtagsMacro.bas
+
+Converts Macmillan-styled manuscripts to tagged text files for the Library of Congress CIP application. Requires ProgressBar.frm.
+
+### ProgressBar.frm, ProgressBar.frx
+
+Userform that displays a progress bar as other macros are running.
+
+### Reports.bas
+
+Contains two reports that verify that the manuscript is styled following [Macmillan best practices.](https://confluence.macmillan.com/display/PBL/Manuscript+Styling+Best+Practices). Requires ProgressBar.frm.
+
+### RibbonControl.bas
+
+Contains macros to load and control the custom Ribbon tab.
+
+### ThisDocument.cls
+
+Contains an AutoExec macro to check daily if the GtUpdater.dotm template needs to be updated. Must be saved in the ThisDocument object module as a sub called AutoExec(). Requires FileInstaller module.
 
 ### VersionCheck.bas
 
 Tells the user the current version number of MacmillanGT.dotm and macmillan.dotm. [More info--requires login.](https://confluence.macmillan.com/pages/viewpage.action?pageId=32112870)
 
-## macmillan.dotm
-
-The primary Macmillan style template. It contains all of the [custom styles](https://confluence.macmillan.com/display/PBL/Word+Template+Styles+List) for use in Macmillan manuscripts, and the following macros:
-
-### CharacterStyles.bas
-
-Converts direct formatting of italics, bold, small caps, etc. to Macmillan character styles and removes unstyled page breaks and blank paragraphs. [More info.](https://confluence.macmillan.com/display/PBL/Macmillan+Character+Styles+Macro)
-
-### CleanupMacro.bas
-
-Fixes common typographics errors. [More info.](https://confluence.macmillan.com/display/PBL/Macmillan+Manuscript+Cleanup+Macro)
-
-### Reports.bas
-
-Contains two reports that verify that the manuscript is styled following [Macmillan best practices.](https://confluence.macmillan.com/display/PBL/Manuscript+Styling+Best+Practices)
-
-#### Style Report
-
-Produces a report listing all of the Macmillan paragraph styles used and the page number and paragraph number of any non-Macmillan styles used. [More info.](https://confluence.macmillan.com/display/PBL/Macmillan+Style+Report+Macro)
-
-#### Bookmaker Requirements
-
-Produces a report listing errors in the manuscript that need to be resolved before using the Macmillan Bookmaker tool. [More info--requires login.](http://confluence.macmillan.com/display/PE/Bookmaker+Requirements+Macro)
-
 ### ViewStyles.bas
 
 Opens windows and page view useful for working with styles. [More info.](http://confluence.macmillan.com/display/PBL/View+Styles+with+a+Macro)
 
-### ProgressBar.frm
-
-Userform that displays a progress bar as the Cleanup, Character Styles, and Reports macros are running.
-
-## macmillan_NoColor.dotm
-
-Contains all of the same styles and macros as macmillan.dotm but without colored shading and borders.
-
-## MacmillanCoverCopy.dotm
-
-Contains custom styles for jacket and cover copy. Also includes Cleanup, Style Report, and View Styles macros.
-
-## LOC_Tags.dotm
-
-Contains LOCtagsMacro.bas, a macro that converts Macmillan-styled manuscripts for the Library of Congress CIP application.
-
-## SwoonReadsTemplate.dotm
-
-Contains the limited Macmillan style set for Swoon Reads.
-
-## torCastoffTemplate.dotm
-
-Contains torCastoffMacro.bas, a macro that estimates the print page count of manuscripts for Tor.com.
-
-## CastoffMacro.dotm
-
-Contains CastoffMacro.bas, which creates a castoff for either SMP or Tor.com titles. Downloads design character counts from [Confluence page.](https://confluence.macmillan.com/display/PBL/Test) Also contains CastoffForm.frm, a userform to allow user to select trim size and relative type design (loose, average, tight).
 
 # Dependencies
 
@@ -88,31 +95,31 @@ To import macros and userforms into the template files, ctrl+click/right-click o
 
 Any style or macro changes made to macmillan.dotm must be made to macmillan_NoColor.dotm.
 
-Templates must be saved on Windows; saving on a Mac causes the Windows macro launch buttons to drop out.
+Templates must be saved on Windows; saving on a Mac causes the Windows custom Ribbon code and icons to drop out.
+
 
 # Distribution End Points
 
-## MacmillanTemplateInstallerPC.docm
+## MacmillanTemplateInstaller.docm
 
-Direct link to raw file on GitHub on [Macmillan Confluence site](https://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template). For PC installation only. 
+Direct link to raw file on GitHub on [Macmillan Confluence site](https://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template). For PC and external Mac installation only (requires admin rights on a Mac). 
 
 ## MacmillanGT.dotm
 
-Saved as an attachment on top-level page of [Public Macmillan Confluence site.](https://confluence.macmillan.com/display/PBL/Test)
+Saved as an attachment on top-level page of [Public Macmillan Confluence site](https://confluence.macmillan.com/display/PBL/Test) for download by the Installer or update via GtUpdater.dotm.
 
-Also available for client install on Macs via Casper 'Self Service' in Digital Workflow category.
+Also available for client install on internal Macs via Casper 'Self Service' in Digital Workflow category.
+
+## GtUpdater.dotm
+
+Saved as an attachment on top-level page of [Public Macmillan Confluence site](https://confluence.macmillan.com/display/PBL/Test) for download by the Installer or update via MacmillanGT.dotm.
+
+Also available for client install on internal Macs via Casper 'Self Service' in Digital Workflow category.
 
 ## macmillan.dotm, macmillan_NoColor.dotm, MacmillanCoverCopy.dotm
 
-Attachments to [public Macmillan Confluence page](http://confluence.macmillan.com/display/PBL/Test).
+Attachments to [public Macmillan Confluence page](http://confluence.macmillan.com/display/PBL/Test), for download via the Installer or update via MacmillanGT.dotm.
 
-## LOC_Tags.dotm
-
-Users download from direct link to raw file on GitHub on [Macmillan Confluence site--requires login.](http://confluence.macmillan.com/display/PE/CIP+Tagging+Macro)
-
-## torCastoffTemplate.dotm
-
-Users download from direct link to raw file on GitHub on [Macmillan Confluence site--requires login.](http://confluence.macmillan.com/display/EDIT/Tor.com+Castoff+Macro)
 
 # Deployment
 
@@ -120,7 +127,7 @@ Users download from direct link to raw file on GitHub on [Macmillan Confluence s
 
 # Client installation
 
-## PC: MacmillanTemplateInstallerPC.docm
+## PC and external Mac: MacmillanTemplateInstaller.docm
 
 Users can download from direct link to raw file on GitHub on [Macmillan Confluence site.](http://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template#InstalltheMacmillanTemplate-OnaPC(orMac-external))
 
@@ -128,19 +135,10 @@ Users can download from direct link to raw file on GitHub on [Macmillan Confluen
 
 Available for client install on Macs via Casper 'Self Service' in Digital Workflow category. Installs all other required templates.
 
-[Manual installation instructions](http://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template) for installation outside of Macmillan.
-
 ## macmillan.dotm, macmillan_NoColor.dotm, MacmillanCoverCopy.dotm
 
-Attachments to [public Macmillan Confluence page;](http://confluence.macmillan.com/display/PBL/Test) downloaded to users' machines via the AttachTemplateMacros.bas macros.
+Attachments to [public Macmillan Confluence page;](http://confluence.macmillan.com/display/PBL/Test) downloaded to users' machines via the MacmillanGT.dotm AutoExec macro.
 
-## LOC_Tags.dotm
-
-[Manual installation instructions--requires login](http://confluence.macmillan.com/display/PE/CIP+Tagging+Macro#CIPTaggingMacro-InstallingtheMacro)
-
-## torCastoffTemplate.dotm
-
-[Manual installation instructions--requires login](http://confluence.macmillan.com/display/EDIT/Tor.com+Castoff+Macro)
 
 # Stakeholders
 
