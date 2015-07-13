@@ -202,7 +202,7 @@ Sub UniversalCastoff()
                 
                 'Get spine size
                 If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-                    strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm)
+                    strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm, strLogFile)
                     'Debug.Print "spine size = " & strSpineSize
                     If strSpineSize = vbNullString Then
                         strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
@@ -381,7 +381,8 @@ Private Function SpineSize(PageCount As Long, Publisher As String, objForm As Ca
 
 '----Get Log dir to save spines CSV to --------------------------
     Dim strLogDir As String
-    strLogDir = Left(FileName, InStrRev(FileName, Application.PathSeparator) - 1)
+    strLogDir = Left(LogFile, InStrRev(LogFile, Application.PathSeparator) - 1)
+    Debug.Print strLogDir
 
 '----Define spine chart file name--------------------------------
     Dim strSpineFile As String
@@ -394,19 +395,18 @@ Private Function SpineSize(PageCount As Long, Publisher As String, objForm As Ca
 '----Download CSV with spine sizes from Confluence site----------
 
     'Check if log file already exists; if not, create it then download CSV file
-    If ItItThere(LogFile) = True Then
+    If IsItThere(LogFile) = True Then
         If DownloadFromConfluence(strLogDir, LogFile, strSpineFile) = False Then
-            Unload objCastoffForm
             Exit Function
         End If
     End If
                         
     'Make sure CSV is there
+    Dim strMessage As String
     If IsItThere(strFullPath) = False Then
         strMessage = "The Castoff macro is unable to access the spine size file right now. Please check your internet " & _
                     "connection and try again, or contact workflows@macmillan.com."
         MsgBox strMessage, vbCritical, "Error 4: Spine CSV doesn't exist"
-        Unload objCastoffForm
         Exit Function
     End If
 
