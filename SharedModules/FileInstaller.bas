@@ -1,18 +1,20 @@
 Attribute VB_Name = "FileInstaller"
+' created by Erica Warren - erica.warren@macmillan.com
+
+' ======== PURPOSE ===================================
+' Downloads and installs an array of template files & logs the downloads
+
+' ======== DEPENDENCIES =======================================
+' This is Part 2 of 2. Must be called from a sub in another module that declares file names and locations.
+' The template file needs to be uploaded as an attachment to https://confluence.macmillan.com/display/PBL/Test
+' If this is an installer file, The Part 1 code needs to reside in the ThisDocument module as a sub called
+' Documents_Open in a .docm file so that it will launch when users open the file.
+' Requires the SharedMacros module be installed in the same template.
+
 Option Explicit
 Option Base 1
 
 Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As String, ByRef FinalDir() As String)
-'created by Erica Warren - erica.warren@macmillan.com
-
-'======== PURPOSE ===================================
-'Downloads and installs an array of template files & logs the downloads
-
-'======== USE =======================================
-'This is Part 2 of 2. Must be called from a sub in another module that declares file names and locations.
-'The template file needs to be uploaded as an attachment to https://confluence.macmillan.com/display/PBL/Test
-'If this is an installer file, The Part 1 code needs to reside in the ThisDocument module as a sub called
-'Documents_Open in a .docm file so that it will launch when users open the file.
 
 '"Installer" argument = True if this is for a standalone installtion file.
 '"Installer" argument = False is this is part of a daily check of the current file and only updates if out of date.

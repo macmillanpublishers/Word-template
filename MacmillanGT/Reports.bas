@@ -1,7 +1,16 @@
 Attribute VB_Name = "Reports"
+' ====== PURPOSE =================
+' Checks that manuscript styles follow Macmillan best practices
+' If no Macmillan styles are used, just produces a list of styles in use
+
+' ====== DEPENDENCIES ============
+' 1. Manuscript must be styled with Macmillan custom styles to generate full report.
+' 2. Requires ProgressBar userform
+' 3. Requires SharedMacros be installed in same template.
+
+
 Option Explicit
 Option Base 1
-
 
 Sub BookmakerReqs()
     '-----------------------------------------------------------

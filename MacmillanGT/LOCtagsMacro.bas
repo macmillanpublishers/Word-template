@@ -1,12 +1,17 @@
 Attribute VB_Name = "LOCtagsMacro"
+' ======= PURPOSE ============================
+' Produces a text file of the manuscript with tags added for CIP application
+
+' ======= DEPENDENCIES =======================
+' 1. Requires ProgressBar userform
+' 2. Manuscript must be tagged with Macmillan styles.
+      
 Option Explicit
 Option Base 1
 Dim activeRng As Range
 
-
 Sub LibraryOfCongressTags()
-    'This sub must remain public as it is called from the UserForm (progress bar)
-    
+
     '''''''''''''''''''''''''''''''''
     '''created by Matt Retzer  - matthew.retzer@macmillan.com
     '''2/25/15

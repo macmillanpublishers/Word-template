@@ -1,4 +1,12 @@
 Attribute VB_Name = "CleanupMacro"
+' by Erica Warren - erica.warren@macmillan.com
+
+' ======== PURPOSE ============================
+' Performs standard typographic cleanup in current document
+
+' ======== DEPENDENCIES =======================
+' 1. Requires ProgressBar userform module
+
 Option Explicit
 Option Base 1
 

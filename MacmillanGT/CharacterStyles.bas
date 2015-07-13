@@ -6,7 +6,7 @@ Attribute VB_Name = "CharacterStyles"
 ' Applies Macmillan character styles to direct-styled text in current document
 
 ' ======== DEPENDENCIES =======================
-' 1. Requires CastoffForm userform module
+' 1. Requires ProgressBar userform module
 
 Option Explicit
 Option Base 1
