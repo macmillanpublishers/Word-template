@@ -80,7 +80,7 @@ Sub UniversalCastoff()
     
     'Create name of castoff csv file to download
     strInfoType = "Castoff"
-    strCastoffFile = InfoType & "_" & Publisher & ".csv"
+    strCastoffFile = strInfoType & "_" & strPub & ".csv"
     
     '---------Download CSV with design specs from Confluence site-------
     'Create log file name
@@ -91,16 +91,20 @@ Sub UniversalCastoff()
       
     'Create final path for downloaded CSV file (in log directory)
     'not in temp dir because that is where DownloadFromConfluence downloads it to, and it cleans that file up when done
+    Dim strStyleDir As String
     Dim strPath As String
     Dim strLogFile As String
     Dim strMessage As String
+    Dim strDir As String
     
-    strPath = arrLogInfo(2)
+    strStyleDir = arrLogInfo(1)
+    strDir = arrLogInfo(2)
     strLogFile = arrLogInfo(3)
+    strPath = strDir & Application.PathSeparator & strCastoffFile
         
     'Check if log file already exists; if not, create it
-    If CheckLog(arrLogInfo(1), arrLogInfo(2), arrLogInfo(3)) = True Or CheckLog(arrLogInfo(1), arrLogInfo(2), arrLogInfo(3)) = False Then
-        If DownloadFromConfluence(strPath, arrLogInfo(3), strCastoffFile) = False Then
+    If CheckLog(strStyleDir, strDir, strLogFile) = True Or CheckLog(strStyleDir, strDir, strLogFile) = False Then
+        If DownloadFromConfluence(strDir, strLogFile, strCastoffFile) = False Then
             Unload objCastoffForm
             Exit Sub
         End If
@@ -215,8 +219,6 @@ Sub UniversalCastoff()
             End If
             
             '------------------Create output for this castoff---------------------
-            Dim strMessage As String
-            
             strMessage = strMessage & _
                 vbTab & UCase(strDesign(d)) & ": " & lngFinalCount & vbNewLine & _
                 vbTab & lngActualCount & " text pages" & vbNewLine & _
@@ -338,6 +340,12 @@ Private Function LoadCSVtoArray(Path As String) As Variant
     Dim the_array() As Variant
     Dim R As Long
     Dim c As Long
+    
+        If IsItThere(Path) = False Then
+            MsgBox "There was a problem with your Castoff.", vbCritical, "Error"
+            Exit Function
+        End If
+        Debug.Print Path
 
         ' Load the csv file.
         fnum = FreeFile
