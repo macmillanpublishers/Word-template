@@ -26,43 +26,21 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     '' --------------- Set up variable names ----------------------------------------------
     '' Create style directory and logfile names
     Dim a As Long
-    Dim strLogFile() As String
-    ReDim strLogFile(LBound(FileName()) To UBound(FileName()))
-    Dim strFullLogPath() As String
+    Dim arrLogInfo() As Variant
+    ReDim arrLogInfo(1 To 3)
+    Dim strStyleDir() As String
+    ReDim strStyleDir(LBound(FileName()) To UBound(FileName()))
+    Dim strLogDir() As String
+    ReDim strLogDir(LBound(FileName()) To UBound(FileName()))
+    Dim strFullLogPath As String
     ReDim strFullLogPath(LBound(FileName()) To UBound(FileName()))
-    Dim strStyleDir As String
-    Dim strLogDir As String
 
+    ' ------------ Define Log Dirs and such -----------------------------------------
     For a = LBound(FileName()) To UBound(FileName())
-        ' Remove trailing path separator from dir if it's there, so we know we won't duplicate below
-        If Right(FinalDir(a), 1) = Application.PathSeparator Then
-            FinalDir(a) = Left(FinalDir(a), Len(FinalDir(a)) - 1)
-        End If
-        
-        ' Create full path to template file
-        Dim strTemplatePath() As String
-        ReDim strTemplatePath(LBound(FileName()) To UBound(FileName()))
-        strTemplatePath(a) = FinalDir(a) & Application.PathSeparator & FileName(a)
-        'Debug.Print "Full template path: " & strTemplatePath(a)
-        
-        'Create logfile name
-        strLogFile(a) = Left(FileName(a), InStrRev(FileName(a), ".do") - 1)
-        strLogFile(a) = strLogFile(a) & "_updates.log"
-        
-        'Create directory names based on OS
-        #If Mac Then
-            Dim strUser As String
-            strUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-                "return (name of current user)" & Chr(13) & "end tell")
-            strStyleDir = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
-            strLogDir = strStyleDir & Application.PathSeparator & "log"
-            strFullLogPath(a) = strLogDir & Application.PathSeparator & strLogFile(a)
-        #Else
-            strStyleDir = Environ("ProgramData") & "\MacmillanStyleTemplate"
-            strLogDir = strStyleDir & Application.PathSeparator & "log"
-            strFullLogPath(a) = strLogDir & Application.PathSeparator & strLogFile(a)
-        #End If
-        'Debug.Print strFullLogPath(a)
+        arrLogInfo() = CreateLogFileInfo(FileName)
+        strStyleDir(a) = arrLogInfo(1)
+        strLogDir(a) = arrLogInfo(2)
+        strFullLogPath(a) = arrLogInfo(3)
     Next a
     
     ' ------------- Check if we need to do an installation ---------------------------
@@ -186,8 +164,6 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     End If
         
 End Sub
-
-
 
 Private Function IsTemplateThere(Directory As String, FileName As String, Log As String)
     
