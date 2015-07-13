@@ -431,14 +431,3 @@ Private Function SpineSize(PageCount As Long, Publisher As String, objForm As Ca
     SpineSize = strSpine
 
 End Function
-
-Private Function ShellAndWaitMac(cmd As String) As String
-
-    Dim result As String
-    Dim scriptCmd As String ' Macscript command
-
-    scriptCmd = "do shell script """ & cmd & """"
-    result = MacScript(scriptCmd) ' result contains stdout, should you care
-    ShellAndWaitMac = result
-
-End Function
