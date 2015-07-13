@@ -240,4 +240,39 @@ Dim FileNum As Integer
     Close #FileNum ' close the file
 End Sub
 
+Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
+'LogPath is full path to log file.
 
+    Dim logString As String
+    
+    '------------------ Check log file --------------------------------------------
+    'Check if logfile/directory exists
+    If IsItThere(LogPath) = False Then
+        CheckLog = False
+        logString = Now & "----------------------------" & vbNewLine & Now & " -- Creating logfile."
+        If IsItThere(LogDir) = False Then
+            If IsItThere(StyleDir) = False Then
+                MkDir (StyleDir)
+                MkDir (LogDir)
+                logString = "----------------------------" & vbNewLine & Now & " -- Creating MacmillanStyleTemplate directory."
+            Else
+                MkDir (LogDir)
+                logString = "----------------------------" & vbNewLine & Now & " -- Creating log directory."
+            End If
+        End If
+    Else    'logfile exists, so check last modified date
+        Dim lastModDate As Date
+        lastModDate = FileDateTime(LogPath)
+        If DateDiff("d", lastModDate, Date) < 1 Then       'i.e. 1 day
+            CheckLog = True
+            logString = "----------------------------" & vbNewLine & Now & " -- Already checked less than 1 day ago."
+        Else
+            CheckLog = False
+            logString = "----------------------------" & vbNewLine & Now & " -- >= 1 day since last update check."
+        End If
+    End If
+    
+    'Log that info!
+    LogInformation LogPath, logString
+    
+End Function
