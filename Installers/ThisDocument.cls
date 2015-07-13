@@ -7,11 +7,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
-Option Explicit
-Option Base 1
-
-Private Sub Document_Open()
-
 '=======================================
 ' By Erica Warren - erica.warren@macmillan.com
 '
@@ -22,7 +17,14 @@ Private Sub Document_Open()
 ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
 ' If this is meant to be an installer, it should reside in the ThisDocument module in a .docm file.
 ' If this is meant to be an updater, it should reside in whatever module calls the checking procedure.
-    
+
+' Requires SharedMacros be installed in the same template
+
+Option Explicit
+Option Base 1
+
+Private Sub Document_Open()
+
     Dim strTemplateName As String
     Dim strFileName() As String
     Dim strFileDir() As String
