@@ -240,7 +240,7 @@ Dim FileNum As Integer
     Close #FileNum ' close the file
 End Sub
 
-Public Function CreateLogFileInfo(FileName As String) As Variant
+Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
 ' Creates the style dir, log dir, and log file name variables for use in other subs.
 ' File name should not contain periods other than before file type
 
@@ -264,10 +264,10 @@ Public Function CreateLogFileInfo(FileName As String) As Variant
         strLogPath = strLogDir & Application.PathSeparator & strLogFile
     #Else
         strStyle = Environ("ProgramData") & "\MacmillanStyleTemplate"
-        strLogFolder = strStyleDir & Application.PathSeparator & "log"
-        strLogPath = strLogDir & Application.PathSeparator & strLogFile
+        strLogFolder = strStyle & Application.PathSeparator & "log"
+        strLogPath = strLogFolder & Application.PathSeparator & strLogFile
     #End If
-    'Debug.Print strFullLogPath(a)
+    Debug.Print strLogPath
 
     Dim arrFinalDirs() As Variant
     ReDim arrFinalDirs(1 To 3)

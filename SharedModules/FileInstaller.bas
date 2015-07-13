@@ -32,17 +32,21 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     ReDim strStyleDir(LBound(FileName()) To UBound(FileName()))
     Dim strLogDir() As String
     ReDim strLogDir(LBound(FileName()) To UBound(FileName()))
-    Dim strFullLogPath As String
+    Dim strFullLogPath() As String
     ReDim strFullLogPath(LBound(FileName()) To UBound(FileName()))
 
     ' ------------ Define Log Dirs and such -----------------------------------------
     For a = LBound(FileName()) To UBound(FileName())
-        arrLogInfo() = CreateLogFileInfo(FileName)
+        arrLogInfo() = CreateLogFileInfo(FileName(a))
         strStyleDir(a) = arrLogInfo(1)
         strLogDir(a) = arrLogInfo(2)
         strFullLogPath(a) = arrLogInfo(3)
     Next a
     
+    'Debug.Print "Style Dir is: " & strStyleDir(1) & vbNewLine & _
+                "Log dir is: " & strLogDir(1) & vbNewLine & _
+                "Full path to log is: " & strFullLogPath(1)
+                
     ' ------------- Check if we need to do an installation ---------------------------
     ' Check if template exists
     Dim installCheck() As Boolean
