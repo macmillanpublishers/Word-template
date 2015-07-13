@@ -2,16 +2,7 @@ Attribute VB_Name = "LOCtagsMacro"
 Option Explicit
 Option Base 1
 Dim activeRng As Range
-Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 
-Private Sub Doze(ByVal lngPeriod As Long)
-    'This only works for PC
-    DoEvents
-    Sleep lngPeriod
-    DoEvents
-     'Call it in desired location to sleep for 1 seconds like this:
-    ' Doze 1000
-End Sub
 
 Sub LibraryOfCongressTags()
     'This sub must remain public as it is called from the UserForm (progress bar)

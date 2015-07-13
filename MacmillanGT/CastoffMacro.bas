@@ -1,7 +1,16 @@
 Attribute VB_Name = "CastoffMacro"
 Option Explicit
 Sub UniversalCastoff()
-'created by Erica Warren - erica.warren@macmillan.com
+' created by Erica Warren - erica.warren@macmillan.com
+
+' ========== PUROPOSE ========================
+' Takes user inputs from userform to calculate a castoff (estimated print page count) based on
+' the current text of the document.
+
+' ========== DEPENDENCIES ====================
+' 1. Requires SharedMacros module to be installed in same template
+' 2. Requires design character count CSV files and spine size files be saved to Confluence Test page
+' 3. Requires CastoffForm userform module
 
     '----------Load userform to get user inputs------------------------
     Dim objCastoffForm As CastoffForm

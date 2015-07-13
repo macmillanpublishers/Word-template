@@ -1,5 +1,14 @@
 Attribute VB_Name = "AttachTemplateMacro"
 Option Explicit
+'created by Erica Warren - erica.warren@macmillan.com
+' ======== PURPOSE =================
+' Attaches assorted templates with custom Macmillan styles to the current document
+
+' ======== DEPENDENCIES ============
+' 1. Requires SharedMacros module be installed in the same template
+' 2. Requires the macmillan style templates be saved in the correct directories
+'    that were nstalled on user's computer with Installer file or updated from MacmillanGT.dotm
+
 
 Sub zz_AttachStyleTemplate()
     Call AttachMe("macmillan.dotm")
