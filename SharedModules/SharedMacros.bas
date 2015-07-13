@@ -1,7 +1,16 @@
 Attribute VB_Name = "SharedMacros"
-Option Explicit
 ' For macros that are shared by macros in other modules of the Macmillan template
+' All should be declared as Public for use from other modules
 
+Option Explicit
+Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+
+Public Sub Doze(ByVal lngPeriod As Long)
+    DoEvents
+    Sleep lngPeriod
+    ' Call it in desired location to sleep for 1 seconds like this:
+    ' Doze 1000
+End Sub
 Public Function IsItThere(Path)
 ' Check if file or directory exists on PC or Mac
     
