@@ -14,7 +14,7 @@ Attribute VB_Name = "FileInstaller"
 Option Explicit
 Option Base 1
 
-Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As String, ByRef FinalDir() As String)
+Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, ByRef FileName() As String, ByRef FinalDir() As String)
 
 '"Installer" argument = True if this is for a standalone installtion file.
 '"Installer" argument = False is this is part of a daily check of the current file and only updates if out of date.
@@ -127,7 +127,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
             MsgBox "Please try to install the files at a later time."
             
             If Installer = True Then
-                Application.Quit (wdDoNotSaveChanges)
+                ActiveDocument.Close (wdDoNotSaveChanges)
             End If
             
             Exit Sub
@@ -143,7 +143,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     
     For d = LBound(strInstallFile()) To UBound(strInstallFile())
         'If False, error in download; user was notified in DownloadFromConfluence function
-        If DownloadFromConfluence(strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
+        If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
             If Installer = True Then
                 Application.Quit (wdDoNotSaveChanges)
             Else

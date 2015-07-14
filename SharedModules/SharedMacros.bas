@@ -44,7 +44,7 @@ ErrHandler:
     End If
 End Function
 
-Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String) As Boolean
+Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String, LogFile As String, FileName As String) As Boolean
 'FinalPath is directory w/o file name
 
     Dim logString As String
@@ -57,9 +57,16 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
     
     strFinalPath = FinalDir & Application.PathSeparator & FileName
     
-    'this is download link, actual page housing files is https://confluence.macmillan.com/display/PBL/Test
-    myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
-            
+    'Get URL to download from
+    If StagingURL = True Then
+        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
+        myURL = "https://confluence.macmillan.com/download/attachments/350013701/" & FileName
+    Else
+        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+production
+        myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
+    End If
+    
+    'Get temp dir based on OS
     #If Mac Then
         'set tmp dir
         strMacHD = "Macintosh HD"
@@ -183,10 +190,11 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
         logString = Now & " -- Final directory clear of " & FileName & " file."
         LogInformation LogFile, logString
         
-        'Mac won't load macros from a template downloaded from the internet to Startup. Need to open and save as to final location for macros to work.
+        'Mac won't load macros from a template downloaded from the internet to Startup.
+        'Need to open and save as to final location for macros to work.
         #If Mac Then
             If InStr(1, FileName, ".dotm") > 0 And InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then      'File is a template being saved in startup dir
-                Documents.Open FileName:=strTmpPath, ReadOnly:=True ', Visible:=False
+                Documents.Open FileName:=strTmpPath, ReadOnly:=True ', Visible:=False doesn't work on Mac
                 Documents(strTmpPath).SaveAs (strFinalPath)
                 Documents(strFinalPath).Close
             Else

@@ -18,13 +18,15 @@ Attribute VB_Exposed = True
 ' If this is meant to be an installer, it should reside in the ThisDocument module in a .docm file.
 ' If this is meant to be an updater, it should reside in whatever module calls the checking procedure.
 
-' Requires SharedMacros be installed in the same template
+' Requires FileInstaller and SharedMacros modules be installed in the same template
 
 Option Explicit
 Option Base 1
 
 Private Sub Document_Open()
 
+    Dim blnStaging As Boolean
+    Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
     Dim strFileDir() As String
@@ -35,9 +37,30 @@ Private Sub Document_Open()
     Dim strMacStartupDir As String
     Dim strMacUser As String
     
-    ' ==========================================================================================
-    ' Enter the home directories for your templates here, for Mac AND PC
+'==========================================================================================
+    'DEFINE ALL YOUR VARIABLES HERE
     
+    'Make sure to switch to FALSE before going live!
+    blnStaging = True
+    
+    'True = standalone installer file, False = daily update checker already installed
+    blnInstaller = True
+    
+    'Plain English name of what you're installing/updating, should be singular
+    strTemplateName = "Macmillan Tools and Style Template"
+    
+    'Update array lengths and template file names here
+    ReDim strFileName(1 To 5)               'Declare number of files here
+    ReDim strFileDir(1 To 5)                'And here
+    
+    'File names you're installing/updating
+    strFileName(1) = "GtUpdater.dotm"
+    strFileName(2) = "macmillan.dotm"
+    strFileName(3) = "macmillan_NoColor.dotm"
+    strFileName(4) = "MacmillanCoverCopy.dotm"
+    strFileName(5) = "MacmillanGT.dotm"
+    
+    ' Enter the home directories for your templates here, for Mac *AND* PC
     #If Mac Then
         strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
                 "return (name of current user)" & Chr(13) & "end tell")
@@ -47,22 +70,8 @@ Private Sub Document_Open()
         strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
         strPcStartupDir = Environ("APPDATA") & "\Microsoft\Word\STARTUP"
     #End If
-    
-    'Update array lengths and template file names here
-    
-    strTemplateName = "Macmillan Tools and Style Template"           ''Plain English name of what you're installing/updating, should be singular
-    
-    ReDim strFileName(1 To 5)               'Declare number of files here
-    ReDim strFileDir(1 To 5)                'And here
-    
-    'File 1
-    strFileName(1) = "MacmillanGT.dotm"                                 'File name you're installing/updating
-    strFileName(2) = "macmillan.dotm"
-    strFileName(3) = "macmillan_NoColor.dotm"
-    strFileName(4) = "MacmillanCoverCopy.dotm"
-    strFileName(5) = "GtUpdater.dotm"
-    
-    '=============================================================================================
+'=============================================================================================
+
     
     #If Mac Then
         strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
@@ -85,6 +94,6 @@ Private Sub Document_Open()
     End If
     
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call FileInstaller.Installer(Installer:=True, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call FileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
 End Sub
