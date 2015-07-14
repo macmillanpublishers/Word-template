@@ -60,7 +60,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     'Get URL to download from
     If StagingURL = True Then
         'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
-        myURL = "https://confluence.macmillan.com/download/attachments/35001370x/" & FileName
+        myURL = "https://confluence.macmillan.com/download/attachments/35001370/" & FileName
     Else
         'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+production
         myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
