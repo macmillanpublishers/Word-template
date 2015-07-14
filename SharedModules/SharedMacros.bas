@@ -60,7 +60,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     'Get URL to download from
     If StagingURL = True Then
         'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
-        myURL = "https://confluence.macmillan.com/download/attachments/350013701/" & FileName
+        myURL = "https://confluence.macmillan.com/download/attachments/35001370/" & FileName
     Else
         'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+production
         myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
@@ -114,7 +114,8 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
                     Exit Function
                 End If
         On Error GoTo 0
-    
+        
+        'Debug.Print "Http status for " & FileName & ": " & WinHttpReq.Status
         If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
         
             'if connection OK, download file to temp dir
@@ -127,6 +128,14 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
             oStream.Close
             Set oStream = Nothing
             Set WinHttpReq = Nothing
+        ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
+            logString = Now & " -- 404 File not found. Cannot download file."
+            LogInformation LogFile, logString
+            strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
+                "Please contact workflows@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
+            DownloadFromConfluence = False
+            ExitFunction
         Else
             logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
             LogInformation LogFile, logString
