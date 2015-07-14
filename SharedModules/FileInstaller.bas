@@ -75,7 +75,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 installCheck(b) = False
             ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
                 'check version number
-                installCheck(b) = NeedUpdate(FinalDir(b), FileName(b), strFullLogPath(b))
+                installCheck(b) = NeedUpdate(Staging, FinalDir(b), FileName(b), strFullLogPath(b))
             Else ' blnTemplateExists = False, just download new template
                  installCheck(b) = True
             End If
@@ -198,7 +198,7 @@ Private Function IsTemplateThere(Directory As String, FileName As String, Log As
     LogInformation Log, logString
 End Function
 
-Private Function NeedUpdate(Directory As String, FileName As String, Log As String) As Boolean
+Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName As String, Log As String) As Boolean
 'Directory argument should be the final directory the template should go in.
 'File should be the template file name
 'Log argument should be full path to log file
@@ -236,7 +236,7 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(Directory, Log, strVersion) = False Then
+    If DownloadFromConfluence(StagingURL, Directory, Log, strVersion) = False Then
         NeedUpdate = False
     End If
         
