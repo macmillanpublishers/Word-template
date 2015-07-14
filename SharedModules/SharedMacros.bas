@@ -146,7 +146,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
                 "Please contact workflows@macmillan.com for help."
             MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
             DownloadFromConfluence = False
-            ExitFunction
+            Exit Function
         Else
             logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
             LogInformation LogFile, logString
