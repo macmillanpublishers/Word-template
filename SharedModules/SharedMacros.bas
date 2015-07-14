@@ -32,6 +32,8 @@ Public Function IsItThere(Path)
         IsItThere = True
     End If
     
+    On Error GoTo 0
+    
 Exit Function
 
 ErrHandler:
@@ -276,7 +278,7 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
         strLogFolder = strStyle & Application.PathSeparator & "log"
         strLogPath = strLogFolder & Application.PathSeparator & strLogFile
     #End If
-    Debug.Print strLogPath
+    'Debug.Print strLogPath
 
     Dim arrFinalDirs() As Variant
     ReDim arrFinalDirs(1 To 3)
@@ -290,7 +292,7 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
 End Function
 
 Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
-'LogPath is full path to log file.
+'LogPath is *full* path to log file, including file name. Created by CreateLogFileInfo sub, to be called before this one.
 
     Dim logString As String
     
