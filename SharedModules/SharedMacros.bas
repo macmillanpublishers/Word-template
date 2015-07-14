@@ -60,7 +60,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     'Get URL to download from
     If StagingURL = True Then
         'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
-        myURL = "https://confluence.macmillan.com/download/attachments/35001370/" & FileName
+        myURL = "https://confluence.macmillan.com/download/attachments/35001370x/" & FileName
     Else
         'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+production
         myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
@@ -84,14 +84,31 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
             DownloadFromConfluence = False
             Exit Function
         Else 'internet is working, download file
-            'But first make sure file isn't already there, delete if it is
-            If IsItThere(strTmpPath) = True Then
-                Kill strTmpPath
-            End If
+            'Make sure file is there
+            Dim httpStatus As Long
+            httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_code}' " & myURL)
             
-            'Now download the file
-            ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
-            'ShellAndWaitMac ("rm -f /private/tmp/MacmillanGT.dotm ; curl -o /private/tmp/MacmillanGT.dotm " & myURL)
+            If httpStatus = 200 Then                    ' File is there
+                'Now delete file if already there, then download new file
+                ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
+            ElseIf httpStatus = 404 Then            ' 404 = page not found
+                logString = Now & " -- 404 File not found. Cannot download file."
+                LogInformation LogFile, logString
+                strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
+                    "Please contact workflows@macmillan.com for help."
+                MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
+                DownloadFromConfluence = False
+                Exit Function
+            Else
+                logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
+                LogInformation LogFile, logString
+                strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
+                    "Please check your internet connection or contact workflows@macmillan.com for help."
+                MsgBox strErrMsg, vbCritical, "Error 2: Http status " & httpStatus & " (" & FileName & ")"
+                DownloadFromConfluence = False
+                Exit Function
+            End If
+
         End If
     #Else
         'set tmp dir
@@ -266,6 +283,7 @@ Public Function ShellAndWaitMac(cmd As String) As String
     
     scriptCmd = "do shell script """ & cmd & """"
     result = MacScript(scriptCmd) ' result contains stdout, should you care
+    'Debug.Print result
     ShellAndWaitMac = result
 
 End Function
@@ -295,12 +313,11 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
     
     'Create directory names based on OS
     #If Mac Then
-        Dim strUser As String
         strUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
             "return (name of current user)" & Chr(13) & "end tell")
         strStyle = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
-        strLogFolder = strStyleDir & Application.PathSeparator & "log"
-        strLogPath = strLogDir & Application.PathSeparator & strLogFile
+        strLogFolder = strStyle & Application.PathSeparator & "log"
+        strLogPath = strLogFolder & Application.PathSeparator & strLogFile
     #Else
         strStyle = Environ("ProgramData") & "\MacmillanStyleTemplate"
         strLogFolder = strStyle & Application.PathSeparator & "log"
