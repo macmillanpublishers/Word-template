@@ -66,7 +66,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
     End If
     
-    'Get temp dir based on OS
+    'Get temp dir based on OS, then download file.
     #If Mac Then
         'set tmp dir
         strMacHD = "Macintosh HD"
@@ -84,13 +84,24 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
             DownloadFromConfluence = False
             Exit Function
         Else 'internet is working, download file
+            'But first make sure file isn't already there, delete if it is
+            If IsItThere(strTmpPath) = True Then
+                Kill strTmpPath
+            End If
+            
+            'Now download the file
             ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
             'ShellAndWaitMac ("rm -f /private/tmp/MacmillanGT.dotm ; curl -o /private/tmp/MacmillanGT.dotm " & myURL)
         End If
     #Else
         'set tmp dir
-        strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too?
-    
+        strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too? NOPE
+        
+        'Check if file is already in tmp dir, delete if yes
+        If IsItThere(strTmpPath) = True Then
+            Kill strTmpPath
+        End If
+        
         'try to download the file from Public Confluence page
         Dim WinHttpReq As Object
         Dim oStream As Object
