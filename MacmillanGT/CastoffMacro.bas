@@ -9,8 +9,17 @@ Sub UniversalCastoff()
 
 ' ========== DEPENDENCIES ====================
 ' 1. Requires SharedMacros module to be installed in same template
-' 2. Requires design character count CSV files and spine size files be saved to Confluence Test page
+' 2. Requires design character count CSV files and spine size files be saved as attachments to
+'    https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production
 ' 3. Requires CastoffForm userform module
+
+' ============================================
+' FOR TESTING / DEBUGGING
+' If set to true, downloads CSV files from https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
+' instead of production page (noted above)
+    Dim blnStaging As Boolean
+    blnStaging = False
+' ============================================
 
     '----------Load userform to get user inputs------------------------
     Dim objCastoffForm As CastoffForm
@@ -113,7 +122,7 @@ Sub UniversalCastoff()
         
     'Check if log file already exists; if not, create it then download CSV file
     If CheckLog(strStyleDir, strDir, strLogFile) = True Or CheckLog(strStyleDir, strDir, strLogFile) = False Then
-        If DownloadFromConfluence(strDir, strLogFile, strCastoffFile) = False Then
+        If DownloadFromConfluence(blnStaging, strDir, strLogFile, strCastoffFile) = False Then
             Unload objCastoffForm
             Exit Sub
         End If
@@ -211,7 +220,7 @@ Sub UniversalCastoff()
                 
                 'Get spine size
                 If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-                    strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm, strLogFile)
+                    strSpineSize = SpineSize(blnStaging, lngFinalCount, strPub, objCastoffForm, strLogFile)
                     'Debug.Print "spine size = " & strSpineSize
                     If strSpineSize = vbNullString Then
                         strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
@@ -386,7 +395,7 @@ Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
     Castoff = arrResult
 
 End Function
-Private Function SpineSize(PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
+Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
 
 '----Get Log dir to save spines CSV to --------------------------
     Dim strLogDir As String
@@ -405,7 +414,7 @@ Private Function SpineSize(PageCount As Long, Publisher As String, objForm As Ca
 
     'Check if log file already exists; if not, create it then download CSV file
     If IsItThere(LogFile) = True Then
-        If DownloadFromConfluence(strLogDir, LogFile, strSpineFile) = False Then
+        If DownloadFromConfluence(Staging, strLogDir, LogFile, strSpineFile) = False Then
             Exit Function
         End If
     End If
