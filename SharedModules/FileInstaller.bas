@@ -77,6 +77,11 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         logString = "----------------------------------------------" & vbNewLine & Now & " -- beginning " & strTypeOfInstaller
         LogInformation strFullLogPath(b), logString
         
+        ' ===============================
+        ' FOR DEBUGGING: SET TO TRUE,    |
+        ' SO ALWAYS DOWNLOADS FILES      |
+         Installer = True              '|
+        ' ===============================
         
         
         If Installer = False Then 'Because if it's an installer, we just want to install the file
