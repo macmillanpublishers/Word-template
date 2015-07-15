@@ -49,6 +49,9 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 "Log dir is: " & strLogDir(1) & vbNewLine & _
                 "Full path to log is: " & strFullLogPath(1)
                 
+                
+
+
     ' ------------- Check if we need to do an installation ---------------------------
     ' Check if template exists
     Dim installCheck() As Boolean
@@ -57,10 +60,23 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     ReDim blnTemplateExists(LBound(FileName()) To UBound(FileName()))
     Dim blnLogUpToDate() As Boolean
     ReDim blnLogUpToDate(LBound(FileName()) To UBound(FileName()))
+    Dim logString As String
+    Dim strTypeOfInstall As String
+
     Dim b As Long
     
     For b = LBound(FileName()) To UBound(FileName())
-    
+        ' Log whether this is an updater or an installer
+        
+        If Installer = True Then
+            strTypeOfInstall = "installer"
+        Else
+            strTypeOfInstall = "updater"
+        End If
+        
+        logString = "----------------------------------------------" & vbNewLine & Now & " -- beginning " & strTypeOfInstaller
+        LogInformation strFullLogPath(b), logString
+        
         'Check if log dir/file exists, create if it doesn't, check last mod date if it does
         ' If last mod date less than 1 day ago, CheckLog = True
         blnLogUpToDate(b) = CheckLog(strStyleDir(b), strLogDir(b), strFullLogPath(b))
@@ -138,7 +154,6 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     Call CloseOpenDocs
         
     '----------------- download template files ------------------------------------------
-    Dim logString As String
     Dim d As Long
     
     For d = LBound(strInstallFile()) To UBound(strInstallFile())

@@ -218,7 +218,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         On Error GoTo 0
         
     Else
-        logString = Now & "No previous version file in final directory."
+        logString = Now & " -- No previous version file in final directory."
         LogInformation LogFile, logString
     End If
         
@@ -345,15 +345,15 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
     'Check if logfile/directory exists
     If IsItThere(LogPath) = False Then
         CheckLog = False
-        logString = Now & "----------------------------" & vbNewLine & Now & " -- Creating logfile."
+        logString = Now & " -- Creating logfile."
         If IsItThere(LogDir) = False Then
             If IsItThere(StyleDir) = False Then
                 MkDir (StyleDir)
                 MkDir (LogDir)
-                logString = "----------------------------" & vbNewLine & Now & " -- Creating MacmillanStyleTemplate directory."
+                logString = Now & " -- Creating MacmillanStyleTemplate directory."
             Else
                 MkDir (LogDir)
-                logString = "----------------------------" & vbNewLine & Now & " -- Creating log directory."
+                logString = Now & " -- Creating log directory."
             End If
         End If
     Else    'logfile exists, so check last modified date
@@ -361,10 +361,10 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
         lastModDate = FileDateTime(LogPath)
         If DateDiff("d", lastModDate, Date) < 1 Then       'i.e. 1 day
             CheckLog = True
-            logString = "----------------------------" & vbNewLine & Now & " -- Already checked less than 1 day ago."
+            logString = Now & " -- Already checked less than 1 day ago."
         Else
             CheckLog = False
-            logString = "----------------------------" & vbNewLine & Now & " -- >= 1 day since last update check."
+            logString = Now & " -- >= 1 day since last update check."
         End If
     End If
     
