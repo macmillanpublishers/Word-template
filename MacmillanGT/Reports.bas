@@ -515,7 +515,7 @@ Sub MacmillanStyleReport()
     Dim strBadStylesList As String
     
     arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, _
-                        Status:="strSTatus", ProgTitle:="strTitle")
+                        Status:=strStatus, ProgTitle:=strTitle)
     strGoodStylesList = arrGoodBadStyles(1)
     strBadStylesList = arrGoodBadStyles(2)
     
