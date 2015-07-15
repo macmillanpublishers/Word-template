@@ -74,15 +74,14 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
             strTypeOfInstall = "updater"
         End If
         
-        logString = "----------------------------------------------" & vbNewLine & Now & " -- beginning " & strTypeOfInstaller
+        logString = "----------------------------------------------" & vbNewLine & Now & " -- beginning " & strTypeOfInstall
         LogInformation strFullLogPath(b), logString
         
         ' ===============================
         ' FOR DEBUGGING: SET TO TRUE,    |
         ' SO ALWAYS DOWNLOADS FILES      |
-         Installer = True              '|
+        ' Installer = True              '|
         ' ===============================
-        
         
         If Installer = False Then 'Because if it's an installer, we just want to install the file
             'Check if log dir/file exists, create if it doesn't, check last mod date if it does
@@ -93,6 +92,13 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
             ' Check if template exists, if not create any missing directories
             blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
             'Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
+                
+            ' ==========================================
+            ' FOR DEBUGGING: SET TO FALSE AND THEN TRUE |
+            ' TO TEST NEEDUPDATE FUNCTION               |
+            ' blnLogUpToDate(b) = False                '|
+            ' blnTemplateExists(b) = True              '|
+            ' ==========================================
                 
             If blnLogUpToDate(b) = True And blnTemplateExists(b) = True Then ' already checked today, already exists
                 installCheck(b) = False
