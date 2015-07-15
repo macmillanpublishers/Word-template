@@ -77,16 +77,18 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         logString = "----------------------------------------------" & vbNewLine & Now & " -- beginning " & strTypeOfInstaller
         LogInformation strFullLogPath(b), logString
         
-        'Check if log dir/file exists, create if it doesn't, check last mod date if it does
-        ' If last mod date less than 1 day ago, CheckLog = True
-        blnLogUpToDate(b) = CheckLog(strStyleDir(b), strLogDir(b), strFullLogPath(b))
-        'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
         
-        ' Check if template exists, if not create any missing directories
-        blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
-        'Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
-                
+        
         If Installer = False Then 'Because if it's an installer, we just want to install the file
+            'Check if log dir/file exists, create if it doesn't, check last mod date if it does
+            ' If last mod date less than 1 day ago, CheckLog = True
+            blnLogUpToDate(b) = CheckLog(strStyleDir(b), strLogDir(b), strFullLogPath(b))
+            'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
+            
+            ' Check if template exists, if not create any missing directories
+            blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
+            'Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
+                
             If blnLogUpToDate(b) = True And blnTemplateExists(b) = True Then ' already checked today, already exists
                 installCheck(b) = False
             ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
@@ -227,8 +229,15 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     
     'Get version number of installed template
     Dim strInstalledVersion As String
+    
     If IsItThere(strFullTemplatePath) = True Then
-        Documents.Open FileName:=strFullTemplatePath, ReadOnly:=True ', Visible:=False      'Mac Word 2011 doesn't allow Visible as an argument :(
+        
+        #If Mac Then
+            Call OpenDocMac(strFullTemplatePath)
+        #Else
+            Call OpenDocPC(strFullTemplatePath)
+        #End If
+        
         strInstalledVersion = Documents(strFullTemplatePath).CustomDocumentProperties("Version")
         Documents(strFullTemplatePath).Close
         logString = Now & " -- installed version is " & strInstalledVersion
@@ -285,6 +294,14 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     LogInformation Log, logString
     
 End Function
+
+Private Sub OpenDocMac(FilePath As String)
+        Documents.Open FileName:=FilePath, ReadOnly:=True ', Visible:=False      'Mac Word 2011 doesn't allow Visible as an argument :(
+End Sub
+
+Private Sub OpenDocPC(FilePath As String)
+        Documents.Open FileName:=FilePath, ReadOnly:=True, Visible:=False      'Win Word DOES allow Visible as an argument :)
+End Sub
 
 Private Sub CloseOpenDocs()
 
