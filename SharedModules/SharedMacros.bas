@@ -100,7 +100,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
                 DownloadFromConfluence = False
                 Exit Function
             Else
-                logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
+                logString = Now & " -- Http status is " & httpStatus & ". Cannot download file."
                 LogInformation LogFile, logString
                 strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
                     "Please check your internet connection or contact workflows@macmillan.com for help."
