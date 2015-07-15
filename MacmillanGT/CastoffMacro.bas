@@ -422,7 +422,8 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
     strFullPath = strLogDir & Application.PathSeparator & strSpineFile
     
 '----Download CSV with spine sizes from Confluence site----------
-
+    Dim strMessage As String
+    
     'Check if log file already exists; if not, create it then download CSV file
     If IsItThere(LogFile) = True Then
         If DownloadFromConfluence(Staging, strLogDir, LogFile, strSpineFile) = False Then
@@ -431,8 +432,7 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
                 strMessage = "Looks like we can't download the spine size info from the internet right now. " & _
                     "Please check your internet connection, or contact workflows@macmillan.com."
                 MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous spine file available"
-                Unload objCastoffForm
-                Exit Sub
+                Exit Function
             Else
                 strMessage = "Looks like we can't download the most up to date spine size info from the internet right now, " & _
                     "so we'll just use the info we have on file for your castoff."
@@ -442,7 +442,6 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
     End If
                         
     'Make sure CSV is there
-    Dim strMessage As String
     If IsItThere(strFullPath) = False Then
         strMessage = "The Castoff macro is unable to access the spine size file right now. Please check your internet " & _
                     "connection and try again, or contact workflows@macmillan.com."
