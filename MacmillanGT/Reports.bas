@@ -223,7 +223,7 @@ Sub BookmakerReqs()
     'returns array with 2 elements, 1: good styles list, 2: bad styles list
     arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
     strGoodStylesList = arrGoodBadStyles(1)
-    Debug.Print strGoodStylesList
+    'Debug.Print strGoodStylesList
     strBadStylesList = arrGoodBadStyles(2)
         
     'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
@@ -1714,7 +1714,7 @@ Private Function GetMetadata() As String
     
     strTitleData = bString(1) & bString(2) & bString(3) & bString(4)
                 
-    Debug.Print strTitleData
+    'Debug.Print strTitleData
     
     GetMetadata = strTitleData
 
