@@ -650,10 +650,11 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
         If J Mod 100 = 0 Then
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((J / activeParaCount) * 0.5) + 0.18)
+            sglPercentComplete = (((J / activeParaCount) * 0.45) + 0.18)
             strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & _
                         vbCr & Status
-    
+            
+            'Debug.Print sglPercentComplete
             If Not TheOS Like "*Mac*" Then
                 ProgressBar.Increment sglPercentComplete, strStatus
                 Doze 50 'Wait 50 milliseconds for progress bar to update
@@ -769,7 +770,7 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
     For M = 1 To UBound(styleNameM())
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((M / UBound(styleNameM())) * 0.1) + 0.68)
+            sglPercentComplete = (((M / UBound(styleNameM())) * 0.13) + 0.63)
             strStatus = "* Checking for " & styleNameM(M) & " styles..." & vbCr & Status
     
             If Not TheOS Like "*Mac*" Then
@@ -1522,7 +1523,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
         
         If N Mod 100 = 0 Then
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((N / activeParaCount) * 0.2) + 0.78)
+            sglPercentComplete = (((N / activeParaCount) * 0.1) + 0.76)
             strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for Tor.com approved styles..." & vbCr & StatusBar
     
             'All Progress Bar statements for PC only because won't run modeless on Mac
@@ -2137,7 +2138,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
         If J Mod 100 = 0 Then
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((J / activeParaCount) * 0.8) + 0.18)
+            sglPercentComplete = (((J / activeParaCount) * 0.12) + 0.86)
             strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
     
             If Not TheOS Like "*Mac*" Then
