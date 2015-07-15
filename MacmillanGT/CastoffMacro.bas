@@ -135,11 +135,12 @@ Sub UniversalCastoff()
         MsgBox strMessage, vbCritical, "Error 3: Design CSV doesn't exist"
         Unload objCastoffForm
         Exit Sub
+    Else
+        ' Load CSV into an array
+        Dim arrDesign() As Variant
+        arrDesign = LoadCSVtoArray(strPath)
     End If
     
-    '---------Load CSV into an array-----------------------------------
-    Dim arrDesign() As Variant
-    arrDesign = LoadCSVtoArray(strPath)
 
             
     '------------Get castoff for each Design selected-------------------
@@ -309,18 +310,18 @@ Private Function LoadCSVtoArray(Path As String) As Variant
     
         ' Prove we have the data loaded.
 
-        'For R = 0 To num_rows
-        '    For c = 0 To num_cols
-        '        Debug.Print the_array(R, c) & "|";
-        '    Next c
-        '    Debug.Print
-        'Next R
-        'Debug.Print "======="
+        ' For R = 0 To num_rows
+        '     For c = 0 To num_cols
+        '         Debug.Print the_array(R, c) & "|";
+        '     Next c
+        '     Debug.Print
+        ' Next R
+        ' Debug.Print "======="
         
-        'Delete the .csv file 'cuz we don't need it any more
-        If Len(Dir$(Path)) > 0 Then
-            Kill Path
-        End If
+        ' Delete the .csv file (actually keep it in case we need it later!)
+        ' If Len(Dir$(Path)) > 0 Then
+        '     Kill Path
+        ' End If
     
     LoadCSVtoArray = the_array
     
