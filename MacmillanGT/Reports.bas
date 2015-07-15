@@ -514,9 +514,13 @@ Sub MacmillanStyleReport()
     Dim strGoodStylesList As String
     Dim strBadStylesList As String
     
+    arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, _
+                        Status:="strSTatus", ProgTitle:="strTitle")
+    strGoodStylesList = arrGoodBadStyles(1)
+    strBadStylesList = arrGoodBadStyles(2)
+    
     'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
     Dim blnTemplateUsed As Boolean
-    
     If strGoodStylesList = vbNullString Then
         blnTemplateUsed = False
         
@@ -647,7 +651,8 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
             sglPercentComplete = (((J / activeParaCount) * 0.5) + 0.18)
-            strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
+            strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & _
+                        vbCr & Status
     
             If Not TheOS Like "*Mac*" Then
                 ProgressBar.Increment sglPercentComplete, strStatus
