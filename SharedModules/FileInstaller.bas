@@ -68,14 +68,16 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     For b = LBound(FileName()) To UBound(FileName())
         ' Log whether this is an updater or an installer
         
-        If Installer = True Then
-            strTypeOfInstall = "installer"
-        Else
-            strTypeOfInstall = "updater"
+        If IsItThere(strFullLogPath(b)) = True Then
+            If Installer = True Then
+                strTypeOfInstall = "installer"
+            Else
+                strTypeOfInstall = "updater"
+            End If
+            
+            logString = "----------------------------------------------" & vbNewLine & Now & " -- beginning " & strTypeOfInstall
+            LogInformation strFullLogPath(b), logString
         End If
-        
-        logString = "----------------------------------------------" & vbNewLine & Now & " -- beginning " & strTypeOfInstall
-        LogInformation strFullLogPath(b), logString
         
         ' ===============================
         ' FOR DEBUGGING: SET TO TRUE,    |
