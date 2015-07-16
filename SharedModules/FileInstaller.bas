@@ -316,11 +316,12 @@ Private Sub CloseOpenDocs()
     Dim strSaveWarning As String
     Dim objDocument As Document
     Dim b As Long
+    Dim doc As Document
     
     strInstallerName = ThisDocument.Name
         'Debug.Print "Installer Name: " & strInstallerName
         'Debug.Print "Open docs: " & Documents.Count
-        
+
     If Documents.Count > 1 Then
         strSaveWarning = "All other Word documents must be closed to run the installer." & vbNewLine & vbNewLine & _
             "Click OK and I will save and close your documents." & vbNewLine & _
@@ -329,15 +330,15 @@ Private Sub CloseOpenDocs()
             ActiveDocument.Close
             Exit Sub
         Else
-            For b = 1 To Documents.Count
-                'Debug.Print "Current doc " & b & ": " & Documents(b).Name
+            For Each doc In Documents
                 On Error Resume Next        'To skip error if user is prompted to save new doc and clicks Cancel
-                    If Documents(b).Name <> strInstallerName Then       'But don't close THIS document
-                        Documents(b).Save   'separate step to trigger Save As prompt for previously unsaved docs
-                        Documents(b).Close
+                    Debug.Print doc.Name
+                    If doc.Name <> strInstallerName Then       'But don't close THIS document
+                        doc.Save   'separate step to trigger Save As prompt for previously unsaved docs
+                        doc.Close
                     End If
                 On Error GoTo 0
-            Next b
+            Next doc
         End If
     End If
     
