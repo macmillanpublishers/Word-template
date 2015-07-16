@@ -66,18 +66,18 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     Dim b As Long
     
     For b = LBound(FileName()) To UBound(FileName())
-        ' Log whether this is an updater or an installer
         
-        If IsItThere(strFullLogPath(b)) = True Then
-            If Installer = True Then
-                strTypeOfInstall = "installer"
-            Else
-                strTypeOfInstall = "updater"
-            End If
-            
-            logString = "----------------------------------------------" & vbNewLine & Now & " -- beginning " & strTypeOfInstall
-            LogInformation strFullLogPath(b), logString
-        End If
+        ' Check if log dir/file exists, create if it doesn't, check last mod date if it does
+        ' We don't need the true/false info for Installer, but we DO need to run these two
+        ' functions to create directories if they don't exist yet
+        
+        ' If last mod date less than 1 day ago, CheckLog = True
+        blnLogUpToDate(b) = CheckLog(strStyleDir(b), strLogDir(b), strFullLogPath(b))
+        'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
+        
+        ' Check if template exists, if not create any missing directories
+        blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
+        ' Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
         
         ' ===============================
         ' FOR DEBUGGING: SET TO TRUE,    |
@@ -86,14 +86,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         ' ===============================
         
         If Installer = False Then 'Because if it's an installer, we just want to install the file
-            'Check if log dir/file exists, create if it doesn't, check last mod date if it does
-            ' If last mod date less than 1 day ago, CheckLog = True
-            blnLogUpToDate(b) = CheckLog(strStyleDir(b), strLogDir(b), strFullLogPath(b))
-            'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
-            
-            ' Check if template exists, if not create any missing directories
-            blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
-            'Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
+
                 
             ' ==========================================
             ' FOR DEBUGGING: SET TO FALSE AND THEN TRUE |
