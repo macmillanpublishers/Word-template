@@ -51,7 +51,7 @@ Sub AutoExec()
     blnInstaller = False
     
     'Plain English name of what you're installing/updating, should be singular
-    strTemplateName = "Macmillan Updater Template"
+    strTemplateName = "Macmillan Styles"
     
     'Update array lengths and template file names here
     ReDim strFileName(1 To 4)               'Declare number of files here
