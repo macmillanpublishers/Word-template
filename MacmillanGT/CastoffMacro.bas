@@ -120,24 +120,25 @@ Sub UniversalCastoff()
     strLogFile = arrLogInfo(3)
     strPath = strDir & Application.PathSeparator & strCastoffFile
         
-    'Check if log file already exists; if not, create it then download CSV file
-    If CheckLog(strStyleDir, strDir, strLogFile) = True Or CheckLog(strStyleDir, strDir, strLogFile) = False Then
-        If DownloadFromConfluence(blnStaging, strDir, strLogFile, strCastoffFile) = False Then
-            ' If download fails, check if we have an older version of the design CSV to work with
-            If IsItThere(strPath) = False Then
-                strMessage = "Looks like we can't download the design info from the internet right now. " & _
-                    "Please check your internet connection, or contact workflows@macmillan.com."
-                MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous design file available"
-                Unload objCastoffForm
-                Exit Sub
-            Else
-                strMessage = "Looks like we can't download the most up to date design info from the internet right now, " & _
-                    "so we'll just use the info we have on file for your castoff."
-                MsgBox strMessage, vbInformation, "Let's do this thing!"
-            End If
+    'Check if log file already exists; if not, create it
+    CheckLog strStyleDir, strDir, strLogFile
+    
+    'Download CSV file from Confluence
+    If DownloadFromConfluence(blnStaging, strDir, strLogFile, strCastoffFile) = False Then
+        ' If download fails, check if we have an older version of the design CSV to work with
+        If IsItThere(strPath) = False Then
+            strMessage = "Looks like we can't download the design info from the internet right now. " & _
+                "Please check your internet connection, or contact workflows@macmillan.com."
+            MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous design file available"
+            Unload objCastoffForm
+            Exit Sub
+        Else
+            strMessage = "Looks like we can't download the most up to date design info from the internet right now, " & _
+                "so we'll just use the info we have on file for your castoff."
+            MsgBox strMessage, vbInformation, "Let's do this thing!"
         End If
     End If
-                        
+             
     'Double check that CSV is there
     If IsItThere(strPath) = False Then
         strMessage = "The Castoff macro is unable to access the design count file right now. Please check your internet " & _
