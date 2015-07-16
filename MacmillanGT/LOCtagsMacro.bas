@@ -245,12 +245,10 @@ Sub LibraryOfCongressTags()
     End If
    
     'return cursor to original position and delete bookmark
-    On Error Resume Next
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
         ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
     End If
-    On Error GoTo 0
     
     Application.ScreenUpdating = True
     Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings

@@ -237,10 +237,10 @@ Sub MacmillanCharStyles()
     End If
     
     'Go back to original insertion point and delete bookmark
-    On Error Resume Next
+    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
         ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    On Error GoTo 0
+    End If
     
     ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
     Application.DisplayStatusBar = currentStatusBar

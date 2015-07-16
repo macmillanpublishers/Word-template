@@ -275,8 +275,10 @@ Sub MacmillanManuscriptCleanup()
     Call zz_clearFind
     
     '-------------Go back to original insertion point and delete bookmark-----------------
-    Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-    ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+    End If
     
     '--------------Remove other bookmarks------------------------------------------------
     sglPercentComplete = 0.95
@@ -306,7 +308,6 @@ Sub MacmillanManuscriptCleanup()
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
         DoEvents
     End If
-    
     
     ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
     Application.DisplayStatusBar = currentStatusBar
