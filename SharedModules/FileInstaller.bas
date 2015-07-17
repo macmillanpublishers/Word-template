@@ -184,23 +184,17 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     Dim strComplete As String
     
     ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart. Otherwise, quit for user on PC.
-    If Installer = True Then
-        #If Mac Then
-            strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
-                "You must quit Word and then restart for the changes to take effect."
-            MsgBox strComplete, vbOKOnly, "Installation Successful"
-        #Else
-            strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
-                "Click OK to quit Word. When you restart Word, the template will be available."
-            MsgBox strComplete, vbOKOnly, "Installation Successful"
-            Application.Quit (wdDoNotSaveChanges)
-        #End If
-    Else    'It's an updater, so we don't want to quit word at all
-        strComplete = "The " & TemplateName & " has been updated on your computer."
-        MsgBox strComplete, vbOKOnly, "Update Successful"
-    End If
-    
-        
+    #If Mac Then
+        strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
+            "You must quit Word and then restart for the changes to take effect."
+        MsgBox strComplete, vbOKOnly, "Installation Successful"
+    #Else
+        strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
+            "Click OK to quit Word. When you restart Word, the template will be available."
+        MsgBox strComplete, vbOKOnly, "Installation Successful"
+        Application.Quit (wdDoNotSaveChanges)
+    #End If
+
 End Sub
 
 Private Function IsTemplateThere(Directory As String, FileName As String, Log As String)
