@@ -129,7 +129,11 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     ' ---------------- Check if new array is allocated -----------------------------------
     If IsArrayEmpty(strInstallFile()) = True Then
         If Installer = True Then
-            Application.Quit (wdDoNotSaveChanges)
+            #If Mac Then    ' because application.quit generates error on Mac
+                'Nothing
+            #Else
+                Application.Quit (wdDoNotSaveChanges)
+            #End If
         Else
             Exit Sub
         End If
