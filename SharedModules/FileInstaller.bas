@@ -182,7 +182,6 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     
     '------Display installation complete message   ---------------------------
     Dim strComplete As String
-    Dim d As Long
     
     ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart. Otherwise, quit for user on PC.
     If Installer = True Then
