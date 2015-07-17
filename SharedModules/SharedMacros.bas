@@ -267,6 +267,13 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         Exit Function
     End If
     
+    'If it was a Startup item, activate it again
+    If InStr(1, strFinalPath, LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
+        On Error Resume Next                                        'Error = add-in not available, don't need to install
+        AddIns(strFinalPath).Installed = True
+        On Error GoTo 0
+    End If
+    
     'Cleanup: Get rid of temp file if downloaded correctly
     If IsItThere(strTmpPath) = True Then
         Kill strTmpPath
