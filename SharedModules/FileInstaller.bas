@@ -36,7 +36,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     ReDim strLogDir(LBound(FileName()) To UBound(FileName()))
     Dim strFullLogPath() As String
     ReDim strFullLogPath(LBound(FileName()) To UBound(FileName()))
-
+    
     ' ------------ Define Log Dirs and such -----------------------------------------
     For a = LBound(FileName()) To UBound(FileName())
         arrLogInfo() = CreateLogFileInfo(FileName(a))
@@ -49,9 +49,6 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 "Log dir is: " & strLogDir(1) & vbNewLine & _
                 "Full path to log is: " & strFullLogPath(1)
                 
-                
-
-
     ' ------------- Check if we need to do an installation ---------------------------
     ' Check if template exists
     Dim installCheck() As Boolean
@@ -168,29 +165,38 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         'If False, error in download; user was notified in DownloadFromConfluence function
         If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
             If Installer = True Then
-                Application.Quit (wdDoNotSaveChanges)
+                #If Mac Then    ' because application.quit generates error on Mac
+                    'Nothing
+                #Else
+                    Application.Quit (wdDoNotSaveChanges)
+                #End If
             Else
                 Exit Sub
             End If
         End If
     Next d
     
-    '------Display installation complete message and close doc (ending sub)---------------
+    '------Display installation complete message   ---------------------------
     Dim strComplete As String
+    Dim d As Long
     
-    strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
-        "When you restart Word, the template will be available."
-        
-    MsgBox strComplete, vbOKOnly, "Installation Successful"
-    
-    '------Close and restart Word for template changes to take effect---------------------
-    'Would love to get restart to work...
-    'Dim restartTime As Variant
-    'restartTime = Now + TimeValue("00:00:01")
-    'Application.OnTime When:=restartTime, Name:="Restart"
+    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart. Otherwise, quit for user on PC.
     If Installer = True Then
-        Application.Quit SaveChanges:=wdDoNotSaveChanges          'DEBUG: comment out this line
+        #If Mac Then
+            strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
+                "You must quit Word and then restart for the changes to take effect."
+            MsgBox strComplete, vbOKOnly, "Installation Successful"
+        #Else
+            strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
+                "Click OK to quit Word. When you restart Word, the template will be available."
+            MsgBox strComplete, vbOKOnly, "Installation Successful"
+            Application.Quit (wdDoNotSaveChanges)
+        #End If
+    Else    'It's an updater, so we don't want to quit word at all
+        strComplete = "The " & TemplateName & " has been updated on your computer."
+        MsgBox strComplete, vbOKOnly, "Update Successful"
     End If
+    
         
 End Sub
 
