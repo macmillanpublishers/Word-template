@@ -643,7 +643,7 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
     styleGoodCount = 0
     styleBadCount = 0
     styleBadOverflow = False
-    activeParaCount = activeDoc.paragraphs.Count
+    activeParaCount = activeDoc.Paragraphs.Count
     For J = 1 To activeParaCount
         
         'All Progress Bar statements for PC only because won't run modeless on Mac
@@ -665,20 +665,24 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
             End If
         End If
         
-        paraStyle = activeDoc.paragraphs(J).Style
+        paraStyle = activeDoc.Paragraphs(J).Style
+        Set activeParaRange = activeDoc.Paragraphs(J).Range
+        pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
+            
             'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
         If Right(paraStyle, 1) = ")" Then
             For K = 1 To styleGoodCount
-                If paraStyle = stylesGood(K) Then                   'stylereport bug fix #1  v. 3.1
-                    K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                'Debug.Print Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1)
+                ' "Left" function because now stylesGood includes page number, so won't match paraStyle
+                If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
+                K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
                     Exit For                                        'stylereport bug fix #1   v. 3.1
                 End If                                              'stylereport bug fix #1   v. 3.1
             Next K
             If K = styleGoodCount + 1 Then
                 styleGoodCount = K
-               ' ReDim Preserve stylesGood(1 To styleGoodCount)
-                
-                stylesGood(styleGoodCount) = paraStyle
+                ReDim Preserve stylesGood(1 To styleGoodCount)
+                stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
             End If
         Else
             For L = 1 To styleBadCount
@@ -690,8 +694,7 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
             End If
             If L = styleBadCount + 1 Then
                 styleBadCount = L
-                Set activeParaRange = ActiveDocument.paragraphs(J).Range
-                pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
+
                 stylesBad(styleBadCount) = "** ERROR: Non-Macmillan style on page " & pageNumber & _
                     " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
             End If
@@ -1156,7 +1159,7 @@ Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
         Selection.Range.Select  'select current ran
         CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
         Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
-        intCurrentPara = rParagraphs.paragraphs.Count
+        intCurrentPara = rParagraphs.Paragraphs.Count
         
         'Debug.Print intCurrentPara
         
@@ -1515,11 +1518,11 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     arrTorStyles(92) = "Appendix Text (aptx)"
     arrTorStyles(93) = "Appendix Text No-Indent (aptx1)"
     
-    activeParaCount = ActiveDocument.paragraphs.Count
+    activeParaCount = ActiveDocument.Paragraphs.Count
     
     For N = 1 To activeParaCount
         intBadCount = 0
-        paraStyle = ActiveDocument.paragraphs(N).Style
+        paraStyle = ActiveDocument.Paragraphs(N).Style
         
         If N Mod 100 = 0 Then
             'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -1550,7 +1553,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
             Next M
         
             If intBadCount = UBound(arrTorStyles()) Then
-                Set activeParaRange = ActiveDocument.paragraphs(N).Range
+                Set activeParaRange = ActiveDocument.Paragraphs(N).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
                 strBadStyles = strBadStyles & "** ERROR: Non-Tor.com style on page " & pageNumber _
                     & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
@@ -1854,7 +1857,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
         
         'Get number of current pagaraph, because we get an error if try to select before 1st para
         
-        intCurrentPara = ActiveDocument.Range(0, Selection.paragraphs(1).Range.End).paragraphs.Count
+        intCurrentPara = ActiveDocument.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
         
         'Debug.Print intCurrentPara
         
@@ -1964,7 +1967,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
         intCount = intCount + 1
         
         'Get number of current pagaraph, because we get an error if try to select before 1st para
-        intCurrentPara = ActiveDocument.Range(0, Selection.paragraphs(1).Range.End).paragraphs.Count
+        intCurrentPara = ActiveDocument.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
     
         If intCurrentPara > 1 Then      'NOT first paragraph of document
             'select preceding paragraph
@@ -2131,7 +2134,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     
     '----------Collect all styles being used-------------------------------
     styleGoodCount = 0
-    activeParaCount = activeDoc.paragraphs.Count
+    activeParaCount = activeDoc.Paragraphs.Count
     For J = 1 To activeParaCount
         
         'All Progress Bar statements for PC only because won't run modeless on Mac
@@ -2151,18 +2154,22 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
             End If
         End If
         
-        paraStyle = activeDoc.paragraphs(J).Style
-    
-            For K = 1 To styleGoodCount
-                If paraStyle = stylesGood(K) Then                   'stylereport bug fix #1  v. 3.1
-                    K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
-                    Exit For                                        'stylereport bug fix #1   v. 3.1
-                End If                                              'stylereport bug fix #1   v. 3.1
-            Next K
-            If K = styleGoodCount + 1 Then
-                styleGoodCount = K
-                stylesGood(styleGoodCount) = paraStyle
-            End If
+        paraStyle = activeDoc.Paragraphs(J).Style
+        Set activeParaRange = activeDoc.Paragraphs(J).Range
+        pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
+
+        For K = 1 To styleGoodCount
+            ' "Left" function because now stylesGood includes page number, so won't match paraStyle
+            If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
+                K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                Exit For                                        'stylereport bug fix #1   v. 3.1
+            End If                                              'stylereport bug fix #1   v. 3.1
+        Next K
+        If K = styleGoodCount + 1 Then
+            styleGoodCount = K
+            stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
+        End If
+        
     Next J
     
     'Sort good styles
