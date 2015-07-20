@@ -32,6 +32,8 @@ Public Function IsItThere(Path)
         IsItThere = True
     End If
     
+    On Error GoTo 0
+    
 Exit Function
 
 ErrHandler:
@@ -42,7 +44,7 @@ ErrHandler:
     End If
 End Function
 
-Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String) As Boolean
+Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String, LogFile As String, FileName As String) As Boolean
 'FinalPath is directory w/o file name
 
     Dim logString As String
@@ -55,9 +57,16 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
     
     strFinalPath = FinalDir & Application.PathSeparator & FileName
     
-    'this is download link, actual page housing files is https://confluence.macmillan.com/display/PBL/Test
-    myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
-            
+    'Get URL to download from
+    If StagingURL = True Then
+        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
+        myURL = "https://confluence.macmillan.com/download/attachments/35001370/" & FileName
+    Else
+        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+production
+        myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
+    End If
+    
+    'Get temp dir based on OS, then download file.
     #If Mac Then
         'set tmp dir
         strMacHD = "Macintosh HD"
@@ -75,13 +84,41 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
             DownloadFromConfluence = False
             Exit Function
         Else 'internet is working, download file
-            ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
-            'ShellAndWaitMac ("rm -f /private/tmp/MacmillanGT.dotm ; curl -o /private/tmp/MacmillanGT.dotm " & myURL)
+            'Make sure file is there
+            Dim httpStatus As Long
+            httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_code}' " & myURL)
+            
+            If httpStatus = 200 Then                    ' File is there
+                'Now delete file if already there, then download new file
+                ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
+            ElseIf httpStatus = 404 Then            ' 404 = page not found
+                logString = Now & " -- 404 File not found. Cannot download file."
+                LogInformation LogFile, logString
+                strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
+                    "Please contact workflows@macmillan.com for help."
+                MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
+                DownloadFromConfluence = False
+                Exit Function
+            Else
+                logString = Now & " -- Http status is " & httpStatus & ". Cannot download file."
+                LogInformation LogFile, logString
+                strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
+                    "Please check your internet connection or contact workflows@macmillan.com for help."
+                MsgBox strErrMsg, vbCritical, "Error 2: Http status " & httpStatus & " (" & FileName & ")"
+                DownloadFromConfluence = False
+                Exit Function
+            End If
+
         End If
     #Else
         'set tmp dir
-        strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too?
-    
+        strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too? NOPE
+        
+        'Check if file is already in tmp dir, delete if yes
+        If IsItThere(strTmpPath) = True Then
+            Kill strTmpPath
+        End If
+        
         'try to download the file from Public Confluence page
         Dim WinHttpReq As Object
         Dim oStream As Object
@@ -105,7 +142,8 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
                     Exit Function
                 End If
         On Error GoTo 0
-    
+        
+        'Debug.Print "Http status for " & FileName & ": " & WinHttpReq.Status
         If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
         
             'if connection OK, download file to temp dir
@@ -118,6 +156,14 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
             oStream.Close
             Set oStream = Nothing
             Set WinHttpReq = Nothing
+        ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
+            logString = Now & " -- 404 File not found. Cannot download file."
+            LogInformation LogFile, logString
+            strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
+                "Please contact workflows@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
+            DownloadFromConfluence = False
+            Exit Function
         Else
             logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
             LogInformation LogFile, logString
@@ -172,7 +218,7 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
         On Error GoTo 0
         
     Else
-        logString = Now & "No previous version file in final directory."
+        logString = Now & " -- No previous version file in final directory."
         LogInformation LogFile, logString
     End If
         
@@ -181,10 +227,11 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
         logString = Now & " -- Final directory clear of " & FileName & " file."
         LogInformation LogFile, logString
         
-        'Mac won't load macros from a template downloaded from the internet to Startup. Need to open and save as to final location for macros to work.
+        'Mac won't load macros from a template downloaded from the internet to Startup.
+        'Need to open and save as to final location for macros to work.
         #If Mac Then
             If InStr(1, FileName, ".dotm") > 0 And InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then      'File is a template being saved in startup dir
-                Documents.Open FileName:=strTmpPath, ReadOnly:=True ', Visible:=False
+                Documents.Open FileName:=strTmpPath, ReadOnly:=True ', Visible:=False doesn't work on Mac
                 Documents(strTmpPath).SaveAs (strFinalPath)
                 Documents(strFinalPath).Close
             Else
@@ -236,6 +283,7 @@ Public Function ShellAndWaitMac(cmd As String) As String
     
     scriptCmd = "do shell script """ & cmd & """"
     result = MacScript(scriptCmd) ' result contains stdout, should you care
+    'Debug.Print result
     ShellAndWaitMac = result
 
 End Function
@@ -265,18 +313,17 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
     
     'Create directory names based on OS
     #If Mac Then
-        Dim strUser As String
         strUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
             "return (name of current user)" & Chr(13) & "end tell")
         strStyle = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
-        strLogFolder = strStyleDir & Application.PathSeparator & "log"
-        strLogPath = strLogDir & Application.PathSeparator & strLogFile
+        strLogFolder = strStyle & Application.PathSeparator & "log"
+        strLogPath = strLogFolder & Application.PathSeparator & strLogFile
     #Else
         strStyle = Environ("ProgramData") & "\MacmillanStyleTemplate"
         strLogFolder = strStyle & Application.PathSeparator & "log"
         strLogPath = strLogFolder & Application.PathSeparator & strLogFile
     #End If
-    Debug.Print strLogPath
+    'Debug.Print strLogPath
 
     Dim arrFinalDirs() As Variant
     ReDim arrFinalDirs(1 To 3)
@@ -290,7 +337,7 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
 End Function
 
 Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
-'LogPath is full path to log file.
+'LogPath is *full* path to log file, including file name. Created by CreateLogFileInfo sub, to be called before this one.
 
     Dim logString As String
     
@@ -298,15 +345,15 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
     'Check if logfile/directory exists
     If IsItThere(LogPath) = False Then
         CheckLog = False
-        logString = Now & "----------------------------" & vbNewLine & Now & " -- Creating logfile."
+        logString = Now & " -- Creating logfile."
         If IsItThere(LogDir) = False Then
             If IsItThere(StyleDir) = False Then
                 MkDir (StyleDir)
                 MkDir (LogDir)
-                logString = "----------------------------" & vbNewLine & Now & " -- Creating MacmillanStyleTemplate directory."
+                logString = Now & " -- Creating MacmillanStyleTemplate directory."
             Else
                 MkDir (LogDir)
-                logString = "----------------------------" & vbNewLine & Now & " -- Creating log directory."
+                logString = Now & " -- Creating log directory."
             End If
         End If
     Else    'logfile exists, so check last modified date
@@ -314,10 +361,10 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
         lastModDate = FileDateTime(LogPath)
         If DateDiff("d", lastModDate, Date) < 1 Then       'i.e. 1 day
             CheckLog = True
-            logString = "----------------------------" & vbNewLine & Now & " -- Already checked less than 1 day ago."
+            logString = Now & " -- Already checked less than 1 day ago."
         Else
             CheckLog = False
-            logString = "----------------------------" & vbNewLine & Now & " -- >= 1 day since last update check."
+            logString = Now & " -- >= 1 day since last update check."
         End If
     End If
     

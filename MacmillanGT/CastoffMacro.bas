@@ -9,8 +9,17 @@ Sub UniversalCastoff()
 
 ' ========== DEPENDENCIES ====================
 ' 1. Requires SharedMacros module to be installed in same template
-' 2. Requires design character count CSV files and spine size files be saved to Confluence Test page
+' 2. Requires design character count CSV files and spine size files be saved as attachments to
+'    https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production
 ' 3. Requires CastoffForm userform module
+
+' ============================================
+' FOR TESTING / DEBUGGING
+' If set to true, downloads CSV files from https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
+' instead of production page (noted above)
+    Dim blnStaging As Boolean
+    blnStaging = False
+' ============================================
 
     '----------Load userform to get user inputs------------------------
     Dim objCastoffForm As CastoffForm
@@ -111,26 +120,38 @@ Sub UniversalCastoff()
     strLogFile = arrLogInfo(3)
     strPath = strDir & Application.PathSeparator & strCastoffFile
         
-    'Check if log file already exists; if not, create it then download CSV file
-    If CheckLog(strStyleDir, strDir, strLogFile) = True Or CheckLog(strStyleDir, strDir, strLogFile) = False Then
-        If DownloadFromConfluence(strDir, strLogFile, strCastoffFile) = False Then
+    'Check if log file already exists; if not, create it
+    CheckLog strStyleDir, strDir, strLogFile
+    
+    'Download CSV file from Confluence
+    If DownloadFromConfluence(blnStaging, strDir, strLogFile, strCastoffFile) = False Then
+        ' If download fails, check if we have an older version of the design CSV to work with
+        If IsItThere(strPath) = False Then
+            strMessage = "Looks like we can't download the design info from the internet right now. " & _
+                "Please check your internet connection, or contact workflows@macmillan.com."
+            MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous design file available"
             Unload objCastoffForm
             Exit Sub
+        Else
+            strMessage = "Looks like we can't download the most up to date design info from the internet right now, " & _
+                "so we'll just use the info we have on file for your castoff."
+            MsgBox strMessage, vbInformation, "Let's do this thing!"
         End If
     End If
-                        
-    'Make sure CSV is there
+             
+    'Double check that CSV is there
     If IsItThere(strPath) = False Then
         strMessage = "The Castoff macro is unable to access the design count file right now. Please check your internet " & _
                     "connection and try again, or contact workflows@macmillan.com."
         MsgBox strMessage, vbCritical, "Error 3: Design CSV doesn't exist"
         Unload objCastoffForm
         Exit Sub
+    Else
+        ' Load CSV into an array
+        Dim arrDesign() As Variant
+        arrDesign = LoadCSVtoArray(strPath)
     End If
     
-    '---------Load CSV into an array-----------------------------------
-    Dim arrDesign() As Variant
-    arrDesign = LoadCSVtoArray(strPath)
 
             
     '------------Get castoff for each Design selected-------------------
@@ -211,7 +232,7 @@ Sub UniversalCastoff()
                 
                 'Get spine size
                 If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-                    strSpineSize = SpineSize(lngFinalCount, strPub, objCastoffForm, strLogFile)
+                    strSpineSize = SpineSize(blnStaging, lngFinalCount, strPub, objCastoffForm, strLogFile)
                     'Debug.Print "spine size = " & strSpineSize
                     If strSpineSize = vbNullString Then
                         strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
@@ -300,18 +321,18 @@ Private Function LoadCSVtoArray(Path As String) As Variant
     
         ' Prove we have the data loaded.
 
-        'For R = 0 To num_rows
-        '    For c = 0 To num_cols
-        '        Debug.Print the_array(R, c) & "|";
-        '    Next c
-        '    Debug.Print
-        'Next R
-        'Debug.Print "======="
+        ' For R = 0 To num_rows
+        '     For c = 0 To num_cols
+        '         Debug.Print the_array(R, c) & "|";
+        '     Next c
+        '     Debug.Print
+        ' Next R
+        ' Debug.Print "======="
         
-        'Delete the .csv file 'cuz we don't need it any more
-        If Len(Dir$(Path)) > 0 Then
-            Kill Path
-        End If
+        ' Delete the .csv file (actually keep it in case we need it later!)
+        ' If Len(Dir$(Path)) > 0 Then
+        '     Kill Path
+        ' End If
     
     LoadCSVtoArray = the_array
     
@@ -386,7 +407,7 @@ Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
     Castoff = arrResult
 
 End Function
-Private Function SpineSize(PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
+Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
 
 '----Get Log dir to save spines CSV to --------------------------
     Dim strLogDir As String
@@ -402,27 +423,39 @@ Private Function SpineSize(PageCount As Long, Publisher As String, objForm As Ca
     strFullPath = strLogDir & Application.PathSeparator & strSpineFile
     
 '----Download CSV with spine sizes from Confluence site----------
-
+    Dim strMessage As String
+    
     'Check if log file already exists; if not, create it then download CSV file
     If IsItThere(LogFile) = True Then
-        If DownloadFromConfluence(strLogDir, LogFile, strSpineFile) = False Then
-            Exit Function
+        If DownloadFromConfluence(Staging, strLogDir, LogFile, strSpineFile) = False Then
+            ' If download fails, check if we have an older version of the spine CSV to work with
+            If IsItThere(strFullPath) = False Then
+                strMessage = "Looks like we can't download the spine size info from the internet right now. " & _
+                    "Please check your internet connection, or contact workflows@macmillan.com."
+                MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous spine file available"
+                Exit Function
+            Else
+                strMessage = "Looks like we can't download the most up to date spine size info from the internet right now, " & _
+                    "so we'll just use the info we have on file for your castoff."
+                MsgBox strMessage, vbInformation, "Let's do this thing!"
+            End If
         End If
     End If
                         
     'Make sure CSV is there
-    Dim strMessage As String
     If IsItThere(strFullPath) = False Then
         strMessage = "The Castoff macro is unable to access the spine size file right now. Please check your internet " & _
                     "connection and try again, or contact workflows@macmillan.com."
         MsgBox strMessage, vbCritical, "Error 4: Spine CSV doesn't exist"
         Exit Function
+    Else
+        ' Load CSV into an array
+        Dim arrDesign() As Variant
+        arrDesign = LoadCSVtoArray(strFullPath)
     End If
 
 
-'---------Load CSV into an array-----------------------------------
-    Dim arrDesign() As Variant
-    arrDesign = LoadCSVtoArray(strFullPath)
+
     
 '---------Lookup spine size in array-------------------------------
     Dim strSpine As String

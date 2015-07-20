@@ -14,7 +14,7 @@ Attribute VB_Name = "FileInstaller"
 Option Explicit
 Option Base 1
 
-Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As String, ByRef FinalDir() As String)
+Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, ByRef FileName() As String, ByRef FinalDir() As String)
 
 '"Installer" argument = True if this is for a standalone installtion file.
 '"Installer" argument = False is this is part of a daily check of the current file and only updates if out of date.
@@ -36,7 +36,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     ReDim strLogDir(LBound(FileName()) To UBound(FileName()))
     Dim strFullLogPath() As String
     ReDim strFullLogPath(LBound(FileName()) To UBound(FileName()))
-
+    
     ' ------------ Define Log Dirs and such -----------------------------------------
     For a = LBound(FileName()) To UBound(FileName())
         arrLogInfo() = CreateLogFileInfo(FileName(a))
@@ -57,25 +57,46 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     ReDim blnTemplateExists(LBound(FileName()) To UBound(FileName()))
     Dim blnLogUpToDate() As Boolean
     ReDim blnLogUpToDate(LBound(FileName()) To UBound(FileName()))
+    Dim logString As String
+    Dim strTypeOfInstall As String
+
     Dim b As Long
     
     For b = LBound(FileName()) To UBound(FileName())
-    
-        'Check if log dir/file exists, create if it doesn't, check last mod date if it does
+        
+        ' Check if log dir/file exists, create if it doesn't, check last mod date if it does
+        ' We don't need the true/false info for Installer, but we DO need to run these two
+        ' functions to create directories if they don't exist yet
+        
         ' If last mod date less than 1 day ago, CheckLog = True
         blnLogUpToDate(b) = CheckLog(strStyleDir(b), strLogDir(b), strFullLogPath(b))
         'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
         
         ' Check if template exists, if not create any missing directories
         blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
-        'Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
-                
+        ' Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
+        
+        ' ===============================
+        ' FOR DEBUGGING: SET TO TRUE,    |
+        ' SO ALWAYS DOWNLOADS FILES      |
+        ' Installer = True              '|
+        ' ===============================
+        
         If Installer = False Then 'Because if it's an installer, we just want to install the file
+
+                
+            ' ==========================================
+            ' FOR DEBUGGING: SET TO FALSE AND THEN TRUE |
+            ' TO TEST NEEDUPDATE FUNCTION               |
+            ' blnLogUpToDate(b) = False                '|
+            ' blnTemplateExists(b) = True              '|
+            ' ==========================================
+                
             If blnLogUpToDate(b) = True And blnTemplateExists(b) = True Then ' already checked today, already exists
                 installCheck(b) = False
             ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
                 'check version number
-                installCheck(b) = NeedUpdate(FinalDir(b), FileName(b), strFullLogPath(b))
+                installCheck(b) = NeedUpdate(Staging, FinalDir(b), FileName(b), strFullLogPath(b))
             Else ' blnTemplateExists = False, just download new template
                  installCheck(b) = True
             End If
@@ -108,7 +129,11 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     ' ---------------- Check if new array is allocated -----------------------------------
     If IsArrayEmpty(strInstallFile()) = True Then
         If Installer = True Then
-            Application.Quit (wdDoNotSaveChanges)
+            #If Mac Then    ' because application.quit generates error on Mac
+                ActiveDocument.Close (wdDoNotSaveChanges)
+            #Else
+                Application.Quit (wdDoNotSaveChanges)
+            #End If
         Else
             Exit Sub
         End If
@@ -127,7 +152,7 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
             MsgBox "Please try to install the files at a later time."
             
             If Installer = True Then
-                Application.Quit (wdDoNotSaveChanges)
+                ActiveDocument.Close (wdDoNotSaveChanges)
             End If
             
             Exit Sub
@@ -138,37 +163,49 @@ Sub Installer(Installer As Boolean, TemplateName As String, ByRef FileName() As 
     Call CloseOpenDocs
         
     '----------------- download template files ------------------------------------------
-    Dim logString As String
     Dim d As Long
     
     For d = LBound(strInstallFile()) To UBound(strInstallFile())
         'If False, error in download; user was notified in DownloadFromConfluence function
-        If DownloadFromConfluence(strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
+        If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
             If Installer = True Then
-                Application.Quit (wdDoNotSaveChanges)
+                #If Mac Then    ' because application.quit generates error on Mac
+                    ActiveDocument.Close (wdDoNotSaveChanges)
+                #Else
+                    Application.Quit (wdDoNotSaveChanges)
+                #End If
             Else
                 Exit Sub
             End If
         End If
     Next d
     
-    '------Display installation complete message and close doc (ending sub)---------------
+    '------Display installation complete message   ---------------------------
     Dim strComplete As String
+    Dim strInstallType As String
     
-    strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
-        "When you restart Word, the template will be available."
-        
+    ' Quit if it's an installer, but not if it's an updater (updater was causing conflicts between GT and GtUpdater)
+    If Installer = True Then
+        strInstallType = "installed"
+    Else
+        strInstallType = "updated"
+    End If
+    
+    strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
+            "You must QUIT and RESTART Word for the changes to take effect."
     MsgBox strComplete, vbOKOnly, "Installation Successful"
     
-    '------Close and restart Word for template changes to take effect---------------------
-    'Would love to get restart to work...
-    'Dim restartTime As Variant
-    'restartTime = Now + TimeValue("00:00:01")
-    'Application.OnTime When:=restartTime, Name:="Restart"
+    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer
+    ' (but don't quit Word). Otherwise, quit for user on PC.
+    ' Don't want to Close/Quit if it's an updater, because both MacmillanGT and GtUpdater need to run consecutively
     If Installer = True Then
-        Application.Quit SaveChanges:=wdDoNotSaveChanges          'DEBUG: comment out this line
+        #If Mac Then
+            ActiveDocument.Close (wdDoNotSaveChanges)
+        #Else
+            Application.Quit (wdDoNotSaveChanges)
+        #End If
     End If
-        
+    
 End Sub
 
 Private Function IsTemplateThere(Directory As String, FileName As String, Log As String)
@@ -198,7 +235,7 @@ Private Function IsTemplateThere(Directory As String, FileName As String, Log As
     LogInformation Log, logString
 End Function
 
-Private Function NeedUpdate(Directory As String, FileName As String, Log As String) As Boolean
+Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName As String, Log As String) As Boolean
 'Directory argument should be the final directory the template should go in.
 'File should be the template file name
 'Log argument should be full path to log file
@@ -212,8 +249,15 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
     
     'Get version number of installed template
     Dim strInstalledVersion As String
+    
     If IsItThere(strFullTemplatePath) = True Then
-        Documents.Open FileName:=strFullTemplatePath, ReadOnly:=True ', Visible:=False      'Mac Word 2011 doesn't allow Visible as an argument :(
+        
+        #If Mac Then
+            Call OpenDocMac(strFullTemplatePath)
+        #Else
+            Call OpenDocPC(strFullTemplatePath)
+        #End If
+        
         strInstalledVersion = Documents(strFullTemplatePath).CustomDocumentProperties("Version")
         Documents(strFullTemplatePath).Close
         logString = Now & " -- installed version is " & strInstalledVersion
@@ -236,7 +280,7 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(Directory, Log, strVersion) = False Then
+    If DownloadFromConfluence(StagingURL, Directory, Log, strVersion) = False Then
         NeedUpdate = False
     End If
         
@@ -271,6 +315,14 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
     
 End Function
 
+Private Sub OpenDocMac(FilePath As String)
+        Documents.Open FileName:=FilePath, ReadOnly:=True ', Visible:=False      'Mac Word 2011 doesn't allow Visible as an argument :(
+End Sub
+
+Private Sub OpenDocPC(FilePath As String)
+        Documents.Open FileName:=FilePath, ReadOnly:=True, Visible:=False      'Win Word DOES allow Visible as an argument :)
+End Sub
+
 Private Sub CloseOpenDocs()
 
     '-------------Check for/close open documents---------------------------------------------
@@ -278,11 +330,12 @@ Private Sub CloseOpenDocs()
     Dim strSaveWarning As String
     Dim objDocument As Document
     Dim b As Long
+    Dim doc As Document
     
     strInstallerName = ThisDocument.Name
         'Debug.Print "Installer Name: " & strInstallerName
         'Debug.Print "Open docs: " & Documents.Count
-        
+
     If Documents.Count > 1 Then
         strSaveWarning = "All other Word documents must be closed to run the installer." & vbNewLine & vbNewLine & _
             "Click OK and I will save and close your documents." & vbNewLine & _
@@ -291,15 +344,15 @@ Private Sub CloseOpenDocs()
             ActiveDocument.Close
             Exit Sub
         Else
-            For b = 1 To Documents.Count
-                'Debug.Print "Current doc " & b & ": " & Documents(b).Name
+            For Each doc In Documents
                 On Error Resume Next        'To skip error if user is prompted to save new doc and clicks Cancel
-                    If Documents(b).Name <> strInstallerName Then       'But don't close THIS document
-                        Documents(b).Save   'separate step to trigger Save As prompt for previously unsaved docs
-                        Documents(b).Close
+                    Debug.Print doc.Name
+                    If doc.Name <> strInstallerName Then       'But don't close THIS document
+                        doc.Save   'separate step to trigger Save As prompt for previously unsaved docs
+                        doc.Close
                     End If
                 On Error GoTo 0
-            Next b
+            Next doc
         End If
     End If
     
