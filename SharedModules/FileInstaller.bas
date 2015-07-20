@@ -188,7 +188,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     If Installer = True Then
         strInstallType = "installed"
     Else
-        strInstallTyle = "updated"
+        strInstallType = "updated"
     End If
     
     ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer (but don't quit Word). Otherwise, quit for user on PC.
