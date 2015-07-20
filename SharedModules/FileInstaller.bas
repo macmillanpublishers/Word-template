@@ -130,7 +130,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     If IsArrayEmpty(strInstallFile()) = True Then
         If Installer = True Then
             #If Mac Then    ' because application.quit generates error on Mac
-                'Nothing
+                ActiveDocument.Close (wdDoNotSaveChanges)
             #Else
                 Application.Quit (wdDoNotSaveChanges)
             #End If
@@ -170,7 +170,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
             If Installer = True Then
                 #If Mac Then    ' because application.quit generates error on Mac
-                    'Nothing
+                    ActiveDocument.Close (wdDoNotSaveChanges)
                 #Else
                     Application.Quit (wdDoNotSaveChanges)
                 #End If
@@ -182,25 +182,27 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     
     '------Display installation complete message   ---------------------------
     Dim strComplete As String
+    Dim strInstallType As String
     
     ' Quit if it's an installer, but not if it's an updater (updater was causing conflicts between GT and GtUpdater)
     If Installer = True Then
-        ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart. Otherwise, quit for user on PC.
-        #If Mac Then
-            strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
-                "You must quit Word and then restart for the changes to take effect."
-            MsgBox strComplete, vbOKOnly, "Installation Successful"
-        #Else
-            strComplete = "The " & TemplateName & " has been installed on your computer." & vbNewLine & vbNewLine & _
-                "Click OK to quit Word. When you restart Word, the template will be available."
-            MsgBox strComplete, vbOKOnly, "Installation Successful"
-            Application.Quit (wdDoNotSaveChanges)
-        #End If
+        strInstallType = "installed"
     Else
-        strComplete = "Your " & TemplateName & " has been updated." & vbNewLine & vbNewLine _
-            & "Please RESTART Word for the changes to take effect."
-        MsgBox strComplete, vbInformation, "Update Successful"
+        strInstallTyle = "updated"
     End If
+    
+    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer (but don't quit Word). Otherwise, quit for user on PC.
+    #If Mac Then
+        strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
+            "You must QUIT and RESTART Word for the changes to take effect."
+        MsgBox strComplete, vbOKOnly, "Installation Successful"
+        ActiveDocument.Close (wdDoNotSaveChanges)
+    #Else
+        strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
+            "Click OK to quit Word. When you restart Word, the changes will be available."
+        MsgBox strComplete, vbOKOnly, "Installation Successful"
+        Application.Quit (wdDoNotSaveChanges)
+    #End If
 
 End Sub
 
