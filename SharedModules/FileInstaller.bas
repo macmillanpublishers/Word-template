@@ -191,19 +191,21 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         strInstallType = "updated"
     End If
     
-    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer (but don't quit Word). Otherwise, quit for user on PC.
-    #If Mac Then
-        strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
+    strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
             "You must QUIT and RESTART Word for the changes to take effect."
-        MsgBox strComplete, vbOKOnly, "Installation Successful"
-        ActiveDocument.Close (wdDoNotSaveChanges)
-    #Else
-        strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
-            "Click OK to quit Word. When you restart Word, the changes will be available."
-        MsgBox strComplete, vbOKOnly, "Installation Successful"
-        Application.Quit (wdDoNotSaveChanges)
-    #End If
-
+    MsgBox strComplete, vbOKOnly, "Installation Successful"
+    
+    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer
+    ' (but don't quit Word). Otherwise, quit for user on PC.
+    ' Don't want to Close/Quit if it's an updater, because both MacmillanGT and GtUpdater need to run consecutively
+    If Installer = True Then
+        #If Mac Then
+            ActiveDocument.Close (wdDoNotSaveChanges)
+        #Else
+            Application.Quit (wdDoNotSaveChanges)
+        #End If
+    End If
+    
 End Sub
 
 Private Function IsTemplateThere(Directory As String, FileName As String, Log As String)
