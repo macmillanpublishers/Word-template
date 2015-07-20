@@ -203,13 +203,30 @@ Sub LibraryOfCongressTags()
     End If
     
     If zz_TagReport = False Then
-        oProgressCIP.Hide
+        If Not TheOS Like "*Mac*" Then
+            oProgressCIP.Hide
+        End If
+        
         Dim strMessage As String
         strMessage = "CIP tags cannot be added because no paragraphs were tagged with Macmillan styles for the titlepage, " & _
             "copyright page, table of contents, or chapter title pages. Please add the correct styles and try again."
         MsgBox strMessage, vbCritical, "No Styles Found"
-        Unload oProgressCIP
+        
+        Application.ScreenUpdating = True
+        Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
+        Application.ScreenRefresh
+        
+        If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+            Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+            ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+        End If
+
+        If Not TheOS Like "*Mac*" Then
+            Unload oProgressCIP
+        End If
+        
         Exit Sub
+        
     End If
     
     '-------------------------Save as text doc---------------------------
