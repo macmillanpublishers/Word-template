@@ -189,8 +189,48 @@ Sub LibraryOfCongressTags()
         Call zz_clearFindB
     End If
     
-    '-------------------------Save as text doc---------------------------
+    
+    '-------------------------Checking tags--------------------------
     sglPercentComplete = 0.7
+    strStatus = "* Running tag check & generating report..." & vbCr & strStatus
+    
+    If Not TheOS Like "*Mac*" Then
+        oProgressCIP.Increment sglPercentComplete, strStatus
+        Doze 50 'Wait 50 milliseconds for progress bar to update
+    Else
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    End If
+    
+    If zz_TagReport = False Then
+        If Not TheOS Like "*Mac*" Then
+            oProgressCIP.Hide
+        End If
+        
+        Dim strMessage As String
+        strMessage = "CIP tags cannot be added because no paragraphs were tagged with Macmillan styles for the titlepage, " & _
+            "copyright page, table of contents, or chapter title pages. Please add the correct styles and try again."
+        MsgBox strMessage, vbCritical, "No Styles Found"
+        
+        Application.ScreenUpdating = True
+        Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
+        Application.ScreenRefresh
+        
+        If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+            Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+            ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+        End If
+
+        If Not TheOS Like "*Mac*" Then
+            Unload oProgressCIP
+        End If
+        
+        Exit Sub
+        
+    End If
+    
+    '-------------------------Save as text doc---------------------------
+    sglPercentComplete = 0.8
     strStatus = "* Saving as text document..." & vbCr & strStatus
     
     If Not TheOS Like "*Mac*" Then
@@ -203,19 +243,7 @@ Sub LibraryOfCongressTags()
     
     Call SaveAsTextFile
     
-    '-------------------------Checking tags--------------------------
-    sglPercentComplete = 0.8
-    strStatus = "* Running tag check & generating report..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Call zz_TagReport
+
     
     '-------------------------Delete tags from orig doc---------------------------
     sglPercentComplete = 0.9
@@ -1478,7 +1506,7 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
 
 End Function
 
-Private Sub zz_TagReport()
+Private Function zz_TagReport()
 
     Application.ScreenUpdating = False
     
@@ -1492,7 +1520,7 @@ Private Sub zz_TagReport()
     Dim TheOS As String
     TheOS = System.OperatingSystem
     Dim fnum As Integer
-    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".doc") - 1)
+    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
     activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
     
     'count occurences of all but Chapter Heads
@@ -1533,6 +1561,25 @@ Private Sub zz_TagReport()
     End With
     
     Call zz_clearFindB
+    
+    'Check if there are ANY tags; if not, styles not used so don't continue.
+    If LOCtagCount(1) = 0 And _
+        LOCtagCount(2) = 0 And _
+        LOCtagCount(3) = 0 And _
+        LOCtagCount(4) = 0 And _
+        LOCtagCount(5) = 0 And _
+        LOCtagCount(6) = 0 And _
+        LOCtagCount(7) = 0 And _
+        LOCtagCount(8) = 0 And _
+        LOCtagCount(9) = 0 And _
+        chTagCount = 0 Then
+            zz_TagReport = False
+            Exit Function
+    Else
+        zz_TagReport = True
+    End If
+        
+    
     
     'Prepare error message
     Dim errorList As String
@@ -1614,5 +1661,5 @@ Private Sub zz_TagReport()
         "end tell" & vbCr)
     End If
 
-End Sub
+End Function
 
