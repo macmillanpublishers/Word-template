@@ -16,17 +16,6 @@ Sub BookmakerReqs()
     '-----------------------------------------------------------
     
     'Created by Erica Warren - erica.warren@macmillan.com
-    '4/23/2015: expanding private subs to cover all macmillan styles for style report
-    '4/21/2015: breaking down into individual subs and functions for each step
-    '4/10/2015: adding handling of track changes
-    '4/3/2015: adding Imprint Line requirement
-    '3/27/2015: converts solo CNs to CTs
-    '           page numbers added to Illustrations List
-    '           Added style report WITH character styles
-    '3/20/2015: Added check if template is attached
-    '3/17/2015: Added Illustrations List
-    '3/16/32015: Fixed error creating text file, added title/author/isbn confirmation
-    
     
     '=================================================
     '''''              Timer Start                  '|
@@ -176,6 +165,7 @@ Sub BookmakerReqs()
     
     '--------Get title/author/isbn/imprint text from document-----------
     sglPercentComplete = 0.11
+    Application.ScreenUpdating = True
     strStatus = "* Getting book metadata from manuscript..." & vbCr & strStatus
     
     If Not TheOS Like "*Mac*" Then
@@ -1050,7 +1040,7 @@ Private Function GetText(styleName As String) As String
     Dim fString As String
     Dim fCount As Integer
     
-    Application.ScreenUpdating = False
+    'Application.ScreenUpdating = False
     
     fCount = 0
     
@@ -1074,7 +1064,7 @@ Private Function GetText(styleName As String) As String
             .MatchAllWordForms = False
         End With
     
-    Do While Selection.Find.Execute = True And fCount < 1000            'fCount < 1000 so we don't get an infinite loop
+    Do While Selection.Find.Execute = True And fCount < 100            'fCount < 100 so we don't get an infinite loop
         fCount = fCount + 1
         
         'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
@@ -1088,7 +1078,7 @@ Private Function GetText(styleName As String) As String
         'If the next character is a paragraph return, add that to the selection
         'Otherwise the next Find will just select the same text with the paragraph return
         If InStr(styleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
-            Selection.MoveEndWhile Cset:=Chr(13), Count:=wdForward
+            Selection.MoveEndWhile Cset:=Chr(13), Count:=1
         End If
     Loop
     
@@ -1149,7 +1139,7 @@ Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
             .MatchAllWordForms = False
         End With
     
-    Do While Selection.Find.Execute = True And jCount < 1000            'jCount < 1000 so we don't get an infinite loop
+    Do While Selection.Find.Execute = True And jCount < 200            'jCount so we don't get an infinite loop
         jCount = jCount + 1
         
         'Get number of current pagaraph, because we get an error if try to select before 1st para
@@ -1234,16 +1224,16 @@ Function CheckAfterPB() As String
     arrSecStartStyles(13) = "Front Sales Title (fst)"
     arrSecStartStyles(14) = "Front Sales Quote (fsq)"
     arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
-    arrSecStartStyles(16) = "Epigraph – non-verse (epi)"
-    arrSecStartStyles(17) = "Epigraph – verse (epiv)"
+    arrSecStartStyles(16) = "Epigraph Ð non-verse (epi)"
+    arrSecStartStyles(17) = "Epigraph Ð verse (epiv)"
     arrSecStartStyles(18) = "FM Head (fmh)"
     arrSecStartStyles(19) = "Illustration holder (ill)"
     arrSecStartStyles(20) = "Page Break (pb)"
-    arrSecStartStyles(21) = "FM Epigraph – non-verse (fmepi)"
-    arrSecStartStyles(22) = "FM Epigraph – verse (fmepiv)"
+    arrSecStartStyles(21) = "FM Epigraph Ð non-verse (fmepi)"
+    arrSecStartStyles(22) = "FM Epigraph Ð verse (fmepiv)"
     arrSecStartStyles(23) = "FM Head ALT (afmh)"
-    arrSecStartStyles(24) = "Part Epigraph – non-verse (pepi)"
-    arrSecStartStyles(25) = "Part Epigraph – verse (pepiv)"
+    arrSecStartStyles(24) = "Part Epigraph Ð non-verse (pepi)"
+    arrSecStartStyles(25) = "Part Epigraph Ð verse (pepiv)"
     arrSecStartStyles(26) = "Part Contents Main Head (pcmh)"
     arrSecStartStyles(27) = "Poem Title (vt)"
     arrSecStartStyles(28) = "Recipe Head (rh)"
@@ -1287,7 +1277,7 @@ Function CheckAfterPB() As String
             .MatchAllWordForms = False
         End With
     
-    Do While Selection.Find.Execute = True And kCount < 1000            'jCount < 1000 so we don't get an infinite loop
+    Do While Selection.Find.Execute = True And kCount < 200            'jCount so we don't get an infinite loop
         kCount = kCount + 1
         nCount = 0
         'select following paragraph
@@ -1462,15 +1452,15 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
     arrTorStyles(37) = "Dedication (ded)"
     arrTorStyles(38) = "Dedication Author (dedau)"
-    arrTorStyles(39) = "Epigraph – non-verse (epi)"
-    arrTorStyles(40) = "Epigraph – verse (epiv)"
+    arrTorStyles(39) = "Epigraph Ð non-verse (epi)"
+    arrTorStyles(40) = "Epigraph Ð verse (epiv)"
     arrTorStyles(41) = "Epigraph Source (eps)"
     arrTorStyles(42) = "Chap Epigraph Source (ceps)"
-    arrTorStyles(43) = "Chap Epigraph – non-verse (cepi)"
-    arrTorStyles(44) = "Chap Epigraph – verse (cepiv)"
+    arrTorStyles(43) = "Chap Epigraph Ð non-verse (cepi)"
+    arrTorStyles(44) = "Chap Epigraph Ð verse (cepiv)"
     arrTorStyles(45) = "Chap Title Nonprinting (ctnp)"
-    arrTorStyles(46) = "FM Epigraph – non-verse (fmepi)"
-    arrTorStyles(47) = "FM Epigraph – verse (fmepiv)"
+    arrTorStyles(46) = "FM Epigraph Ð non-verse (fmepi)"
+    arrTorStyles(47) = "FM Epigraph Ð verse (fmepiv)"
     arrTorStyles(48) = "FM Epigraph Source (fmeps)"
     arrTorStyles(49) = "FM Head (fmh)"
     arrTorStyles(50) = "FM Subhead (fmsh)"
@@ -1701,7 +1691,7 @@ Private Function GetMetadata() As String
     Dim b As Integer
     Dim strTitleData As String
     
-    Application.ScreenUpdating = False
+    'Application.ScreenUpdating = False
     
     styleNameB(1) = "Titlepage Book Title (tit)"
     styleNameB(2) = "Titlepage Author Name (au)"
@@ -1852,7 +1842,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
     
     intCount = 0
     
-    Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 1000 so we don't get an infinite loop
+    Do While Selection.Find.Execute = True And intCount < 300            'jCount < 300 so we don't get an infinite loop
         intCount = intCount + 1
         
         'Get number of current pagaraph, because we get an error if try to select before 1st para
