@@ -2179,3 +2179,61 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     StylesInUse = strGoodStyles
 
 End Function
+
+Private Sub ISBNcleanup()
+    
+    Dim g As Long
+    Dim gCount As Long
+    
+    gCount = 0
+    
+    'check if styles exist, else exit sub
+    On Error GoTo ErrHandler:
+        Dim keyStyle As Word.Style
+    
+        Set keyStyle = ActiveDocument.Styles("span ISBN (isbn)")
+    
+    On Error GoTo 0
+    
+    Dim strISBNtextArray()
+    ReDim strISBNtextArray(1 To 6)
+    
+    strISBNtextArray(1) = "e-book"
+    strISBNtextArray(2) = "^13"
+    strISBNtextArray(3) = "[A-z]"   ' Any upper or lowercase letter, presumably
+    strISBNtextArray(4) = " "
+    strISBNtextArray(5) = "("
+    strISBNtextArray(6) = ")"
+            
+    'Move selection to start of document
+    Selection.HomeKey unit:=wdStory
+    
+    For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
+        Selection.Find.ClearFormatting
+        With Selection.Find
+            .Text = strISBNtextArray(g)
+            .Replacement.Text = strISBNtextArray(g)
+            .Forward = True
+            .Wrap = wdFindStop
+            .Format = True
+            .Style = "span ISBN (isbn)"
+            .Replacement.Style = "Default Paragraph Font"
+            .MatchCase = False
+            .MatchWholeWord = False
+            .MatchWildcards = True
+            .MatchSoundsLike = False
+            .MatchAllWordForms = False
+        End With
+    
+        Do While Selection.Find.Execute = True And gCount < 1000            'gCount < 1000 so we don't get an infinite loop
+            gCount = gCount + 1
+        Loop
+    
+    Next g
+    
+ErrHandler:
+    If Err.Number = 5941 Or Err.Number = 5834 Then       'Style doesn't exist in document
+        Exit Sub
+    End If
+
+End Sub
