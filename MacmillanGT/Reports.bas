@@ -111,6 +111,10 @@ Sub BookmakerReqs()
         Exit Sub
     End If
     
+    '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
+    '-------because it should just be applied to the isbn numerals and hyphens-------------------
+    Call ISBNcleanup
+    
     '-------Count number of occurences of each required style----
     sglPercentComplete = 0.05
     strStatus = "* Counting required styles..." & vbCr & strStatus
@@ -399,6 +403,10 @@ Sub MacmillanStyleReport()
     If Not TheOS Like "*Mac*" Then
         Call DeleteContentControlPC
     End If
+    
+    '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
+    '-------because it should just be applied to the isbn numerals and hyphens-------------------
+    Call ISBNcleanup
     
     '-------Count number of occurences of each required style----
     sglPercentComplete = 0.05
@@ -2183,11 +2191,8 @@ End Function
 Private Sub ISBNcleanup()
     
     Dim g As Long
-    Dim gCount As Long
     
-    gCount = 0
-    
-    'check if styles exist, else exit sub
+    'check if style exists, else exit sub
     On Error GoTo ErrHandler:
         Dim keyStyle As Word.Style
     
@@ -2195,24 +2200,29 @@ Private Sub ISBNcleanup()
     
     On Error GoTo 0
     
+    ' These are the things we're searching for
     Dim strISBNtextArray()
     ReDim strISBNtextArray(1 To 6)
     
-    strISBNtextArray(1) = "e-book"
-    strISBNtextArray(2) = "^13"
-    strISBNtextArray(3) = "[A-z]"   ' Any upper or lowercase letter, presumably
-    strISBNtextArray(4) = " "
-    strISBNtextArray(5) = "("
-    strISBNtextArray(6) = ")"
+    strISBNtextArray(1) = "e-book"  ' because this is probably the only hyphen we want to get rid of (keep hyphens in ISBN numbers)
+    strISBNtextArray(2) = "^13"     ' paragraph return (this is the most important, if a paragraph return is styled it puts GetText
+                                    ' function into an infinite loop
+    strISBNtextArray(3) = "[A-z]"   ' Any upper or lowercase letter
+    strISBNtextArray(4) = " "       ' spaces
+    strISBNtextArray(5) = "\("      ' open parens
+    strISBNtextArray(6) = "\)"      ' close parens
             
     'Move selection to start of document
     Selection.HomeKey unit:=wdStory
     
     For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
+        'Debug.Print strISBNtextArray(g)
         Selection.Find.ClearFormatting
         With Selection.Find
+            .ClearFormatting
             .Text = strISBNtextArray(g)
-            .Replacement.Text = strISBNtextArray(g)
+            .Replacement.ClearFormatting
+            .Replacement.Text = ""
             .Forward = True
             .Wrap = wdFindStop
             .Format = True
@@ -2224,12 +2234,11 @@ Private Sub ISBNcleanup()
             .MatchSoundsLike = False
             .MatchAllWordForms = False
         End With
-    
-        Do While Selection.Find.Execute = True And gCount < 1000            'gCount < 1000 so we don't get an infinite loop
-            gCount = gCount + 1
-        Loop
-    
+        
+        Selection.Find.Execute Replace:=wdReplaceAll
     Next g
+    
+Exit Sub
     
 ErrHandler:
     If Err.Number = 5941 Or Err.Number = 5834 Then       'Style doesn't exist in document
