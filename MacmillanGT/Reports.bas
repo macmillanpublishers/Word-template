@@ -2189,35 +2189,32 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
 End Function
 
 Private Sub ISBNcleanup()
+'removes "span ISBN (isbn)" style from all but the actual ISBN numerals
     
-    Dim g As Long
-    
-    'check if style exists, else exit sub
+    'check if that style exists, if not then exit sub
     On Error GoTo ErrHandler:
         Dim keyStyle As Word.Style
-    
         Set keyStyle = ActiveDocument.Styles("span ISBN (isbn)")
-    
     On Error GoTo 0
     
-    ' These are the things we're searching for
     Dim strISBNtextArray()
-    ReDim strISBNtextArray(1 To 6)
+    ReDim strISBNtextArray(1 To 3)
     
-    strISBNtextArray(1) = "e-book"  ' because this is probably the only hyphen we want to get rid of (keep hyphens in ISBN numbers)
-    strISBNtextArray(2) = "^13"     ' paragraph return (this is the most important, if a paragraph return is styled it puts GetText
-                                    ' function into an infinite loop
-    strISBNtextArray(3) = "[A-z]"   ' Any upper or lowercase letter
-    strISBNtextArray(4) = " "       ' spaces
-    strISBNtextArray(5) = "\("      ' open parens
-    strISBNtextArray(6) = "\)"      ' close parens
-            
-    'Move selection to start of document
-    Selection.HomeKey unit:=wdStory
+    strISBNtextArray(1) = "-[!0-9]"     'any hyphen followed by any non-digit character
+    strISBNtextArray(2) = "[!0-9]-"     'any hyphen preceded by any non-digit character
+    strISBNtextArray(3) = "[!-0-9]"     'any character other than a hyphen or digit
     
+    ' re: above--need to search for hyphens first, because if you lead with what is now 3, you
+    ' remove the style from any characters around hyphens, so if you search for a hyphen next to
+    ' a character later, it won't return anything because the whole string needs to have the
+    ' style applied for it to be found.
+    
+    Dim g As Long
     For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
-        'Debug.Print strISBNtextArray(g)
-        Selection.Find.ClearFormatting
+        
+        'Move selection to start of document
+        Selection.HomeKey unit:=wdStory
+
         With Selection.Find
             .ClearFormatting
             .Text = strISBNtextArray(g)
@@ -2226,8 +2223,8 @@ Private Sub ISBNcleanup()
             .Forward = True
             .Wrap = wdFindStop
             .Format = True
-            .Style = "span ISBN (isbn)"
-            .Replacement.Style = "Default Paragraph Font"
+            .Style = "span ISBN (isbn)"                     'find this style
+            .Replacement.Style = "Default Paragraph Font"   'replace with this style
             .MatchCase = False
             .MatchWholeWord = False
             .MatchWildcards = True
@@ -2236,6 +2233,7 @@ Private Sub ISBNcleanup()
         End With
         
         Selection.Find.Execute Replace:=wdReplaceAll
+    
     Next g
     
 Exit Sub
