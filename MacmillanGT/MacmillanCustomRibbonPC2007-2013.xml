@@ -8,24 +8,24 @@
 		<tabs>
 			<tab id="CustomTab1" label="Macmillan Tools" insertAfterMso="TabHome">
 				<group id="CustGrp1" label="Macmillan Styles" >
-					<button id="BtnAttachTemplate" label="Import Manuscript Styles" image="import" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnCoverCopy" label="Import Cover Copy Styles" image="star" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnRemoveColor" label="Remove Color Guides" image="notepad" size="normal" onAction="RibbonControl.LaunchMacros" />	
-					<button id="BtnViewStyles" size="normal" image="eye" onAction="RibbonControl.LaunchMacros" label="View Styles"/>
+					<button id="BtnAttachTemplate" label="Import Manuscript Styles" image="import32" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCoverCopy" label="Import Cover Copy Styles" image="bookcover16" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnRemoveColor" label="Remove Color Guides" image="eraser16" size="normal" onAction="RibbonControl.LaunchMacros" />	
+					<button id="BtnViewStyles" size="normal" image="eye16" onAction="RibbonControl.LaunchMacros" label="View Styles"/>
 				</group>
 				<group id="CustGrp2" label="Editorial Tools" >
-					<button id="BtnCastoff" label="Castoff" image="calculator" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnCleanup" label="Manuscript Cleanup" image="quotes" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCastoff" label="Castoff" image="calculator32" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCleanup" label="Manuscript Cleanup" image="quotes32" size="large" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp3" label="Style Tools" >
-					<button id="BtnCharStyles" label="Apply Character Styles" image="wand" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnStyleReport" label="Style Report" image="document" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnBkmkrCheck" label="Bookmaker Check" image="thumbsup" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnLocTags" label="CIP Application Tags" image="tags" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCharStyles" label="Apply Character Styles" image="highlighter33" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnStyleReport" label="Style Report" image="exclamationwhite16" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnBkmkrCheck" label="Bookmaker Check" image="book16" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnLocTags" label="CIP Application Tags" image="tags16" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp4" label="Help" >
-					<button id="BtnGtVersion" label="Macmillan Tools Version" image="Check" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnStyleVersion" label="Macmillan Styles Version" image="Check" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnGtVersion" label="Macmillan Tools Version" image="question16" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnStyleVersion" label="Macmillan Styles Version" image="question16" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
 			</tab>
 		</tabs>
