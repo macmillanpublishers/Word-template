@@ -19,6 +19,22 @@ End Sub
 
 Sub Triceratops()
     Dim strMessage As String
+    Dim strTriceratops As String
+    
+    strTriceratops = _
+        "                            __.--'~~~~~`--." & vbNewLine & _
+        "         ..       __.    .-~               ~-." & vbNewLine & _
+        "         ((\     /   `}.~                     `." & vbNewLine & _
+        "          \\\  .{     }               /     \   \" & vbNewLine & _
+        "      (\   \\~~       }              |       }   \" & vbNewLine & _
+        "       \`.-~ -@~     }  ,-,.         |       )    \" & vbNewLine & _
+        "       (___     ) _}  (    :        |    / /      `._" & vbNewLine & _
+        "        `----._-~.     _\ \ |_       \   / /-.__     `._" & vbNewLine & _
+        "               ~~----~~  \ \| ~~--~~~(  + /     ~-._    ~-._" & vbNewLine & _
+        "                         /  /         \  \          ~--.,___~_-_." & vbNewLine & _
+        "                      __/  /          _\  )" & vbNewLine & _
+        "                    .<___.'         .<___/"
+    
     strMessage = "Would you like a Triceratops at the end of your document?"
     If MsgBox(strMessage, vbOKCancel) = vbCancel Then
         Exit Sub
@@ -33,6 +49,8 @@ Sub Triceratops()
             .LineSpacing = 1
             .SpaceAfter = 0
             .SpaceBefore = 0
-            .
+        End With
+        Selection.Font.Name = "Courier New"
+        Selection.TypeText Text:=strTriceratops
         
 End Sub
