@@ -483,17 +483,19 @@ Private Sub RemoveBreaks()
     'Created v. 3.7
     Set activeRng = ActiveDocument.Range
     
-    Dim wsFindArray(3) As String              'number of items in array should be declared here
-    Dim wsReplaceArray(3) As String       'and here
+    Dim wsFindArray(4) As String              'number of items in array should be declared here
+    Dim wsReplaceArray(4) As String       'and here
     Dim q As Long
     
     wsFindArray(1) = "^m^13"              'manual page breaks
     wsFindArray(2) = "^13{2,}"          '2 or more paragraphs
     wsFindArray(3) = "(`[0-9]``)^13"    'remove para following a preserved break style                     v. 3.1 patch
+    wsFindArray(4) = "(`7`^13`7``)`7`^13`7``"  'remove blank para following page break even if styled.
     
     wsReplaceArray(1) = "^p"
     wsReplaceArray(2) = "^p"
     wsReplaceArray(3) = "\1"
+    wsReplaceArray(4) = "\1"
     
     
     For q = 1 To UBound(wsFindArray())
@@ -515,10 +517,10 @@ Private Sub RemoveBreaks()
     
     ''' the bit below to remove the last paragraph if it's blank
     Dim MyRange As Range
-    Set MyRange = ActiveDocument.paragraphs(1).Range
+    Set MyRange = ActiveDocument.Paragraphs(1).Range
         If MyRange.Text = Chr(13) Then MyRange.Delete
     
-    Set MyRange = ActiveDocument.paragraphs.Last.Range
+    Set MyRange = ActiveDocument.Paragraphs.Last.Range
         If MyRange.Text = Chr(13) Then MyRange.Delete
 
 End Sub
