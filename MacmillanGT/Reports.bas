@@ -765,7 +765,7 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
     styleNameM(21) = "span symbols bold (symb)"
     
     'Move selection back to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
     
     
     For M = 1 To UBound(styleNameM())
@@ -1053,7 +1053,7 @@ Private Function GetText(styleName As String) As String
     fCount = 0
     
     'Move selection to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
     
     On Error GoTo ErrHandler
     
@@ -1077,7 +1077,7 @@ Private Function GetText(styleName As String) As String
         
         'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
         If InStr(Selection.Text, Chr(13)) > 0 Then
-            Selection.MoveEnd unit:=wdCharacter, Count:=-1
+            Selection.MoveEnd Unit:=wdCharacter, Count:=-1
         End If
         
         'Assign selected text to variable
@@ -1129,7 +1129,7 @@ Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
     jString = ""
     
     'Move selection to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
     
     'select paragraph with that style
         Selection.Find.ClearFormatting
@@ -1163,8 +1163,8 @@ Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
         
         If intCurrentPara > 1 Then
             'select preceding paragraph
-            Selection.Previous(unit:=wdParagraph, Count:=1).Select
-            pageNum = Selection.Information(wdActiveEndPageNumber) - 1
+            Selection.Previous(Unit:=wdParagraph, Count:=1).Select
+            pageNum = Selection.Information(wdActiveEndPageNumber)
         
                 'Check if preceding paragraph style is correct
                 If Selection.Style <> prevStyle Then
@@ -1184,7 +1184,7 @@ Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
         
             'move the selection back to original paragraph, so it won't be
             'selected again on next search
-            Selection.Next(unit:=wdParagraph, Count:=1).Select
+            Selection.Next(Unit:=wdParagraph, Count:=1).Select
         End If
         
     Loop
@@ -1265,7 +1265,7 @@ Function CheckAfterPB() As String
     kString = ""
     
     'Move selection to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
     
     On Error GoTo ErrHandler1
     
@@ -1289,7 +1289,7 @@ Function CheckAfterPB() As String
         kCount = kCount + 1
         nCount = 0
         'select following paragraph
-        Selection.Next(unit:=wdParagraph, Count:=1).Select
+        Selection.Next(Unit:=wdParagraph, Count:=1).Select
         nextStyle = Selection.Style
         pageNumK = Selection.Information(wdActiveEndPageNumber)
             
@@ -1313,7 +1313,7 @@ Err2Resume:
         
         'move the selection back to original paragraph, so it won't be
         'selected again on next search
-        Selection.Previous(unit:=wdParagraph, Count:=1).Select
+        Selection.Previous(Unit:=wdParagraph, Count:=1).Select
     Loop
     
     'Debug.Print kString
@@ -1365,7 +1365,7 @@ Private Function FixTrackChanges() As Boolean
     
     'See if there are tracked changes or comments in document
     On Error Resume Next
-    Selection.HomeKey unit:=wdStory   'start search at beginning of doc
+    Selection.HomeKey Unit:=wdStory   'start search at beginning of doc
     WordBasic.NextChangeOrComment       'search for a tracked change or comment. error if none are found.
     
     'If there are changes, ask user if they want macro to accept changes or cancel
@@ -1663,7 +1663,7 @@ Private Sub FixSectionHeadings(oldStyle As String, newStyle As String)
     Set keyStyle = ActiveDocument.Styles(newStyle)
 
     'Move selection to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
 
         'Find paras styles as CN and change to CT style
         Selection.Find.ClearFormatting
@@ -1736,7 +1736,7 @@ Private Function IllustrationsList() As String
     cCount = 0
     
     'Move selection to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
         
         ' Check if search style exists in document
         On Error GoTo ErrHandler
@@ -1765,7 +1765,7 @@ Private Function IllustrationsList() As String
         
         'If paragraph return exists in selection, don't select last character (the last paragraph return)
         If InStr(Selection.Text, Chr(13)) > 0 Then
-            Selection.MoveEnd unit:=wdCharacter, Count:=-1
+            Selection.MoveEnd Unit:=wdCharacter, Count:=-1
         End If
         
         cString(cCount) = "Page " & pageNumberC & ": " & Selection.Text & vbNewLine
@@ -1777,7 +1777,7 @@ Private Function IllustrationsList() As String
     Loop
     
     'Move selection back to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
     
     If cCount > 1000 Then
         MsgBox "You have more than 1,000 illustrations tagged in your manuscript." & vbNewLine & _
@@ -1830,7 +1830,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
     strErrors = ""
     
     'Move selection to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
     
     'select paragraph with that style
         Selection.Find.ClearFormatting
@@ -1871,7 +1871,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
         
         If intCurrentPara > 1 Then      'NOT first paragraph of document
             'select preceding paragraph
-            Selection.Previous(unit:=wdParagraph, Count:=1).Select
+            Selection.Previous(Unit:=wdParagraph, Count:=1).Select
             pageNum = Selection.Information(wdActiveEndPageNumber)
         
                 'Check if preceding paragraph style is correct
@@ -1879,7 +1879,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
                 
                     If Selection.Style = StyleB Then
                         'select preceding paragraph again, see if it's prevStyle
-                        Selection.Previous(unit:=wdParagraph, Count:=1).Select
+                        Selection.Previous(Unit:=wdParagraph, Count:=1).Select
                         pageNum = Selection.Information(wdActiveEndPageNumber)
                         
                             If Selection.Style <> StyleA Then
@@ -1896,7 +1896,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
                                 End If
                             End If
                             
-                        Selection.Next(unit:=wdParagraph, Count:=1).Select
+                        Selection.Next(Unit:=wdParagraph, Count:=1).Select
                     Else
                     
                         strErrors = strErrors & "** ERROR: " & StyleC & " on page " _
@@ -1908,14 +1908,14 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
                     'Make sure initial selection wasn't last paragraph, or else we'll error when trying to select after it
                     If SelectionIncludesFinalParagraphMark = False Then
                         'select follow paragraph again, see if it's a Caption
-                        Selection.Next(unit:=wdParagraph, Count:=2).Select
+                        Selection.Next(Unit:=wdParagraph, Count:=2).Select
                         pageNum = Selection.Information(wdActiveEndPageNumber)
                             
                             If Selection.Style = StyleB Then
                                 strErrors = strErrors & "** ERROR: " & StyleC & " style on page " & pageNum & " must" _
                                     & " come after " & StyleB & " style." & vbNewLine & vbNewLine
                             End If
-                        Selection.Previous(unit:=wdParagraph, Count:=2).Select
+                        Selection.Previous(Unit:=wdParagraph, Count:=2).Select
                     End If
                     
                     'If you're searching for a page break before, also check if manual page break is in paragraph
@@ -1931,7 +1931,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
         
             'move the selection back to original paragraph, so it won't be
             'selected again on next search
-            Selection.Next(unit:=wdParagraph, Count:=1).Select
+            Selection.Next(Unit:=wdParagraph, Count:=1).Select
         
         Else 'Selection is first paragraph of the document
             strErrors = strErrors & "** ERROR: " & StyleC & " cannot be first paragraph of document." & vbNewLine & vbNewLine
@@ -1941,7 +1941,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
     
     '------------------------Search for Illustration holder and check previous paragraph--------------
     'Move selection to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
     
     'select paragraph with that style
         Selection.Find.ClearFormatting
@@ -1969,7 +1969,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
     
         If intCurrentPara > 1 Then      'NOT first paragraph of document
             'select preceding paragraph
-            Selection.Previous(unit:=wdParagraph, Count:=1).Select
+            Selection.Previous(Unit:=wdParagraph, Count:=1).Select
             pageNum = Selection.Information(wdActiveEndPageNumber)
         
                 'Check if preceding paragraph style is a Caption, which is not allowed
@@ -1978,7 +1978,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
                                     & StyleA & "." & vbNewLine & vbNewLine
                 End If
                 
-            Selection.Next(unit:=wdParagraph, Count:=1).Select
+            Selection.Next(Unit:=wdParagraph, Count:=1).Select
         End If
     Loop
     
@@ -1987,7 +1987,7 @@ Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) A
     CheckPrev2Paras = strErrors
     
     'Move selection back to start of document
-    Selection.HomeKey unit:=wdStory
+    Selection.HomeKey Unit:=wdStory
     Exit Function
 
 ErrHandler:
@@ -2213,7 +2213,7 @@ Private Sub ISBNcleanup()
     For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
         
         'Move selection to start of document
-        Selection.HomeKey unit:=wdStory
+        Selection.HomeKey Unit:=wdStory
 
         With Selection.Find
             .ClearFormatting
