@@ -36,7 +36,22 @@ Sub MacmillanCharStyles()
         'If exitOnError = True Then
             'Exit Sub
         'End If
+    '------------check for endnotes and footnotes--------------------------
+    Dim stStories() As WdStoryType
     
+    ReDim stStories(1 To 1)
+    stStories(1) = wdMainTextStory
+    
+    If NotesExist(wdEndnotesStory) = True Then
+        ReDim stStories(1 To (UBound(stStories()) + 1))
+        stStories(UBound(stStories())) = wdEndnotesStory
+    End If
+    
+    If NotesExist(wdFootnotesStory) = True Then
+        ReDim stStories(1 To (UBound(stStories()) + 1))
+        stStories(UBound(stStories())) = wdFootnotesStory
+    End If
+        
     '------------record status of current status bar and then turn on-------
     Dim currentStatusBar As Boolean
     currentStatusBar = Application.DisplayStatusBar
@@ -109,7 +124,7 @@ Sub MacmillanCharStyles()
     
     
     '-----------------------Tag space break styles----------------------------
-    Call zz_clearFind                          'Clear find object
+    Call zz_clearFind(StoryType:=wdMainTextStory)                          'Clear find object
     
     sglPercentComplete = 0.15
     strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
@@ -123,8 +138,12 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call PreserveWhiteSpaceinBrkStylesA     'Part A tags styled blank paragraphs so they don't get deleted
-    Call zz_clearFind
+    Dim s As Long
+    
+    For s = 1 To UBound(stStories())
+        Call PreserveWhiteSpaceinBrkStylesA(StoryType:=s)     'Part A tags styled blank paragraphs so they don't get deleted
+        Call zz_clearFind(StoryType:=s)
+    Next s
     
     '----------------------------Fix hyperlinks---------------------------------------
     sglPercentComplete = 0.25
@@ -139,8 +158,10 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
-    Call zz_clearFind
+    For s = 1 To UBound(stStories())
+        Call StyleHyperlinks(StoryType:=s)                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+        Call zz_clearFind(StoryType:=s)
+    Next s
     
     '--------------------------Remove unstyled space breaks---------------------------
     sglPercentComplete = 0.4
@@ -155,8 +176,10 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
-    Call zz_clearFind
+    For s = 1 To UBound(stStories())
+        Call RemoveBreaks(StoryType:=s)  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
+        Call zz_clearFind(StoryType:=s)
+    Next s
     
     '--------------------------Tag existing character styles------------------------
     sglPercentComplete = 0.55
@@ -171,9 +194,10 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call TagExistingCharStyles            'tag existing styled items
-    Call zz_clearFind
-    
+    For s = 1 To UBound(stStories())
+        Call TagExistingCharStyles(StoryType:=s)            'tag existing styled items
+        Call zz_clearFind(StoryType:=s)
+    Next s
     
     '-------------------------Tag direct formatting----------------------------------
     sglPercentComplete = 0.7
@@ -188,8 +212,10 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call LocalStyleTag                 'tag local styling, reset local styling, remove text highlights
-    Call zz_clearFind
+    For s = 1 To UBound(stStories())
+        Call LocalStyleTag(StoryType:=s)                 'tag local styling, reset local styling, remove text highlights
+        Call zz_clearFind(StoryType:=s)
+    Next s
     
     '----------------------------Apply Macmillan character styles to tagged text--------
     sglPercentComplete = 0.85
@@ -204,8 +230,10 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call LocalStyleReplace            'reapply local styling through char styles
-    Call zz_clearFind
+    For s = 1 To UBound(stStories())
+        Call LocalStyleReplace(StoryType:=s)            'reapply local styling through char styles
+        Call zz_clearFind(StoryType:=s)
+    Next s
     
     '---------------------------Remove tags from styled space breaks---------------------
     sglPercentComplete = 0.95
@@ -220,8 +248,10 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies the styles
-    Call zz_clearFind
+    For s = 1 To UBound(stStories())
+        Call PreserveWhiteSpaceinBrkStylesB(StoryType:=s)     'Part B removes the tags and reapplies the styles
+        Call zz_clearFind(StoryType:=s)
+    Next s
     
     '---------------------------Return settings to original------------------------------
     sglPercentComplete = 1
@@ -263,7 +293,7 @@ Sub MacmillanCharStyles()
 
 End Sub
 
-Private Sub StyleHyperlinks()
+Private Sub StyleHyperlinks(StoryType As WdStoryType)
     ' added by Erica 2014-10-07, v. 3.4
     ' removes all live hyperlinks but leaves hyperlink text intact
     ' then styles all URLs as "span hyperlink (url)" style
@@ -271,7 +301,7 @@ Private Sub StyleHyperlinks()
     ' this first bit removes all live hyperlinks from document
     ' we want to remove these from urls AND text; will add back to just urls later
     
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     ' remove all embedded hyperlinks regardless of character style
     With activeRng
         While .Hyperlinks.Count > 0
@@ -411,8 +441,8 @@ LinksErrorHandler:
 
 End Sub
 
-Private Sub PreserveWhiteSpaceinBrkStylesA()
-    Set activeRng = ActiveDocument.Range
+Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     Dim tagArray(12) As String                                   ' number of items in array should be declared here
     Dim StylePreserveArray(12) As String              ' number of items in array should be declared here
@@ -479,9 +509,9 @@ BreaksStyleError:
 
 End Sub
 
-Private Sub RemoveBreaks()
+Private Sub RemoveBreaks(StoryType As WdStoryType)
     'Created v. 3.7
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     Dim wsFindArray(4) As String              'number of items in array should be declared here
     Dim wsReplaceArray(4) As String       'and here
@@ -516,17 +546,17 @@ Private Sub RemoveBreaks()
     Next
     
     ''' the bit below to remove the last paragraph if it's blank
-    Dim MyRange As Range
-    Set MyRange = ActiveDocument.Paragraphs(1).Range
-        If MyRange.Text = Chr(13) Then MyRange.Delete
+    Dim myRange As Range
+    Set myRange = ActiveDocument.Paragraphs(1).Range
+        If myRange.Text = Chr(13) Then myRange.Delete
     
-    Set MyRange = ActiveDocument.Paragraphs.Last.Range
-        If MyRange.Text = Chr(13) Then MyRange.Delete
+    Set myRange = ActiveDocument.Paragraphs.Last.Range
+        If myRange.Text = Chr(13) Then myRange.Delete
 
 End Sub
 
-Private Sub PreserveWhiteSpaceinBrkStylesB()
-    Set activeRng = ActiveDocument.Range
+Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     Dim tagArrayB(12) As String                                   ' number of items in array should be declared here
     Dim f As Long
@@ -563,8 +593,8 @@ Private Sub PreserveWhiteSpaceinBrkStylesB()
 
 End Sub
 
-Private Sub TagExistingCharStyles()
-    Set activeRng = ActiveDocument.Range                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
+Private Sub TagExistingCharStyles(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
     
     Dim tagCharStylesArray(13) As String                                   ' number of items in array should be declared here
     Dim CharStylePreserveArray(13) As String              ' number of items in array should be declared here
@@ -634,8 +664,8 @@ CharStyleError:
 
 End Sub
 
-Private Sub LocalStyleTag()
-    Set activeRng = ActiveDocument.Range
+Private Sub LocalStyleTag(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     '------------tag key styles-------------------------------
     Dim tagStyleFindArray(10) As Boolean              ' number of items in array should be declared here
@@ -700,8 +730,8 @@ Private Sub LocalStyleTag()
 
 End Sub
 
-Private Sub LocalStyleReplace()
-    Set activeRng = ActiveDocument.Range
+Private Sub LocalStyleReplace(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
@@ -874,10 +904,10 @@ ErrorHandler:
 
 End Sub
 
-Private Sub zz_clearFind()
+Private Sub zz_clearFind(StoryType As WdStoryType)
 
     Dim clearRng As Range
-    Set clearRng = ActiveDocument.Words.First
+    Set clearRng = ActiveDocument.StoryRanges(StoryType).Words.First
     
         With clearRng.Find
             .ClearFormatting

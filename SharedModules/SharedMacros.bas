@@ -372,3 +372,16 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
     LogInformation LogPath, logString
     
 End Function
+
+Public Function NotesExist(StoryType As WdStoryType) As Boolean
+    On Error GoTo ErrHandler
+    Dim myRange As Range
+    Set myRange = ActiveDocument.StoryRanges(StoryType)
+    'If can set as myRange, then exists
+    NotesExist = True
+    Exit Function
+ErrHandler:
+    If Err.Number = 5941 Then   '"Member of the collection does not exist"
+        NotesExist = False
+    End If
+End Function
