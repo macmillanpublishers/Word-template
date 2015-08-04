@@ -506,8 +506,8 @@ End Sub
 Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
-    Dim tagArray(12) As String                                   ' number of items in array should be declared here
-    Dim StylePreserveArray(12) As String              ' number of items in array should be declared here
+    Dim tagArray(13) As String                                   ' number of items in array should be declared here
+    Dim StylePreserveArray(13) As String              ' number of items in array should be declared here
     Dim e As Long
     
     StylePreserveArray(1) = "Space Break (#)"
@@ -522,6 +522,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
     StylePreserveArray(10) = "Space Break - 3-Line (ls3)"
     StylePreserveArray(11) = "Column Break (cbr)"
     StylePreserveArray(12) = "Design Note (dn)"
+    StylePreserveArray(13) = "Bookmaker Page Break (br)"
     
     tagArray(1) = "`1`^&`1``"                                       'v. 3.1 patch  added extra backtick on trailing tag for all of these.
     tagArray(2) = "`2`^&`2``"
@@ -535,6 +536,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
     tagArray(10) = "`0`^&`0``"
     tagArray(11) = "`L`^&`L``"
     tagArray(12) = "`R`^&`R``"
+    tagArray(13) = "`N`^&`N``"
     
     On Error GoTo BreaksStyleError:
     
@@ -620,7 +622,7 @@ End Sub
 Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
-    Dim tagArrayB(12) As String                                   ' number of items in array should be declared here
+    Dim tagArrayB(13) As String                                   ' number of items in array should be declared here
     Dim f As Long
     
     tagArrayB(1) = "`1`(^13)`1``"                             'v. 3.1 patch  added extra backtick on trailing tag for all of these.
@@ -635,6 +637,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
     tagArrayB(10) = "`0`(^13)`0``"
     tagArrayB(11) = "`L`(^13)`L``"              ' for new column break, added v. 3.4.1
     tagArrayB(12) = "`R`(^13)`R``"
+    tagArrayB(13) = "`N`(^13)`N``"
     
     For f = 1 To UBound(tagArrayB())
         With activeRng.Find
@@ -658,8 +661,8 @@ End Sub
 Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
     
-    Dim tagCharStylesArray(13) As String                                   ' number of items in array should be declared here
-    Dim CharStylePreserveArray(13) As String              ' number of items in array should be declared here
+    Dim tagCharStylesArray(12) As String                                   ' number of items in array should be declared here
+    Dim CharStylePreserveArray(12) As String              ' number of items in array should be declared here
     Dim d As Long
     
     CharStylePreserveArray(1) = "span hyperlink (url)"
@@ -671,10 +674,9 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     CharStylePreserveArray(7) = "span key phrase (kp)"
     CharStylePreserveArray(8) = "span preserve characters (pre)"  'added v. 3.2
     CharStylePreserveArray(9) = "bookmaker keep together (kt)"  'added v. 3.7
-    CharStylePreserveArray(10) = "bookmaker force page break (br)"  'added v. 3.7
-    CharStylePreserveArray(11) = "span ISBN (isbn)"  'added v. 3.7
-    CharStylePreserveArray(12) = "span symbols ital (symi)"     'added v. 3.8
-    CharStylePreserveArray(13) = "span symbols bold (symb)"
+    CharStylePreserveArray(10) = "span ISBN (isbn)"  'added v. 3.7
+    CharStylePreserveArray(11) = "span symbols ital (symi)"     'added v. 3.8
+    CharStylePreserveArray(12) = "span symbols bold (symb)"
     
     
     tagCharStylesArray(1) = "`H|^&|H`"
@@ -686,10 +688,9 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     tagCharStylesArray(7) = "`T|^&|T`"
     tagCharStylesArray(8) = "`F|^&|F`"
     tagCharStylesArray(9) = "`K|^&|K`"
-    tagCharStylesArray(10) = "`N|^&|N`"
-    tagCharStylesArray(11) = "`Q|^&|Q`"
-    tagCharStylesArray(12) = "`E|^&|E`"
-    tagCharStylesArray(13) = "`G|^&|G`"
+    tagCharStylesArray(10) = "`Q|^&|Q`"
+    tagCharStylesArray(11) = "`E|^&|E`"
+    tagCharStylesArray(12) = "`G|^&|G`"
     
     On Error GoTo CharStyleError
     
@@ -797,8 +798,8 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-    Dim tagFindArray(22) As String              ' number of items in array should be declared here
-    Dim tagReplaceArray(22) As String         'and here
+    Dim tagFindArray(21) As String              ' number of items in array should be declared here
+    Dim tagReplaceArray(21) As String         'and here
     Dim h As Long
     
     tagFindArray(1) = "`B|(*)|B`"
@@ -819,10 +820,9 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagFindArray(16) = "`D|(*)|D`"                       'v. 3.1 patch
     tagFindArray(17) = "`F|(*)|F`"
     tagFindArray(18) = "`K|(*)|K`"          'v. 3.7 added
-    tagFindArray(19) = "`N|(*)|N`"          'v. 3.7 added
-    tagFindArray(20) = "`Q|(*)|Q`"          'v. 3.7 added
-    tagFindArray(21) = "`E|(*)|E`"
-    tagFindArray(22) = "`G|(*)|G`"          'v. 3.8 added
+    tagFindArray(19) = "`Q|(*)|Q`"          'v. 3.7 added
+    tagFindArray(20) = "`E|(*)|E`"
+    tagFindArray(21) = "`G|(*)|G`"          'v. 3.8 added
     
     tagReplaceArray(1) = "span boldface characters (bf)"
     tagReplaceArray(2) = "span italic characters (ital)"
@@ -843,10 +843,9 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagReplaceArray(16) = "span smcap ital (scital)"
     tagReplaceArray(17) = "span preserve characters (pre)"
     tagReplaceArray(18) = "bookmaker keep together (kt)"            'v. 3.7 added
-    tagReplaceArray(19) = "bookmaker force page break (br)"          'v. 3.7 added
-    tagReplaceArray(20) = "span ISBN (isbn)"                        'v. 3.7 added
-    tagReplaceArray(21) = "span symbols ital (symi)"                ' v. 3.8 added
-    tagReplaceArray(22) = "span symbols bold (symb)"                ' v. 3.8 added
+    tagReplaceArray(19) = "span ISBN (isbn)"                        'v. 3.7 added
+    tagReplaceArray(20) = "span symbols ital (symi)"                ' v. 3.8 added
+    tagReplaceArray(21) = "span symbols bold (symb)"                ' v. 3.8 added
     
     On Error GoTo ErrorHandler:
     
