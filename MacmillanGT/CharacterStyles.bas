@@ -429,8 +429,8 @@ Private Sub AutoFormatHyperlinks()
     Dim oRng As Range
     
     Set oDoc = ActiveDocument
-    oDoc.Save      ' Already saved active doc?
-    Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False) 'Visible:=False won't work on Mac...
+    'oDoc.Save      ' Already saved active doc?
+    Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False)
     
     If ActiveDocument.Footnotes.Count >= 1 Then
         Dim oFN As Footnote
@@ -473,8 +473,6 @@ End Sub
 Private Sub StyleHyperlinksB(StoryType As WdStoryType)
     '--------------------------------------------------
     ' apply macmillan URL style to hyperlinks we just tagged in Autoformat
-    On Error GoTo LinksErrorHandler
-    
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     With activeRng.Find
         .ClearFormatting
@@ -503,28 +501,6 @@ Private Sub StyleHyperlinksB(StoryType As WdStoryType)
         Wend
     End With
     
-    On Error GoTo 0
-    
-    Exit Sub
-    
-LinksErrorHandler:
-        '5834 means item does not exist
-        '5941 means style not present in collection
-        If Err.Number = 5834 Or Err.Number = 5941 Then
-            
-            'If style is not present, add style
-            Dim myStyle As Style
-            Set myStyle = ActiveDocument.Styles.Add(Name:="Hyperlink", Type:=wdStyleTypeCharacter)
-            Set myStyle = ActiveDocument.Styles.Add(Name:="span hyperlink (url)", Type:=wdStyleTypeCharacter)
-            
-            'If missing style was Macmillan built-in style, add character highlighting
-            If myStyle = "span hyperlink (url)" Then
-                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
-            End If
-        
-        End If
-    Resume
-
 End Sub
 
 Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
