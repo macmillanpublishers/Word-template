@@ -379,6 +379,7 @@ Public Function NotesExist(StoryType As WdStoryType) As Boolean
     Set myRange = ActiveDocument.StoryRanges(StoryType)
     'If can set as myRange, then exists
     NotesExist = True
+    On Error GoTo 0
     Exit Function
 ErrHandler:
     If Err.Number = 5941 Then   '"Member of the collection does not exist"
