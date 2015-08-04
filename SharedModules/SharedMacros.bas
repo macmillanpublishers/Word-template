@@ -386,3 +386,25 @@ ErrHandler:
         NotesExist = False
     End If
 End Function
+
+Public Sub zz_clearFind()
+
+    Dim clearRng As Range
+    Set clearRng = ActiveDocument.Words.First
+
+    With clearRng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Wrap = wdFindStop
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute
+    End With
+    
+End Sub

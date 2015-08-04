@@ -966,26 +966,6 @@ ErrorHandler:
 
 End Sub
 
-Private Sub zz_clearFind()
-
-    Dim clearRng As Range
-    Set clearRng = ActiveDocument.Range.Words.First
-    
-        With clearRng.Find
-            .ClearFormatting
-            .Replacement.ClearFormatting
-            .Text = ""
-            .Replacement.Text = ""
-            .Wrap = wdFindStop
-            .Format = False
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-            .Execute
-        End With
-End Sub
 
 Function zz_templateCheck()
 'removed from main sub because can now run w/o template attached
