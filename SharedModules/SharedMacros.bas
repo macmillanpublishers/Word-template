@@ -372,3 +372,39 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
     LogInformation LogPath, logString
     
 End Function
+
+Public Function NotesExist(StoryType As WdStoryType) As Boolean
+    On Error GoTo ErrHandler
+    Dim myRange As Range
+    Set myRange = ActiveDocument.StoryRanges(StoryType)
+    'If can set as myRange, then exists
+    NotesExist = True
+    On Error GoTo 0
+    Exit Function
+ErrHandler:
+    If Err.Number = 5941 Then   '"Member of the collection does not exist"
+        NotesExist = False
+    End If
+End Function
+
+Public Sub zz_clearFind()
+
+    Dim clearRng As Range
+    Set clearRng = ActiveDocument.Words.First
+
+    With clearRng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Wrap = wdFindStop
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute
+    End With
+    
+End Sub

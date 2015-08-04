@@ -36,7 +36,22 @@ Sub MacmillanCharStyles()
         'If exitOnError = True Then
             'Exit Sub
         'End If
+    '------------check for endnotes and footnotes--------------------------
+    Dim stStories() As WdStoryType
     
+    ReDim stStories(1 To 1)
+    stStories(1) = wdMainTextStory
+    
+    If NotesExist(wdEndnotesStory) = True Then
+        ReDim stStories(1 To (UBound(stStories()) + 1))
+        stStories(UBound(stStories())) = wdEndnotesStory
+    End If
+    
+    If NotesExist(wdFootnotesStory) = True Then
+        ReDim stStories(1 To (UBound(stStories()) + 1))
+        stStories(UBound(stStories())) = wdFootnotesStory
+    End If
+        
     '------------record status of current status bar and then turn on-------
     Dim currentStatusBar As Boolean
     currentStatusBar = Application.DisplayStatusBar
@@ -123,7 +138,11 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call PreserveWhiteSpaceinBrkStylesA     'Part A tags styled blank paragraphs so they don't get deleted
+    Dim s As Long
+    
+    For s = 1 To UBound(stStories())
+        Call PreserveWhiteSpaceinBrkStylesA(StoryType:=s)     'Part A tags styled blank paragraphs so they don't get deleted
+    Next s
     Call zz_clearFind
     
     '----------------------------Fix hyperlinks---------------------------------------
@@ -139,8 +158,20 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call StyleHyperlinks                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+    'Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
+    'Also if you AutoFormat a second time if undoes all of the formatting already applied to hyperlinks
+    For s = 1 To UBound(stStories())
+        Call StyleHyperlinksA(StoryType:=s)                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+    Next s
+    
+    Call AutoFormatHyperlinks
+    
+    For s = 1 To UBound(stStories())
+        Call StyleHyperlinksB(StoryType:=s)
+    Next s
+    
     Call zz_clearFind
+
     
     '--------------------------Remove unstyled space breaks---------------------------
     sglPercentComplete = 0.4
@@ -155,7 +186,9 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call RemoveBreaks  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
+    For s = 1 To UBound(stStories())
+        Call RemoveBreaks(StoryType:=s)  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
+    Next s
     Call zz_clearFind
     
     '--------------------------Tag existing character styles------------------------
@@ -171,9 +204,10 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call TagExistingCharStyles            'tag existing styled items
+    For s = 1 To UBound(stStories())
+        Call TagExistingCharStyles(StoryType:=s)            'tag existing styled items
+    Next s
     Call zz_clearFind
-    
     
     '-------------------------Tag direct formatting----------------------------------
     sglPercentComplete = 0.7
@@ -188,9 +222,11 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call LocalStyleTag                 'tag local styling, reset local styling, remove text highlights
+    For s = 1 To UBound(stStories())
+        Call LocalStyleTag(StoryType:=s)                 'tag local styling, reset local styling, remove text highlights
+    Next s
     Call zz_clearFind
-    
+
     '----------------------------Apply Macmillan character styles to tagged text--------
     sglPercentComplete = 0.85
     strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
@@ -204,7 +240,9 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call LocalStyleReplace            'reapply local styling through char styles
+    For s = 1 To UBound(stStories())
+        Call LocalStyleReplace(StoryType:=s)            'reapply local styling through char styles
+    Next s
     Call zz_clearFind
     
     '---------------------------Remove tags from styled space breaks---------------------
@@ -220,7 +258,9 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Call PreserveWhiteSpaceinBrkStylesB     'Part B removes the tags and reapplies the styles
+    For s = 1 To UBound(stStories())
+        Call PreserveWhiteSpaceinBrkStylesB(StoryType:=s)     'Part B removes the tags and reapplies the styles
+    Next s
     Call zz_clearFind
     
     '---------------------------Return settings to original------------------------------
@@ -263,7 +303,7 @@ Sub MacmillanCharStyles()
 
 End Sub
 
-Private Sub StyleHyperlinks()
+Private Sub StyleHyperlinksA(StoryType As WdStoryType)
     ' added by Erica 2014-10-07, v. 3.4
     ' removes all live hyperlinks but leaves hyperlink text intact
     ' then styles all URLs as "span hyperlink (url)" style
@@ -271,7 +311,7 @@ Private Sub StyleHyperlinks()
     ' this first bit removes all live hyperlinks from document
     ' we want to remove these from urls AND text; will add back to just urls later
     
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     ' remove all embedded hyperlinks regardless of character style
     With activeRng
         While .Hyperlinks.Count > 0
@@ -308,7 +348,29 @@ Private Sub StyleHyperlinks()
             .Execute Replace:=wdReplaceAll
         End With
     Next
+    On Error GoTo 0
     
+    Exit Sub
+LinksErrorHandler:
+        '5834 means item does not exist
+        '5941 means style not present in collection
+        If Err.Number = 5834 Or Err.Number = 5941 Then
+            
+            'If style is not present, add style
+            Dim myStyle As Style
+            Set myStyle = ActiveDocument.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
+            
+            'If missing style was Macmillan built-in style, add character highlighting
+            If myStyle = "span hyperlink (url)" Then
+                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
+            End If
+        
+        End If
+    Resume
+End Sub
+
+Private Sub AutoFormatHyperlinks()
+
     '--------------------------------------------------
     ' converts all URLs to hyperlinks with built-in "Hyperlink" style
     ' because some show up as plain text
@@ -320,6 +382,7 @@ Private Sub StyleHyperlinks()
     Dim f7 As Boolean, f8 As Boolean, f9 As Boolean
     Dim f10 As Boolean
       
+    'This first bit autoformats hyperlinks in main text story
     With Options
         ' Save current AutoFormat settings
         f1 = .AutoFormatApplyHeadings
@@ -358,9 +421,59 @@ Private Sub StyleHyperlinks()
         .AutoFormatReplaceHyperlinks = f10
     End With
     
-    '--------------------------------------------------
-    ' apply macmillan URL style to hyperlinks we just tagged
+    'This bit autoformats hyperlinks in endnotes and footnotes
+    ' from http://www.vbaexpress.com/forum/showthread.php?52466-applying-hyperlink-styles-in-footnotes-and-endnotes
+    Dim oDoc As Document
+    Dim oTemp As Document
+    Dim oNote As Range
+    Dim oRng As Range
     
+    Set oDoc = ActiveDocument
+    'oDoc.Save      ' Already saved active doc?
+    Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False)
+    
+    If ActiveDocument.Footnotes.Count >= 1 Then
+        Dim oFN As Footnote
+        For Each oFN In oDoc.Footnotes
+            Set oNote = oFN.Range
+            Set oRng = oTemp.Range
+            oRng.FormattedText = oNote.FormattedText
+            'oRng.Style = "Footnote Text"
+            Options.AutoFormatReplaceHyperlinks = True
+            oRng.AutoFormat
+            oRng.End = oRng.End - 1
+            oNote.FormattedText = oRng.FormattedText
+        Next oFN
+        Set oFN = Nothing
+    End If
+    
+    If ActiveDocument.Endnotes.Count >= 1 Then
+        Dim oEN As Endnote
+        For Each oEN In oDoc.Endnotes
+            Set oNote = oEN.Range
+            Set oRng = oTemp.Range
+            oRng.FormattedText = oNote.FormattedText
+            'oRng.Style = "Endnote Text"
+            Options.AutoFormatReplaceHyperlinks = True
+            oRng.AutoFormat
+            oRng.End = oRng.End - 1
+            oNote.FormattedText = oRng.FormattedText
+        Next oEN
+        Set oEN = Nothing
+    End If
+    
+    oTemp.Close savechanges:=wdDoNotSaveChanges
+    Set oDoc = Nothing
+    Set oTemp = Nothing
+    Set oRng = Nothing
+    Set oNote = Nothing
+    
+End Sub
+
+Private Sub StyleHyperlinksB(StoryType As WdStoryType)
+    '--------------------------------------------------
+    ' apply macmillan URL style to hyperlinks we just tagged in Autoformat
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     With activeRng.Find
         .ClearFormatting
         .Replacement.ClearFormatting
@@ -388,34 +501,13 @@ Private Sub StyleHyperlinks()
         Wend
     End With
     
-    On Error GoTo 0
-    
-    Exit Sub
-    
-LinksErrorHandler:
-        '5834 means item does not exist
-        '5941 means style not present in collection
-        If Err.Number = 5834 Or Err.Number = 5941 Then
-            
-            'If style is not present, add style
-            Dim myStyle As Style
-            Set myStyle = ActiveDocument.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
-            
-            'If missing style was Macmillan built-in style, add character highlighting
-            If myStyle = "span hyperlink (url)" Then
-                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
-            End If
-        
-        End If
-    Resume
-
 End Sub
 
-Private Sub PreserveWhiteSpaceinBrkStylesA()
-    Set activeRng = ActiveDocument.Range
+Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
-    Dim tagArray(12) As String                                   ' number of items in array should be declared here
-    Dim StylePreserveArray(12) As String              ' number of items in array should be declared here
+    Dim tagArray(13) As String                                   ' number of items in array should be declared here
+    Dim StylePreserveArray(13) As String              ' number of items in array should be declared here
     Dim e As Long
     
     StylePreserveArray(1) = "Space Break (#)"
@@ -430,6 +522,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesA()
     StylePreserveArray(10) = "Space Break - 3-Line (ls3)"
     StylePreserveArray(11) = "Column Break (cbr)"
     StylePreserveArray(12) = "Design Note (dn)"
+    StylePreserveArray(13) = "Bookmaker Page Break (br)"
     
     tagArray(1) = "`1`^&`1``"                                       'v. 3.1 patch  added extra backtick on trailing tag for all of these.
     tagArray(2) = "`2`^&`2``"
@@ -443,6 +536,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesA()
     tagArray(10) = "`0`^&`0``"
     tagArray(11) = "`L`^&`L``"
     tagArray(12) = "`R`^&`R``"
+    tagArray(13) = "`N`^&`N``"
     
     On Error GoTo BreaksStyleError:
     
@@ -479,9 +573,9 @@ BreaksStyleError:
 
 End Sub
 
-Private Sub RemoveBreaks()
+Private Sub RemoveBreaks(StoryType As WdStoryType)
     'Created v. 3.7
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     Dim wsFindArray(4) As String              'number of items in array should be declared here
     Dim wsReplaceArray(4) As String       'and here
@@ -516,19 +610,19 @@ Private Sub RemoveBreaks()
     Next
     
     ''' the bit below to remove the last paragraph if it's blank
-    Dim MyRange As Range
-    Set MyRange = ActiveDocument.Paragraphs(1).Range
-        If MyRange.Text = Chr(13) Then MyRange.Delete
+    Dim myRange As Range
+    Set myRange = ActiveDocument.Paragraphs(1).Range
+        If myRange.Text = Chr(13) Then myRange.Delete
     
-    Set MyRange = ActiveDocument.Paragraphs.Last.Range
-        If MyRange.Text = Chr(13) Then MyRange.Delete
+    Set myRange = ActiveDocument.Paragraphs.Last.Range
+        If myRange.Text = Chr(13) Then myRange.Delete
 
 End Sub
 
-Private Sub PreserveWhiteSpaceinBrkStylesB()
-    Set activeRng = ActiveDocument.Range
+Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
-    Dim tagArrayB(12) As String                                   ' number of items in array should be declared here
+    Dim tagArrayB(13) As String                                   ' number of items in array should be declared here
     Dim f As Long
     
     tagArrayB(1) = "`1`(^13)`1``"                             'v. 3.1 patch  added extra backtick on trailing tag for all of these.
@@ -543,6 +637,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesB()
     tagArrayB(10) = "`0`(^13)`0``"
     tagArrayB(11) = "`L`(^13)`L``"              ' for new column break, added v. 3.4.1
     tagArrayB(12) = "`R`(^13)`R``"
+    tagArrayB(13) = "`N`(^13)`N``"
     
     For f = 1 To UBound(tagArrayB())
         With activeRng.Find
@@ -563,11 +658,11 @@ Private Sub PreserveWhiteSpaceinBrkStylesB()
 
 End Sub
 
-Private Sub TagExistingCharStyles()
-    Set activeRng = ActiveDocument.Range                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
+Private Sub TagExistingCharStyles(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
     
-    Dim tagCharStylesArray(13) As String                                   ' number of items in array should be declared here
-    Dim CharStylePreserveArray(13) As String              ' number of items in array should be declared here
+    Dim tagCharStylesArray(12) As String                                   ' number of items in array should be declared here
+    Dim CharStylePreserveArray(12) As String              ' number of items in array should be declared here
     Dim d As Long
     
     CharStylePreserveArray(1) = "span hyperlink (url)"
@@ -579,10 +674,9 @@ Private Sub TagExistingCharStyles()
     CharStylePreserveArray(7) = "span key phrase (kp)"
     CharStylePreserveArray(8) = "span preserve characters (pre)"  'added v. 3.2
     CharStylePreserveArray(9) = "bookmaker keep together (kt)"  'added v. 3.7
-    CharStylePreserveArray(10) = "bookmaker force page break (br)"  'added v. 3.7
-    CharStylePreserveArray(11) = "span ISBN (isbn)"  'added v. 3.7
-    CharStylePreserveArray(12) = "span symbols ital (symi)"     'added v. 3.8
-    CharStylePreserveArray(13) = "span symbols bold (symb)"
+    CharStylePreserveArray(10) = "span ISBN (isbn)"  'added v. 3.7
+    CharStylePreserveArray(11) = "span symbols ital (symi)"     'added v. 3.8
+    CharStylePreserveArray(12) = "span symbols bold (symb)"
     
     
     tagCharStylesArray(1) = "`H|^&|H`"
@@ -594,10 +688,9 @@ Private Sub TagExistingCharStyles()
     tagCharStylesArray(7) = "`T|^&|T`"
     tagCharStylesArray(8) = "`F|^&|F`"
     tagCharStylesArray(9) = "`K|^&|K`"
-    tagCharStylesArray(10) = "`N|^&|N`"
-    tagCharStylesArray(11) = "`Q|^&|Q`"
-    tagCharStylesArray(12) = "`E|^&|E`"
-    tagCharStylesArray(13) = "`G|^&|G`"
+    tagCharStylesArray(10) = "`Q|^&|Q`"
+    tagCharStylesArray(11) = "`E|^&|E`"
+    tagCharStylesArray(12) = "`G|^&|G`"
     
     On Error GoTo CharStyleError
     
@@ -634,8 +727,8 @@ CharStyleError:
 
 End Sub
 
-Private Sub LocalStyleTag()
-    Set activeRng = ActiveDocument.Range
+Private Sub LocalStyleTag(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     '------------tag key styles-------------------------------
     Dim tagStyleFindArray(10) As Boolean              ' number of items in array should be declared here
@@ -700,13 +793,13 @@ Private Sub LocalStyleTag()
 
 End Sub
 
-Private Sub LocalStyleReplace()
-    Set activeRng = ActiveDocument.Range
+Private Sub LocalStyleReplace(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-    Dim tagFindArray(22) As String              ' number of items in array should be declared here
-    Dim tagReplaceArray(22) As String         'and here
+    Dim tagFindArray(21) As String              ' number of items in array should be declared here
+    Dim tagReplaceArray(21) As String         'and here
     Dim h As Long
     
     tagFindArray(1) = "`B|(*)|B`"
@@ -727,10 +820,9 @@ Private Sub LocalStyleReplace()
     tagFindArray(16) = "`D|(*)|D`"                       'v. 3.1 patch
     tagFindArray(17) = "`F|(*)|F`"
     tagFindArray(18) = "`K|(*)|K`"          'v. 3.7 added
-    tagFindArray(19) = "`N|(*)|N`"          'v. 3.7 added
-    tagFindArray(20) = "`Q|(*)|Q`"          'v. 3.7 added
-    tagFindArray(21) = "`E|(*)|E`"
-    tagFindArray(22) = "`G|(*)|G`"          'v. 3.8 added
+    tagFindArray(19) = "`Q|(*)|Q`"          'v. 3.7 added
+    tagFindArray(20) = "`E|(*)|E`"
+    tagFindArray(21) = "`G|(*)|G`"          'v. 3.8 added
     
     tagReplaceArray(1) = "span boldface characters (bf)"
     tagReplaceArray(2) = "span italic characters (ital)"
@@ -751,10 +843,9 @@ Private Sub LocalStyleReplace()
     tagReplaceArray(16) = "span smcap ital (scital)"
     tagReplaceArray(17) = "span preserve characters (pre)"
     tagReplaceArray(18) = "bookmaker keep together (kt)"            'v. 3.7 added
-    tagReplaceArray(19) = "bookmaker force page break (br)"          'v. 3.7 added
-    tagReplaceArray(20) = "span ISBN (isbn)"                        'v. 3.7 added
-    tagReplaceArray(21) = "span symbols ital (symi)"                ' v. 3.8 added
-    tagReplaceArray(22) = "span symbols bold (symb)"                ' v. 3.8 added
+    tagReplaceArray(19) = "span ISBN (isbn)"                        'v. 3.7 added
+    tagReplaceArray(20) = "span symbols ital (symi)"                ' v. 3.8 added
+    tagReplaceArray(21) = "span symbols bold (symb)"                ' v. 3.8 added
     
     On Error GoTo ErrorHandler:
     
@@ -874,26 +965,6 @@ ErrorHandler:
 
 End Sub
 
-Private Sub zz_clearFind()
-
-    Dim clearRng As Range
-    Set clearRng = ActiveDocument.Words.First
-    
-        With clearRng.Find
-            .ClearFormatting
-            .Replacement.ClearFormatting
-            .Text = ""
-            .Replacement.Text = ""
-            .Wrap = wdFindStop
-            .Format = False
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-            .Execute
-        End With
-End Sub
 
 Function zz_templateCheck()
 'removed from main sub because can now run w/o template attached
