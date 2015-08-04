@@ -141,6 +141,22 @@ Sub MacmillanManuscriptCleanup()
     
     Application.ScreenUpdating = False
     
+    '------------check for endnotes and footnotes--------------------------
+    Dim stStories() As WdStoryType
+    
+    ReDim stStories(1 To 1)
+    stStories(1) = wdMainTextStory
+    
+    If NotesExist(wdEndnotesStory) = True Then
+        ReDim stStories(1 To (UBound(stStories()) + 1))
+        stStories(UBound(stStories())) = wdEndnotesStory
+    End If
+    
+    If NotesExist(wdFootnotesStory) = True Then
+        ReDim stStories(1 To (UBound(stStories()) + 1))
+        stStories(UBound(stStories())) = wdFootnotesStory
+    End If
+    
     '------------record status of current status bar and then turn on-------
     Dim currentStatusBar As Boolean
     currentStatusBar = Application.DisplayStatusBar
@@ -223,7 +239,12 @@ Sub MacmillanManuscriptCleanup()
         DoEvents
     End If
     
-    Call RmNonWildcardItems                     'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
+    Dim s As Long
+    
+    For s = 1 To UBound(stStories())
+        Call RmNonWildcardItems(StoryType:=s)   'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
+    Next s
+    
     Call zz_clearFind
 
     '-------------Tag characters styled "span preserve characters"-----------------
@@ -239,7 +260,9 @@ Sub MacmillanManuscriptCleanup()
         DoEvents
     End If
     
-    Call PreserveStyledCharactersA              ' EW added v. 3.2, tags styled page breaks, tabs
+    For s = 1 To UBound(stStories())
+        Call PreserveStyledCharactersA(StoryType:=s)              ' EW added v. 3.2, tags styled page breaks, tabs
+    Next s
     Call zz_clearFind
     
     '---------------Find/Replace for rest of the typographic errors----------------------
@@ -255,7 +278,10 @@ Sub MacmillanManuscriptCleanup()
         DoEvents
     End If
     
-    Call RmWhiteSpaceB                      'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
+    For s = 1 To UBound(stStories())
+        Call RmWhiteSpaceB(StoryType:=s)    'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
+    Next s
+    
     Call zz_clearFind
     
     '---------------Remove tags from "span preserve characters"-------------------------
@@ -271,7 +297,10 @@ Sub MacmillanManuscriptCleanup()
         DoEvents
     End If
     
-    Call PreserveStyledCharactersB              ' EW added v. 3.2, replaces character tags with actual character
+    For s = 1 To UBound(stStories())
+        Call PreserveStyledCharactersB(StoryType:=s)    ' EW added v. 3.2, replaces character tags with actual character
+    Next s
+    
     Call zz_clearFind
     
     '-------------Go back to original insertion point and delete bookmark-----------------
@@ -339,8 +368,8 @@ Private Sub RemoveBookmarks()
     
 End Sub
 
-Private Sub RmNonWildcardItems()                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
-    Set activeRng = ActiveDocument.Range
+Private Sub RmNonWildcardItems(StoryType As WdStoryType)                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     Dim noWildTagArray(3) As String                                   ' number of items in array should be declared here
     Dim noWildReplaceArray(3) As String              ' number of items in array should be declared here
@@ -378,10 +407,10 @@ Private Sub RmNonWildcardItems()                                             'v.
 
 End Sub
 
-Private Sub PreserveStyledCharactersA()
+Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     ' added by EW v. 3.2
     ' replaces correctly styled characters with placeholder so they don't get removed
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     Dim preserveCharFindArray(3) As String  ' declare number of items in array
     Dim preserveCharReplaceArray(3) As String   'delcare number of items in array
@@ -432,8 +461,8 @@ ErrHandler:
     
 End Sub
 
-Private Sub RmWhiteSpaceB()
-    Set activeRng = ActiveDocument.Range
+Private Sub RmWhiteSpaceB(StoryType As WdStoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
 
     Dim wsFindArray(33) As String              'number of items in array should be declared here
     Dim wsReplaceArray(33) As String       'and here
@@ -563,10 +592,10 @@ Private Sub RmWhiteSpaceB()
 
 End Sub
 
-Private Sub PreserveStyledCharactersB()
+Private Sub PreserveStyledCharactersB(StoryType As WdStoryType)
     ' added by EW v. 3.2
     ' replaces placeholders with original characters
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
 
     Dim preserveCharFindArray(3) As String  ' declare number of items in array
     Dim preserveCharReplaceArray(3) As String   'declare number of items in array
@@ -611,28 +640,6 @@ ErrHandler:
     If Err.Number = 5834 Or Err.Number = 5941 Then
         Exit Sub
     End If
-End Sub
-
-Private Sub zz_clearFind()
-
-    Dim clearRng As Range
-    Set clearRng = ActiveDocument.Words.First
-
-    With clearRng.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = ""
-        .Replacement.Text = ""
-        .Wrap = wdFindStop
-        .Format = False
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = False
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-        .Execute
-    End With
-    
 End Sub
 
 Function zz_errorChecks()
