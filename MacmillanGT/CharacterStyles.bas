@@ -124,7 +124,7 @@ Sub MacmillanCharStyles()
     
     
     '-----------------------Tag space break styles----------------------------
-    Call zz_clearFind(StoryType:=wdMainTextStory)                          'Clear find object
+    Call zz_clearFind                          'Clear find object
     
     sglPercentComplete = 0.15
     strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
@@ -142,8 +142,8 @@ Sub MacmillanCharStyles()
     
     For s = 1 To UBound(stStories())
         Call PreserveWhiteSpaceinBrkStylesA(StoryType:=s)     'Part A tags styled blank paragraphs so they don't get deleted
-        Call zz_clearFind(StoryType:=s)
     Next s
+    Call zz_clearFind
     
     '----------------------------Fix hyperlinks---------------------------------------
     sglPercentComplete = 0.25
@@ -158,10 +158,20 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
+    'Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
+    'Also if you AutoFormat a second time if undoes all of the formatting already applied to hyperlinks
     For s = 1 To UBound(stStories())
-        Call StyleHyperlinks(StoryType:=s)                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
-        Call zz_clearFind(StoryType:=s)
+        Call StyleHyperlinksA(StoryType:=s)                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
     Next s
+    
+    Call AutoFormatHyperlinks
+    
+    For s = 1 To UBound(stStories())
+        Call StyleHyperlinksB(StoryType:=s)
+    Next s
+    
+    Call zz_clearFind
+
     
     '--------------------------Remove unstyled space breaks---------------------------
     sglPercentComplete = 0.4
@@ -178,8 +188,8 @@ Sub MacmillanCharStyles()
     
     For s = 1 To UBound(stStories())
         Call RemoveBreaks(StoryType:=s)  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
-        Call zz_clearFind(StoryType:=s)
     Next s
+    Call zz_clearFind
     
     '--------------------------Tag existing character styles------------------------
     sglPercentComplete = 0.55
@@ -196,8 +206,8 @@ Sub MacmillanCharStyles()
     
     For s = 1 To UBound(stStories())
         Call TagExistingCharStyles(StoryType:=s)            'tag existing styled items
-        Call zz_clearFind(StoryType:=s)
     Next s
+    Call zz_clearFind
     
     '-------------------------Tag direct formatting----------------------------------
     sglPercentComplete = 0.7
@@ -214,9 +224,9 @@ Sub MacmillanCharStyles()
     
     For s = 1 To UBound(stStories())
         Call LocalStyleTag(StoryType:=s)                 'tag local styling, reset local styling, remove text highlights
-        Call zz_clearFind(StoryType:=s)
     Next s
-    
+    Call zz_clearFind
+
     '----------------------------Apply Macmillan character styles to tagged text--------
     sglPercentComplete = 0.85
     strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
@@ -232,8 +242,8 @@ Sub MacmillanCharStyles()
     
     For s = 1 To UBound(stStories())
         Call LocalStyleReplace(StoryType:=s)            'reapply local styling through char styles
-        Call zz_clearFind(StoryType:=s)
     Next s
+    Call zz_clearFind
     
     '---------------------------Remove tags from styled space breaks---------------------
     sglPercentComplete = 0.95
@@ -250,8 +260,8 @@ Sub MacmillanCharStyles()
     
     For s = 1 To UBound(stStories())
         Call PreserveWhiteSpaceinBrkStylesB(StoryType:=s)     'Part B removes the tags and reapplies the styles
-        Call zz_clearFind(StoryType:=s)
     Next s
+    Call zz_clearFind
     
     '---------------------------Return settings to original------------------------------
     sglPercentComplete = 1
@@ -293,7 +303,7 @@ Sub MacmillanCharStyles()
 
 End Sub
 
-Private Sub StyleHyperlinks(StoryType As WdStoryType)
+Private Sub StyleHyperlinksA(StoryType As WdStoryType)
     ' added by Erica 2014-10-07, v. 3.4
     ' removes all live hyperlinks but leaves hyperlink text intact
     ' then styles all URLs as "span hyperlink (url)" style
@@ -338,7 +348,29 @@ Private Sub StyleHyperlinks(StoryType As WdStoryType)
             .Execute Replace:=wdReplaceAll
         End With
     Next
+    On Error GoTo 0
     
+    Exit Sub
+LinksErrorHandler:
+        '5834 means item does not exist
+        '5941 means style not present in collection
+        If Err.Number = 5834 Or Err.Number = 5941 Then
+            
+            'If style is not present, add style
+            Dim myStyle As Style
+            Set myStyle = ActiveDocument.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
+            
+            'If missing style was Macmillan built-in style, add character highlighting
+            If myStyle = "span hyperlink (url)" Then
+                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
+            End If
+        
+        End If
+    Resume
+End Sub
+
+Private Sub AutoFormatHyperlinks()
+
     '--------------------------------------------------
     ' converts all URLs to hyperlinks with built-in "Hyperlink" style
     ' because some show up as plain text
@@ -350,6 +382,7 @@ Private Sub StyleHyperlinks(StoryType As WdStoryType)
     Dim f7 As Boolean, f8 As Boolean, f9 As Boolean
     Dim f10 As Boolean
       
+    'This first bit autoformats hyperlinks in main text story
     With Options
         ' Save current AutoFormat settings
         f1 = .AutoFormatApplyHeadings
@@ -388,9 +421,61 @@ Private Sub StyleHyperlinks(StoryType As WdStoryType)
         .AutoFormatReplaceHyperlinks = f10
     End With
     
-    '--------------------------------------------------
-    ' apply macmillan URL style to hyperlinks we just tagged
+    'This bit autoformats hyperlinks in endnotes and footnotes
+    ' from http://www.vbaexpress.com/forum/showthread.php?52466-applying-hyperlink-styles-in-footnotes-and-endnotes
+    Dim oDoc As Document
+    Dim oTemp As Document
+    Dim oNote As Range
+    Dim oRng As Range
     
+    Set oDoc = ActiveDocument
+    oDoc.Save      ' Already saved active doc?
+    Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False) 'Visible:=False won't work on Mac...
+    
+    If ActiveDocument.Footnotes.Count >= 1 Then
+        Dim oFN As Footnote
+        For Each oFN In oDoc.Footnotes
+            Set oNote = oFN.Range
+            Set oRng = oTemp.Range
+            oRng.FormattedText = oNote.FormattedText
+            'oRng.Style = "Footnote Text"
+            Options.AutoFormatReplaceHyperlinks = True
+            oRng.AutoFormat
+            oRng.End = oRng.End - 1
+            oNote.FormattedText = oRng.FormattedText
+        Next oFN
+        Set oFN = Nothing
+    End If
+    
+    If ActiveDocument.Endnotes.Count >= 1 Then
+        Dim oEN As Endnote
+        For Each oEN In oDoc.Endnotes
+            Set oNote = oEN.Range
+            Set oRng = oTemp.Range
+            oRng.FormattedText = oNote.FormattedText
+            'oRng.Style = "Endnote Text"
+            Options.AutoFormatReplaceHyperlinks = True
+            oRng.AutoFormat
+            oRng.End = oRng.End - 1
+            oNote.FormattedText = oRng.FormattedText
+        Next oEN
+        Set oEN = Nothing
+    End If
+    
+    oTemp.Close savechanges:=wdDoNotSaveChanges
+    Set oDoc = Nothing
+    Set oTemp = Nothing
+    Set oRng = Nothing
+    Set oNote = Nothing
+    
+End Sub
+
+Private Sub StyleHyperlinksB(StoryType As WdStoryType)
+    '--------------------------------------------------
+    ' apply macmillan URL style to hyperlinks we just tagged in Autoformat
+    On Error GoTo LinksErrorHandler
+    
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     With activeRng.Find
         .ClearFormatting
         .Replacement.ClearFormatting
@@ -429,7 +514,8 @@ LinksErrorHandler:
             
             'If style is not present, add style
             Dim myStyle As Style
-            Set myStyle = ActiveDocument.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
+            Set myStyle = ActiveDocument.Styles.Add(Name:="Hyperlink", Type:=wdStyleTypeCharacter)
+            Set myStyle = ActiveDocument.Styles.Add(Name:="span hyperlink (url)", Type:=wdStyleTypeCharacter)
             
             'If missing style was Macmillan built-in style, add character highlighting
             If myStyle = "span hyperlink (url)" Then
@@ -904,10 +990,10 @@ ErrorHandler:
 
 End Sub
 
-Private Sub zz_clearFind(StoryType As WdStoryType)
+Private Sub zz_clearFind()
 
     Dim clearRng As Range
-    Set clearRng = ActiveDocument.StoryRanges(StoryType).Words.First
+    Set clearRng = ActiveDocument.Range.Words.First
     
         With clearRng.Find
             .ClearFormatting
