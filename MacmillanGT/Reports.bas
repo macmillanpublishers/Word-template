@@ -950,8 +950,10 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
         errorList = errorList & "** ERROR: No styled ISBN detected." _
         & vbNewLine & vbNewLine
     Else
-    'New sub: check for correct book type following, in parens.
-        errorList = errorList & BookTypeCheck
+        If torDOTcom = True Then
+            'check for correct book type following ISBN, in parens.
+            errorList = errorList & BookTypeCheck
+        End If
     End If
     
     'If CN > 0 and CT = 0 (already fixed in FixSectionHeadings sub)
