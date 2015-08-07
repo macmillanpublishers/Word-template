@@ -95,7 +95,7 @@ Sub BookmakerReqs()
     End If
     
     '--------save the current cursor location in a bookmark---------------------------
-    Selection.Collapse direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
+    Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
     ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
     
     '-------Delete content controls on PC------------------------
@@ -387,7 +387,7 @@ Sub MacmillanStyleReport()
     
     
     '--------save the current cursor location in a bookmark---------------------------
-    Selection.Collapse direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
+    Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
     ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
     
     
@@ -946,8 +946,13 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
         & vbNewLine & vbNewLine
     
     'If ISBN = 0
-    If arrStyleCount(3) = 0 Then errorList = errorList & "** ERROR: No styled ISBN detected." _
+    If arrStyleCount(3) = 0 Then
+        errorList = errorList & "** ERROR: No styled ISBN detected." _
         & vbNewLine & vbNewLine
+    Else
+    'New sub: check for correct book type following, in parens.
+        errorList = errorList & BookTypeCheck
+    End If
     
     'If CN > 0 and CT = 0 (already fixed in FixSectionHeadings sub)
     If arrStyleCount(4) > 0 And arrStyleCount(5) = 0 Then errorList = errorList & _
@@ -2244,3 +2249,86 @@ ErrHandler:
     End If
 
 End Sub
+
+Private Function BookTypeCheck()
+    ' Validates the book types listed following the ISBN on the copyright page.
+    Dim intCount As Integer
+    Dim strErrors As String
+    Dim strBookTypes(1 To 6) As String
+    Dim a As Long
+    Dim blnMissing As Boolean
+    Dim strISBN As String
+    
+    strBookTypes(1) = "trade paperback"
+    strBookTypes(2) = "hardcover"
+    strBookTypes(3) = "e-book"
+    strBookTypes(4) = "ebook"
+    strBookTypes(5) = "print on demand"
+    strBookTypes(6) = "print-on-demand"
+    
+    'Move selection back to start of document
+    Selection.HomeKey Unit:=wdStory
+
+    On Error GoTo ErrHandler
+    
+    intCount = 0
+    With Selection.Find
+        .ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles("span ISBN (isbn)")
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        
+        Do While .Execute(Forward:=True) = True And intCount < 100   ' < 100 to precent infinite loop
+            intCount = intCount + 1
+            strISBN = Selection.Text
+            'Record current selection because we need to return to it later
+            ActiveDocument.Bookmarks.Add Name:="ISBN", Range:=Selection.Range
+            
+            Selection.Collapse Direction:=wdCollapseEnd
+            Selection.EndOf Unit:=wdLine, Extend:=wdExtend
+            
+            blnMissing = True
+                For a = 1 To UBound(strBookTypes())
+                    If InStr(Selection.Text, "(" & strBookTypes(a) & ")") > 0 Then
+                        blnMissing = False
+                        Exit For
+                    End If
+                Next a
+            
+            If blnMissing = True Then
+                strErrors = strErrors & "** ERROR: Correct book type required in parentheses after ISBN " & strISBN & " on copyright page." _
+                    & vbNewLine & vbNewLine
+            End If
+            
+            'Now we need to return the selection to where it was above, or else we can't loop through selection.find
+            If ActiveDocument.Bookmarks.Exists("ISBN") = True Then
+                Selection.GoTo what:=wdGoToBookmark, Name:="ISBN"
+                ActiveDocument.Bookmarks("ISBN").Delete
+            End If
+            
+        Loop
+    
+    End With
+    
+    'Debug.Print strErrors
+    BookTypeCheck = strErrors
+    
+    On Error GoTo 0
+    Exit Function
+
+ErrHandler:
+    Debug.Print Err.Number & ": " & Err.Description
+    If Err.Number = 5941 Or Err.Number = 5834 Then      ' style doesn't exist in document
+        Exit Function
+    End If
+        
+End Function
+
