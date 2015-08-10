@@ -408,3 +408,23 @@ Public Sub zz_clearFind()
     End With
     
 End Sub
+
+Public Function StoryArray() As Variant
+    '------------check for endnotes and footnotes--------------------------
+    Dim strStories() As Variant
+    
+    ReDim strStories(1 To 1)
+    strStories(1) = "wdMainTextStory"
+    
+    If NotesExist(wdEndnotesStory) = True Then
+        ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
+        strStories(UBound(strStories())) = "wdEndnotesStory"
+    End If
+    
+    If NotesExist(wdFootnotesStory) = True Then
+        ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
+        strStories(UBound(strStories())) = "wdFootnotesStory"
+    End If
+    
+    StoryArray = strStories
+End Function
