@@ -41,6 +41,11 @@ Sub BookmakerReqs()
     currentStatusBar = Application.DisplayStatusBar
     Application.DisplayStatusBar = True
     
+    '------------ check for endnotes and footnotes -------------------------
+    Dim arrStories() As Variant
+    
+    arrStories = StoryArray
+    
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
     'Requires ProgressBar custom UserForm and Class
@@ -215,7 +220,8 @@ Sub BookmakerReqs()
     Dim strBadStylesList As String
                 
     'returns array with 2 elements, 1: good styles list, 2: bad styles list
-    arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
+    arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle, _
+        Stories:=arrStories)
     strGoodStylesList = arrGoodBadStyles(1)
     'Debug.Print strGoodStylesList
     strBadStylesList = arrGoodBadStyles(2)
@@ -331,6 +337,11 @@ Sub MacmillanStyleReport()
     Dim currentStatusBar As Boolean
     currentStatusBar = Application.DisplayStatusBar
     Application.DisplayStatusBar = True
+    
+    '------------ check for endnotes and footnotes -------------------------
+    Dim arrStories() As Variant
+    
+    arrStories = StoryArray
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -513,7 +524,7 @@ Sub MacmillanStyleReport()
     Dim strBadStylesList As String
     
     arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, _
-                        Status:=strStatus, ProgTitle:=strTitle)
+                        Status:=strStatus, ProgTitle:=strTitle, Stories:=arrStories)
     strGoodStylesList = arrGoodBadStyles(1)
     strBadStylesList = arrGoodBadStyles(2)
     
@@ -606,7 +617,7 @@ Sub MacmillanStyleReport()
 
 End Sub
 
-Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String) As Variant
+Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As Variant
     'Creates a list of Macmillan styles in use
     'And a separate list of non-Macmillan styles in use
     
@@ -632,6 +643,7 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
     '''''''''''''''''''''
     Dim activeParaRange As Range
     Dim pageNumber As Integer
+    Dim a As Long
     
     
     'Alter built-in Normal (Web) style temporarily (later, maybe forever?)
@@ -663,40 +675,54 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
             End If
         End If
         
-        paraStyle = activeDoc.Paragraphs(J).Style
-        Set activeParaRange = activeDoc.Paragraphs(J).Range
-        pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
-            
-            'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
-        If Right(paraStyle, 1) = ")" Then
-            For K = 1 To styleGoodCount
-                'Debug.Print Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1)
-                ' "Left" function because now stylesGood includes page number, so won't match paraStyle
-                If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
-                K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
-                    Exit For                                        'stylereport bug fix #1   v. 3.1
-                End If                                              'stylereport bug fix #1   v. 3.1
-            Next K
-            If K = styleGoodCount + 1 Then
-                styleGoodCount = K
-                ReDim Preserve stylesGood(1 To styleGoodCount)
-                stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
-            End If
-        Else
-            For L = 1 To styleBadCount
-                'If paraStyle = stylesBad(L) Then Exit For                  'Not needed, since we want EVERY instance of bad style
-            Next L
-            If L > 100 Then                                                 ' Exits if more than 100 bad paragraphs
-                    styleBadOverflow = True
-                Exit For
-            End If
-            If L = styleBadCount + 1 Then
-                styleBadCount = L
 
-                stylesBad(styleBadCount) = "** ERROR: Non-Macmillan style on page " & pageNumber & _
-                    " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
+        For a = LBound(Stories()) To UBound(Stories())
+            If J <= ActiveDocument.StoryRanges(a).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(a).Paragraphs(J).Style
+                'paraStyle = activeDoc.Paragraphs(J).Style
+                Set activeParaRange = activeDoc.StoryRanges(a).Paragraphs(J).Range
+                pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
+                    
+                'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
+                If Right(paraStyle, 1) = ")" Then
+CheckGoodStyles:
+                    For K = 1 To styleGoodCount
+                        'Debug.Print Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1)
+                        ' "Left" function because now stylesGood includes page number, so won't match paraStyle
+                        If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
+                        K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                            Exit For                                        'stylereport bug fix #1   v. 3.1
+                        End If                                              'stylereport bug fix #1   v. 3.1
+                    Next K
+                    
+                    If K = styleGoodCount + 1 Then
+                        styleGoodCount = K
+                        ReDim Preserve stylesGood(1 To styleGoodCount)
+                        stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
+                    End If
+                
+                Else
+                    
+                    If paraStyle = "Endnote Text" Or paraStyle = "Footnote Text" Then
+                        GoTo CheckGoodStyles
+                    Else
+                        For L = 1 To styleBadCount
+                            'If paraStyle = stylesBad(L) Then Exit For                  'Not needed, since we want EVERY instance of bad style
+                        Next L
+                        If L > 100 Then                                                 ' Exits if more than 100 bad paragraphs
+                                styleBadOverflow = True
+                            Exit For
+                        End If
+                        If L = styleBadCount + 1 Then
+                            styleBadCount = L
+            
+                            stylesBad(styleBadCount) = "** ERROR: Non-Macmillan style on page " & pageNumber & _
+                                " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
+                        End If
+                     End If
+                End If
             End If
-        End If
+        Next a
     Next J
     
     Status = "* Checking paragraphs for Macmillan styles..." & vbCr & Status
@@ -790,9 +816,36 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
             .Wrap = wdFindContinue
             .Format = True
         End With
-        'Debug.Print Application.ScreenUpdating
+        
         If Selection.Find.Execute = True Then
             charStyles = charStyles & styleNameM(M) & vbNewLine
+        Else
+            If ActiveDocument.Footnotes.Count > 0 Then
+                With ActiveDocument.StoryRanges(wdFootnotesStory).Find
+                    .Style = ActiveDocument.Styles(styleNameM(M))
+                    .Wrap = wdFindContinue
+                    .Format = True
+                End With
+            
+                If ActiveDocument.StoryRanges(wdFootnotesStory).Find.Execute = True Then
+                    charStyles = charStyles & styleNameM(M) & vbNewLine
+                Else
+                    GoTo CheckEndnotes
+                End If
+            Else
+CheckEndnotes:
+                If ActiveDocument.Endnotes.Count > 0 Then
+                     With ActiveDocument.StoryRanges(wdEndnotesStory).Find
+                         .Style = ActiveDocument.Styles(styleNameM(M))
+                         .Wrap = wdFindContinue
+                         .Format = True
+                     End With
+                        
+                    If Selection.Find.Execute = True Then
+                        charStyles = charStyles & styleNameM(M) & vbNewLine
+                    End If
+                End If
+            End If
         End If
 NextLoop:
     Next M
