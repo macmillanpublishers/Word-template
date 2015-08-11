@@ -679,7 +679,6 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
         For a = LBound(Stories()) To UBound(Stories())
             If J <= ActiveDocument.StoryRanges(a).Paragraphs.Count Then
                 paraStyle = activeDoc.StoryRanges(a).Paragraphs(J).Style
-                'paraStyle = activeDoc.Paragraphs(J).Style
                 Set activeParaRange = activeDoc.StoryRanges(a).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
                     
@@ -882,7 +881,7 @@ NextLoop:
     'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
     Dim strTorBadStyles As String
     If torDOTcom = True Then
-        strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle)
+        strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle, Stories:=Stories)
         strBadStyles = strBadStyles & strTorBadStyles
     End If
     
@@ -1474,7 +1473,7 @@ Private Function FixTrackChanges() As Boolean
 
 End Function
 
-Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String) As String
+Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String, Stories() As Variant) As String
     'Called from GoodBadStyles sub if torDOTcom parameter is set to True.
     
     Dim paraStyle As String
@@ -1490,6 +1489,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     Dim N As Integer
     Dim M As Integer
     Dim strBadStyles As String
+    Dim a As Long
     
     Dim TheOS As String
     TheOS = System.OperatingSystem
@@ -1598,9 +1598,8 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     activeParaCount = ActiveDocument.Paragraphs.Count
     
     For N = 1 To activeParaCount
-        intBadCount = 0
-        paraStyle = ActiveDocument.Paragraphs(N).Style
         
+ 
         If N Mod 100 = 0 Then
             'Percent complete and status for progress bar (PC) and status bar (Mac)
             sglPercentComplete = (((N / activeParaCount) * 0.1) + 0.76)
@@ -1617,26 +1616,36 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
             End If
         End If
         
-        If Right(paraStyle, 1) = ")" Then
-            
-            On Error GoTo ErrHandler
-            
-            For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
-                If paraStyle <> arrTorStyles(M) Then
-                    intBadCount = intBadCount + 1
-                Else
-                    Exit For
+        For a = LBound(Stories()) To UBound(Stories())
+            If N <= ActiveDocument.StoryRanges(a).Paragraphs.Count Then
+                paraStyle = ActiveDocument.StoryRanges(a).Paragraphs(N).Style
+                'Debug.Print paraStyle
+                
+                If Right(paraStyle, 1) = ")" Then
+                    
+                    On Error GoTo ErrHandler
+                    
+                    intBadCount = 0
+                    
+                    For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
+                        If paraStyle <> arrTorStyles(M) Then
+                            intBadCount = intBadCount + 1
+                        Else
+                            Exit For
+                        End If
+                    Next M
+                
+                    If intBadCount = UBound(arrTorStyles()) Then
+                        Set activeParaRange = ActiveDocument.StoryRanges(a).Paragraphs(N).Range
+                        pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
+                        strBadStyles = strBadStyles & "** ERROR: Non-Tor.com style on page " & pageNumber _
+                            & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
+                            'Debug.Print strBadStyles
+                    End If
+                
                 End If
-            Next M
-        
-            If intBadCount = UBound(arrTorStyles()) Then
-                Set activeParaRange = ActiveDocument.Paragraphs(N).Range
-                pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
-                strBadStyles = strBadStyles & "** ERROR: Non-Tor.com style on page " & pageNumber _
-                    & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
             End If
-        
-        End If
+        Next a
     
 ErrResume:
     
