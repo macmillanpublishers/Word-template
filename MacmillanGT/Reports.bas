@@ -790,8 +790,6 @@ CheckGoodStyles:
     styleNameM(20) = "span symbols ital (symi)"
     styleNameM(21) = "span symbols bold (symb)"
     
-    'Move selection back to start of document
-    Selection.HomeKey Unit:=wdStory
     
     
     For M = 1 To UBound(styleNameM())
@@ -811,23 +809,29 @@ CheckGoodStyles:
         
         On Error GoTo ErrHandler
         
+        'Move selection back to start of document
+        Selection.HomeKey Unit:=wdStory
+
         With Selection.Find
             .Style = ActiveDocument.Styles(styleNameM(M))
             .Wrap = wdFindContinue
             .Format = True
+            .Execute
         End With
         
-        If Selection.Find.Execute = True Then
+        If Selection.Find.Found = True Then
             charStyles = charStyles & styleNameM(M) & vbNewLine
         Else
             If ActiveDocument.Footnotes.Count > 0 Then
-                With ActiveDocument.StoryRanges(wdFootnotesStory).Find
+                ActiveDocument.StoryRanges(wdFootnotesStory).Select
+                With Selection.Find
                     .Style = ActiveDocument.Styles(styleNameM(M))
                     .Wrap = wdFindContinue
                     .Format = True
+                    .Execute
                 End With
             
-                If ActiveDocument.StoryRanges(wdFootnotesStory).Find.Execute = True Then
+                If Selection.Find.Found = True Then
                     charStyles = charStyles & styleNameM(M) & vbNewLine
                 Else
                     GoTo CheckEndnotes
@@ -835,13 +839,15 @@ CheckGoodStyles:
             Else
 CheckEndnotes:
                 If ActiveDocument.Endnotes.Count > 0 Then
-                     With ActiveDocument.StoryRanges(wdEndnotesStory).Find
+                    ActiveDocument.StoryRanges(wdEndnotesStory).Select
+                     With Selection.Find
                          .Style = ActiveDocument.Styles(styleNameM(M))
                          .Wrap = wdFindContinue
                          .Format = True
+                         .Execute
                      End With
                         
-                    If Selection.Find.Execute = True Then
+                    If Selection.Find.Found = True Then
                         charStyles = charStyles & styleNameM(M) & vbNewLine
                     End If
                 End If
@@ -849,6 +855,8 @@ CheckEndnotes:
         End If
 NextLoop:
     Next M
+    
+    Debug.Print charStyles
     
     Status = "* Checking character styles..." & vbCr & Status
     
