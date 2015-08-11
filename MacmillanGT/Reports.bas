@@ -811,7 +811,10 @@ CheckGoodStyles:
         
         'Move selection back to start of document
         Selection.HomeKey Unit:=wdStory
-
+        
+        'Need to do Selection.Find for char styles. Range.Find won't work.
+        'We only need to find a style once to add it to the list
+        'Search through the main text story here
         With Selection.Find
             .Style = ActiveDocument.Styles(styleNameM(M))
             .Wrap = wdFindContinue
@@ -821,9 +824,13 @@ CheckGoodStyles:
         
         If Selection.Find.Found = True Then
             charStyles = charStyles & styleNameM(M) & vbNewLine
+        'Else not present in main text story
         Else
+            ' So check if there are footnotes
             If ActiveDocument.Footnotes.Count > 0 Then
+                'If there are footnotes, select the footnote text
                 ActiveDocument.StoryRanges(wdFootnotesStory).Select
+                'Search the new selection for the style
                 With Selection.Find
                     .Style = ActiveDocument.Styles(styleNameM(M))
                     .Wrap = wdFindContinue
@@ -833,14 +840,18 @@ CheckGoodStyles:
             
                 If Selection.Find.Found = True Then
                     charStyles = charStyles & styleNameM(M) & vbNewLine
+                ' Else didn't find style in footnotes, check endnotes
                 Else
                     GoTo CheckEndnotes
                 End If
             Else
 CheckEndnotes:
+                ' Check if there are endnotes in the document
                 If ActiveDocument.Endnotes.Count > 0 Then
+                    ' If there are endnotes, select them
                     ActiveDocument.StoryRanges(wdEndnotesStory).Select
-                     With Selection.Find
+                    'Search the new selection for the style
+                    With Selection.Find
                          .Style = ActiveDocument.Styles(styleNameM(M))
                          .Wrap = wdFindContinue
                          .Format = True
@@ -856,7 +867,7 @@ CheckEndnotes:
 NextLoop:
     Next M
     
-    Debug.Print charStyles
+    'Debug.Print charStyles
     
     Status = "* Checking character styles..." & vbCr & Status
     
