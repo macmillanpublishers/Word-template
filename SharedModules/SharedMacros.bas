@@ -428,3 +428,17 @@ Public Function StoryArray() As Variant
     
     StoryArray = strStories
 End Function
+
+Public Function RegEx(Pattern As String, StringToMatch As String)
+    ' Uses regular expressions to find a pattern in a string
+    ' note that vbNewLine is \r\n and MultiLine needs to be False
+    Dim objRegEx1 As New RegExp
+    
+    objRegEx1.MultiLine = False
+    
+    objRegEx1.Pattern = Pattern
+    ' "^([End|Foot]{3,4}note Text -- p\. \d+\r\n){1,2}$"
+
+    RegEx = objRegEx1.test(StringToMatch)
+
+End Function
