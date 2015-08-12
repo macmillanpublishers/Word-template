@@ -228,15 +228,19 @@ Sub BookmakerReqs()
         
     'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
     Dim blnTemplateUsed As Boolean
-    
     If strGoodStylesList = vbNullString Then
         blnTemplateUsed = False
-        
-        'just returns list of styles in use
-        strGoodStylesList = StylesInUse(ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
-        strBadStylesList = ""
+    'Test if good styles are just Endnote Text and Footnote Text
+    ElseIf RegEx(Pattern:="^([End|Foot]{3,4}note Text -- p\. \d+\r\n){1,2}$", StringToMatch:=strGoodStylesList) = True Then
+        blnTemplateUsed = False
     Else
         blnTemplateUsed = True
+    End If
+    
+    'If template not used, just returns list of styles in use
+    If blnTemplateUsed = False Then
+        strGoodStylesList = StylesInUse(ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle, Stories:=arrStories)
+        strBadStylesList = ""
     End If
     
     '-------------------Create error report----------------------------
@@ -532,13 +536,19 @@ Sub MacmillanStyleReport()
     Dim blnTemplateUsed As Boolean
     If strGoodStylesList = vbNullString Then
         blnTemplateUsed = False
-        
-        'just returns list of styles in use
-        strGoodStylesList = StylesInUse(ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle)
-        strBadStylesList = ""
+    'Test if good styles are just Endnote Text and Footnote Text
+    ElseIf RegEx(Pattern:="^([End|Foot]{3,4}note Text -- p\. \d+\r\n){1,2}$", StringToMatch:=strGoodStylesList) = True Then
+        blnTemplateUsed = False
     Else
         blnTemplateUsed = True
     End If
+    
+    'If template not used, just returns list of styles in use
+    If blnTemplateUsed = False Then
+        strGoodStylesList = StylesInUse(ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle, Stories:=arrStories)
+        strBadStylesList = ""
+    End If
+        
     '-------------------Create error report----------------------------
     sglPercentComplete = 0.98
     strStatus = "* Checking styles for errors..." & vbCr & strStatus
@@ -887,6 +897,9 @@ NextLoop:
     
     'Debug.Print strGoodStyles
     'Debug.Print strBadStyles
+    
+    'If only good styles are Endnote Text and Footnote text, then the template is not being used
+    
     
     'Add both good and bad styles lists to an array to pass back to original sub
     Dim arrFinalLists() As Variant
@@ -2194,7 +2207,7 @@ Private Sub CreateReport(TemplateUsed As Boolean, errorList As String, metadata 
     End If
 End Sub
 
-Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgTitle As String) As String
+Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As String
     'Creates a list of all styles in use, not just Macmillan styles
     'No list of bad styles
     'For use when no Macmillan template is attached
@@ -2217,6 +2230,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     '''''''''''''''''''''
     Dim activeParaRange As Range
     Dim pageNumber As Integer
+    Dim a As Long
     
     '----------Collect all styles being used-------------------------------
     styleGoodCount = 0
@@ -2240,22 +2254,25 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
             End If
         End If
         
-        paraStyle = activeDoc.Paragraphs(J).Style
-        Set activeParaRange = activeDoc.Paragraphs(J).Range
-        pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
-
-        For K = 1 To styleGoodCount
-            ' "Left" function because now stylesGood includes page number, so won't match paraStyle
-            If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
-                K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
-                Exit For                                        'stylereport bug fix #1   v. 3.1
-            End If                                              'stylereport bug fix #1   v. 3.1
-        Next K
-        If K = styleGoodCount + 1 Then
-            styleGoodCount = K
-            stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
-        End If
+        For a = LBound(Stories()) To UBound(Stories())
+            If J <= ActiveDocument.StoryRanges(a).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(a).Paragraphs(J).Style
+                Set activeParaRange = activeDoc.StoryRanges(a).Paragraphs(J).Range
+                pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
         
+                For K = 1 To styleGoodCount
+                    ' "Left" function because now stylesGood includes page number, so won't match paraStyle
+                    If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
+                        K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                        Exit For                                        'stylereport bug fix #1   v. 3.1
+                    End If                                              'stylereport bug fix #1   v. 3.1
+                Next K
+                If K = styleGoodCount + 1 Then
+                    styleGoodCount = K
+                    stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
+                End If
+            End If
+        Next a
     Next J
     
     'Sort good styles
@@ -2414,4 +2431,5 @@ ErrHandler:
     End If
         
 End Function
+
 
