@@ -430,15 +430,22 @@ Public Function StoryArray() As Variant
 End Function
 
 Public Function RegEx(Pattern As String, StringToMatch As String)
+    ' Only works for Windows! Argh!!
     ' Uses regular expressions to find a pattern in a string
     ' note that vbNewLine is \r\n and MultiLine needs to be False
-    Dim objRegEx1 As New RegExp
     
-    objRegEx1.MultiLine = False
+    #If Mac Then
+        'Placeholder until we can figure out how to do it on Mac
+        RegEx = False
+    #Else
+        Dim objRegEx1 As New RegExp
+        
+        objRegEx1.MultiLine = False
+        
+        objRegEx1.Pattern = Pattern
+        ' "^([End|Foot]{3,4}note Text -- p\. \d+\r\n){1,2}$"
     
-    objRegEx1.Pattern = Pattern
-    ' "^([End|Foot]{3,4}note Text -- p\. \d+\r\n){1,2}$"
-
-    RegEx = objRegEx1.test(StringToMatch)
+        RegEx = objRegEx1.test(StringToMatch)
+    #End If
 
 End Function
