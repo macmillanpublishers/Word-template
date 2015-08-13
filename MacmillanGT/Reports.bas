@@ -228,10 +228,17 @@ Sub BookmakerReqs()
         
     'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
     Dim blnTemplateUsed As Boolean
+    Dim strSearchPattern As String
+    ' Searching for "Footnote Text" or "Endnote Text" followed by page number, then
+    ' followed by anything NOT including a close bracket. If there are other Mac styles
+    ' it won't select the whole string
+    
+    strSearchPattern = "[EF]{1}[dnot]{4}[eot]{2,} Text -- p. [0-9]{1,}[!\)]{1,}"
+    
     If strGoodStylesList = vbNullString Then
         blnTemplateUsed = False
-    'Test if good styles are just Endnote Text and Footnote Text
-    ElseIf RegEx(Pattern:="^([End|Foot]{3,4}note Text -- p\. \d+\r\n){1,2}$", StringToMatch:=strGoodStylesList) = True Then
+    ' Test if good styles are just Endnote Text and Footnote Text
+    ElseIf PatternMatch(SearchPattern:=strSearchPattern, SearchText:=strGoodStylesList, WholeString:=True) = True Then
         blnTemplateUsed = False
     Else
         blnTemplateUsed = True
@@ -534,10 +541,17 @@ Sub MacmillanStyleReport()
     
     'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
     Dim blnTemplateUsed As Boolean
+    Dim strSearchPattern As String
+    ' Searching for "Footnote Text" or "Endnote Text" followed by page number, then
+    ' followed by anything NOT including a close bracket. If there are other Mac styles
+    ' it won't select the whole string
+    
+    strSearchPattern = "[EF]{1}[dnot]{4}[eot]{2,} Text -- p. [0-9]{1,}[!\)]{1,}"
+    
     If strGoodStylesList = vbNullString Then
         blnTemplateUsed = False
-    'Test if good styles are just Endnote Text and Footnote Text
-    ElseIf RegEx(Pattern:="^([End|Foot]{3,4}note Text -- p\. \d+\r\n){1,2}$", StringToMatch:=strGoodStylesList) = True Then
+    ' Test if good styles are just Endnote Text and Footnote Text
+    ElseIf PatternMatch(SearchPattern:=strSearchPattern, SearchText:=strGoodStylesList, WholeString:=True) = True Then
         blnTemplateUsed = False
     Else
         blnTemplateUsed = True
@@ -685,11 +699,10 @@ Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar,
             End If
         End If
         
-
         For a = LBound(Stories()) To UBound(Stories())
-            If J <= ActiveDocument.StoryRanges(a).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(a).Paragraphs(J).Style
-                Set activeParaRange = activeDoc.StoryRanges(a).Paragraphs(J).Range
+            If J <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Style
+                Set activeParaRange = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
                     
                 'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
@@ -720,6 +733,7 @@ CheckGoodStyles:
                         Next L
                         If L > 100 Then                                                 ' Exits if more than 100 bad paragraphs
                                 styleBadOverflow = True
+                                stylesBad(100) = "** WARNING: More than 100 paragraphs with bad styles found." & vbNewLine & vbNewLine
                             Exit For
                         End If
                         If L = styleBadCount + 1 Then
@@ -752,7 +766,7 @@ CheckGoodStyles:
         strGoodStyles = ""
     Else
         For K = LBound(stylesGood()) To UBound(stylesGood())
-            strGoodStyles = strGoodStyles & stylesGood(K) & vbNewLine
+            strGoodStyles = strGoodStyles & stylesGood(K) & Chr(11)
         Next K
     End If
     
@@ -832,7 +846,7 @@ CheckGoodStyles:
         End With
         
         If Selection.Find.Found = True Then
-            charStyles = charStyles & styleNameM(M) & vbNewLine
+            charStyles = charStyles & styleNameM(M) & Chr(11)
         'Else not present in main text story
         Else
             ' So check if there are footnotes
@@ -848,7 +862,7 @@ CheckGoodStyles:
                 End With
             
                 If Selection.Find.Found = True Then
-                    charStyles = charStyles & styleNameM(M) & vbNewLine
+                    charStyles = charStyles & styleNameM(M) & Chr(11)
                 ' Else didn't find style in footnotes, check endnotes
                 Else
                     GoTo CheckEndnotes
@@ -868,7 +882,7 @@ CheckEndnotes:
                      End With
                         
                     If Selection.Find.Found = True Then
-                        charStyles = charStyles & styleNameM(M) & vbNewLine
+                        charStyles = charStyles & styleNameM(M) & Chr(11)
                     End If
                 End If
             End If
@@ -882,6 +896,7 @@ NextLoop:
     
     'Move selection back to original starting point, added in parent Sub
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        ActiveDocument.StoryRanges(wdMainTextStory).Select
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
     End If
     
@@ -1183,6 +1198,7 @@ Private Function GetText(styleName As String) As String
     
     'Move selection back to original starting point, added in parent sub
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        ActiveDocument.StoryRanges(wdMainTextStory).Select
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
     End If
     
@@ -1286,6 +1302,7 @@ Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
     
     'Move selection back to original starting point, added in parent sub
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        ActiveDocument.StoryRanges(wdMainTextStory).Select
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
     End If
     Exit Function
@@ -1413,6 +1430,7 @@ Err2Resume:
     
     'Move selection back to original cursor position, bookmark added in parent Sub
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        ActiveDocument.StoryRanges(wdMainTextStory).Select
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
     End If
     
@@ -1480,7 +1498,9 @@ Private Function FixTrackChanges() As Boolean
     Application.DisplayAlerts = True
     
     'Move cursor back to original starting point, added in parent Sub
+    'Selection.HomeKey Unit:=wdDocument
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        ActiveDocument.StoryRanges(wdMainTextStory).Select
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
     End If
 
@@ -1630,8 +1650,8 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
         End If
         
         For a = LBound(Stories()) To UBound(Stories())
-            If N <= ActiveDocument.StoryRanges(a).Paragraphs.Count Then
-                paraStyle = ActiveDocument.StoryRanges(a).Paragraphs(N).Style
+            If N <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
+                paraStyle = ActiveDocument.StoryRanges(Stories(a)).Paragraphs(N).Style
                 'Debug.Print paraStyle
                 
                 If Right(paraStyle, 1) = ")" Then
@@ -2255,9 +2275,9 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
         End If
         
         For a = LBound(Stories()) To UBound(Stories())
-            If J <= ActiveDocument.StoryRanges(a).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(a).Paragraphs(J).Style
-                Set activeParaRange = activeDoc.StoryRanges(a).Paragraphs(J).Range
+            If J <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Style
+                Set activeParaRange = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
         
                 For K = 1 To styleGoodCount
@@ -2404,7 +2424,8 @@ Private Function BookTypeCheck()
                 Next a
             
             If blnMissing = True Then
-                strErrors = strErrors & "** ERROR: Correct book type required in parentheses after ISBN " & strISBN & " on copyright page." _
+                strErrors = strErrors & "** ERROR: Correct book type required in parentheses after" & vbNewLine & _
+                    "ISBN " & strISBN & " on copyright page." _
                     & vbNewLine & vbNewLine
             End If
             

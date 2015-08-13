@@ -1,5 +1,5 @@
 Attribute VB_Name = "SharedMacros"
-' For macros that are shared by macros in other modules of the Macmillan template
+
 ' All should be declared as Public for use from other modules
 
 Option Explicit
@@ -373,19 +373,19 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
     
 End Function
 
-Public Function NotesExist(StoryType As WdStoryType) As Boolean
-    On Error GoTo ErrHandler
-    Dim myRange As Range
-    Set myRange = ActiveDocument.StoryRanges(StoryType)
-    'If can set as myRange, then exists
-    NotesExist = True
-    On Error GoTo 0
-    Exit Function
-ErrHandler:
-    If Err.Number = 5941 Then   '"Member of the collection does not exist"
-        NotesExist = False
-    End If
-End Function
+'Public Function NotesExist(StoryType As WdStoryType) As Boolean
+'    On Error GoTo ErrHandler
+'    Dim myRange As Range
+'    Set myRange = ActiveDocument.StoryRanges(StoryType)
+'    'If can set as myRange, then exists
+'    NotesExist = True
+'    On Error GoTo 0
+'    Exit Function
+'ErrHandler:
+'    If Err.Number = 5941 Then   '"Member of the collection does not exist"
+'        NotesExist = False
+'    End If
+'End Function
 
 Public Sub zz_clearFind()
 
@@ -414,38 +414,71 @@ Public Function StoryArray() As Variant
     Dim strStories() As Variant
     
     ReDim strStories(1 To 1)
-    strStories(1) = "wdMainTextStory"
+    strStories(1) = wdMainTextStory
     
-    If NotesExist(wdEndnotesStory) = True Then
+    If ActiveDocument.Endnotes.Count > 0 Then
         ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
-        strStories(UBound(strStories())) = "wdEndnotesStory"
+        strStories(UBound(strStories())) = wdEndnotesStory
     End If
     
-    If NotesExist(wdFootnotesStory) = True Then
+    If ActiveDocument.Footnotes.Count > 0 Then
         ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
-        strStories(UBound(strStories())) = "wdFootnotesStory"
+        strStories(UBound(strStories())) = wdFootnotesStory
     End If
     
     StoryArray = strStories
 End Function
 
-Public Function RegEx(Pattern As String, StringToMatch As String)
-    ' Only works for Windows! Argh!!
-    ' Uses regular expressions to find a pattern in a string
-    ' note that vbNewLine is \r\n and MultiLine needs to be False
-    
-    #If Mac Then
-        'Placeholder until we can figure out how to do it on Mac
-        RegEx = False
-    #Else
-        Dim objRegEx1 As New RegExp
+Function PatternMatch(SearchPattern As String, SearchText As String, WholeString As Boolean) As Boolean
+    ' "SearchPattern" uses Word Find pattern matching, which is not the same as regular expressions
+    ' But the RegEx library breaks Word Mac 2011, so we'll do it this way
+    ' This is a good reference: http://www.gmayor.com/replace_using_wildcards.htm
+    ' "SearchText" is the string you're looking in
+    ' "WholeString" is True if you are trying to match the whole string; if just part
+    ' of the string is an acceptable match, set to False
         
-        objRegEx1.MultiLine = False
-        
-        objRegEx1.Pattern = Pattern
-        ' "^([End|Foot]{3,4}note Text -- p\. \d+\r\n){1,2}$"
+    ' Need to paste string into a Word doc to use Find pattern matching
+    Dim newDoc As New Document
+    Set newDoc = Documents.Add(Visible:=False)
+    newDoc.Select
     
-        RegEx = objRegEx1.test(StringToMatch)
-    #End If
-
+    Selection.InsertBefore (SearchText)
+    ' Insertion point has to be at start of doc for Selection.Find
+    Selection.Collapse (wdCollapseStart)
+    
+    With Selection.Find
+        .ClearFormatting
+        .Text = SearchPattern
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = False
+        .MatchWholeWord = False
+        .MatchCase = True
+        .MatchWildcards = True
+        .MatchSoundsLike = False
+        .Execute
+    End With
+    
+    If Selection.Find.Found = True Then
+        If WholeString = True Then
+            ' The final paragraph return is the only character the new doc had it in, not part of added string
+            If InStrRev(Selection.Text, Chr(13)) = Len(Selection.Text) Then
+                Selection.MoveEnd Unit:=wdCharacter, Count:=-1
+            End If
+            
+            If Len(Selection.Text) = Len(SearchText) Then
+                PatternMatch = True
+            Else
+                PatternMatch = False
+            End If
+        Else
+            PatternMatch = True
+        End If
+    Else
+        PatternMatch = False
+    End If
+    
+    newDoc.Close wdDoNotSaveChanges
+    
 End Function
+
