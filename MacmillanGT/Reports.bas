@@ -100,6 +100,8 @@ Sub BookmakerReqs()
     End If
     
     '--------save the current cursor location in a bookmark---------------------------
+    Dim currentStory As WdStoryType
+    currentStory = Selection.StoryType
     Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
     ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
     
@@ -301,6 +303,7 @@ Sub BookmakerReqs()
     
     'return cursor to original position and delete bookmark
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        ActiveDocument.StoryRanges(currentStory).Select
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
         ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
     End If
@@ -409,6 +412,8 @@ Sub MacmillanStyleReport()
     
     
     '--------save the current cursor location in a bookmark---------------------------
+    Dim currentStory As WdStoryType
+    currentStory = Selection.StoryType
     Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
     ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
     
@@ -617,6 +622,7 @@ Sub MacmillanStyleReport()
     
     'return cursor to original position and delete bookmark
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        ActiveDocument.StoryRanges(currentStory).Select
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
         ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
     End If
@@ -893,12 +899,6 @@ NextLoop:
     'Debug.Print charStyles
     
     Status = "* Checking character styles..." & vbCr & Status
-    
-    'Move selection back to original starting point, added in parent Sub
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        ActiveDocument.StoryRanges(wdMainTextStory).Select
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-    End If
     
     'Add character styles to Good styles list
     strGoodStyles = strGoodStyles & charStyles
@@ -1195,13 +1195,7 @@ Private Function GetText(styleName As String) As String
             Selection.MoveEndWhile Cset:=Chr(13), Count:=1
         End If
     Loop
-    
-    'Move selection back to original starting point, added in parent sub
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        ActiveDocument.StoryRanges(wdMainTextStory).Select
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-    End If
-    
+        
     If fCount = 0 Then
         GetText = ""
     Else
@@ -1300,11 +1294,6 @@ Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
     
     CheckPrevStyle = jString
     
-    'Move selection back to original starting point, added in parent sub
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        ActiveDocument.StoryRanges(wdMainTextStory).Select
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-    End If
     Exit Function
     
 ErrHandler:
@@ -1428,12 +1417,6 @@ Err2Resume:
     
     CheckAfterPB = kString
     
-    'Move selection back to original cursor position, bookmark added in parent Sub
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        ActiveDocument.StoryRanges(wdMainTextStory).Select
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-    End If
-    
     Exit Function
 
 ErrHandler1:
@@ -1497,13 +1480,6 @@ Private Function FixTrackChanges() As Boolean
     On Error GoTo 0
     Application.DisplayAlerts = True
     
-    'Move cursor back to original starting point, added in parent Sub
-    'Selection.HomeKey Unit:=wdDocument
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        ActiveDocument.StoryRanges(wdMainTextStory).Select
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-    End If
-
 End Function
 
 Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String, Stories() As Variant) As String
