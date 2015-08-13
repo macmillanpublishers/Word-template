@@ -766,7 +766,7 @@ CheckGoodStyles:
         strGoodStyles = ""
     Else
         For K = LBound(stylesGood()) To UBound(stylesGood())
-            strGoodStyles = strGoodStyles & stylesGood(K) & Chr(11)
+            strGoodStyles = strGoodStyles & stylesGood(K) & vbCrLf
         Next K
     End If
     

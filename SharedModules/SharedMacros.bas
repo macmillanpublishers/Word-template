@@ -459,14 +459,23 @@ Function PatternMatch(SearchPattern As String, SearchText As String, WholeString
         .Execute
     End With
     
+    
+    
     If Selection.Find.Found = True Then
         If WholeString = True Then
-            ' The final paragraph return is the only character the new doc had it in, not part of added string
+            ' The final paragraph return is the only character the new doc had it in,
+            ' it 's not part of the added string
             If InStrRev(Selection.Text, Chr(13)) = Len(Selection.Text) Then
                 Selection.MoveEnd Unit:=wdCharacter, Count:=-1
             End If
             
-            If Len(Selection.Text) = Len(SearchText) Then
+            ' the SearchText requires vbCrLf to start text on a new line, but Word for some reason
+            ' strips out the Lf when content is pasted in. CrLf counts as 2 characters but Cr is only
+            ' 1, so to get these to match we need to add 1 character to the selection for each line.
+            Dim lngLines As Long
+            lngLines = ActiveDocument.ComputeStatistics(wdStatisticLines)
+            
+            If Len(Selection.Text) + lngLines = Len(SearchText) Then
                 PatternMatch = True
             Else
                 PatternMatch = False
