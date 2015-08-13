@@ -37,21 +37,11 @@ Sub MacmillanCharStyles()
             'Exit Sub
         'End If
     '------------check for endnotes and footnotes--------------------------
-    Dim stStories() As WdStoryType
+    Dim stStories() As Variant
+    Dim a As Long
     
-    ReDim stStories(1 To 1)
-    stStories(1) = wdMainTextStory
-    
-    If NotesExist(wdEndnotesStory) = True Then
-        ReDim stStories(1 To (UBound(stStories()) + 1))
-        stStories(UBound(stStories())) = wdEndnotesStory
-    End If
-    
-    If NotesExist(wdFootnotesStory) = True Then
-        ReDim stStories(1 To (UBound(stStories()) + 1))
-        stStories(UBound(stStories())) = wdFootnotesStory
-    End If
-        
+    stStories = StoryArray
+     
     '------------record status of current status bar and then turn on-------
     Dim currentStatusBar As Boolean
     currentStatusBar = Application.DisplayStatusBar

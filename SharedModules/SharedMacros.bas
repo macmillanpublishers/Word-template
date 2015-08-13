@@ -1,5 +1,5 @@
 Attribute VB_Name = "SharedMacros"
-' For macros that are shared by macros in other modules of the Macmillan template
+
 ' All should be declared as Public for use from other modules
 
 Option Explicit
@@ -373,19 +373,19 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
     
 End Function
 
-Public Function NotesExist(StoryType As WdStoryType) As Boolean
-    On Error GoTo ErrHandler
-    Dim myRange As Range
-    Set myRange = ActiveDocument.StoryRanges(StoryType)
-    'If can set as myRange, then exists
-    NotesExist = True
-    On Error GoTo 0
-    Exit Function
-ErrHandler:
-    If Err.Number = 5941 Then   '"Member of the collection does not exist"
-        NotesExist = False
-    End If
-End Function
+'Public Function NotesExist(StoryType As WdStoryType) As Boolean
+'    On Error GoTo ErrHandler
+'    Dim myRange As Range
+'    Set myRange = ActiveDocument.StoryRanges(StoryType)
+'    'If can set as myRange, then exists
+'    NotesExist = True
+'    On Error GoTo 0
+'    Exit Function
+'ErrHandler:
+'    If Err.Number = 5941 Then   '"Member of the collection does not exist"
+'        NotesExist = False
+'    End If
+'End Function
 
 Public Sub zz_clearFind()
 
@@ -408,3 +408,86 @@ Public Sub zz_clearFind()
     End With
     
 End Sub
+
+Public Function StoryArray() As Variant
+    '------------check for endnotes and footnotes--------------------------
+    Dim strStories() As Variant
+    
+    ReDim strStories(1 To 1)
+    strStories(1) = wdMainTextStory
+    
+    If ActiveDocument.Endnotes.Count > 0 Then
+        ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
+        strStories(UBound(strStories())) = wdEndnotesStory
+    End If
+    
+    If ActiveDocument.Footnotes.Count > 0 Then
+        ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
+        strStories(UBound(strStories())) = wdFootnotesStory
+    End If
+    
+    StoryArray = strStories
+End Function
+
+Function PatternMatch(SearchPattern As String, SearchText As String, WholeString As Boolean) As Boolean
+    ' "SearchPattern" uses Word Find pattern matching, which is not the same as regular expressions
+    ' But the RegEx library breaks Word Mac 2011, so we'll do it this way
+    ' This is a good reference: http://www.gmayor.com/replace_using_wildcards.htm
+    ' "SearchText" is the string you're looking in
+    ' "WholeString" is True if you are trying to match the whole string; if just part
+    ' of the string is an acceptable match, set to False
+        
+    ' Need to paste string into a Word doc to use Find pattern matching
+    Dim newDoc As New Document
+    Set newDoc = Documents.Add(Visible:=False)
+    newDoc.Select
+    
+    Selection.InsertBefore (SearchText)
+    ' Insertion point has to be at start of doc for Selection.Find
+    Selection.Collapse (wdCollapseStart)
+    
+    With Selection.Find
+        .ClearFormatting
+        .Text = SearchPattern
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = False
+        .MatchWholeWord = False
+        .MatchCase = True
+        .MatchWildcards = True
+        .MatchSoundsLike = False
+        .Execute
+    End With
+    
+    
+    
+    If Selection.Find.Found = True Then
+        If WholeString = True Then
+            ' The final paragraph return is the only character the new doc had it in,
+            ' it 's not part of the added string
+            If InStrRev(Selection.Text, Chr(13)) = Len(Selection.Text) Then
+                Selection.MoveEnd Unit:=wdCharacter, Count:=-1
+            End If
+            
+            ' the SearchText requires vbCrLf to start text on a new line, but Word for some reason
+            ' strips out the Lf when content is pasted in. CrLf counts as 2 characters but Cr is only
+            ' 1, so to get these to match we need to add 1 character to the selection for each line.
+            Dim lngLines As Long
+            lngLines = ActiveDocument.ComputeStatistics(wdStatisticLines)
+            
+            If Len(Selection.Text) + lngLines = Len(SearchText) Then
+                PatternMatch = True
+            Else
+                PatternMatch = False
+            End If
+        Else
+            PatternMatch = True
+        End If
+    Else
+        PatternMatch = False
+    End If
+    
+    newDoc.Close wdDoNotSaveChanges
+    
+End Function
+
