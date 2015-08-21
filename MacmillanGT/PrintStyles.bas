@@ -5,6 +5,7 @@ Sub PrintStyles()
     ' Prints current styles names to the left of each paragraph
     
     ' ===== DEPENDENCIES ==========================================================
+    ' Requires module AttachTemplateMacro
     ' Before you run this, create a text box with the listed settings below, then select the
     ' text box and go to Insert > Text Box > Save Selection to Text Box Gallery (Word 2013). In the
     ' Create New Building Block dialog that opens, name the Building Block "StyleNames1" and
@@ -50,20 +51,30 @@ Sub PrintStyles()
         .Options.PasteFormatBetweenDocuments = wdKeepSourceFormatting
     End With
     
+    ' ===== Create new version of this document to manipulate ============
     ' Copy the text of the document into a new document, so we don't screw up the original
-    ActiveDocument.StoryRanges(wdMainTextStory).Copy
+    ' Needs to have the BoundMS template attached before copying so the styles match
+    ' the new document later, or won't copy any styles
+    Dim currentTemplate As String
+    Dim currentDoc As Document
+    Set currentDoc = ActiveDocument
+    ' Record current template
+    currentTemplate = currentDoc.AttachedTemplate
     
-    ' Test if document has any text in it (1 = just a single paragraph return)
+    ' Attach BoundMS template to original doc, then copy contents
+    Call AttachTemplateMacro.zz_AttachBoundMSTemplate
+    currentDoc.StoryRanges(wdMainTextStory).Copy
+    
     Dim tempDoc As Document
-    
-    If Len(Selection) > 1 Then
-        Set tempDoc = Documents.Add '(Visible:=False) ' Can I set visibility to False here on Mac?
-        tempDoc.Content.PasteAndFormat wdFormatOriginalFormatting
-    Else
-        MsgBox "Your document doesn't appear to have any content.", vbCritical, "Oops!"
-        GoTo Cleanup
-    End If
-    
+    ' Create a new document
+    Set tempDoc = Documents.Add '(Visible:=False) ' Can I set visibility to False here on Mac?
+    ' Add Macmillan styles with no color guides (because if we don't add them,
+    ' we get an error that there are too many styles to paste and it just pastes
+    ' all with Normal style)
+    tempDoc.Activate
+    Call AttachTemplateMacro.zz_AttachBoundMSTemplate
+    tempDoc.Content.PasteAndFormat wdFormatOriginalFormatting
+        
     ' ===== Set margins =================
     ' if possible, we want the total margin size to stay the same
     ' so that the paragraphs don't reflow
@@ -144,10 +155,20 @@ Sub PrintStyles()
         .ParagraphFormat.SpaceAfter = currentSpace
     End With
     
-    ' Close newly created doc w/o saving
-    tempDoc.Close wdDoNotSaveChanges
-        
 Cleanup:
+    ' Close newly created doc w/o saving
+    Dim tempDocPath As String
+    tempDocPath = tempDoc.Path
+
+    If IsItThere(tempDocPath) = True Then
+        tempDoc.Close wdDoNotSaveChanges
+    End If
+    
+    ' Return original document to original template
+    currentDoc.Activate
+    Call AttachTemplateMacro.AttachMe(TemplateName:=currentTemplate)
+    
+    ' Reset settings to original
     With Application
         .DisplayAlerts = lngOpt
         .Options.PasteFormatBetweenStyledDocuments = lngPasteStyled
