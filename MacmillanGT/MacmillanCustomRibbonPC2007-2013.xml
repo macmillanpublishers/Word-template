@@ -16,6 +16,7 @@
 				</group>
 				<group id="CustGrp2" label="Manuscript Tools" >
 					<button id="BtnCastoff" label="Castoff" image="_0013_castoff---calculator" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnEndnotes" label="Unlink Endnotes" image="_0007_de-embed-endnotes---unlink" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="BtnCleanup" label="Manuscript Cleanup" image="_0005_manuscript-cleanup---wineglass" size="large" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp3" label="Style Tools" >
@@ -25,8 +26,9 @@
 					<button id="BtnLocTags" label="CIP Application Tags" image="_0010_CIP-application-tags---index" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp4" label="Help" >
-					<button id="BtnGtVersion" label="Macmillan Tools Version" image="question16" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnStyleVersion" label="Macmillan Styles Version" image="question16" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnGtVersion" label="Macmillan Tools Version" image="_0009_-check-macros_styles-version---info" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnStyleVersion" label="Macmillan Styles Version" image="_0009_-check-macros_styles-version---info" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnTriceratops" image="_0000_insert-ASCII-triceratops---pizza" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
 			</tab>
 		</tabs>
