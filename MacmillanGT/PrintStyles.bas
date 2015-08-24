@@ -29,8 +29,12 @@ Sub PrintStyles()
     ' Doesn't work for endnotes/footnotes (can't add a drawing object to EN/FNs)
     
     ' ====== TO DO ======
-    ' save original document (can use shared macros?)
     ' add progress bar?
+    
+    ''-----------------Check if doc is saved/protected---------------
+    If CheckSave = True Then
+        Exit Function
+    End If
     
     Application.ScreenUpdating = False
     

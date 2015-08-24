@@ -635,37 +635,13 @@ End Sub
 Function zz_errorChecks()
 
     zz_errorChecks = False
-    Dim mainDoc As Document
-    Set mainDoc = ActiveDocument
-    Dim iReply As Integer
-
-    '-----make sure document is saved
-    Dim docSaved As Boolean                                                                                                 'v. 3.1 update
-    docSaved = mainDoc.Saved
     
-    If docSaved = False Then
-        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-            "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
-            vbOKCancel, "Alert")
-        
-        If iReply = vbOK Then
-            mainDoc.Save
-        Else
-            zz_errorChecks = True
-            Exit Function
-        End If
-    
-    End If
-
-    '-----test protection
-    If ActiveDocument.ProtectionType <> wdNoProtection Then
-        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
-            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
-            "TIP: If you don't know the protection password, try pasting contents of this file into a " & _
-            "new file, and run the macro on that.", , "Error 2"
+    ''-----------------Check if doc is saved/protected---------------
+    If CheckSave = True Then
         zz_errorChecks = True
         Exit Function
     End If
+
 
     '-----test if backtick style tag already exists
     Set activeRng = ActiveDocument.Range
@@ -694,7 +670,7 @@ Function zz_errorChecks()
     If foundBad = True Then                'If activeRng.Find.Execute Then
         MsgBox "Something went wrong! The macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & _
             "'" & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support, I am sure they will " & _
-            "be happy to help.", , "Error Code: 1"
+            "be happy to help.", , "Error Code: 3"
         zz_errorChecks = True
     End If
 

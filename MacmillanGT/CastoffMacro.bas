@@ -21,6 +21,11 @@ Sub UniversalCastoff()
     blnStaging = False
 ' ============================================
 
+    '---------- Check if doc is saved ---------------------------------
+    If CheckSave = True Then
+        Exit Sub
+    End If
+    
     '----------Load userform to get user inputs------------------------
     Dim objCastoffForm As CastoffForm
     Set objCastoffForm = New CastoffForm
