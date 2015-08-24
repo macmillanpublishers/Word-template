@@ -51,9 +51,6 @@ Sub PrintStyles()
     currentStatusBar = Application.DisplayStatusBar
     Application.DisplayStatusBar = True
     
-    Dim objProgressPrint As ProgressBar
-    Set objProgressPrint = New ProgressBar
-    
     Dim sglPercentComplete As Single
     Dim strStatus As String
     Dim strTitle As String
@@ -68,6 +65,8 @@ Sub PrintStyles()
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
         DoEvents
     #Else
+        Dim objProgressPrint As ProgressBar
+        Set objProgressPrint = New ProgressBar
         objProgressPrint.Title = strTitle
         objProgressPrint.Show
         objProgressPrint.Increment sglPercentComplete, strStatus
@@ -84,11 +83,11 @@ Sub PrintStyles()
     With Application
     ' record current settings to reset in Cleanup
         lngOpt = .DisplayAlerts
-        lngPasteStyled = .Options.PasteFormatBetweenStyledDocuments
-        lngPasteFormat = .Options.PasteFormatBetweenDocuments
-        .DisplayAlerts = wdAlertsNone
-        .Options.PasteFormatBetweenStyledDocuments = wdKeepSourceFormatting
-        .Options.PasteFormatBetweenDocuments = wdKeepSourceFormatting
+        'lngPasteStyled = .Options.PasteFormatBetweenStyledDocuments ' not available on Mac
+        'lngPasteFormat = .Options.PasteFormatBetweenDocuments  ' not available on Mac
+        .DisplayAlerts = wdAlertsMessageBox
+        '.Options.PasteFormatBetweenStyledDocuments = wdKeepSourceFormatting
+        '.Options.PasteFormatBetweenDocuments = wdKeepSourceFormatting
     End With
     
     ' ===== Create new version of this document to manipulate ============
@@ -200,17 +199,17 @@ Sub PrintStyles()
     Dim b As Long
     
     ' This is the template where the building block is saved
-    strPath = Environ("APPDATA") & "\Microsoft\Word\STARTUP\MacmillanGT.dotm"
-    If IsItThere(strPath) = True Then
-        Set objTemplate = Templates(strPath)
-    Else
-        MsgBox "I can't find the Macmillan template, sorry."
-        GoTo Cleanup
-    End If
+    'strPath = Environ("APPDATA") & "\Microsoft\Word\STARTUP\MacmillanGT.dotm"
+    'If IsItThere(strPath) = True Then
+    '    Set objTemplate = Templates(strPath)
+    'Else
+    '    MsgBox "I can't find the Macmillan template, sorry."
+    '    GoTo Cleanup
+   ' End If
     
     ' Access the building block through the type and category
     ' NOTE the text box building block has to already be created in the template.
-    Set objBB = objTemplate.BuildingBlockTypes(wdTypeTextBox).Categories("Macmillan").BuildingBlocks("StyleNames1")
+    ' Set objBB = objTemplate.BuildingBlockTypes(wdTypeTextBox).Categories("Macmillan").BuildingBlocks("StyleNames1") ' building blocks don't exist in Word 2011 Mac
     
     ' Count the number of current text boxes etc., because the index number of the new ones
     ' will be offset by that amount
@@ -220,11 +219,11 @@ Sub PrintStyles()
     
     For a = 1 To activeParas
         If a Mod 50 = 0 Then
-            sglPercentComplete = (((a / activeParas) * 0.85) + 0.1)
+            sglPercentComplete = Round((((a / activeParas) * 0.85) + 0.1), 2)
             strStatusLoop = "* Adding style names to paragraph " & a & " of " & activeParas & "..." & vbNewLine & strStatus
             
             #If Mac Then
-                Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+                Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatusLoop
                 DoEvents
             #Else
                 objProgressPrint.Title = strTitle
@@ -237,9 +236,29 @@ Sub PrintStyles()
         tempDoc.Paragraphs(a).Range.Select
         strStyle = Selection.Style
         Selection.Collapse Direction:=wdCollapseStart
-        objBB.Insert Where:=Selection.Range
-        tempDoc.Shapes(a + lngTextBoxes).TextFrame.TextRange.Text = strStyle
-    
+        'objBB.Insert Where:=Selection.Range
+        Dim newBox As Shape
+        Set newBox = tempDoc.Shapes.AddTextbox(Orientation:=msoTextOrientationHorizontal, Left:=InchesToPoints(0.13), Top:=0, Height:=InchesToPoints(0.4), _
+            Width:=InchesToPoints(1.35))
+        With newBox
+            .RelativeHorizontalPosition = wdRelativeHorizontalPositionLeftMarginArea
+            .RelativeVerticalPosition = wdRelativeVerticalPositionParagraph
+            .Top = 0
+            .Line.Visible = False
+            .LockAnchor = True
+            .TextFrame.TextRange.Text = strStyle
+            
+            With .WrapFormat
+                .Type = wdWrapSquare
+                .Side = wdWrapBoth
+                .DistanceTop = 0
+                .DistanceBottom = 0
+                .DistanceLeft = 0
+                .DistanceRight = 0
+            End With
+            
+        End With
+        
     Next a
     
     strStatus = "* Adding style names to margin..." & vbNewLine & strStatus
@@ -294,13 +313,17 @@ Cleanup:
     currentDoc.Activate
     Call AttachTemplateMacro.AttachMe(TemplateName:=currentTemplate)
     
-    Unload objProgressPrint
+    #If Mac Then
+        'Nothing
+    #Else
+        Unload objProgressPrint
+    #End If
     
     ' Reset settings to original
     With Application
         .DisplayAlerts = lngOpt
-        .Options.PasteFormatBetweenStyledDocuments = lngPasteStyled
-        .Options.PasteFormatBetweenDocuments = lngPasteFormat
+        '.Options.PasteFormatBetweenStyledDocuments = lngPasteStyled
+        '.Options.PasteFormatBetweenDocuments = lngPasteFormat
         .DisplayStatusBar = currentStatusBar
         .ScreenUpdating = True
         .ScreenRefresh
