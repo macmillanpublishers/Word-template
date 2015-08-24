@@ -233,7 +233,7 @@ Sub UniversalCastoff()
                                     vbNewLine & vbNewLine
                 End If
             
-                Debug.Print strPub
+                'Debug.Print strPub
                 
                 'Get spine size
                 If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
@@ -297,7 +297,7 @@ Private Function LoadCSVtoArray(Path As String) As Variant
             MsgBox "There was a problem with your Castoff.", vbCritical, "Error"
             Exit Function
         End If
-        Debug.Print Path
+        'Debug.Print Path
 
         ' Load the csv file.
         fnum = FreeFile
@@ -417,7 +417,7 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
 '----Get Log dir to save spines CSV to --------------------------
     Dim strLogDir As String
     strLogDir = Left(LogFile, InStrRev(LogFile, Application.PathSeparator) - 1)
-    Debug.Print strLogDir
+    'Debug.Print strLogDir
 
 '----Define spine chart file name--------------------------------
     Dim strSpineFile As String

@@ -2,10 +2,12 @@ Attribute VB_Name = "PrintStyles"
 Option Explicit
 Option Base 1
 Sub PrintStyles()
-    ' Prints current styles names to the left of each paragraph
+    ' Created by Erica Warren -- erica.warren@macmillan.com
+    
+    ' places current styles names to the left of each paragraph in the margin and prints document
     
     ' ===== DEPENDENCIES ==========================================================
-    ' Requires module AttachTemplateMacro
+    ' Requires modules AttachTemplateMacro (and thus also Macmillan style templates) and SharedMacros
     ' Before you run this, create a text box with the listed settings below, then select the
     ' text box and go to Insert > Text Box > Save Selection to Text Box Gallery (Word 2013). In the
     ' Create New Building Block dialog that opens, name the Building Block "StyleNames1" and
@@ -20,20 +22,26 @@ Sub PrintStyles()
     ' Layout > Text wrapping > Text wrap = right only
     ' Layout > Distance from text = 0" (each side)
     ' Layout > Size > Height: Absolute 0.4"
-    ' Layout > Size > Width: Absolute 1.35
-    ' Format > Shape Styles > Shape Outline > No outline
+    ' Layout > Size > Width: Absolute 1.35"
+    ' Format > Shape Styles > Shape Outline: No outline
     
     ' ===== LIMITATIONS ==========================================================
     ' "Normal" can't be in-use as a style in the document
     ' If total margin size (left + right) is < 2 " paragraphs will reflow
     ' Doesn't work for endnotes/footnotes (can't add a drawing object to EN/FNs)
     
-    ' ====== TO DO ======
-    ' add progress bar?
+    '=================================================
+    '                  Timer Start                  '|
+    Dim StartTime As Double                         '|
+    Dim SecondsElapsed As Double                    '|
+                                                    '|
+    'Remember time when macro starts                '|
+    StartTime = Timer                               '|
+    '=================================================
     
     ' ====== Check if doc is saved/protected ================
     If CheckSave = True Then
-        Exit Function
+        Exit Sub
     End If
     
     Application.ScreenUpdating = False
@@ -54,7 +62,7 @@ Sub PrintStyles()
     
     strTitle = "Print Styles in Margin"
     sglPercentComplete = 0.01
-    strStatus = "Fun thing here"
+    strStatus = "* Getting started..."
     
     #If Mac Then
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
@@ -85,7 +93,7 @@ Sub PrintStyles()
     
     ' ===== Create new version of this document to manipulate ============
     sglPercentComplete = 0.03
-    strStatus = "* Creating dupe document to tag with style names..."
+    strStatus = "* Creating dupe document to tag with style names..." & vbNewLine & strStatus
     
     #If Mac Then
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
@@ -122,7 +130,7 @@ Sub PrintStyles()
         
     ' ===== Set margins =================
     sglPercentComplete = 0.05
-    strStatus = "* Adjusting margins to fit style names..."
+    strStatus = "* Adjusting margins to fit style names..." & vbNewLine & strStatus
     
     #If Mac Then
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
@@ -155,7 +163,7 @@ Sub PrintStyles()
     
     ' ==== Change Normal style formatting (since it will define the text boxes) =====
     sglPercentComplete = 0.07
-    strStatus = "* Setting format for style names..."
+    strStatus = "* Setting format for style names..." & vbNewLine & strStatus
     
     #If Mac Then
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
@@ -182,24 +190,12 @@ Sub PrintStyles()
     End With
     
     ' ==== Add style names in margin ==================================
-    sglPercentComplete = 0.1
-    strStatus = "* Adding style names to margin..."
-    
-    #If Mac Then
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    #Else
-        objProgressPrint.Title = strTitle
-        objProgressPrint.Show
-        objProgressPrint.Increment sglPercentComplete, strStatus
-        Doze 50
-    #End If
-    
     Dim strPath As String
     Dim objTemplate As Template
     Dim objBB As BuildingBlock
     Dim strStyle As String
     Dim lngTextBoxes As Long
+    Dim activeParas As Long
     Dim a As Long
     Dim b As Long
     
@@ -218,13 +214,14 @@ Sub PrintStyles()
     
     ' Count the number of current text boxes etc., because the index number of the new ones
     ' will be offset by that amount
+    Dim strStatusLoop As String
     lngTextBoxes = tempDoc.Shapes.Count
     activeParas = tempDoc.Paragraphs.Count
     
     For a = 1 To activeParas
-        If a Mod 100 = 0 Then
+        If a Mod 50 = 0 Then
             sglPercentComplete = (((a / activeParas) * 0.85) + 0.1)
-            strStatus = "* Adding style names to paragraph " & a & " of " & activeParas & "..."
+            strStatusLoop = "* Adding style names to paragraph " & a & " of " & activeParas & "..." & vbNewLine & strStatus
             
             #If Mac Then
                 Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
@@ -232,7 +229,7 @@ Sub PrintStyles()
             #Else
                 objProgressPrint.Title = strTitle
                 objProgressPrint.Show
-                objProgressPrint.Increment sglPercentComplete, strStatus
+                objProgressPrint.Increment sglPercentComplete, strStatusLoop
                 Doze 50
             #End If
         End If
@@ -245,9 +242,11 @@ Sub PrintStyles()
     
     Next a
     
+    strStatus = "* Adding style names to margin..." & vbNewLine & strStatus
+
     ' Now open the print dialog so user can print the document.
     sglPercentComplete = 0.97
-    strStatus = "* Printing document with style names in  margin..."
+    strStatus = strStatus & "* Printing document with style names in  margin..." & vbNewLine
     
     #If Mac Then
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
@@ -263,7 +262,7 @@ Sub PrintStyles()
     
     ' Cleanup
     sglPercentComplete = 1
-    strStatus = "* Finishing up..."
+    strStatus = strStatus & "* Finishing up..." & vbNewLine
     
     #If Mac Then
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
@@ -281,13 +280,14 @@ Cleanup:
     tempDocPath = tempDoc.Path
 
     If IsItThere(tempDocPath) = True Then
-        tempDoc.Close wdDoNotSaveChanges
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
             .Font.Size = currentSize
             .Font.Name = currentName
             .ParagraphFormat.SpaceAfter = currentSpace
         End With
+        ' Close temo doc without saving
+        tempDoc.Close wdDoNotSaveChanges
     End If
     
     ' Return original document to original template
@@ -305,6 +305,17 @@ Cleanup:
         .ScreenUpdating = True
         .ScreenRefresh
     End With
+    
+    '============================================================================
+    '----------------------Timer End-------------------------------------------
+    ''''Determine how many seconds code took to run
+      SecondsElapsed = Round(Timer - StartTime, 2)
+    
+    ''''Notify user in seconds
+      Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+    '============================================================================
+
+
 End Sub
 
 

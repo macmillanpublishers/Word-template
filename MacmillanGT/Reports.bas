@@ -28,7 +28,7 @@ Sub BookmakerReqs()
     
     ''-----------------Check if doc is saved/protected---------------
     If CheckSave = True Then
-        Exit Function
+        Exit Sub
     End If
     
     Application.ScreenUpdating = False
@@ -336,7 +336,7 @@ Sub MacmillanStyleReport()
     
     ''-----------------Check if doc is saved/protected---------------
     If CheckSave = True Then
-        Exit Function
+        Exit Sub
     End If
     
     Application.ScreenUpdating = False
@@ -846,7 +846,7 @@ CheckGoodStyles:
         End With
         
         If Selection.Find.Found = True Then
-            charStyles = charStyles & styleNameM(M) & Chr(11)
+            charStyles = charStyles & styleNameM(M) & vbNewLine
         'Else not present in main text story
         Else
             ' So check if there are footnotes
@@ -862,7 +862,7 @@ CheckGoodStyles:
                 End With
             
                 If Selection.Find.Found = True Then
-                    charStyles = charStyles & styleNameM(M) & Chr(11)
+                    charStyles = charStyles & styleNameM(M) & vbNewLine
                 ' Else didn't find style in footnotes, check endnotes
                 Else
                     GoTo CheckEndnotes
@@ -882,7 +882,7 @@ CheckEndnotes:
                      End With
                         
                     If Selection.Find.Found = True Then
-                        charStyles = charStyles & styleNameM(M) & Chr(11)
+                        charStyles = charStyles & styleNameM(M) & vbNewLine
                     End If
                 End If
             End If

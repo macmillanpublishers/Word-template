@@ -668,7 +668,7 @@ Function zz_errorChecks()
     Next
 
     If foundBad = True Then                'If activeRng.Find.Execute Then
-        MsgBox "Something went wrong! The macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & _
+        MsgBox "Something went wrong! The macro cannot be run on Document:" & vbNewLine & "'" & ActiveDocument & _
             "'" & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support, I am sure they will " & _
             "be happy to help.", , "Error Code: 3"
         zz_errorChecks = True
