@@ -31,12 +31,40 @@ Sub PrintStyles()
     ' ====== TO DO ======
     ' add progress bar?
     
-    ''-----------------Check if doc is saved/protected---------------
+    ' ====== Check if doc is saved/protected ================
     If CheckSave = True Then
         Exit Function
     End If
     
     Application.ScreenUpdating = False
+    
+    ' ===== Progress Bar / Status Bar ========================
+    Dim currentStatusBar As Boolean
+    currentStatusBar = Application.DisplayStatusBar
+    Application.DisplayStatusBar = True
+    
+    Dim objProgressPrint As ProgressBar
+    Set objProgressPrint = New ProgressBar
+    
+    Dim sglPercentComplete As Single
+    Dim strStatus As String
+    Dim strTitle As String
+       
+    ' Enter fun array here
+    
+    strTitle = "Print Styles in Margin"
+    sglPercentComplete = 0.01
+    strStatus = "Fun thing here"
+    
+    #If Mac Then
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    #Else
+        objProgressPrint.Title = strTitle
+        objProgressPrint.Show
+        objProgressPrint.Increment sglPercentComplete, strStatus
+        Doze 50
+    #End If
     
     ' ===== Copy and Paste into a new doc ===================
     ' Paste below throws an alert that too many styles are being copied, so turn off alerts
@@ -56,6 +84,19 @@ Sub PrintStyles()
     End With
     
     ' ===== Create new version of this document to manipulate ============
+    sglPercentComplete = 0.03
+    strStatus = "* Creating dupe document to tag with style names..."
+    
+    #If Mac Then
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    #Else
+        objProgressPrint.Title = strTitle
+        objProgressPrint.Show
+        objProgressPrint.Increment sglPercentComplete, strStatus
+        Doze 50
+    #End If
+    
     ' Copy the text of the document into a new document, so we don't screw up the original
     ' Needs to have the BoundMS template attached before copying so the styles match
     ' the new document later, or won't copy any styles
@@ -80,6 +121,19 @@ Sub PrintStyles()
     tempDoc.Content.PasteAndFormat wdFormatOriginalFormatting
         
     ' ===== Set margins =================
+    sglPercentComplete = 0.05
+    strStatus = "* Adjusting margins to fit style names..."
+    
+    #If Mac Then
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    #Else
+        objProgressPrint.Title = strTitle
+        objProgressPrint.Show
+        objProgressPrint.Increment sglPercentComplete, strStatus
+        Doze 50
+    #End If
+    
     ' if possible, we want the total margin size to stay the same
     ' so that the paragraphs don't reflow
     ' note margins are in points, 72 pts = 1 inch
@@ -100,6 +154,19 @@ Sub PrintStyles()
     End With
     
     ' ==== Change Normal style formatting (since it will define the text boxes) =====
+    sglPercentComplete = 0.07
+    strStatus = "* Setting format for style names..."
+    
+    #If Mac Then
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    #Else
+        objProgressPrint.Title = strTitle
+        objProgressPrint.Show
+        objProgressPrint.Increment sglPercentComplete, strStatus
+        Doze 50
+    #End If
+        
     ' But save settings first and then change back -- are these settings sticky?
     Dim currentSize As Long
     Dim currentName As String
@@ -113,6 +180,20 @@ Sub PrintStyles()
         .Font.Name = "Calibri"
         .ParagraphFormat.SpaceAfter = 0
     End With
+    
+    ' ==== Add style names in margin ==================================
+    sglPercentComplete = 0.1
+    strStatus = "* Adding style names to margin..."
+    
+    #If Mac Then
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    #Else
+        objProgressPrint.Title = strTitle
+        objProgressPrint.Show
+        objProgressPrint.Increment sglPercentComplete, strStatus
+        Doze 50
+    #End If
     
     Dim strPath As String
     Dim objTemplate As Template
@@ -138,8 +219,23 @@ Sub PrintStyles()
     ' Count the number of current text boxes etc., because the index number of the new ones
     ' will be offset by that amount
     lngTextBoxes = tempDoc.Shapes.Count
+    activeParas = tempDoc.Paragraphs.Count
     
-    For a = 1 To tempDoc.Paragraphs.Count
+    For a = 1 To activeParas
+        If a Mod 100 = 0 Then
+            sglPercentComplete = (((a / activeParas) * 0.85) + 0.1)
+            strStatus = "* Adding style names to paragraph " & a & " of " & activeParas & "..."
+            
+            #If Mac Then
+                Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+                DoEvents
+            #Else
+                objProgressPrint.Title = strTitle
+                objProgressPrint.Show
+                objProgressPrint.Increment sglPercentComplete, strStatus
+                Doze 50
+            #End If
+        End If
     
         tempDoc.Paragraphs(a).Range.Select
         strStyle = Selection.Style
@@ -148,16 +244,36 @@ Sub PrintStyles()
         tempDoc.Shapes(a + lngTextBoxes).TextFrame.TextRange.Text = strStyle
     
     Next a
-
+    
     ' Now open the print dialog so user can print the document.
+    sglPercentComplete = 0.97
+    strStatus = "* Printing document with style names in  margin..."
+    
+    #If Mac Then
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    #Else
+        objProgressPrint.Title = strTitle
+        objProgressPrint.Show
+        objProgressPrint.Increment sglPercentComplete, strStatus
+        Doze 50
+    #End If
+    
     Dialogs(wdDialogFilePrint).Show
     
-    ' reset Normal style because I'm not sure if it's sticky or not
-    With tempDoc.Styles("Normal")
-        .Font.Size = currentSize
-        .Font.Name = currentName
-        .ParagraphFormat.SpaceAfter = currentSpace
-    End With
+    ' Cleanup
+    sglPercentComplete = 1
+    strStatus = "* Finishing up..."
+    
+    #If Mac Then
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    #Else
+        objProgressPrint.Title = strTitle
+        objProgressPrint.Show
+        objProgressPrint.Increment sglPercentComplete, strStatus
+        Doze 50
+    #End If
     
 Cleanup:
     ' Close newly created doc w/o saving
@@ -166,17 +282,26 @@ Cleanup:
 
     If IsItThere(tempDocPath) = True Then
         tempDoc.Close wdDoNotSaveChanges
+        ' reset Normal style because I'm not sure if it's sticky or not
+        With tempDoc.Styles("Normal")
+            .Font.Size = currentSize
+            .Font.Name = currentName
+            .ParagraphFormat.SpaceAfter = currentSpace
+        End With
     End If
     
     ' Return original document to original template
     currentDoc.Activate
     Call AttachTemplateMacro.AttachMe(TemplateName:=currentTemplate)
     
+    Unload objProgressPrint
+    
     ' Reset settings to original
     With Application
         .DisplayAlerts = lngOpt
         .Options.PasteFormatBetweenStyledDocuments = lngPasteStyled
         .Options.PasteFormatBetweenDocuments = lngPasteFormat
+        .DisplayStatusBar = currentStatusBar
         .ScreenUpdating = True
         .ScreenRefresh
     End With
