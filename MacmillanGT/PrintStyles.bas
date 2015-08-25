@@ -8,11 +8,11 @@ Sub PrintStyles()
     
     '=================================================
     '                  Timer Start                  '|
-    'Dim StartTime As Double                         '|
-    'Dim SecondsElapsed As Double                    '|
+    Dim StartTime As Double                         '|
+    Dim SecondsElapsed As Double                    '|
                                                     '|
     'Remember time when macro starts                '|
-    'StartTime = Timer                               '|
+    StartTime = Timer                               '|
     '=================================================
     
     #If Mac Then
@@ -24,10 +24,10 @@ Sub PrintStyles()
     '============================================================================
     '                   Timer End
     ''''Determine how many seconds code took to run
-    'SecondsElapsed = Round(Timer - StartTime, 2)
+    SecondsElapsed = Round(Timer - StartTime, 2)
     
     ''''Notify user in seconds
-    'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+    Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
     '============================================================================
     
 End Sub
@@ -325,7 +325,10 @@ Private Sub PrintStylesPC()
         lngOpt = .DisplayAlerts
         lngPasteStyled = .Options.PasteFormatBetweenStyledDocuments ' not available on Mac
         lngPasteFormat = .Options.PasteFormatBetweenDocuments  ' not available on Mac
-        .DisplayAlerts = wdAlertsMessageBox
+        ' need to display messages because if original template and current template don't match exactly, will
+        ' still get the alert that there are too many styles to copy and we need to select the option that
+        ' is NOT the default
+        .DisplayAlerts = wdAlertsAll
         .Options.PasteFormatBetweenStyledDocuments = wdKeepSourceFormatting
         .Options.PasteFormatBetweenDocuments = wdKeepSourceFormatting
     End With
@@ -352,14 +355,17 @@ Private Sub PrintStylesPC()
     
     Dim tempDoc As Document
     ' Create a new document
-    Set tempDoc = Documents.Add '(Visible:=False)  ' Visible:=False doesn't work for Mac, but the code runs
+    Set tempDoc = Documents.Add(Visible:=False)
     ' Add Macmillan styles with no color guides (because if we don't add them,
     ' we get an error that there are too many styles to paste and it just pastes
     ' all with Normal style)
     tempDoc.Activate
     Call AttachTemplateMacro.zz_AttachBoundMSTemplate
-    'tempDoc.Content.PasteAndFormat wdFormatOriginalFormatting  'works on PC, doesn't work on Mac
-     tempDoc.Content.PasteSpecial DataType:=wdPasteHTML ' maintains styles
+    
+    'If the template isn't EXACTLY the same (e.g., document was originally styled with an earlier version)
+    'you'll still get the error that there are too many styles, so send 'n' to choose "No" from the alert
+    SendKeys "n"
+    tempDoc.Content.PasteSpecial DataType:=wdPasteHTML ' maintains styles
         
     ' ===== Set margins =================
     sglPercentComplete = 0.05
@@ -493,8 +499,6 @@ Cleanup:
     ' Return original document to original template
     currentDoc.Activate
     Call AttachTemplateMacro.AttachMe(TemplateName:=currentTemplate)
-
-    Unload objProgressPrint
     
     ' Reset settings to original
     With Application
@@ -505,6 +509,8 @@ Cleanup:
         .ScreenUpdating = True
         .ScreenRefresh
     End With
+
+    Unload objProgressPrint
 
 End Sub
 
