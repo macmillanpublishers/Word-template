@@ -29,6 +29,7 @@ Sub PrintStyles()
     ' "Normal" can't be in-use as a style in the document
     ' If total margin size (left + right) is < 2 " paragraphs will reflow
     ' Doesn't work for endnotes/footnotes (can't add a drawing object to EN/FNs)
+    ' Doesn't work on tables -- breaks the whole macro
     
     '=================================================
     '                  Timer Start                  '|
@@ -119,13 +120,14 @@ Sub PrintStyles()
     
     Dim tempDoc As Document
     ' Create a new document
-    Set tempDoc = Documents.Add '(Visible:=False) ' Can I set visibility to False here on Mac?
+    Set tempDoc = Documents.Add(Visible:=False)  ' Visible:=False doesn't work for Mac, but the code runs
     ' Add Macmillan styles with no color guides (because if we don't add them,
     ' we get an error that there are too many styles to paste and it just pastes
     ' all with Normal style)
     tempDoc.Activate
     Call AttachTemplateMacro.zz_AttachBoundMSTemplate
-    tempDoc.Content.PasteAndFormat wdFormatOriginalFormatting
+    'tempDoc.Content.PasteAndFormat wdFormatOriginalFormatting  'works on PC, doesn't work on Mac
+     tempDoc.Content.PasteSpecial DataType:=wdPasteHTML
         
     ' ===== Set margins =================
     sglPercentComplete = 0.05
@@ -231,33 +233,39 @@ Sub PrintStyles()
                 objProgressPrint.Increment sglPercentComplete, strStatusLoop
                 Doze 50
             #End If
+            
+            'SecondsElapsed = Round(Timer - StartTime, 2)
+            'Debug.Print "Paragraph " & a & " in " & SecondsElapsed & " seconds"
         End If
     
         tempDoc.Paragraphs(a).Range.Select
         strStyle = Selection.Style
-        Selection.Collapse Direction:=wdCollapseStart
-        'objBB.Insert Where:=Selection.Range
-        Dim newBox As Shape
-        Set newBox = tempDoc.Shapes.AddTextbox(Orientation:=msoTextOrientationHorizontal, Left:=InchesToPoints(0.13), Top:=0, Height:=InchesToPoints(0.4), _
-            Width:=InchesToPoints(1.35))
-        With newBox
-            .RelativeHorizontalPosition = wdRelativeHorizontalPositionLeftMarginArea
-            .RelativeVerticalPosition = wdRelativeVerticalPositionParagraph
-            .Top = 0
-            .Line.Visible = False
-            .LockAnchor = True
-            .TextFrame.TextRange.Text = strStyle
-            
-            With .WrapFormat
-                .Type = wdWrapSquare
-                .Side = wdWrapBoth
-                .DistanceTop = 0
-                .DistanceBottom = 0
-                .DistanceLeft = 0
-                .DistanceRight = 0
+        
+        If strStyle <> "Text - Standard (tx)" Then
+            Selection.Collapse Direction:=wdCollapseStart
+            'objBB.Insert Where:=Selection.Range        ' works on PC, not on Mac
+            Dim newBox As Shape
+            Set newBox = tempDoc.Shapes.AddTextbox(Orientation:=msoTextOrientationHorizontal, Left:=InchesToPoints(0.13), Top:=0, Height:=InchesToPoints(0.4), _
+                Width:=InchesToPoints(1.35))
+            With newBox
+                .RelativeHorizontalPosition = wdRelativeHorizontalPositionLeftMarginArea
+                .RelativeVerticalPosition = wdRelativeVerticalPositionParagraph
+                .Top = 0
+                .Line.Visible = False
+                .LockAnchor = True
+                .TextFrame.TextRange.Text = strStyle
+                
+                With .WrapFormat
+                    .Type = wdWrapSquare
+                    .Side = wdWrapBoth
+                    .DistanceTop = 0
+                    .DistanceBottom = 0
+                    .DistanceLeft = 0
+                    .DistanceRight = 0
+                End With
+                
             End With
-            
-        End With
+        End If
         
     Next a
     
@@ -294,11 +302,6 @@ Sub PrintStyles()
     #End If
     
 Cleanup:
-    ' Close newly created doc w/o saving
-    Dim tempDocPath As String
-    tempDocPath = tempDoc.Path
-
-    If IsItThere(tempDocPath) = True Then
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
             .Font.Size = currentSize
@@ -307,7 +310,6 @@ Cleanup:
         End With
         ' Close temo doc without saving
         tempDoc.Close wdDoNotSaveChanges
-    End If
     
     ' Return original document to original template
     currentDoc.Activate
