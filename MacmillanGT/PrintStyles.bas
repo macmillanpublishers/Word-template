@@ -77,7 +77,7 @@ Private Sub PrintStylesMac()
         lngOpt = .DisplayAlerts
         'lngPasteStyled = .Options.PasteFormatBetweenStyledDocuments ' not available on Mac
         'lngPasteFormat = .Options.PasteFormatBetweenDocuments  ' not available on Mac
-        .DisplayAlerts = wdAlertsMessageBox
+        .DisplayAlerts = wdAlertsAll
         '.Options.PasteFormatBetweenStyledDocuments = wdKeepSourceFormatting
         '.Options.PasteFormatBetweenDocuments = wdKeepSourceFormatting
     End With
@@ -104,13 +104,17 @@ Private Sub PrintStylesMac()
     
     Dim tempDoc As Document
     ' Create a new document
-    Set tempDoc = Documents.Add  ' Visible:=False doesn't work for Mac
+    Set tempDoc = Documents.Add(Visible:=False)  ' Visible:=False doesn't work for Mac?
     ' Add Macmillan styles with no color guides 'Might not need this, as we get prompted there are too many styles anyway
     tempDoc.Activate
     Call AttachTemplateMacro.zz_AttachBoundMSTemplate
-    'tempDoc.Content.PasteAndFormat wdFormatOriginalFormatting  'works on PC, doesn't work on Mac
+    'SendKeys not working on Mac for some reason. Need to send "n" (code 45) to the Paste line because pasting a document with
+    'many styles triggers a warning and the default behavior is to paste as Normal style. Delay 1 second to allow the message to pop up first.
+     MacScript ("delay 1" & vbCr & "tell application " & Chr(34) & "System Events" & Chr(34) & " to key code 45")
      tempDoc.Content.PasteSpecial DataType:=wdPasteHTML 'maintains styles
-        
+     
+
+
     ' ===== Set margins =================
     sglPercentComplete = 0.05
     strStatus = "* Adjusting margins to fit style names..." & vbNewLine & strStatus
@@ -192,7 +196,9 @@ Private Sub PrintStylesMac()
             Set newBox = tempDoc.Shapes.AddTextbox(Orientation:=msoTextOrientationHorizontal, Left:=InchesToPoints(0.13), Top:=0, Height:=InchesToPoints(0.4), _
                 Width:=InchesToPoints(1.35))
             With newBox
+                ' Left and Top are required arguments above, but get reset when we change the position so we have to set them again here
                 .RelativeHorizontalPosition = wdRelativeHorizontalPositionLeftMarginArea
+                .Left = InchesToPoints(0.13)
                 .RelativeVerticalPosition = wdRelativeVerticalPositionParagraph
                 .Top = 0
                 .Line.Visible = False
