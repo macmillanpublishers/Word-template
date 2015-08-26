@@ -8,11 +8,11 @@ Sub PrintStyles()
     
     '=================================================
     '                  Timer Start                  '|
-    Dim StartTime As Double                         '|
-    Dim SecondsElapsed As Double                    '|
+    'Dim StartTime As Double                         '|
+    'Dim SecondsElapsed As Double                    '|
                                                     '|
     'Remember time when macro starts                '|
-    StartTime = Timer                               '|
+    'StartTime = Timer                               '|
     '=================================================
     
     #If Mac Then
@@ -24,10 +24,10 @@ Sub PrintStyles()
     '============================================================================
     '                   Timer End
     ''''Determine how many seconds code took to run
-    SecondsElapsed = Round(Timer - StartTime, 2)
+    'SecondsElapsed = Round(Timer - StartTime, 2)
     
     ''''Notify user in seconds
-    Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+    'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
     '============================================================================
     
 End Sub
