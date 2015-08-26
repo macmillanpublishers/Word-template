@@ -288,7 +288,7 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     If IsItThere(strFullVersionPath) = True Then
         NeedUpdate = True
         Dim strCurrentVersion As String
-        strCurrentVersion = ImportVariable(strFullTemplatePath)
+        strCurrentVersion = ImportVariable(strFullVersionPath)
         logString = Now & " -- Current version is " & strCurrentVersion
     Else
         NeedUpdate = False
