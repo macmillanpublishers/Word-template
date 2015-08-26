@@ -20,10 +20,10 @@
 					<button id="BtnCleanup" label="Manuscript Cleanup" image="_0005_manuscript-cleanup---wineglass" size="large" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp3" label="Style Tools" >
-					<button id="BtnCharStyles" label="Apply Character Styles" image="_0002_character-styles---tag" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCharStyles" label="Tag Character Styles" image="_0002_character-styles---tag" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="BtnStyleReport" label="Style Report" image="_0004_style-report---file" size="normal" onAction="RibbonControl.LaunchMacros" />
 					<button id="BtnBkmkrCheck" label="Bookmaker Check" image="_0008_bookmaker-requirements---checkfile" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnLocTags" label="CIP Application Tags" image="_0010_CIP-application-tags---index" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnLocTags" label="CIP Application" image="_0010_CIP-application-tags---index" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp4" label="Help" >
 					<button id="BtnGtVersion" label="Macmillan Tools Version" image="_0009_-check-macros_styles-version---info" size="normal" onAction="RibbonControl.LaunchMacros" />
