@@ -491,3 +491,42 @@ Function PatternMatch(SearchPattern As String, SearchText As String, WholeString
     
 End Function
 
+Function CheckSave()
+    ' Prompts user to save document before running the macro. If they click "Cancel" then CheckSave returns true and
+    ' you should exit your macro. also checks if document protection is on.
+    
+    Dim mainDoc As Document
+    Set mainDoc = ActiveDocument
+    Dim iReply As Integer
+    
+    '-----make sure document is saved
+    Dim docSaved As Boolean                                                                                                 'v. 3.1 update
+    docSaved = mainDoc.Saved
+    
+    If docSaved = False Then
+        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
+                vbOKCancel, "Error 1")
+        If iReply = vbOK Then
+            CheckSave = False
+            mainDoc.Save
+        Else
+            CheckSave = True
+            Exit Function
+        End If
+    End If
+    
+    '-----test protection
+    If ActiveDocument.ProtectionType <> wdNoProtection Then
+        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
+            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
+            "TIP: If you don't know the protection password, try pasting contents of this file into " & _
+            "a new file, and run the macro on that.", , "Error 2"
+        CheckSave = True
+        Exit Function
+    Else
+        CheckSave = False
+    End If
+
+End Function
+

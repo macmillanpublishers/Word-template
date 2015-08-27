@@ -23,13 +23,10 @@ Sub MacmillanCharStyles()
     'Remember time when macro starts
     'StartTime = Timer
     
-    ''-----------------Error checks---------------
-    Dim exitOnError As Boolean
-    
-    exitOnError = zz_errorChecks()   ''Doc is unsaved, protected, or uses backtick character?
-        If exitOnError = True Then
-            Exit Sub
-        End If
+    ''-----------------Check if doc is saved/protected---------------
+    If CheckSave = True Then
+        Exit Sub
+    End If
     
     'don't need to check for template now that missing styles errors are trapped
     'exitOnError = zz_templateCheck()   '' template is attached?
@@ -452,7 +449,7 @@ Private Sub AutoFormatHyperlinks()
         Set oEN = Nothing
     End If
     
-    oTemp.Close savechanges:=wdDoNotSaveChanges
+    oTemp.Close SaveChanges:=wdDoNotSaveChanges
     Set oDoc = Nothing
     Set oTemp = Nothing
     Set oRng = Nothing
@@ -955,90 +952,3 @@ ErrorHandler:
 
 End Sub
 
-
-Function zz_templateCheck()
-'removed from main sub because can now run w/o template attached
-
-    zz_templateCheck = False
-    Dim mainDoc As Document
-    Set mainDoc = ActiveDocument
-    Dim iReply As Integer
-
-    '-----this way is more reliable even though it doesn't check template directly
-    Dim keyStyle As Word.Style
-    Dim styleCheck As Boolean
-
-    On Error Resume Next
-
-    Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
-    styleCheck = keyStyle Is Nothing
-    
-    If styleCheck Then
-        MsgBox "Oops! Required Macmillan styles are not present. Please attach the Macmillan template and run the macro again.", , "Error"
-        zz_templateCheck = True
-    End If
-    
-'    '--Checking template this way would be better but wasn't always working for users------------------
-'    'Check if Macmillan template is attached
-'    Dim currentTemplate As String
-'    Dim ourTemplate1 As String
-'    Dim ourTemplate2 As String
-'    Dim ourTemplate3 As String
-
-'    currentTemplate = mainDoc.BuiltInDocumentProperties(wdPropertyTemplate)
-'    ourTemplate1 = "macmillan.dotm"
-'    ourTemplate2 = "macmillan_NoColor.dotm"
-'    ourTemplate3 = "MacmillanCoverCopy.dotm"
-
-'    Debug.Print "Current template is " & currentTemplate & vbNewLine
-
-'    If currentTemplate <> ourTemplate1 Then
-'       If currentTemplate <> ourTemplate2 Then
-'           If currentTemplate <> ourTemplate3 Then
-'               MsgBox "Please attach the Macmillan Style Template to this document and run the macro again."
-'               zz_templateCheck = True
-'               Exit Function
-'           End If
-'       End If
-'    End If
-
-
-''''Could also try
-''ActiveDocument.AttachedTemplate.FullName
-''-------------------------------------------------------------------------------------------------------
-
-End Function
-Function zz_errorChecks()
-
-    zz_errorChecks = False
-    Dim mainDoc As Document
-    Set mainDoc = ActiveDocument
-    Dim iReply As Integer
-    
-    '-----make sure document is saved
-    Dim docSaved As Boolean                                                                                                 'v. 3.1 update
-    docSaved = mainDoc.Saved
-    
-    If docSaved = False Then
-        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-            "Click OK and I will save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
-                vbOKCancel, "Alert")
-        If iReply = vbOK Then
-            mainDoc.Save
-        Else
-            zz_errorChecks = True
-            Exit Function
-        End If
-    End If
-    
-    '-----test protection
-    If ActiveDocument.ProtectionType <> wdNoProtection Then
-        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
-            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
-            "TIP: If you don't know the protection password, try pasting contents of this file into " & _
-            "a new file, and run the macro on that.", , "Error 2"
-        zz_errorChecks = True
-        Exit Function
-    End If
-
-End Function

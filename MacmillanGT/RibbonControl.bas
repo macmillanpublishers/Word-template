@@ -34,6 +34,12 @@ Sub LaunchMacros(control As IRibbonControl)
             VersionCheck.CheckMacmillan
         Case Is = "BtnLocTags"
             LOCtagsMacro.LibraryOfCongressTags
+        Case Is = "BtnPrintStyles"
+            PrintStyles.PrintStyles
+        Case Is = "BtnTriceratops"
+            EasterEggs.Triceratops
+        'Case Is = "BtnEndnotes"
+            'Endnotes.Unlink 'Add module and sub name here
         Case Else
             'Do nothing
     End Select

@@ -22,7 +22,7 @@ Sub zz_AttachCoverTemplate()
     Call AttachMe("MacmillanCoverCopy.dotm")
 End Sub
 
-Private Sub AttachMe(TemplateName As String)
+Sub AttachMe(TemplateName As String)
 'Attaches a style template from the MacmillanStyleTemplate directory
 
     Dim currentUser As String

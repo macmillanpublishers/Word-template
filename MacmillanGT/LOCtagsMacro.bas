@@ -98,7 +98,7 @@ Sub LibraryOfCongressTags()
     End If
     
     '--------save the current cursor location in a bookmark---------------------------
-    Selection.Collapse direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
+    Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
     ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
     
     '----------remove content controls from PC---
@@ -365,10 +365,10 @@ On Error GoTo 0
     .Text = "<ch>"
     Do While .Execute(Forward:=True) = True
     With activeRng
-    .MoveEnd unit:=wdCharacter, Count:=-1
+    .MoveEnd Unit:=wdCharacter, Count:=-1
     .InsertAfter (chTag)
-    .Collapse direction:=wdCollapseEnd
-    .Move unit:=wdCharacter, Count:=1
+    .Collapse Direction:=wdCollapseEnd
+    .Move Unit:=wdCharacter, Count:=1
     End With
     chTag = chTag + 1
     Loop
@@ -1379,38 +1379,10 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
     Set mainDoc = ActiveDocument
     Dim iReply As Integer
     
-    '-----make sure Style template is attached
-'    Dim keyStyle As Word.Style
-'    Dim styleCheck As Boolean
-'    On Error Resume Next
-'    Set keyStyle = mainDoc.Styles("Text - Standard (tx)")                '''Style from template to check against
-'    styleCheck = keyStyle Is Nothing
-    
-'    If styleCheck Then
-'        MsgBox "Oops! Required Macmillan style template is not attached.", , "Error"
-'        zz_errorChecksB = True
-'        Exit Function
-'    End If
-    
-    '-----make sure document is saved
-    Dim docSaved As Boolean                                                                                                 'v. 3.1 update
-    docSaved = mainDoc.Saved
-    If docSaved = False Then
-        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-            "Click OK and I will save the document and run the CIP macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", vbOKCancel, "Alert")
-        If iReply = vbOK Then
-            mainDoc.Save
-        Else
-            zz_errorChecksB = True
-            Exit Function
-        End If
-    End If
-    
-    '-----test protection
-    If ActiveDocument.ProtectionType <> wdNoProtection Then
-    MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & "TIP: If you don't know the protection password, try pasting contents of this file into a new file, and run the macro on that.", , "Error 2"
-    zz_errorChecksB = True
-    Exit Function
+    ''-----------------Check if doc is saved/protected---------------
+    If CheckSave = True Then
+        zz_errorChecksB = True
+        Exit Function
     End If
     
     '-----test if backtick style tag already exists
