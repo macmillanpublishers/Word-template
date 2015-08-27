@@ -27,7 +27,7 @@ Option Base 1
 Sub AutoExec()
 
     ' ======= For testing / debugging ==============
-     MsgBox "I am GtUpdater and I am running!"
+    ' MsgBox "I am GtUpdater and I am running!"
     ' ==============================================
     
     Dim blnStaging As Boolean

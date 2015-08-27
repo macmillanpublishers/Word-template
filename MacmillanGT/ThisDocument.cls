@@ -26,7 +26,7 @@ Sub AutoExec()
 ' Requires FileInstaller and SharedMacros modules be installed in the same template.
         
     ' ======= For testing / debugging ==============
-     MsgBox "I am MacmillanGT and I am running!"
+    ' MsgBox "I am MacmillanGT and I am running!"
     ' ==============================================
     
     Dim blnStaging As Boolean
@@ -51,7 +51,7 @@ Sub AutoExec()
     blnInstaller = False
     
     'Plain English name of what you're installing/updating, should be singular
-    strTemplateName = "Macmillan Styles"
+    strTemplateName = "Macmillan Styles Template"
     
     'Update array lengths and template file names here
     ReDim strFileName(1 To 4)               'Declare number of files here
