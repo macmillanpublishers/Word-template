@@ -14,6 +14,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
+
 Option Explicit
 Public blnCancel As Boolean
 
@@ -54,28 +55,28 @@ Private Sub tabPublisher_Change()
     Select Case i
         Case "SMP"
             optTrim5x8.Enabled = True
-            optTrim5x8.Value = True
+            optTrim5x8.value = True
             optTrim6x9.Enabled = True
         
             chkDesignLoose.Enabled = True
-            chkDesignLoose.Value = True
+            chkDesignLoose.value = True
             chkDesignAverage.Enabled = True
-            chkDesignAverage.Value = True
+            chkDesignAverage.value = True
             chkDesignTight.Enabled = True
-            chkDesignTight.Value = True
+            chkDesignTight.value = True
             
         Case "torDOTcom"
             optTrim5x8.Enabled = True
-            optTrim5x8.Value = True
+            optTrim5x8.value = True
             optTrim6x9.Enabled = False
-            optTrim6x9.Value = False
+            optTrim6x9.value = False
         
             chkDesignLoose.Enabled = False
-            chkDesignLoose.Value = False
+            chkDesignLoose.value = False
             chkDesignAverage.Enabled = True
-            chkDesignAverage.Value = True
+            chkDesignAverage.value = True
             chkDesignTight.Enabled = False
-            chkDesignTight.Value = False
+            chkDesignTight.value = False
     End Select
 
 End Sub
@@ -103,11 +104,16 @@ Private Sub UserForm_Initialize()
     
     'set all option buttons to not selected
     txtMissingPages.Text = "0"
-    optTrim5x8.Value = True
-    optTrim6x9.Value = False
-    chkDesignLoose.Value = True
-    chkDesignAverage.Value = True
-    chkDesignTight.Value = True
+    optTrim5x8.value = True
+    optTrim6x9.value = False
+    chkDesignLoose.value = True
+    chkDesignAverage.value = True
+    chkDesignTight.value = True
+    
+    'make sure text is 10 pt because sometimes it turns into 2pt?
+    fraDesign.Font.Size = 10
+    fraMissingPages.Font.Size = 10
+    fraTrimSize.Font.Size = 10
 
 End Sub
 
