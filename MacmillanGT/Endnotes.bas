@@ -62,6 +62,11 @@ Sub EndnoteDeEmbed()
     currentStatusBar = Application.DisplayStatusBar
     Application.DisplayStatusBar = True
     
+    '-----------Turn off track changes--------
+    Dim currentTracking As Boolean
+    currentTracking = ActiveDocument.TrackRevisions
+    ActiveDocument.TrackRevisions = False
+    
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
     'Requires ProgressBar custom UserForm and Class
@@ -222,15 +227,19 @@ Sub EndnoteDeEmbed()
     #End If
     
     Call RemoveAllBookmarks
-    
+
+Cleanup:
     ' ---- Close progress bar -----
     #If Mac Then
       ' Nothing?
     #Else
       Unload objProgressNotes
     #End If
+    
+    ActiveDocument.TrackRevisions = currentTracking
     Application.DisplayStatusBar = currentStatusBar
     Application.ScreenUpdating = True
+    Application.ScreenRefresh
 
 End Sub
 
