@@ -182,7 +182,7 @@ Sub EndnoteDeEmbed()
           .End = .End - 1
           If .Characters.Last <> Chr(12) Then .InsertAfter vbCr
           If addHeader = True Then
-            .InsertAfter "ENDNOTES" & vbCr
+            .InsertAfter "Notes" & vbCr
             With .Paragraphs.Last.Range
                 .Style = "BM Head (bmh)"
             End With
@@ -191,13 +191,13 @@ Sub EndnoteDeEmbed()
           If addChapterName = True Then
             .InsertAfter chapterName '
             With .Paragraphs.Last.Range
-                .Style = "Endnote Text"
+                .Style = "BM Subhead (bmsh)"
             End With
           End If
-          .InsertAfter nref & " "
+          .InsertAfter nref & ". "
           With .Paragraphs.Last.Range
             .Style = "Endnote Text"
-            .Words.First.Style = "Endnote Reference"
+            .Words.First.Style = "Default Paragraph Font"
           End With
           .Collapse wdCollapseEnd
           .Paste
