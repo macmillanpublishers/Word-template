@@ -26,6 +26,7 @@ Sub EndnoteDeEmbed()
     Dim iReply As Integer
     Dim BookmarkNum As Integer
     Dim BookmarkName As String
+    Dim strCurrentStyle As String
     
     BookmarkNum = 1
     lastRefSection = 0
@@ -175,6 +176,7 @@ Sub EndnoteDeEmbed()
             End If
             BookmarkNum = BookmarkNum + 1
           End With
+          'strCurrentStyle = .Range.Style 'this is to apply save style as orig. note but breaks if more than 1 style.
           .Range.Cut
         End With
         
@@ -203,6 +205,7 @@ Sub EndnoteDeEmbed()
           End If
           .InsertAfter nref & ". "
           With .Paragraphs.Last.Range
+            '.Style = strCurrentStyle 'This applies the same style as orig. note, but breaks if more than 1 style used.
             .Style = "Endnote Text"
             .Words.First.Style = "Default Paragraph Font"
           End With
@@ -220,6 +223,28 @@ Sub EndnoteDeEmbed()
       Next
     End With
     Set nRng = Nothing
+    
+    ' ---- apply superscript style to in-text note references -------
+    Call zz_clearFind
+    Selection.HomeKey wdStory
+    
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Replacement.Text = ""
+      .Forward = True
+      .Wrap = wdFindStop
+      .Format = True
+      .Style = "Endnote Reference"
+      .Replacement.Style = "span superscript characters (sup)"
+      .MatchCase = False
+      .MatchWholeWord = False
+      .MatchWildcards = False
+      .MatchSoundsLike = False
+      .MatchAllWordForms = False
+      .Execute Replace:=wdReplaceAll
+    End With
     
         ' ----- Update progress bar -------------
     sglPercentComplete = 0.99
