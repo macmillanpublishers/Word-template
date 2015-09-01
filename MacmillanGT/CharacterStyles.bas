@@ -128,7 +128,7 @@ Sub MacmillanCharStyles()
     Dim s As Long
     
     For s = 1 To UBound(stStories())
-        Call PreserveWhiteSpaceinBrkStylesA(StoryType:=s)     'Part A tags styled blank paragraphs so they don't get deleted
+        Call PreserveWhiteSpaceinBrkStylesA(StoryType:=(stStories(s)))     'Part A tags styled blank paragraphs so they don't get deleted
     Next s
     Call zz_clearFind
     
@@ -148,13 +148,13 @@ Sub MacmillanCharStyles()
     'Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
     'Also if you AutoFormat a second time if undoes all of the formatting already applied to hyperlinks
     For s = 1 To UBound(stStories())
-        Call StyleHyperlinksA(StoryType:=s)                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+        Call StyleHyperlinksA(StoryType:=(stStories(s)))                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
     Next s
     
     Call AutoFormatHyperlinks
     
     For s = 1 To UBound(stStories())
-        Call StyleHyperlinksB(StoryType:=s)
+        Call StyleHyperlinksB(StoryType:=(stStories(s)))
     Next s
     
     Call zz_clearFind
@@ -174,7 +174,7 @@ Sub MacmillanCharStyles()
     End If
     
     For s = 1 To UBound(stStories())
-        Call RemoveBreaks(StoryType:=s)  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
+        Call RemoveBreaks(StoryType:=(stStories(s)))  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
     Next s
     Call zz_clearFind
     
@@ -192,7 +192,7 @@ Sub MacmillanCharStyles()
     End If
     
     For s = 1 To UBound(stStories())
-        Call TagExistingCharStyles(StoryType:=s)            'tag existing styled items
+        Call TagExistingCharStyles(StoryType:=(stStories(s)))            'tag existing styled items
     Next s
     Call zz_clearFind
     
@@ -210,7 +210,7 @@ Sub MacmillanCharStyles()
     End If
     
     For s = 1 To UBound(stStories())
-        Call LocalStyleTag(StoryType:=s)                 'tag local styling, reset local styling, remove text highlights
+        Call LocalStyleTag(StoryType:=(stStories(s)))                 'tag local styling, reset local styling, remove text highlights
     Next s
     Call zz_clearFind
 
@@ -228,7 +228,7 @@ Sub MacmillanCharStyles()
     End If
     
     For s = 1 To UBound(stStories())
-        Call LocalStyleReplace(StoryType:=s)            'reapply local styling through char styles
+        Call LocalStyleReplace(StoryType:=(stStories(s)))            'reapply local styling through char styles
     Next s
     Call zz_clearFind
     
@@ -246,7 +246,7 @@ Sub MacmillanCharStyles()
     End If
     
     For s = 1 To UBound(stStories())
-        Call PreserveWhiteSpaceinBrkStylesB(StoryType:=s)     'Part B removes the tags and reapplies the styles
+        Call PreserveWhiteSpaceinBrkStylesB(StoryType:=(stStories(s)))     'Part B removes the tags and reapplies the styles
     Next s
     Call zz_clearFind
     

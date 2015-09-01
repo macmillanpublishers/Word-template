@@ -38,8 +38,8 @@ Sub LaunchMacros(control As IRibbonControl)
             PrintStyles.PrintStyles
         Case Is = "BtnTriceratops"
             EasterEggs.Triceratops
-        'Case Is = "BtnEndnotes"
-            'Endnotes.Unlink 'Add module and sub name here
+        Case Is = "BtnEndnotes"
+            Endnotes.EndnoteDeEmbed
         Case Else
             'Do nothing
     End Select

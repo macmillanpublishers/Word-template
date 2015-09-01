@@ -232,7 +232,7 @@ Sub MacmillanManuscriptCleanup()
     Dim s As Long
     
     For s = 1 To UBound(stStories())
-        Call RmNonWildcardItems(StoryType:=s)   'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
+        Call RmNonWildcardItems(StoryType:=(stStories(s)))   'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
     Next s
     
     Call zz_clearFind
@@ -251,7 +251,7 @@ Sub MacmillanManuscriptCleanup()
     End If
     
     For s = 1 To UBound(stStories())
-        Call PreserveStyledCharactersA(StoryType:=s)              ' EW added v. 3.2, tags styled page breaks, tabs
+        Call PreserveStyledCharactersA(StoryType:=(stStories(s)))              ' EW added v. 3.2, tags styled page breaks, tabs
     Next s
     Call zz_clearFind
     
@@ -269,7 +269,7 @@ Sub MacmillanManuscriptCleanup()
     End If
     
     For s = 1 To UBound(stStories())
-        Call RmWhiteSpaceB(StoryType:=s)    'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
+        Call RmWhiteSpaceB(StoryType:=(stStories(s)))    'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
     Next s
     
     Call zz_clearFind
@@ -288,7 +288,7 @@ Sub MacmillanManuscriptCleanup()
     End If
     
     For s = 1 To UBound(stStories())
-        Call PreserveStyledCharactersB(StoryType:=s)    ' EW added v. 3.2, replaces character tags with actual character
+        Call PreserveStyledCharactersB(StoryType:=(stStories(s)))    ' EW added v. 3.2, replaces character tags with actual character
     Next s
     
     Call zz_clearFind
