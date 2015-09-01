@@ -4,6 +4,13 @@ Option Base 1
 Dim activeRng As Range
 
 Sub EndnoteDeEmbed()
+
+    '------- Check if document is saved ---------
+    If CheckSave = True Then
+        Exit Sub
+    End If
+    
+    ' --------- Declare variables ---------------
     Dim refRng As Range
     Dim refSection As Integer
     Dim lastRefSection As Integer
