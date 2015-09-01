@@ -105,6 +105,7 @@ Sub EndnoteDeEmbed()
     
     Dim intNotesCount As Integer
     Dim intCurrentNote As Integer
+    Dim strCountMsg As String
     intNotesCount = ActiveDocument.Endnotes.Count
     intCurrentNote = 0
     
@@ -115,13 +116,13 @@ Sub EndnoteDeEmbed()
         
         If intCurrentNote Mod 10 = 0 Then
           sglPercentComplete = (((intCurrentNote / intNotesCount) * 0.95) + 0.04)
-          strStatus = "* Unlinking endnote " & intCurrentNote & " of " & intNotesCount & vbNewLine * strStatus
+          strCountMsg = "* Unlinking endnote " & intCurrentNote & " of " & intNotesCount & vbNewLine & strStatus
           
           #If Mac Then
-            Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+            Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strCountMsg
             DoEvents
           #Else
-            objProgressNotes.Increment sglPercentComplete, strStatus
+            objProgressNotes.Increment sglPercentComplete, strCountMsg
             Doze 50 ' Wait 50 milliseconds for progress bar to update
           #End If
         End If
@@ -199,17 +200,7 @@ Sub EndnoteDeEmbed()
         End With
       Next
       
-      ' ----- Update progress bar -------------
-      sglPercentComplete = 0.99
-      strStatus = "* Finishing up..."
-      
-      #If Mac Then
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-      #Else
-        objProgressNotes.Increment sglPercentComplete, strStatus
-        Doze 50 ' Wait 50 milliseconds for progress bar to update
-      #End If
+      strStatus = "* Unlinking " & intNotesCount & " endnotes..." & vbNewLine & strStatus
       
     '''This deletes the endnote
       For Each eNote In .Endnotes
@@ -217,6 +208,18 @@ Sub EndnoteDeEmbed()
       Next
     End With
     Set nRng = Nothing
+    
+        ' ----- Update progress bar -------------
+    sglPercentComplete = 0.99
+    strStatus = "* Finishing up..." & vbNewLine & strStatus
+    
+    #If Mac Then
+      Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+      DoEvents
+    #Else
+      objProgressNotes.Increment sglPercentComplete, strStatus
+      Doze 50 ' Wait 50 milliseconds for progress bar to update
+    #End If
     
     Call RemoveAllBookmarks
     
