@@ -107,9 +107,15 @@ Sub MacmillanCharStyles()
     currentTracking = ActiveDocument.TrackRevisions
     ActiveDocument.TrackRevisions = False
     
+    '-----------Delete field codes ----------
+    Dim s As Long
+    
+    For s = 1 To UBound(stStories())
+      Call DeleteFields(StoryTypes:=(stStories(s)))
+    Next s
+    
     '===================== Replace Local Styles Start ========================
-    
-    
+
     '-----------------------Tag space break styles----------------------------
     Call zz_clearFind                          'Clear find object
     
@@ -125,7 +131,6 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
-    Dim s As Long
     
     For s = 1 To UBound(stStories())
         Call PreserveWhiteSpaceinBrkStylesA(StoryType:=(stStories(s)))     'Part A tags styled blank paragraphs so they don't get deleted
@@ -950,5 +955,21 @@ ErrorHandler:
         End Select
     End If
 
+End Sub
+
+Sub DeleteFields(StoryTypes As Variant)
+    Dim strContents As String
+    
+    With ActiveDocument.StoryRanges(StoryTypes)
+        While .Fields.Count > 0
+            strContents = .Fields.Item(1).result
+            .Fields(1).Select
+            
+            With Selection
+                .Fields.Item(1).Delete
+                .InsertAfter strContents
+            End With
+        Wend
+    End With
 End Sub
 
