@@ -1,10 +1,10 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} CastoffForm 
    Caption         =   "Macmillan Castoff Form"
-   ClientHeight    =   10830
+   ClientHeight    =   10650
    ClientLeft      =   45
    ClientTop       =   -60
-   ClientWidth     =   9120
+   ClientWidth     =   12135
    OleObjectBlob   =   "CastoffForm.frx":0000
    ShowModal       =   0   'False
    StartUpPosition =   1  'CenterOwner
@@ -48,6 +48,10 @@ Private Sub cmdNoCastoff_Click()
 End Sub
 
 Private Sub Label11_Click()
+
+End Sub
+
+Private Sub Label21_Click()
 
 End Sub
 
