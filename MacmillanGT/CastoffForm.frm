@@ -53,26 +53,32 @@ Private Sub UserForm_Initialize()
 
     'To ensure consistent appearance on different OS
     Dim lngHexVal As Long
+    Dim lngHexRed As Long
     lngHexVal = &HF3F3F3
+    lngHexRed = &HC0
 
     Me.BackColor = lngHexVal
     labHeading.BackColor = lngHexVal
     
     fraTitleInfo.BackColor = lngHexVal
+    fraTitleInfo.ForeColor = lngHexRed
     labEditor.BackColor = lngHexVal
     labAuthor.BackColor = lngHexVal
     labTitle.BackColor = lngHexVal
     
     fraPublisher.BackColor = lngHexVal
+    fraPublisher.ForeColor = lngHexRed
     optPubSMP.BackColor = lngHexVal
     optPubTor.BackColor = lngHexVal
     optPubPickup.BackColor = lngHexVal
     
     fraTrimSize.BackColor = lngHexVal
+    fraTrimSize.ForeColor = lngHexRed
     optTrim5x8.BackColor = lngHexVal
     optTrim6x9.BackColor = lngHexVal
     
     fraDesign.BackColor = lngHexVal
+    fraDesign.ForeColor = lngHexRed
     chkDesignLoose.BackColor = lngHexVal
     chkDesignAverage.BackColor = lngHexVal
     chkDesignTight.BackColor = lngHexVal
@@ -115,16 +121,16 @@ Private Sub UserForm_Initialize()
     chkDesignTight.value = True
     
     'make sure frame text is 10 pt because sometimes it turns into 2pt and I don't know why
-    labHeading.Font = 12
-    fraTitleInfo.Font = 10
-    fraPublisher.Font = 10
+    labHeading.Font.Size = 12
+    fraTitleInfo.Font.Size = 10
+    fraPublisher.Font.Size = 10
     fraDesign.Font.Size = 10
     fraTrimSize.Font.Size = 10
-    fraStandard.Font = 10
-    fraBackmatter.Font = 10
-    fraNotesBib.Font = 10
-    fraComplex.Font = 10
-    fraPickup.Font = 10
+    fraStandard.Font.Size = 10
+    fraBackmatter.Font.Size = 10
+    fraNotesBib.Font.Size = 10
+    fraComplex.Font.Size = 10
+    fraPickup.Font.Size = 10
 
 End Sub
 
