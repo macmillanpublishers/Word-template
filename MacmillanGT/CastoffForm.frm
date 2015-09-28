@@ -47,68 +47,7 @@ Private Sub cmdNoCastoff_Click()
     Me.Hide
 End Sub
 
-Private Sub Label11_Click()
 
-End Sub
-
-Private Sub Label21_Click()
-
-End Sub
-
-Private Sub Label22_Click()
-
-End Sub
-
-Private Sub Label23_Click()
-
-End Sub
-
-Private Sub Label4_Click()
-
-End Sub
-
-Private Sub Label6_Click()
-
-End Sub
-
-Private Sub Label7_Click()
-
-End Sub
-
-Private Sub tabPublisher_Change()
-    
-    Dim i As String
-    
-    i = Me.tabPublisher.SelectedItem.Caption
-
-    Select Case i
-        Case "SMP"
-            optTrim5x8.Enabled = True
-            optTrim5x8.value = True
-            optTrim6x9.Enabled = True
-        
-            chkDesignLoose.Enabled = True
-            chkDesignLoose.value = True
-            chkDesignAverage.Enabled = True
-            chkDesignAverage.value = True
-            chkDesignTight.Enabled = True
-            chkDesignTight.value = True
-            
-        Case "torDOTcom"
-            optTrim5x8.Enabled = True
-            optTrim5x8.value = True
-            optTrim6x9.Enabled = False
-            optTrim6x9.value = False
-        
-            chkDesignLoose.Enabled = False
-            chkDesignLoose.value = False
-            chkDesignAverage.Enabled = True
-            chkDesignAverage.value = True
-            chkDesignTight.Enabled = False
-            chkDesignTight.value = False
-    End Select
-
-End Sub
 
 'Private Sub UserForm_Initialize()
 '
