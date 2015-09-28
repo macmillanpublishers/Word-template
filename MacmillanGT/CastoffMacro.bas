@@ -22,9 +22,9 @@ Sub UniversalCastoff()
 ' ============================================
 
     '---------- Check if doc is saved ---------------------------------
-    If CheckSave = True Then
-        Exit Sub
-    End If
+    'If CheckSave = True Then
+    '    Exit Sub
+    'End If
     
     '----------Load userform to get user inputs------------------------
     Dim objCastoffForm As CastoffForm
@@ -42,7 +42,13 @@ Sub UniversalCastoff()
     If objCastoffForm.blnHelp = True Then
         Dim strHelpMessage As String
         
-        strHelpMessage = "Help message"
+        strHelpMessage = "MACMILLAN PRELIMINARY CASTOFF FORM" & vbNewLine & vbNewLine & _
+        "Note: These are ballpark estimates only. Characters per page are finally determined by font, font size, " & _
+        "and text width." & vbNewLine & vbNewLine & _
+        "This form will calculate an estimated print page count based on the manuscript file you run it on and " & _
+        "the information you enter on this form." & vbNewLine & vbNewLine & _
+        "You can find more detailed information about this form at <Confluence Page>, or contact " & _
+        "workflows@macmillan.com if you have any questions."
         MsgBox strHelpMessage, vbOKOnly, "Castoff Help"
         objCastoffForm.Show
         
