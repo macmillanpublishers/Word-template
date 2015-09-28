@@ -103,23 +103,28 @@ Private Sub UserForm_Initialize()
     labPrevCharCount.BackColor = lngHexVal
     labAddlPgs.BackColor = lngHexVal
     
-    
     cmdNoCastoff.BackColor = lngHexVal
     cmdYesCastoff.BackColor = lngHexVal
     cmdHelp.BackColor = lngHexVal
     
     'set all default selections
-    txtMissingPages.Text = "0"
     optTrim5x8.value = True
     optTrim6x9.value = False
     chkDesignLoose.value = True
     chkDesignAverage.value = True
     chkDesignTight.value = True
     
-    'make sure text is 10 pt because sometimes it turns into 2pt?
+    'make sure frame text is 10 pt because sometimes it turns into 2pt and I don't know why
+    labHeading.Font = 12
+    fraTitleInfo.Font = 10
+    fraPublisher.Font = 10
     fraDesign.Font.Size = 10
-    fraMissingPages.Font.Size = 10
     fraTrimSize.Font.Size = 10
+    fraStandard.Font = 10
+    fraBackmatter.Font = 10
+    fraNotesBib.Font = 10
+    fraComplex.Font = 10
+    fraPickup.Font = 10
 
 End Sub
 
