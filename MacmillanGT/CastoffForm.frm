@@ -49,39 +49,77 @@ End Sub
 
 
 
-'Private Sub UserForm_Initialize()
-'
-'    'To ensure consistent appearance on different OS
-'    Dim lngHexVal As Long
-'    lngHexVal = &HF3F3F3
-'
-'    Me.BackColor = lngHexVal
-'    cmdNoCastoff.BackColor = lngHexVal
-'    cmdYesCastoff.BackColor = lngHexVal
-'    fraDesign.BackColor = lngHexVal
-'    fraTrimSize.BackColor = lngHexVal
-'    labReminder.BackColor = lngHexVal
-'    tabPublisher.BackColor = lngHexVal
-'    optTrim5x8.BackColor = lngHexVal
-'    optTrim6x9.BackColor = lngHexVal
-'    chkDesignLoose.BackColor = lngHexVal
-'    chkDesignAverage.BackColor = lngHexVal
-'    chkDesignTight.BackColor = lngHexVal
-'    fraMissingPages.BackColor = lngHexVal
-'    labMissingPages.BackColor = lngHexVal
+Private Sub UserForm_Initialize()
+
+    'To ensure consistent appearance on different OS
+    Dim lngHexVal As Long
+    lngHexVal = &HF3F3F3
+
+    Me.BackColor = lngHexVal
+    labHeading.BackColor = lngHexVal
     
-    'set all option buttons to not selected
-'    txtMissingPages.Text = "0"
-'    optTrim5x8.value = True
-'    optTrim6x9.value = False
-'    chkDesignLoose.value = True
-'    chkDesignAverage.value = True
-'    chkDesignTight.value = True
+    fraTitleInfo.BackColor = lngHexVal
+    labEditor.BackColor = lngHexVal
+    labAuthor.BackColor = lngHexVal
+    labTitle.BackColor = lngHexVal
+    
+    fraPublisher.BackColor = lngHexVal
+    optPubSMP.BackColor = lngHexVal
+    optPubTor.BackColor = lngHexVal
+    optPubPickup.BackColor = lngHexVal
+    
+    fraTrimSize.BackColor = lngHexVal
+    optTrim5x8.BackColor = lngHexVal
+    optTrim6x9.BackColor = lngHexVal
+    
+    fraDesign.BackColor = lngHexVal
+    chkDesignLoose.BackColor = lngHexVal
+    chkDesignAverage.BackColor = lngHexVal
+    chkDesignTight.BackColor = lngHexVal
+    
+    fraStandard.BackColor = lngHexVal
+    labChapters.BackColor = lngHexVal
+    labParts.BackColor = lngHexVal
+    labFrontmatter.BackColor = lngHexVal
+    
+    fraBackmatter.BackColor = lngHexVal
+    labIndex.BackColor = lngHexVal
+    labBackmatter.BackColor = lngHexVal
+    
+    fraNotesBib.BackColor = lngHexVal
+    labUnlinkedNotes.BackColor = lngHexVal
+    labNotesTK.BackColor = lngHexVal
+    labBibliography.BackColor = lngHexVal
+    labBiblioTK.BackColor = lngHexVal
+    
+    fraComplex.BackColor = lngHexVal
+    labSubheads.BackColor = lngHexVal
+    labTables.BackColor = lngHexVal
+    labArt.BackColor = lngHexVal
+    
+    fraPickup.BackColor = lngHexVal
+    labPrevTitle.BackColor = lngHexVal
+    labPrevPageCount.BackColor = lngHexVal
+    labPrevCharCount.BackColor = lngHexVal
+    labAddlPgs.BackColor = lngHexVal
+    
+    
+    cmdNoCastoff.BackColor = lngHexVal
+    cmdYesCastoff.BackColor = lngHexVal
+    cmdHelp.BackColor = lngHexVal
+    
+    'set all default selections
+    txtMissingPages.Text = "0"
+    optTrim5x8.value = True
+    optTrim6x9.value = False
+    chkDesignLoose.value = True
+    chkDesignAverage.value = True
+    chkDesignTight.value = True
     
     'make sure text is 10 pt because sometimes it turns into 2pt?
-'    fraDesign.Font.Size = 10
-'    fraMissingPages.Font.Size = 10
-'    fraTrimSize.Font.Size = 10
+    fraDesign.Font.Size = 10
+    fraMissingPages.Font.Size = 10
+    fraTrimSize.Font.Size = 10
 
-'End Sub
+End Sub
 
