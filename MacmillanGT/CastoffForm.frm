@@ -20,33 +20,51 @@ Option Explicit
 Public blnCancel As Boolean
 
 Private Sub cmdYesCastoff_Click()
+    Dim blnTitleStatus As Boolean
+    Dim blnPubStatus As Boolean
     Dim blnTrimStatus As Boolean
     Dim blnDesignStatus As Boolean
     
+    blnTitleStatus = False
+    blnPubStatus = False
     blnTrimStatus = False
     blnDesignStatus = False
     
+    'Has something been entered for all Title Info fields?
+    If Me.txtEditor <> vbNullString And Me.txtAuthor <> vbNullString And Me.txtTitle <> vbNullString _
+        And Me.txtPageCount <> vbNullString Then
+            blnTitleStatus = True
+    End If
+    
+    'Has something been selected for Publisher?
+    If Me.optPubSMP Or Me.optPubTor Or Me.optPubPickup Then
+        blnPubStatus = True
+    End If
+    
+    'Has something been selected for Trim Size?
     If Me.optTrim5x8 Or Me.optTrim6x9 Then
         blnTrimStatus = True
     End If
     
+    'Has something been selected for Design?
     If Me.chkDesignLoose Or Me.chkDesignAverage Or Me.chkDesignTight Then
         blnDesignStatus = True
     End If
     
-    If blnTrimStatus = True And blnDesignStatus = True Then
+    'OK if all required have been set, otherwise give a warning message.
+    If blnTrimStatus = True And blnDesignStatus = True And blnPubStatus = True And blnTitleStatus = True Then
         blnCancel = False
         Me.Hide
     Else
-        MsgBox "You must select one Trim Size and at least one Design to generate a castoff."
+        MsgBox "You must fill in Title Info, Publisher, Trim Size, and Design to generate a castoff."
     End If
 End Sub
+
 
 Private Sub cmdNoCastoff_Click()
     blnCancel = True
     Me.Hide
 End Sub
-
 
 
 Private Sub UserForm_Initialize()
@@ -65,6 +83,7 @@ Private Sub UserForm_Initialize()
     labEditor.BackColor = lngHexVal
     labAuthor.BackColor = lngHexVal
     labTitle.BackColor = lngHexVal
+    labPageCount.BackColor = lngHexVal
     
     fraPublisher.BackColor = lngHexVal
     fraPublisher.ForeColor = lngHexRed
