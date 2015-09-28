@@ -31,12 +31,22 @@ Sub UniversalCastoff()
     Set objCastoffForm = New CastoffForm
     
     objCastoffForm.Show
-    
+        
+    'If user selected 'Oops, No Castoff For Me" button, cancel macro
     If objCastoffForm.blnCancel = True Then
         Unload objCastoffForm
         Exit Sub
     End If
 
+    'If use selected 'Help" button, show help text.
+    If objCastoffForm.blnHelp = True Then
+        Dim strHelpMessage As String
+        
+        strHelpMessage = "Help message"
+        MsgBox strHelpMessage, vbOKOnly, "Castoff Help"
+        objCastoffForm.Show
+        
+    End If
     '----------Get user inputs from Userform---------------------------
     Dim intTrim As Integer
     Dim strTrim As String
@@ -99,7 +109,7 @@ Sub UniversalCastoff()
     End If
     
     'Get publisher name from tab of userform
-    strPub = objCastoffForm.tabPublisher.SelectedItem.Caption
+    'strPub = objCastoffForm.tabPublisher.SelectedItem.Caption
     
     'Create name of castoff csv file to download
     strInfoType = "Castoff"

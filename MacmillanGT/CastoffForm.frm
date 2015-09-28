@@ -18,8 +18,13 @@ Attribute VB_Exposed = False
 
 Option Explicit
 Public blnCancel As Boolean
+Public blnHelp As Boolean
 
 Private Sub cmdYesCastoff_Click()
+    ' Cancel or Help were not clicked
+    blnCancel = False
+    blnHelp = False
+    
     Dim blnTitleStatus As Boolean
     Dim blnPubStatus As Boolean
     Dim blnTrimStatus As Boolean
@@ -62,10 +67,17 @@ End Sub
 
 
 Private Sub cmdNoCastoff_Click()
+    blnHelp = False
     blnCancel = True
     Me.Hide
 End Sub
 
+
+Private Sub cmdHelp_Click()
+    blnCancel = False
+    blnHelp = True
+    Me.Hide
+End Sub
 
 Private Sub UserForm_Initialize()
 
