@@ -13,8 +13,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
-
 Option Explicit
 Public blnCancel As Boolean
 Const lngHexVal As Long = &HF3F3F3      'Background color of userform
@@ -24,9 +22,6 @@ Const lngHexBlack As Long = &H0             'Black for non-required sections
 
 Private Sub cmdYesCastoff_Click()
     ' Cancel was not clicked
-    
-    'Stop
-    
     blnCancel = False
     
     Dim blnTitleStatus As Boolean
