@@ -13,13 +13,6 @@ Sub UniversalCastoff()
 '    https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production
 ' 3. Requires CastoffForm userform module
 
-' ============================================
-' FOR TESTING / DEBUGGING
-' If set to true, downloads CSV files from https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
-' instead of production page (noted above)
-    Dim blnStaging As Boolean
-    blnStaging = False
-' ============================================
 
     '---------- Check if doc is saved ---------------------------------
     'If CheckSave = True Then
@@ -36,86 +29,126 @@ Sub UniversalCastoff()
     If objCastoffForm.blnCancel = True Then
         Unload objCastoffForm
         Exit Sub
+    Else
+        Call CastoffStart(FormInputs:=objCastoffForm)
     End If
+    
+End Sub
 
-    'If use selected 'Help" button, show help text.
-    If objCastoffForm.blnHelp = True Then
-        Dim strHelpMessage As String
-        
-        strHelpMessage = "MACMILLAN PRELIMINARY CASTOFF FORM" & vbNewLine & vbNewLine & _
-        "Note: These are ballpark estimates only. Characters per page are finally determined by font, font size, " & _
-        "and text width." & vbNewLine & vbNewLine & _
-        "This form will calculate an estimated print page count based on the manuscript file you run it on and " & _
-        "the information you enter on this form." & vbNewLine & vbNewLine & _
-        "You can find more detailed information about this form at <Confluence Page>, or contact " & _
-        "workflows@macmillan.com if you have any questions."
-        MsgBox strHelpMessage, vbOKOnly, "Castoff Help"
-        objCastoffForm.Show
-        
-    End If
-    '----------Get user inputs from Userform---------------------------
-    Dim intTrim As Integer
-    Dim strTrim As String
-    Dim intDesign() As Integer
-    Dim strDesign() As String
-    Dim intDim As Integer
-    Dim strPub As String
-    Dim strCastoffFile As String
-    Dim strInfoType As String
-
-    'Debug.Print objCastoffForm.tabPublisher.SelectedItem.Caption
-
-    'Get trim size.
+Private Sub CastoffStart(FormInputs As CastoffForm)
+    
+    ' ============================================
+    ' FOR TESTING / DEBUGGING
+    ' If set to true, downloads CSV files from https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
+    ' instead of production page (noted above)
+    Dim blnStaging As Boolean
+    blnStaging = False
+    ' ============================================
+    
+    '----------Get user inputs from Userform--------------------------------------------------
+    
+    'Get trim size
+    Dim intTrim As Integer      'Index number of trim size in CSV file, starts at 0
+    Dim strTrim As String       'Text version of trim size
+    
     'Number assigned is column index in design array
     '0 = 5-1/2 x 8-1/4
     '1 = 6-1/8 x 9-1/4
-    If objCastoffForm.optTrim5x8 Then
+    If FormInputs.optTrim5x8 Then
         intTrim = 0
         strTrim = "5-1/2 x 8-1/4"
-    ElseIf objCastoffForm.optTrim6x9 Then
+    ElseIf FormInputs.optTrim6x9 Then
         intTrim = 1
         strTrim = "6-1/8 x 9-1/4"
     Else
         MsgBox "You must select a Trim Size to run the Castoff Macro."
-        objCastoffForm.Show
+        FormInputs.Show
     End If
         
     'Get designs selected.
-    'Number for intDesign is row index in design array
+    Dim intDesign() As Integer  'Index number of design density in CSV file, starts at 0
+    Dim strDesign() As String   'Text of design density
+    Dim intDim As Integer       'Number of dimensions  of intDesign and strDesign
+    
     intDim = 0
     
-    If objCastoffForm.chkDesignLoose Then
+    'For each design checked, increase dimension by 1 and then assign index and text of the design to an array
+    If FormInputs.chkDesignLoose Then
         intDim = intDim + 1
         ReDim Preserve intDesign(1 To intDim)
         ReDim Preserve strDesign(1 To intDim)
         intDesign(intDim) = 0
-        strDesign(intDim) = objCastoffForm.chkDesignLoose.Caption
+        strDesign(intDim) = FormInputs.chkDesignLoose.Caption
     End If
     
-    If objCastoffForm.chkDesignAverage Then
+    If FormInputs.chkDesignAverage Then
         intDim = intDim + 1
         ReDim Preserve intDesign(1 To intDim)
         ReDim Preserve strDesign(1 To intDim)
         intDesign(intDim) = 1
-        strDesign(intDim) = objCastoffForm.chkDesignAverage.Caption
+        strDesign(intDim) = FormInputs.chkDesignAverage.Caption
     End If
     
-    If objCastoffForm.chkDesignTight Then
+    If FormInputs.chkDesignTight Then
         intDim = intDim + 1
         ReDim Preserve intDesign(1 To intDim)
         ReDim Preserve strDesign(1 To intDim)
         intDesign(intDim) = 2
-        strDesign(intDim) = objCastoffForm.chkDesignTight.Caption
+        strDesign(intDim) = FormInputs.chkDesignTight.Caption
+    End If
+        
+    'Get publisher name from option buttons
+    Dim strPub As String        'Publisher code for file names and stuff
+    Dim strPubRealName As String    'Publisher name for final output
+    If FormInputs.optPubSMP.Enabled Then
+        strPub = "SMP"
+        strPubRealName = "St. Martin's Press"
+    ElseIf FormInputs.optPubTor.Enabled Then
+        strPub = "torDOTcom"
+        strPubRealName = "Tor.com"
+    ElseIf FormInputs.optPubPickup.Enabled Then
+        ' Go to just calculating Pickup info
     End If
     
-    'Make sure at least one design is selected
-    If intDim = 0 Then
-        MsgBox "You must select at least one Design to run the Castoff Macro."
-        objCastoffForm.Show
-    End If
+    ' Get info from Back Matter section
+    Dim intIndexPgs As Integer     'Number of pages estimated for the index
+    intIndexPgs = FormInputs.txtIndex.Text
     
-    'Get publisher name from tab of userform
-    'strPub = objCastoffForm.tabPublisher.SelectedItem.Caption
+    Dim intBackmatterPgsTK As Integer 'Number of pages of backmatter TK
+    intBackmatterPgsTK = FormInputs.txtBackmatter.Text
+    
+    ' Get info from Notes and Bibliography section
+    Dim intUnlinkedNotesPgs As Integer 'Number of unlinked endnotes in manuscript
+    intUnlinkedNotesPgs = FormInputs.txtUnlinkedNotes.Text
+    
+    Dim intEndnotesPgsTK As Integer 'Number of endnotes pages TK
+    intEndnotesPgsTK = FormInputs.txtNotesTK.Text
+    
+    Dim intBiblioPgs As Integer 'Number of pages of of bibliography currently in MS
+    intBiblioPgs = FormInputs.txtBibliography.Text
+    
+    Dim intBiblioPgsTK As Integer 'Number of pages of Bibliography TK
+    intBiblioPgsTK = FormInputs.txtBiblioTK.Text
+    
+    ' Get info from Complex Items section
+    Dim intSubheads2Chap As Integer 'Number of subheads in 2 chapters
+    intSubheads2Chap = FormInputs.txtSubheads.Text
+    
+    Dim intTablesPgs As Integer  'Number of pages for tables
+    intTablesPgs = FormInputs.txtTables.Text
+    
+    Dim intArtPgs As Integer  'Number of pages for in-text art
+    intArtPgs = FormInputs.txtArt.Text
+    
+    
+    
+    
+    
+    
+    
+    ' -------- Do stuff with the userform inputs ------------------------
+    Dim strCastoffFile As String    'File name of CSV on Confluence
+    Dim strInfoType As String       'Type of into we want to download (here = Castoff)
     
     'Create name of castoff csv file to download
     strInfoType = "Castoff"
@@ -151,7 +184,7 @@ Sub UniversalCastoff()
             strMessage = "Looks like we can't download the design info from the internet right now. " & _
                 "Please check your internet connection, or contact workflows@macmillan.com."
             MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous design file available"
-            Unload objCastoffForm
+            Unload FormInputs
             Exit Sub
         Else
             strMessage = "Looks like we can't download the most up to date design info from the internet right now, " & _
@@ -165,7 +198,7 @@ Sub UniversalCastoff()
         strMessage = "The Castoff macro is unable to access the design count file right now. Please check your internet " & _
                     "connection and try again, or contact workflows@macmillan.com."
         MsgBox strMessage, vbCritical, "Error 3: Design CSV doesn't exist"
-        Unload objCastoffForm
+        Unload FormInputs
         Exit Sub
     Else
         ' Load CSV into an array
@@ -193,7 +226,7 @@ Sub UniversalCastoff()
         If UBound(arrDesign(), 1) < intDesign(d) And UBound(arrDesign(), 2) < intTrim Then
              MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
                 vbCritical, "Error 1: Design Count Out of Range"
-            Unload objCastoffForm
+            Unload FormInputs
             Exit Sub
         Else
             '---------Get design character count-------------------------------
@@ -216,7 +249,7 @@ Sub UniversalCastoff()
             Dim lngBlankPgs As Long
             Dim lngActualCount As Long
 
-            arrCastoffResult = Castoff(lngDesignCount, objCastoffForm)
+            arrCastoffResult = Castoff(lngDesignCount, FormInputs)
 
             lngFinalCount = arrCastoffResult(0)
             lngBlankPgs = arrCastoffResult(1)
@@ -253,7 +286,7 @@ Sub UniversalCastoff()
                 
                 'Get spine size
                 If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-                    strSpineSize = SpineSize(blnStaging, lngFinalCount, strPub, objCastoffForm, strLogFile)
+                    strSpineSize = SpineSize(blnStaging, lngFinalCount, strPub, FormInputs, strLogFile)
                     'Debug.Print "spine size = " & strSpineSize
                     If strSpineSize = vbNullString Then
                         strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
@@ -292,7 +325,7 @@ Sub UniversalCastoff()
     '-------------Report castoff info to user----------------------------------------------------------------
     MsgBox strMessage & strWarning & strSpineSize, vbOKOnly, "Castoff"
 
-    Unload objCastoffForm
+    Unload FormInputs
             
 End Sub
 
