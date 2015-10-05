@@ -17,12 +17,17 @@ Attribute VB_Exposed = False
 
 Option Explicit
 Public blnCancel As Boolean
-Public blnHelp As Boolean
+Const lngHexVal As Long = &HF3F3F3      'Background color of userform
+Const lngHexRed As Long = &HC0          'Red for required sections
+Const lngHexBlack As Long = &H0             'Black for non-required sections
+
 
 Private Sub cmdYesCastoff_Click()
-    ' Cancel or Help were not clicked
+    ' Cancel was not clicked
+    
+    'Stop
+    
     blnCancel = False
-    blnHelp = False
     
     Dim blnTitleStatus As Boolean
     Dim blnPubStatus As Boolean
@@ -58,15 +63,41 @@ Private Sub cmdYesCastoff_Click()
     'OK if all required have been set, otherwise give a warning message.
     If blnTrimStatus = True And blnDesignStatus = True And blnPubStatus = True And blnTitleStatus = True Then
         blnCancel = False
-        Me.Hide
     Else
+        Me.Hide
         MsgBox "You must fill in Title Info, Publisher, Trim Size, and Design to generate a castoff."
+        Me.Show
     End If
+    
+    'Also all "Standard" inputs are required if SMP or Tor.com, all "Pickup" are required if "Pickup Design"
+    If Me.optPubSMP Or Me.optPubTor Then
+        If Me.txtChapters = vbNullString Or Me.txtParts = vbNullString Or Me.txtFrontmatter = vbNullString Then
+            Me.Hide
+            MsgBox "You must fill in Standard Items section to get a castoff."
+            Me.Show
+        Else
+            Me.Hide
+        End If
+    ElseIf Me.optPubPickup Then
+        If Me.txtPrevTitle = vbNullString Or Me.txtPrevPageCount = vbNullString Or Me.txtPrevCharCount = vbNullString _
+            Or Me.txtAddlPgs = vbNullString Then
+                Me.Hide
+                MsgBox "You must full in the Pickup Designs section to get a castoff."
+                Me.Show
+        Else
+            Me.Hide
+        End If
+    Else
+        Me.Hide
+        MsgBox "You must pick a Publisher for a castoff."
+        Me.Show
+    End If
+            
+    
 End Sub
 
 
 Private Sub cmdNoCastoff_Click()
-    blnHelp = False
     blnCancel = True
     Me.Hide
 End Sub
@@ -74,17 +105,28 @@ End Sub
 
 Private Sub cmdHelp_Click()
     blnCancel = False
-    blnHelp = True
+    
     Me.Hide
+    
+    Dim strHelpMessage As String
+        
+    strHelpMessage = "MACMILLAN PRELIMINARY CASTOFF FORM" & vbNewLine & vbNewLine & _
+    "Note: These are ballpark estimates only. Characters per page are finally determined by font, font size, " & _
+    "and text width." & vbNewLine & vbNewLine & _
+    "This form will calculate an estimated print page count based on the manuscript file you run it on and " & _
+    "the information you enter on this form." & vbNewLine & vbNewLine & _
+    "You can find more detailed information about this form at <Confluence Page>, or contact " & _
+    "workflows@macmillan.com if you have any questions."
+    
+    MsgBox strHelpMessage, vbOKOnly, "Castoff Help"
+    Me.Show
+    
+
 End Sub
 
 Private Sub UserForm_Initialize()
 
     'To ensure consistent appearance on different OS
-    Dim lngHexVal As Long
-    Dim lngHexRed As Long
-    lngHexVal = &HF3F3F3
-    lngHexRed = &HC0
 
     Me.BackColor = lngHexVal
     labHeading.BackColor = lngHexVal
@@ -164,3 +206,20 @@ Private Sub UserForm_Initialize()
 
 End Sub
 
+
+Private Sub optPubSMP_Click()
+    fraStandard.ForeColor = lngHexRed
+    fraPickup.ForeColor = lngHexBlack
+End Sub
+
+
+Private Sub optPubTor_Click()
+    fraStandard.ForeColor = lngHexRed
+    fraPickup.ForeColor = lngHexBlack
+End Sub
+
+
+Private Sub optPubPickup_Click()
+    fraStandard.ForeColor = lngHexBlack
+    fraPickup.ForeColor = lngHexRed
+End Sub
