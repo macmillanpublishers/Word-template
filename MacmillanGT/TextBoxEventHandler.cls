@@ -17,7 +17,8 @@ Public Property Set TextBox(ByVal oTextBox As TextBox)
 End Property
 
 Private Sub m_oTextBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    'Call OnlyNumbers(KeyAscii, m_oTextBox)
+    ' From http://sitestory.dk/excel_vba/textboxes-userforms.htm and
+    ' http://stackoverflow.com/questions/1083603/vba-using-withevents-on-userforms
     
     If m_oTextBox.Name Like "num*" Then
         'If Not (KeyAscii > 47 And KeyAscii < 59) Then
