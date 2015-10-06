@@ -20,6 +20,112 @@ Const lngHexVal As Long = &HF3F3F3      'Background color of userform
 Const lngHexRed As Long = &HC0          'Red for required sections
 Const lngHexBlack As Long = &H0             'Black for non-required sections
 
+Private m_oCollectionOfEventHandlers As Collection
+
+
+Private Sub UserForm_Initialize()
+    
+    ' Create instance of TextboxEvenHandler for each control
+    ' Started from http://stackoverflow.com/questions/1083603/vba-using-withevents-on-userforms
+    Set m_oCollectionOfEventHandlers = New Collection
+
+    Dim oControl As control
+    For Each oControl In Me.Controls
+
+        If TypeName(oControl) = "TextBox" Then
+
+            Dim oEventHandler As TextBoxEventHandler
+            Set oEventHandler = New TextBoxEventHandler
+
+            Set oEventHandler.TextBox = oControl
+
+            m_oCollectionOfEventHandlers.Add oEventHandler
+
+        End If
+
+    Next oControl
+
+
+    'Set userform appearance to ensure consistent appearance on different OS
+
+    Me.BackColor = lngHexVal
+    labHeading.BackColor = lngHexVal
+    
+    fraTitleInfo.BackColor = lngHexVal
+    fraTitleInfo.ForeColor = lngHexRed
+    labEditor.BackColor = lngHexVal
+    labAuthor.BackColor = lngHexVal
+    labTitle.BackColor = lngHexVal
+    labPageCount.BackColor = lngHexVal
+    
+    fraPublisher.BackColor = lngHexVal
+    fraPublisher.ForeColor = lngHexRed
+    optPubSMP.BackColor = lngHexVal
+    optPubTor.BackColor = lngHexVal
+    optPubPickup.BackColor = lngHexVal
+    
+    fraTrimSize.BackColor = lngHexVal
+    fraTrimSize.ForeColor = lngHexRed
+    optTrim5x8.BackColor = lngHexVal
+    optTrim6x9.BackColor = lngHexVal
+    
+    fraDesign.BackColor = lngHexVal
+    fraDesign.ForeColor = lngHexRed
+    chkDesignLoose.BackColor = lngHexVal
+    chkDesignAverage.BackColor = lngHexVal
+    chkDesignTight.BackColor = lngHexVal
+    
+    fraStandard.BackColor = lngHexVal
+    labChapters.BackColor = lngHexVal
+    labParts.BackColor = lngHexVal
+    labFrontmatter.BackColor = lngHexVal
+    
+    fraBackmatter.BackColor = lngHexVal
+    labIndex.BackColor = lngHexVal
+    labBackmatter.BackColor = lngHexVal
+    
+    fraNotesBib.BackColor = lngHexVal
+    labUnlinkedNotes.BackColor = lngHexVal
+    labNotesTK.BackColor = lngHexVal
+    labBibliography.BackColor = lngHexVal
+    labBiblioTK.BackColor = lngHexVal
+    
+    fraComplex.BackColor = lngHexVal
+    labSubheads.BackColor = lngHexVal
+    labTables.BackColor = lngHexVal
+    labArt.BackColor = lngHexVal
+    
+    fraPickup.BackColor = lngHexVal
+    labPrevTitle.BackColor = lngHexVal
+    labPrevPageCount.BackColor = lngHexVal
+    labPrevCharCount.BackColor = lngHexVal
+    labAddlPgs.BackColor = lngHexVal
+    
+    cmdNoCastoff.BackColor = lngHexVal
+    cmdYesCastoff.BackColor = lngHexVal
+    cmdHelp.BackColor = lngHexVal
+    
+    'set all default selections
+    optTrim5x8.value = False
+    optTrim6x9.value = False
+    chkDesignLoose.value = True
+    chkDesignAverage.value = True
+    chkDesignTight.value = True
+    
+    'make sure frame text is 10 pt because sometimes it turns into 2pt and I don't know why
+    labHeading.Font.Size = 12
+    fraTitleInfo.Font.Size = 10
+    fraPublisher.Font.Size = 10
+    fraDesign.Font.Size = 10
+    fraTrimSize.Font.Size = 10
+    fraStandard.Font.Size = 10
+    fraBackmatter.Font.Size = 10
+    fraNotesBib.Font.Size = 10
+    fraComplex.Font.Size = 10
+    fraPickup.Font.Size = 10
+
+End Sub
+
 
 Private Sub cmdYesCastoff_Click()
     ' Cancel was not clicked
@@ -37,7 +143,7 @@ Private Sub cmdYesCastoff_Click()
     
     'Has something been entered for all Title Info fields?
     If Me.txtEditor <> vbNullString And Me.txtAuthor <> vbNullString And Me.txtTitle <> vbNullString _
-        And Me.txtPageCount <> vbNullString Then
+        And Me.numTxtPageCount <> vbNullString Then
             blnTitleStatus = True
     End If
     
@@ -124,87 +230,6 @@ Private Sub cmdHelp_Click()
 
 End Sub
 
-Private Sub UserForm_Initialize()
-
-    'Set userform appearance to ensure consistent appearance on different OS
-
-    Me.BackColor = lngHexVal
-    labHeading.BackColor = lngHexVal
-    
-    fraTitleInfo.BackColor = lngHexVal
-    fraTitleInfo.ForeColor = lngHexRed
-    labEditor.BackColor = lngHexVal
-    labAuthor.BackColor = lngHexVal
-    labTitle.BackColor = lngHexVal
-    labPageCount.BackColor = lngHexVal
-    
-    fraPublisher.BackColor = lngHexVal
-    fraPublisher.ForeColor = lngHexRed
-    optPubSMP.BackColor = lngHexVal
-    optPubTor.BackColor = lngHexVal
-    optPubPickup.BackColor = lngHexVal
-    
-    fraTrimSize.BackColor = lngHexVal
-    fraTrimSize.ForeColor = lngHexRed
-    optTrim5x8.BackColor = lngHexVal
-    optTrim6x9.BackColor = lngHexVal
-    
-    fraDesign.BackColor = lngHexVal
-    fraDesign.ForeColor = lngHexRed
-    chkDesignLoose.BackColor = lngHexVal
-    chkDesignAverage.BackColor = lngHexVal
-    chkDesignTight.BackColor = lngHexVal
-    
-    fraStandard.BackColor = lngHexVal
-    labChapters.BackColor = lngHexVal
-    labParts.BackColor = lngHexVal
-    labFrontmatter.BackColor = lngHexVal
-    
-    fraBackmatter.BackColor = lngHexVal
-    labIndex.BackColor = lngHexVal
-    labBackmatter.BackColor = lngHexVal
-    
-    fraNotesBib.BackColor = lngHexVal
-    labUnlinkedNotes.BackColor = lngHexVal
-    labNotesTK.BackColor = lngHexVal
-    labBibliography.BackColor = lngHexVal
-    labBiblioTK.BackColor = lngHexVal
-    
-    fraComplex.BackColor = lngHexVal
-    labSubheads.BackColor = lngHexVal
-    labTables.BackColor = lngHexVal
-    labArt.BackColor = lngHexVal
-    
-    fraPickup.BackColor = lngHexVal
-    labPrevTitle.BackColor = lngHexVal
-    labPrevPageCount.BackColor = lngHexVal
-    labPrevCharCount.BackColor = lngHexVal
-    labAddlPgs.BackColor = lngHexVal
-    
-    cmdNoCastoff.BackColor = lngHexVal
-    cmdYesCastoff.BackColor = lngHexVal
-    cmdHelp.BackColor = lngHexVal
-    
-    'set all default selections
-    optTrim5x8.value = False
-    optTrim6x9.value = False
-    chkDesignLoose.value = True
-    chkDesignAverage.value = True
-    chkDesignTight.value = True
-    
-    'make sure frame text is 10 pt because sometimes it turns into 2pt and I don't know why
-    labHeading.Font.Size = 12
-    fraTitleInfo.Font.Size = 10
-    fraPublisher.Font.Size = 10
-    fraDesign.Font.Size = 10
-    fraTrimSize.Font.Size = 10
-    fraStandard.Font.Size = 10
-    fraBackmatter.Font.Size = 10
-    fraNotesBib.Font.Size = 10
-    fraComplex.Font.Size = 10
-    fraPickup.Font.Size = 10
-
-End Sub
 
 
 Private Sub optPubSMP_Click()
@@ -223,3 +248,7 @@ Private Sub optPubPickup_Click()
     fraStandard.ForeColor = lngHexBlack
     fraPickup.ForeColor = lngHexRed
 End Sub
+
+
+ 
+

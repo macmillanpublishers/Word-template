@@ -11,7 +11,7 @@ Sub UniversalCastoff()
 ' 1. Requires SharedMacros module to be installed in same template
 ' 2. Requires design character count CSV files and spine size files be saved as attachments to
 '    https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production
-' 3. Requires CastoffForm userform module
+' 3. Requires CastoffForm userform module. Input validation is done in the userform code.
 
 
     '---------- Check if doc is saved ---------------------------------
@@ -108,6 +108,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         strPubRealName = "Tor.com"
     ElseIf FormInputs.optPubPickup.Enabled Then
         ' Go to just calculating Pickup info
+        ' ==== ADD CALL TO PICKUP SUB HERE =====
     End If
     
     ' Get info from Back Matter section
