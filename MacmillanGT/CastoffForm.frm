@@ -23,6 +23,10 @@ Const lngHexBlack As Long = &H0             'Black for non-required sections
 Private m_oCollectionOfEventHandlers As Collection
 
 
+Private Sub labBiblioTK_Click()
+
+End Sub
+
 Private Sub UserForm_Initialize()
     
     ' Create instance of TextboxEvenHandler for each control
