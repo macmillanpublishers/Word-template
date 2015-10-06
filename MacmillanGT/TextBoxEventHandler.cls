@@ -20,14 +20,8 @@ Private Sub m_oTextBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
     ' From http://sitestory.dk/excel_vba/textboxes-userforms.htm and
     ' http://stackoverflow.com/questions/1083603/vba-using-withevents-on-userforms
     
+    ' Textboxes that can only be numbers are prepended by "num" in the name
     If m_oTextBox.Name Like "num*" Then
-        'If Not (KeyAscii > 47 And KeyAscii < 59) Then
-        '    Beep
-        '    MsgBox "Whole numbers only, please."
-        '    KeyAscii = 0
-        '    m_oTextBox.SetFocus
-        '    m_oTextBox.SelLength = 0
-        'End If
         
         Select Case KeyAscii
             Case 47 To 57
