@@ -87,6 +87,10 @@ Private Sub cmdYesCastoff_Click()
         MsgBox "You must pick a Publisher for a castoff."
         Me.Show
     End If
+    
+    If blnCancel = False Then
+        Call CastoffStart(FormInputs:=Me)
+    End If
             
     
 End Sub
@@ -121,7 +125,7 @@ End Sub
 
 Private Sub UserForm_Initialize()
 
-    'To ensure consistent appearance on different OS
+    'Set userform appearance to ensure consistent appearance on different OS
 
     Me.BackColor = lngHexVal
     labHeading.BackColor = lngHexVal
@@ -181,7 +185,7 @@ Private Sub UserForm_Initialize()
     cmdHelp.BackColor = lngHexVal
     
     'set all default selections
-    optTrim5x8.value = True
+    optTrim5x8.value = False
     optTrim6x9.value = False
     chkDesignLoose.value = True
     chkDesignAverage.value = True

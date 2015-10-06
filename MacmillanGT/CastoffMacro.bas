@@ -19,7 +19,7 @@ Sub UniversalCastoff()
     '    Exit Sub
     'End If
     
-    '----------Load userform to get user inputs------------------------
+    '----------Load userform------------------------
     Dim objCastoffForm As CastoffForm
     Set objCastoffForm = New CastoffForm
     
@@ -29,13 +29,13 @@ Sub UniversalCastoff()
     If objCastoffForm.blnCancel = True Then
         Unload objCastoffForm
         Exit Sub
-    Else
-        Call CastoffStart(FormInputs:=objCastoffForm)
+    'Else
+    '    Call CastoffStart(FormInputs:=objCastoffForm)
     End If
     
 End Sub
 
-Private Sub CastoffStart(FormInputs As CastoffForm)
+Public Sub CastoffStart(FormInputs As CastoffForm)
     
     ' ============================================
     ' FOR TESTING / DEBUGGING
@@ -140,21 +140,21 @@ Private Sub CastoffStart(FormInputs As CastoffForm)
     Dim intArtPgs As Integer  'Number of pages for in-text art
     intArtPgs = FormInputs.txtArt.Text
     
-    
-    
-    
+    ' -------- Get character counts of current document -----------------
     
     
     
     ' -------- Do stuff with the userform inputs ------------------------
+    
+    '---------Download CSV with design specs from Confluence site-------
     Dim strCastoffFile As String    'File name of CSV on Confluence
     Dim strInfoType As String       'Type of into we want to download (here = Castoff)
     
     'Create name of castoff csv file to download
     strInfoType = "Castoff"
     strCastoffFile = strInfoType & "_" & strPub & ".csv"
+
     
-    '---------Download CSV with design specs from Confluence site-------
     'Create log file name
     Dim arrLogInfo() As Variant
     ReDim arrLogInfo(1 To 3)
