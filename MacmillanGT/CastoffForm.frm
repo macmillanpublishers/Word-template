@@ -168,31 +168,30 @@ Private Sub cmdYesCastoff_Click()
     Else
         Me.Hide
         MsgBox "You must fill in Title Info, Publisher, Trim Size, and Design to generate a castoff."
+        blnCancel = True
         Me.Show
     End If
     
     'Also all "Standard" inputs are required if SMP or Tor.com, all "Pickup" are required if "Pickup Design"
     If Me.optPubSMP Or Me.optPubTor Then
-        If Me.txtChapters = vbNullString Or Me.txtParts = vbNullString Or Me.txtFrontmatter = vbNullString Then
+        If Me.numTxtChapters = vbNullString Or Me.numTxtParts = vbNullString Or Me.numTxtFrontmatter = vbNullString Then
             Me.Hide
             MsgBox "You must fill in Standard Items section to get a castoff."
+            blnCancel = True
             Me.Show
         Else
             Me.Hide
         End If
     ElseIf Me.optPubPickup Then
-        If Me.txtPrevTitle = vbNullString Or Me.txtPrevPageCount = vbNullString Or Me.txtPrevCharCount = vbNullString _
-            Or Me.txtAddlPgs = vbNullString Then
+        If Me.txtPrevTitle = vbNullString Or Me.numTxtPrevPageCount = vbNullString Or Me.numTxtPrevCharCount = vbNullString _
+            Or Me.numTxtAddlPgs = vbNullString Then
                 Me.Hide
                 MsgBox "You must full in the Pickup Designs section to get a castoff."
+                blnCancel = True
                 Me.Show
         Else
             Me.Hide
         End If
-    Else
-        Me.Hide
-        MsgBox "You must pick a Publisher for a castoff."
-        Me.Show
     End If
     
     If blnCancel = False Then

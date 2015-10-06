@@ -47,6 +47,32 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
     '----------Get user inputs from Userform--------------------------------------------------
     
+    'Get Title Information
+    Dim strEditor As String
+    strEditor = FormInputs.txtEditor
+    
+    Dim strAuthor As String
+    strAuthor = FormInputs.txtAuthor
+    
+    Dim strTitle As String
+    strTitle = FormInputs.txtTitle
+    
+            
+    'Get publisher name from option buttons
+    Dim strPub As String        'Publisher code for file names and stuff
+    Dim strPubRealName As String    'Publisher name for final output
+    If FormInputs.optPubSMP.Enabled Then
+        strPub = "SMP"
+        strPubRealName = "St. Martin's Press"
+    ElseIf FormInputs.optPubTor.Enabled Then
+        strPub = "torDOTcom"
+        strPubRealName = "Tor.com"
+    ElseIf FormInputs.optPubPickup.Enabled Then
+        ' Go to just calculating Pickup info
+        ' ==== ADD CALL TO PICKUP SUB HERE =====
+    End If
+    
+    
     'Get trim size
     Dim intTrim As Integer      'Index number of trim size in CSV file, starts at 0
     Dim strTrim As String       'Text version of trim size
@@ -54,6 +80,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     'Number assigned is column index in design array
     '0 = 5-1/2 x 8-1/4
     '1 = 6-1/8 x 9-1/4
+    
     If FormInputs.optTrim5x8 Then
         intTrim = 0
         strTrim = "5-1/2 x 8-1/4"
@@ -61,7 +88,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         intTrim = 1
         strTrim = "6-1/8 x 9-1/4"
     Else
-        MsgBox "You must select a Trim Size to run the Castoff Macro."
+        MsgBox "You must select a Trim Size to run the Castoff Macro." 'redundant since we're validating in the form module
         FormInputs.Show
     End If
         
@@ -96,50 +123,46 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         intDesign(intDim) = 2
         strDesign(intDim) = FormInputs.chkDesignTight.Caption
     End If
-        
-    'Get publisher name from option buttons
-    Dim strPub As String        'Publisher code for file names and stuff
-    Dim strPubRealName As String    'Publisher name for final output
-    If FormInputs.optPubSMP.Enabled Then
-        strPub = "SMP"
-        strPubRealName = "St. Martin's Press"
-    ElseIf FormInputs.optPubTor.Enabled Then
-        strPub = "torDOTcom"
-        strPubRealName = "Tor.com"
-    ElseIf FormInputs.optPubPickup.Enabled Then
-        ' Go to just calculating Pickup info
-        ' ==== ADD CALL TO PICKUP SUB HERE =====
-    End If
+    
+    ' Get info from Standard Items section
+    Dim intChapters As Integer      ' number of chapters
+    intChapters = FormInputs.numTxtChapters
+    
+    Dim intParts As Integer         'number of part titles
+    intParts = FormInputs.numTxtParts
+    
+    Dim intFMpgs As Integer         ' number of pages of frontmatter including blanks
+    intFMpgs = FormInputs.numTxtFrontmatter
     
     ' Get info from Back Matter section
     Dim intIndexPgs As Integer     'Number of pages estimated for the index
-    intIndexPgs = FormInputs.txtIndex.Text
+    intIndexPgs = FormInputs.numTxtIndex.Text
     
     Dim intBackmatterPgsTK As Integer 'Number of pages of backmatter TK
-    intBackmatterPgsTK = FormInputs.txtBackmatter.Text
+    intBackmatterPgsTK = FormInputs.numTxtBackmatter.Text
     
     ' Get info from Notes and Bibliography section
     Dim intUnlinkedNotesPgs As Integer 'Number of unlinked endnotes in manuscript
-    intUnlinkedNotesPgs = FormInputs.txtUnlinkedNotes.Text
+    intUnlinkedNotesPgs = FormInputs.numTxtUnlinkedNotes.Text
     
     Dim intEndnotesPgsTK As Integer 'Number of endnotes pages TK
-    intEndnotesPgsTK = FormInputs.txtNotesTK.Text
+    intEndnotesPgsTK = FormInputs.numTxtNotesTK.Text
     
     Dim intBiblioPgs As Integer 'Number of pages of of bibliography currently in MS
-    intBiblioPgs = FormInputs.txtBibliography.Text
+    intBiblioPgs = FormInputs.numTxtBibliography.Text
     
     Dim intBiblioPgsTK As Integer 'Number of pages of Bibliography TK
-    intBiblioPgsTK = FormInputs.txtBiblioTK.Text
+    intBiblioPgsTK = FormInputs.numTxtBiblioTK.Text
     
     ' Get info from Complex Items section
     Dim intSubheads2Chap As Integer 'Number of subheads in 2 chapters
-    intSubheads2Chap = FormInputs.txtSubheads.Text
+    intSubheads2Chap = FormInputs.numTxtSubheads.Text
     
     Dim intTablesPgs As Integer  'Number of pages for tables
-    intTablesPgs = FormInputs.txtTables.Text
+    intTablesPgs = FormInputs.numTxtTables.Text
     
     Dim intArtPgs As Integer  'Number of pages for in-text art
-    intArtPgs = FormInputs.txtArt.Text
+    intArtPgs = FormInputs.numTxtArt.Text
     
     ' -------- Get character counts of current document -----------------
     
