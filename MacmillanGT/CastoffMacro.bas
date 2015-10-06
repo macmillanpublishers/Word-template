@@ -57,6 +57,9 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     Dim strTitle As String
     strTitle = FormInputs.txtTitle
     
+    Dim intSchedPgCount As Integer
+    intSchedPgCount = FormInputs.numTxtPageCount
+    
             
     'Get publisher name from option buttons
     Dim strPub As String        'Publisher code for file names and stuff
@@ -422,7 +425,8 @@ Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
     Dim lngFinalPageCount As Long
 
     'Get character count with space from Word doc, divide by avg. char. count of design to get page count
-    lngCharacterCount = ActiveDocument.Range.ComputeStatistics(wdStatisticCharactersWithSpaces)
+    lngCharacterCount = ActiveDocument.Range.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+        IncludeFootnotesAndEndnotes:=True)
     lngActualPageCount = lngCharacterCount / Design
 
     'Debug.Print "Starting page count: " & lngActualPageCount
