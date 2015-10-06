@@ -11,7 +11,7 @@ Sub UniversalCastoff()
 ' 1. Requires SharedMacros module to be installed in same template
 ' 2. Requires design character count CSV files and spine size files be saved as attachments to
 '    https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production
-' 3. Requires CastoffForm userform module. Input validation is done in the userform code.
+' 3. Requires CastoffForm userform module and TextBoxEventHandler class module. Input validation is done there.
 
 
     '---------- Check if doc is saved ---------------------------------
@@ -26,12 +26,12 @@ Sub UniversalCastoff()
     objCastoffForm.Show
         
     'If user selected 'Oops, No Castoff For Me" button, cancel macro
-    If objCastoffForm.blnCancel = True Then
-        Unload objCastoffForm
-        Exit Sub
+    'If objCastoffForm.blnCancel = True Then
+    '    Unload objCastoffForm
+    '    Exit Sub
     'Else
     '    Call CastoffStart(FormInputs:=objCastoffForm)
-    End If
+    'End If
     
 End Sub
 

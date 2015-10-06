@@ -205,7 +205,7 @@ End Sub
 
 Private Sub cmdNoCastoff_Click()
     blnCancel = True
-    Me.Hide
+    Unload Me
 End Sub
 
 
