@@ -1,10 +1,10 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} CastoffForm 
    Caption         =   "Macmillan Preliminary Castoff Form"
-   ClientHeight    =   10650
+   ClientHeight    =   10560
    ClientLeft      =   45
    ClientTop       =   -60
-   ClientWidth     =   12225
+   ClientWidth     =   9360
    OleObjectBlob   =   "CastoffForm.frx":0000
    ShowModal       =   0   'False
    StartUpPosition =   1  'CenterOwner
@@ -24,6 +24,14 @@ Private m_oCollectionOfEventHandlers As Collection
 
 
 Private Sub labBiblioTK_Click()
+
+End Sub
+
+Private Sub labChapters_Click()
+
+End Sub
+
+Private Sub Label1_Click()
 
 End Sub
 
@@ -54,6 +62,9 @@ Private Sub UserForm_Initialize()
 
     Me.BackColor = lngHexVal
     labHeading.BackColor = lngHexVal
+    labHeading2.BackColor = lngHexVal
+    labHeading2.ForeColor = lngHexRed
+    labHeading3.BackColor = lngHexVal
     
     fraTitleInfo.BackColor = lngHexVal
     fraTitleInfo.ForeColor = lngHexRed
@@ -214,22 +225,18 @@ End Sub
 
 Private Sub cmdHelp_Click()
     blnCancel = False
-    
-    Me.Hide
-    
+        
     Dim strHelpMessage As String
         
     strHelpMessage = "MACMILLAN PRELIMINARY CASTOFF FORM" & vbNewLine & vbNewLine & _
-    "Note: These are ballpark estimates only. Characters per page are finally determined by font, font size, " & _
-    "and text width." & vbNewLine & vbNewLine & _
     "This form will calculate an estimated print page count based on the manuscript file you run it on and " & _
     "the information you enter on this form." & vbNewLine & vbNewLine & _
+    "Note: These are ballpark estimates only. Characters per page are finally determined by font, font size, " & _
+    "and text width." & vbNewLine & vbNewLine & _
     "You can find more detailed information about this form at <Confluence Page>, or contact " & _
     "workflows@macmillan.com if you have any questions."
     
     MsgBox strHelpMessage, vbOKOnly, "Castoff Help"
-    Me.Show
-    
 
 End Sub
 
