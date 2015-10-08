@@ -184,16 +184,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
                 End If
         
                 '---------Tor.com POD exceptions---------------------------------
-                If strPub = "torDOTcom" Then
-            
-                    'POD only has to be even, not 16-page sig
-                    If (lngActualCount Mod 2) = 0 Then      'page count is even
-                        lngFinalCount = lngActualCount
-                        lngBlankPgs = 0
-                    Else                                    'page count is odd
-                        lngFinalCount = lngActualCount + 1
-                        lngBlankPgs = 1
-                    End If
+
             
                     'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
                     If lngFinalCount < 56 Then
@@ -512,21 +503,34 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
                 + lngTablesPgs _
                 + lngArtPgs
                 
-    ' Calculate next sig up and next sig down
-    Dim lngRemainderPgs As Long
-    Dim lngLowerSig As Long
-    Dim lngUpperSig As Long
-    
-    lngRemainderPgs = lngEstPages Mod 16
-    lngLowerSig = lngEstPages - lngRemainderPgs
-    lngUpperSig = lngEstPages + (16 - lngRemainderPgs)
                 
-    ' Determine if we go up or down a signature
+    ' Figure out what the final sig/page count will be
     Dim result As Long
-    If lngRemainderPgs <= 5 Then    ' Do we want this value in a CSV on Confluence for easy update?
-        result = lngLowerSig
-    Else
-        result = lngUpperSig
+           
+    If objForm.optPubTor.Enabled Then
+        'POD only has to be even, not 16-page sig
+        If (lngEstPages Mod 2) = 0 Then      'page count is even
+            result = lngEstPages
+        Else                                    'page count is odd
+            result = lngEstPages + 1
+        End If
+    Else 'It's some other imprint printing offset
+                
+        ' Calculate next sig up and next sig down
+        Dim lngRemainderPgs As Long
+        Dim lngLowerSig As Long
+        Dim lngUpperSig As Long
+        
+        lngRemainderPgs = lngEstPages Mod 16
+        lngLowerSig = lngEstPages - lngRemainderPgs
+        lngUpperSig = lngEstPages + (16 - lngRemainderPgs)
+                    
+        ' Determine if we go up or down a signature
+        If lngRemainderPgs <= 5 Then    ' Do we want this value in a CSV on Confluence for easy update?
+            result = lngLowerSig
+        Else
+            result = lngUpperSig
+        End If
     End If
 
     Castoff = result
