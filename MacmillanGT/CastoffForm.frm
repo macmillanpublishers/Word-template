@@ -79,6 +79,11 @@ Private Sub UserForm_Initialize()
     optPubTor.BackColor = lngHexVal
     optPubPickup.BackColor = lngHexVal
     
+    fraPrintType.BackColor = lngHexVal
+    fraPrintType.ForeColor = lngHexRed
+    optPrintOffset.BackColor = lngHexVal
+    optPrintPOD.BackColor = lngHexVal
+    
     fraTrimSize.BackColor = lngHexVal
     fraTrimSize.ForeColor = lngHexRed
     optTrim5x8.BackColor = lngHexVal
@@ -138,6 +143,21 @@ Private Sub UserForm_Initialize()
     fraNotesBib.Font.Size = 10
     fraComplex.Font.Size = 10
     fraPickup.Font.Size = 10
+    fraPrintType.Font.Size = 10
+    
+    ' ===== FOR TESTING ONLY =================
+    ' ===== COMMENT OUT FOR PRODUCTION =======
+    txtEditor.value = "Editor Name"
+    txtAuthor.value = "Author Name"
+    txtTitle.value = "Book Title"
+    numTxtPageCount = "224"
+    optPrintOffset.value = True
+    optPubSMP.value = True
+    optTrim5x8.value = True
+    numTxtChapters.value = "10"
+    numTxtParts.value = "2"
+    numTxtFrontmatter.value = "14"
+    
 
 End Sub
 
@@ -148,11 +168,13 @@ Private Sub cmdYesCastoff_Click()
     
     Dim blnTitleStatus As Boolean
     Dim blnPubStatus As Boolean
+    Dim blnPrintStatus As Boolean
     Dim blnTrimStatus As Boolean
     Dim blnDesignStatus As Boolean
     
     blnTitleStatus = False
     blnPubStatus = False
+    blnPrintStatus = False
     blnTrimStatus = False
     blnDesignStatus = False
     
@@ -167,6 +189,11 @@ Private Sub cmdYesCastoff_Click()
         blnPubStatus = True
     End If
     
+    ' Has something been selected for Print Type?
+    If Me.optPrintOffset Or Me.optPrintPOD Then
+        blnPrintStatus = True
+    End If
+    
     'Has something been selected for Trim Size?
     If Me.optTrim5x8 Or Me.optTrim6x9 Then
         blnTrimStatus = True
@@ -178,11 +205,12 @@ Private Sub cmdYesCastoff_Click()
     End If
     
     'OK if all required have been set, otherwise give a warning message.
-    If blnTrimStatus = True And blnDesignStatus = True And blnPubStatus = True And blnTitleStatus = True Then
+    If blnTrimStatus = True And blnDesignStatus = True And blnPubStatus = True And blnTitleStatus = True _
+        And blnPrintStatus = True Then
         blnCancel = False
     Else
         Me.Hide
-        MsgBox "You must fill in Title Info, Publisher, Trim Size, and Design to generate a castoff."
+        MsgBox "You must fill in Title Info, Publisher, Print Type, Trim Size, and Design to generate a castoff."
         blnCancel = True
         Me.Show
     End If
@@ -191,7 +219,7 @@ Private Sub cmdYesCastoff_Click()
     If Me.optPubSMP Or Me.optPubTor Then
         If Me.numTxtChapters = vbNullString Or Me.numTxtParts = vbNullString Or Me.numTxtFrontmatter = vbNullString Then
             Me.Hide
-            MsgBox "You must fill in Standard Items section to get a castoff."
+            MsgBox "You must fill in the Standard Items section to get a castoff."
             blnCancel = True
             Me.Show
         Else
@@ -241,7 +269,6 @@ Private Sub cmdHelp_Click()
 End Sub
 
 
-
 Private Sub optPubSMP_Click()
     fraStandard.ForeColor = lngHexRed
     fraPickup.ForeColor = lngHexBlack
@@ -251,6 +278,7 @@ End Sub
 Private Sub optPubTor_Click()
     fraStandard.ForeColor = lngHexRed
     fraPickup.ForeColor = lngHexBlack
+    optPrintPOD.value = True
 End Sub
 
 
