@@ -422,14 +422,22 @@ Private Function LoadCSVtoArray(Path As String) As Variant
         whole_file = Input$(LOF(fnum), #fnum)
         Close fnum
 
-        ' Break the file into lines.
-        lines = Split(whole_file, vbCrLf)
+        ' Break the file into lines (trying to capture whichever line break is used)
+        If InStr(1, whole_file, vbCrLf) <> 0 Then
+            lines = Split(whole_file, vbCrLf)
+        ElseIf InStr(1, whole_file, vbCr) <> 0 Then
+            lines = Split(whole_file, vbCr)
+        ElseIf InStr(1, whole_file, vbLf) <> 0 Then
+            lines = Split(whole_file, vbLf)
+        Else
+            MsgBox "There was an error with your castoff.", vbCritical, "Error parsing CSV file"
+        End If
 
         ' Dimension the array.
-        num_rows = UBound(lines) - 1 ' -1 because we are not using the header row and column
+        num_rows = UBound(lines)
         one_line = Split(lines(0), ",")
-        num_cols = UBound(one_line) - 1 ' -1 because we are not using the header row and column
-        ReDim the_array(num_rows, num_cols)
+        num_cols = UBound(one_line)
+        ReDim the_array(num_rows - 1, num_cols - 1) ' -1 because we are not using the header row and column
         
         ' Copy the data into the array.
         For R = 1 To num_rows           ' 1 (not 0) because we are not using the header row
@@ -442,9 +450,10 @@ Private Function LoadCSVtoArray(Path As String) As Variant
         Next R
     
         ' Prove we have the data loaded.
-
-         For R = 0 To num_rows
-             For c = 0 To num_cols
+        Debug.Print LBound(the_array)
+        Debug.Print UBound(the_array)
+         For R = 0 To num_rows - 1          ' -1 again because we removed the header row
+             For c = 0 To num_cols - 1      ' -1 again because we removed the header column
                  Debug.Print the_array(R, c) & "|";
              Next c
              Debug.Print
