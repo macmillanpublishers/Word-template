@@ -147,6 +147,13 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         End If
         
         '------------Get castoff for each Design selected-------------------
+        Dim lngTrimIndex As Long
+        If objForm.optTrim5x8 Then  ' already validated that there is at least 1 picked in form code
+            lngTrimIndex = 0
+        Else
+            lngTrimIndex = 1
+        End If
+        
         Dim d As Long
         
         For d = LBound(lngDesign()) To UBound(lngDesign())
@@ -155,7 +162,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             UBound(arrDesign(), 2) & " < "; intTrim
             
             'Error handling: lngDesign(d) must be in range of design array
-            If UBound(arrDesign(), 1) < lngDesign(d) And UBound(arrDesign(), 2) < intTrim Then
+            If UBound(arrDesign(), 1) < lngDesign(d) And UBound(arrDesign(), 2) < lngTrimIndex Then
                  MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
                     vbCritical, "Error 1: Design Count Out of Range"
                 Unload FormInputs
