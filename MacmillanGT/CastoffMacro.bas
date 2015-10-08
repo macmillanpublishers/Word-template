@@ -450,20 +450,15 @@ Private Function LoadCSVtoArray(Path As String) As Variant
         Next R
     
         ' Prove we have the data loaded.
-        Debug.Print LBound(the_array)
-        Debug.Print UBound(the_array)
-         For R = 0 To num_rows - 1          ' -1 again because we removed the header row
-             For c = 0 To num_cols - 1      ' -1 again because we removed the header column
-                 Debug.Print the_array(R, c) & "|";
-             Next c
-             Debug.Print
-         Next R
-         Debug.Print "======="
-        
-        ' Delete the .csv file (actually keep it in case we need it later!)
-        ' If Len(Dir$(Path)) > 0 Then
-        '     Kill Path
-        ' End If
+        ' Debug.Print LBound(the_array)
+        ' Debug.Print UBound(the_array)
+        ' For R = 0 To num_rows - 1          ' -1 again because we removed the header row
+        '     For c = 0 To num_cols - 1      ' -1 again because we removed the header column
+        '         Debug.Print the_array(R, c) & "|";
+        '     Next c
+        '     Debug.Print
+        ' Next R
+        ' Debug.Print "======="
     
     LoadCSVtoArray = the_array
     
