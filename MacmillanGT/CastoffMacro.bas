@@ -127,7 +127,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         strDesign(intDim) = FormInputs.chkDesignTight.Caption
     End If
     
-    ' Get info from Standard Items section
+    ' Get info from Standard Items section (already validated as having data)
     Dim intChapters As Integer      ' number of chapters
     intChapters = FormInputs.numTxtChapters
     
@@ -137,35 +137,75 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     Dim intFMpgs As Integer         ' number of pages of frontmatter including blanks
     intFMpgs = FormInputs.numTxtFrontmatter
     
+    ' The rest of the inputs are not required, so only assign the value if one exists
+    ' Otherwise assign 0, so we can still use the variable later without a whole other
+    ' bunch of if statements
+    
     ' Get info from Back Matter section
     Dim intIndexPgs As Integer     'Number of pages estimated for the index
-    intIndexPgs = FormInputs.numTxtIndex.Text
+    If FormInputs.numTxtIndex <> vbNullString Then
+        intIndexPgs = FormInputs.numTxtIndex
+    Else
+        intIndexPgs = 0
+    End If
     
     Dim intBackmatterPgsTK As Integer 'Number of pages of backmatter TK
-    intBackmatterPgsTK = FormInputs.numTxtBackmatter.Text
+    If FormInputs.numTxtBackmatter <> vbNullString Then
+        intBackmatterPgsTK = FormInputs.numTxtBackmatter
+    Else
+        intBackmatterPgsTK = 0
+    End If
     
     ' Get info from Notes and Bibliography section
     Dim intUnlinkedNotesPgs As Integer 'Number of unlinked endnotes in manuscript
-    intUnlinkedNotesPgs = FormInputs.numTxtUnlinkedNotes.Text
+    If FormInputs.numTxtUnlinkedNotes <> vbNullString Then
+        intUnlinkedNotesPgs = FormInputs.numTxtUnlinkedNotes
+    Else
+        intUnlinkedNotesPgs = 0
+    End If
     
     Dim intEndnotesPgsTK As Integer 'Number of endnotes pages TK
-    intEndnotesPgsTK = FormInputs.numTxtNotesTK.Text
+    If FormInputs.numTxtNotesTK <> vbNullString Then
+        intEndnotesPgsTK = FormInputs.numTxtNotesTK
+    Else
+        intEndnotesPgsTK = 0
+    End If
     
     Dim intBiblioPgs As Integer 'Number of pages of of bibliography currently in MS
-    intBiblioPgs = FormInputs.numTxtBibliography.Text
+    If FormInputs.numTxtBibliography <> vbNullString Then
+        intBiblioPgs = FormInputs.numTxtBibliography
+    Else
+        intBiblioPgs = 0
+    End If
     
     Dim intBiblioPgsTK As Integer 'Number of pages of Bibliography TK
-    intBiblioPgsTK = FormInputs.numTxtBiblioTK.Text
+    If FormInputs.numTxtBiblioTK <> vbNullString Then
+        intBiblioPgsTK = FormInputs.numTxtBiblioTK
+    Else
+        intBiblioPgsTK = 0
+    End If
     
     ' Get info from Complex Items section
     Dim intSubheads2Chap As Integer 'Number of subheads in 2 chapters
-    intSubheads2Chap = FormInputs.numTxtSubheads.Text
+    If FormInputs.numTxtSubheads <> vbNullString Then
+        intSubheads2Chap = FormInputs.numTxtSubheads
+    Else
+        intSubheads2Chap = 0
+    End If
     
     Dim intTablesPgs As Integer  'Number of pages for tables
-    intTablesPgs = FormInputs.numTxtTables.Text
+    If FormInputs.numTxtTables <> vbNullString Then
+        intTablesPgs = FormInputs.numTxtTables
+    Else
+        intTablesPgs = 0
+    End If
     
     Dim intArtPgs As Integer  'Number of pages for in-text art
-    intArtPgs = FormInputs.numTxtArt.Text
+    If FormInputs.numTxtArt <> vbNullString Then
+        intArtPgs = FormInputs.numTxtArt
+    Else
+        intArtPgs = 0
+    End If
     
     ' -------- Get character counts of current document -----------------
     
@@ -359,6 +399,7 @@ End Sub
 Private Function LoadCSVtoArray(Path As String) As Variant
 
 '------Load CSV into 2d array, NOTE!!: base 0---------
+' But also note that this now removes the header row and column too
     Dim fnum As Integer
     Dim whole_file As String
     Dim lines As Variant
@@ -385,30 +426,30 @@ Private Function LoadCSVtoArray(Path As String) As Variant
         lines = Split(whole_file, vbCrLf)
 
         ' Dimension the array.
-        num_rows = UBound(lines)
+        num_rows = UBound(lines) - 1 ' -1 because we are not using the header row and column
         one_line = Split(lines(0), ",")
-        num_cols = UBound(one_line)
+        num_cols = UBound(one_line) - 1 ' -1 because we are not using the header row and column
         ReDim the_array(num_rows, num_cols)
-
+        
         ' Copy the data into the array.
-        For R = 0 To num_rows
+        For R = 1 To num_rows           ' 1 (not 0) because we are not using the header row
             If Len(lines(R)) > 0 Then
                 one_line = Split(lines(R), ",")
-                For c = 0 To num_cols
-                    the_array(R, c) = one_line(c)
+                For c = 1 To num_cols   ' 1 (not 0) because we are not using the header column
+                    the_array((R - 1), (c - 1)) = one_line(c)   ' -1 because we are not using header row/column from CSV
                 Next c
             End If
         Next R
     
         ' Prove we have the data loaded.
 
-        ' For R = 0 To num_rows
-        '     For c = 0 To num_cols
-        '         Debug.Print the_array(R, c) & "|";
-        '     Next c
-        '     Debug.Print
-        ' Next R
-        ' Debug.Print "======="
+         For R = 0 To num_rows
+             For c = 0 To num_cols
+                 Debug.Print the_array(R, c) & "|";
+             Next c
+             Debug.Print
+         Next R
+         Debug.Print "======="
         
         ' Delete the .csv file (actually keep it in case we need it later!)
         ' If Len(Dir$(Path)) > 0 Then
