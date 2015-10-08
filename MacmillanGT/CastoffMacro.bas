@@ -507,15 +507,14 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     ' Figure out what the final sig/page count will be
     Dim result As Long
            
-    If objForm.optPubTor.Enabled Then
+    If objForm.optPrintPOD.Enabled Then
         'POD only has to be even, not 16-page sig
         If (lngEstPages Mod 2) = 0 Then      'page count is even
             result = lngEstPages
         Else                                    'page count is odd
             result = lngEstPages + 1
         End If
-    Else 'It's some other imprint printing offset
-                
+    Else 'It's printing offset, already validated in castoff form code
         ' Calculate next sig up and next sig down
         Dim lngRemainderPgs As Long
         Dim lngLowerSig As Long
