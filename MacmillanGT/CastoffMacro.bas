@@ -147,12 +147,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         End If
         
         '------------Get castoff for each Design selected-------------------
-        Dim strWarning As String
-        Dim strSpineSize As String
         Dim d As Long
-        
-        strWarning = ""
-        strSpineSize = ""
         
         For d = LBound(lngDesign()) To UBound(lngDesign())
             'Debug.Print _
@@ -168,86 +163,91 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             Else
     
                 '---------Calculate Page Count--------------------------------------
-                Dim lngCastoffResult() As Long
-                lngCastoffResult = Castoff(lngDesign(d), arrDesign(), FormInputs)
-    
-
-
-    
-                'Add extra space if blanks less than 10
-                Dim strExtraSpace As String
-        
-                If lngBlankPgs < 10 Then
-                    strExtraSpace = "    "
-                Else
-                    strExtraSpace = "  "
-                End If
-        
-                '---------Tor.com POD exceptions---------------------------------
-
-            
-                    'Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
-                    If lngFinalCount < 56 Then
-                        strWarning = "NOTE: Tor.com titles less than 48 pages will be saddle-stitched." & _
-                                        vbNewLine & vbNewLine
-                    End If
+                Dim lngCastoffResult(LBound(lngDesign) To UBound(lngDesign)) As Long
+                lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs)
                 
-                    'Debug.Print strPub
-                    
-                    'Get spine size
-                    If lngFinalCount >= 18 And lngFinalCount <= 1050 Then       'Limits of spine size table
-                        strSpineSize = SpineSize(blnStaging, lngFinalCount, strPub, FormInputs, strLogFile)
-                        'Debug.Print "spine size = " & strSpineSize
-                        If strSpineSize = vbNullString Then
-                            strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
-                                "Contact workflows@macmillan.com for assistance."
-                        Else
-                            strSpineSize = "Your spine size will be " & strSpineSize & " inches " & _
-                                                "at this page count."
-                        End If
-                    Else
-                        strSpineSize = "Your page count of " & lngFinalCount & _
-                                " is out of range of the spine-size table."
-                    End If
-        
-                End If
-                
-                '------------------Create output for this castoff---------------------
-                strMessage = strMessage & _
-                    vbTab & UCase(strDesign(d)) & ": " & lngFinalCount & vbNewLine & _
-                    vbTab & lngActualCount & " text pages" & vbNewLine & _
-                    vbTab & strExtraSpace & lngBlankPgs & " blank pages" & vbNewLine & _
-                    vbTab & lngFinalCount & " total pages" & vbNewLine & vbNewLine
             End If
-        
         Next d
+        
+        ' ----- Special Tor.com things -------
+        Dim strSpineSize As String
+        strSpineSize = ""
+        
+        If FormInputs.optPubTor And FormInputs.optPrintPOD Then
+            ' Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
+            If lngCastoffResult(0) < 48 Then
+                strSpineSize = "NOTE: Tor.com titles less than 48 pages will be saddle-stitched." & _
+                                vbNewLine & vbNewLine
+            
+            ' Get spine size
+            ElseIf lngCastoffResult(0) >= 48 And lngCastoffResult(0) <= 1050 Then       'Limits of spine size table
+                strSpineSize = SpineSize(blnStaging, lngCastoffResult(0), strPub, FormInputs, strLogFile)
+                'Debug.Print "spine size = " & strSpineSize
+                If strSpineSize = vbNullString Then
+                    strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
+                        "Contact workflows@macmillan.com for assistance."
+                Else
+                    strSpineSize = "Your spine size will be " & strSpineSize & " inches " & _
+                                        "at this page count." & vbNewLine & vbNewLine
+                End If
+            Else
+                strSpineSize = "Your page count of " & lngFinalCount & _
+                        " is out of range of the spine-size table." & vbNewLine & vbNewLine
+            End If
+        End If
     End If
     
     '-------------Create final message---------------------------------------------------
-    'Get Title Information
+    Dim strReportText As String
+    
+    'Get Title Information from Form
     Dim strEditor As String
-    strEditor = FormInputs.txtEditor
+    strEditor = FormInputs.txtEditor.value
     
     Dim strAuthor As String
-    strAuthor = FormInputs.txtAuthor
+    strAuthor = FormInputs.txtAuthor.value
     
     Dim strTitle As String
-    strTitle = FormInputs.txtTitle
+    strTitle = FormInputs.txtTitle.value
     
-    Dim intSchedPgCount As Integer
-    intSchedPgCount = FormInputs.numTxtPageCount
+    Dim lngSchedPgCount As Long
+    lngSchedPgCount = FormInputs.numTxtPageCount.value
     
-    If strMessage <> vbNullString Then
-        strMessage = "Your " & strPub & " title will have these approximate page counts" _
-            & vbNewLine & "at the " & strTrim & " trim size:" & vbNewLine & vbNewLine & _
-            strMessage
-    Else
-        strMessage = "Error 4: There was a problem generating your castoff." & _
-            " Please contact workflows@macmillan.com for assistance."
+    ' Get trim size
+    Dim strTrimSize As String
+    If FormInputs.optTrim5x8.Enabled Then
+        strTrimSize = FormInputs.optTrim5x8.Caption
+    ElseIf FormInputs.optTrim6x9.Enabled Then
+        strTrimSize = FormInputs.optTrim6x9.Caption
     End If
-
+    
+    ' Create text of castoff from arrays
+    Dim strCastoffs As String
+    Dim e As Long
+    For e = LBound(lngCastoffResult) To UBound(lngCastoffResult)
+        strCastoffs = vbTab & strDesign(e) & ": " & lngCastoffResult(e) & vbNewLine
+    Next e
+    
+    
+    strReportText = _
+    vbNewLine & _
+    " * * * MACMILLAN PRELIMINARY CASTOFF * * * " & vbNewLine & _
+    vbNewLine & _
+    "DATE: " & Date & vbNewLine & _
+    "TITLE: " & strTitle & vbNewLine & _
+    "AUTHOR: " & strAuthor & vbNewLine & _
+    "PUBLISHER: " & strPubRealName & vbNewLine & _
+    "EDITOR: " & strEditor & vbNewLine & _
+    "TRIM SIZE: " & strTrimSize & vbNewLine & _
+    vbNewLine & _
+    "SCHEDULED PAGE COUNT: " & lngSchedPgCount & vbNewLine & _
+    "ESTIMATED PAGE COUNT: " & vbNewLine & _
+    strCastoffs & _
+    vbNewLine & _
+    strSpineSize
+    
     '-------------Report castoff info to user----------------------------------------------------------------
-    MsgBox strMessage & strWarning & strSpineSize, vbOKOnly, "Castoff"
+    MsgBox strReportText, vbOKOnly, "Castoff"
 
     Unload FormInputs
             
@@ -407,19 +407,20 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     ' --------------------------------------------------
     ' For Reference: Index numbers in arrCSV (base 0)
     '
-    '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
-    'loose  | (0,0)         | (0,1)
-    'average| (1,0)         | (1,1)
-    'tight  | (2,0)         | (2,1)
-    'notes  | (3,0)         | (3,1)
-    'lines  | (4,0)         | (4,1)
+    '         | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
+    'loose    | (0,0)         | (0,1)
+    'average  | (1,0)         | (1,1)
+    'tight    | (2,0)         | (2,1)
+    'notes    | (3,0)         | (3,1)
+    'lines    | (4,0)         | (4,1)
+    'overflow | (5,0)         | (5,1)
     '--------------------------------------------------
     
     '---------Get design character count from CSV-------------------------------
     Dim lngDesignCount As Long
     lngDesignCount = arrCSV(lngDesignIndex, lngTrim)
     'Debug.Print lngDesignCount
-
+    
     '---------Get notes character count from CSV--------------------------------
     Dim lngNotesDesign As Long
     lngNotesDesign = arrCSV(3, lngTrim)
@@ -428,6 +429,10 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     Dim lngLinesPage As Long
     lngLinesPage = arrCSV(4, lngTrim)
     
+    '---------Get overflow pages from CSV--------------------------------------
+    Dim lngOverflow As Long
+    lngOverflow = arrCSV(5, lngTrim)
+
     '----------Get user inputs from Userform--------------------------------------------------
     ' Get info from Standard Items section (already validated as having data)
     Dim lngChapters As Long      ' number of chapters
@@ -525,7 +530,7 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
         lngUpperSig = lngEstPages + (16 - lngRemainderPgs)
                     
         ' Determine if we go up or down a signature
-        If lngRemainderPgs <= 5 Then    ' Do we want this value in a CSV on Confluence for easy update?
+        If lngRemainderPgs < 5 Then    ' Do we want this value in a CSV on Confluence for easy update?
             result = lngLowerSig
         Else
             result = lngUpperSig
@@ -546,7 +551,7 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
     Dim strSpineFile As String
     strSpineFile = "Spine_" & Publisher & ".csv"
     
-'----Define full path to where CSV will be----------------------
+'----Define full path to where CSV will be-----------------------
     Dim strFullPath As String
     strFullPath = strLogDir & Application.PathSeparator & strSpineFile
     
@@ -582,9 +587,6 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
         arrDesign = LoadCSVtoArray(strFullPath)
     End If
 
-
-
-    
 '---------Lookup spine size in array-------------------------------
     Dim strSpine As String
     Dim c As Long
@@ -601,3 +603,9 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
     SpineSize = strSpine
 
 End Function
+
+
+
+    
+
+
