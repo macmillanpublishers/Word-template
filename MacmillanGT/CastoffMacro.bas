@@ -38,35 +38,35 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     ' ============================================
     
     ' Get designs selected from Form.
-    Dim intDesign() As Integer  ' Index number of design density in CSV file, starts at 0
+    Dim lngDesign() As Long     ' Index number of design density in CSV file, starts at 0
     Dim strDesign() As String   ' Text of design density
-    Dim intDim As Integer       ' Number of dimensions of intDesign and strDesign, base 1
+    Dim lngDim As Long       ' Number of dimensions of lngDesign and strDesign, base 1
     
-    intDim = -1
+    lngDim = -1
     
     'For each design checked, increase dimension by 1 and then assign index and text of the design to an array
     If FormInputs.chkDesignLoose Then
-        intDim = intDim + 1
-        ReDim Preserve intDesign(0 To intDim)
-        ReDim Preserve strDesign(0 To intDim)
-        intDesign(intDim) = 0
-        strDesign(intDim) = FormInputs.chkDesignLoose.Caption
+        lngDim = lngDim + 1
+        ReDim Preserve lngDesign(0 To lngDim)
+        ReDim Preserve strDesign(0 To lngDim)
+        lngDesign(lngDim) = 0
+        strDesign(lngDim) = FormInputs.chkDesignLoose.Caption
     End If
     
     If FormInputs.chkDesignAverage Then
-        intDim = intDim + 1
-        ReDim Preserve intDesign(0 To intDim)
-        ReDim Preserve strDesign(0 To intDim)
-        intDesign(intDim) = 1
-        strDesign(intDim) = FormInputs.chkDesignAverage.Caption
+        lngDim = lngDim + 1
+        ReDim Preserve lngDesign(0 To lngDim)
+        ReDim Preserve strDesign(0 To lngDim)
+        lngDesign(lngDim) = 1
+        strDesign(lngDim) = FormInputs.chkDesignAverage.Caption
     End If
     
     If FormInputs.chkDesignTight Then
-        intDim = intDim + 1
-        ReDim Preserve intDesign(0 To intDim)
-        ReDim Preserve strDesign(0 To intDim)
-        intDesign(intDim) = 2
-        strDesign(intDim) = FormInputs.chkDesignTight.Caption
+        lngDim = lngDim + 1
+        ReDim Preserve lngDesign(0 To lngDim)
+        ReDim Preserve strDesign(0 To lngDim)
+        lngDesign(lngDim) = 2
+        strDesign(lngDim) = FormInputs.chkDesignTight.Caption
     End If
 
     ' Get publisher name from option buttons
@@ -146,10 +146,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             arrDesign = LoadCSVtoArray(strPath)
         End If
         
-    
-                
         '------------Get castoff for each Design selected-------------------
-        Dim lngDesignCount As Long
         Dim strWarning As String
         Dim strSpineSize As String
         Dim d As Long
@@ -157,43 +154,25 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         strWarning = ""
         strSpineSize = ""
         
-        For d = LBound(intDesign()) To UBound(intDesign())
+        For d = LBound(lngDesign()) To UBound(lngDesign())
             'Debug.Print _
-            UBound(arrDesign(), 1) & " < " & intDesign(d) & vbNewLine & _
+            UBound(arrDesign(), 1) & " < " & lngDesign(d) & vbNewLine & _
             UBound(arrDesign(), 2) & " < "; intTrim
             
-            'Error handling: intDesign(d) must be in range of design array
-            If UBound(arrDesign(), 1) < intDesign(d) And UBound(arrDesign(), 2) < intTrim Then
+            'Error handling: lngDesign(d) must be in range of design array
+            If UBound(arrDesign(), 1) < lngDesign(d) And UBound(arrDesign(), 2) < intTrim Then
                  MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
                     vbCritical, "Error 1: Design Count Out of Range"
                 Unload FormInputs
                 Exit Sub
             Else
-                '---------Get design character count-------------------------------
-                lngDesignCount = arrDesign(intDesign(d), intTrim)
-        
-                '--------------------------------------------------
-                'For Reference: Index numbers in array (base 0)
-                '
-                '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
-                'loose  | (0,0)         | (0,1)
-                'average| (1,0)         | (1,1)
-                'tight  | (2,0)         | (2,1)
-                '--------------------------------------------------
-    
-                'Debug.Print lngDesignCount
     
                 '---------Calculate Page Count--------------------------------------
-                Dim arrCastoffResult() As Variant
-                Dim lngFinalCount As Long
-                Dim lngBlankPgs As Long
-                Dim lngActualCount As Long
+                Dim lngCastoffResult() As Long
+                lngCastoffResult = Castoff(lngDesign(d), arrDesign(), FormInputs)
     
-                arrCastoffResult = Castoff(lngDesignCount, FormInputs)
-    
-                lngFinalCount = arrCastoffResult(0)
-                lngBlankPgs = arrCastoffResult(1)
-                lngActualCount = arrCastoffResult(2)
+
+
     
                 'Add extra space if blanks less than 10
                 Dim strExtraSpace As String
@@ -254,6 +233,19 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     End If
     
     '-------------Create final message---------------------------------------------------
+    'Get Title Information
+    Dim strEditor As String
+    strEditor = FormInputs.txtEditor
+    
+    Dim strAuthor As String
+    strAuthor = FormInputs.txtAuthor
+    
+    Dim strTitle As String
+    strTitle = FormInputs.txtTitle
+    
+    Dim intSchedPgCount As Integer
+    intSchedPgCount = FormInputs.numTxtPageCount
+    
     If strMessage <> vbNullString Then
         strMessage = "Your " & strPub & " title will have these approximate page counts" _
             & vbNewLine & "at the " & strTrim & " trim size:" & vbNewLine & vbNewLine & _
@@ -338,188 +330,206 @@ Private Function LoadCSVtoArray(Path As String) As Variant
     
 End Function
 
-Private Function Castoff(Design As Long, objForm As CastoffForm) As Variant
+Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As CastoffForm) As Long
     
-        '----------Get user inputs from Userform--------------------------------------------------
-    
-    'Get Title Information
-    Dim strEditor As String
-    strEditor = FormInputs.txtEditor
-    
-    Dim strAuthor As String
-    strAuthor = FormInputs.txtAuthor
-    
-    Dim strTitle As String
-    strTitle = FormInputs.txtTitle
-    
-    Dim intSchedPgCount As Integer
-    intSchedPgCount = FormInputs.numTxtPageCount
-    
-    'Get trim size
-    Dim intTrim As Integer      'Index number of trim size in CSV file, starts at 0
-    
-    'Number assigned is column index in design array
-    '0 = 5-1/2 x 8-1/4
-    '1 = 6-1/8 x 9-1/4
-    
-    If FormInputs.optTrim5x8 Then
-        intTrim = 0
-    ElseIf FormInputs.optTrim6x9 Then
-        intTrim = 1
-    Else
-        MsgBox "You must select a Trim Size to run the Castoff Macro." 'redundant since we're validating in the form module
-        FormInputs.Show
-    End If
+    ' Get total character count (incl. notes and spaces) from document
+    Dim lngTotalCharCount As Long
+    lngTotalCharCount = ActiveDocument.Range.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+                        IncludeFootnotesAndEndnotes:=True)
+                        
+    ' Get char count for just embedded endnotes and footnotes
+    Dim lngNotesCharCount As Long
+    lngNotesCharCount = lngTotalCharCount - ActiveDocument.Range.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+                        IncludeFootnotesAndEndnotes:=False)
+          
+    ' Get page count of main text
+    Dim lngMainTextPages As Long
+    ActiveDocument.Repaginate
+    lngMainTextPages = ActiveDocument.StoryRanges(wdMainTextStory).Information(wdNumberOfPagesInDocument)
         
+    ' Get page count of endnotes and footnotes
+    Dim lngNotesPages As Long
+    ActiveDocument.Repaginate
+    lngNotesPages = ActiveDocument.StoryRanges(wdEndnotesStory).Information(wdNumberOfPagesInDocument) + _
+                    ActiveDocument.StoryRanges(wdFootnotesStory).Information(wdNumberOfPagesInDocument)
+                    
+    ' Calculate number of characters per page of NOTES in the MANUSCRIPT if there are linked notes
+    ' If there aren't linked notes, get char/page of whole manuscript
+    Dim lngMsCharPerPage As Long
+    If lngNotesPages > 0 Then
+        lngMsCharPerPage = lngNotesCharCount / lngNotesPages
+    Else
+        lngMsCharPerPage = lngTotalCharCount / lngMainTextPages
+    End If
     
+    ' Get number of unlinked endnotes in MS from Form, estimate number of characters
+    Dim lngUnlinkedNotesCharCount As Long
+    If objForm.numTxtUnlinkedNotes <> vbNullString Then
+        lngUnlinkedNotesCharCount = objForm.numTxtUnlinkedNotes * lngMsCharPerPage
+    Else
+        lngUnlinkedNotesCharCount = 0
+    End If
+    
+    ' Get number of endnotes TK from Form, estimate number of characters
+    Dim lngEndnotesTKCharCount As Long
+    If objForm.numTxtNotesTK <> vbNullString Then
+        lngEndnotesTKCharCount = objForm.numTxtNotesTK * lngMsCharPerPage
+    Else
+        lngEndnotesTKCharCount = 0
+    End If
+    
+    ' Get number of biblio pages in manuscript from Form, estimate number of characters
+    Dim lngBiblioMsCharCount As Long
+    If objForm.numTxtBibliography <> vbNullString Then
+        lngBiblioMsCharCount = objForm.numTxtBibliography * lngMsCharPerPage
+    Else
+        lngBiblioMsCharCount = 0
+    End If
+    
+    ' Get number of biblio pages TK from Form, estimate number of characters
+    Dim lngBiblioTKCharCount As Long
+    If objForm.numTxtBiblioTK <> vbNullString Then
+        lngBiblioTKCharCount = objForm.numTxtBiblioTK * lngMsCharPerPage
+    Else
+        lngBiblioTKCharCount = 0
+    End If
+
+    
+    ' Calculate total character count of main text and notes separately
+    Dim lngMainCharCount As Long
+    lngMainCharCount = lngTotalCharCount - lngNotesCharCount - lngUnlinkedNotesCharCount - lngBiblioMsCharCount
+    lngNotesCharCount = lngNotesCharCount + lngUnlinkedNotesCharCount + lngBiblioMsCharCount + lngEndnotesTKCharCount _
+                        + lngBiblioTKCharCount
+                        
+    ' Get trim size from Form
+    ' Number assigned is column index in design array
+    ' 0 = 5-1/2 x 8-1/4
+    ' 1 = 6-1/8 x 9-1/4
+    
+    Dim lngTrim As Long
+    If objForm.optTrim5x8 Then  ' already validated that there is at least 1 picked in form code
+        lngTrim = 0
+    Else
+        lngTrim = 1
+    End If
+    
+    ' --------------------------------------------------
+    ' For Reference: Index numbers in arrCSV (base 0)
+    '
+    '       | 5-1/2 x 8-1/4 |  6-1/8 x 9-1/4
+    'loose  | (0,0)         | (0,1)
+    'average| (1,0)         | (1,1)
+    'tight  | (2,0)         | (2,1)
+    'notes  | (3,0)         | (3,1)
+    'lines  | (4,0)         | (4,1)
+    '--------------------------------------------------
+    
+    '---------Get design character count from CSV-------------------------------
+    Dim lngDesignCount As Long
+    lngDesignCount = arrCSV(lngDesignIndex, lngTrim)
+    'Debug.Print lngDesignCount
+
+    '---------Get notes character count from CSV--------------------------------
+    Dim lngNotesDesign As Long
+    lngNotesDesign = arrCSV(3, lngTrim)
+    
+    '---------Get lines per page from CSV--------------------------------------
+    Dim lngLinesPage As Long
+    lngLinesPage = arrCSV(4, lngTrim)
+    
+    '----------Get user inputs from Userform--------------------------------------------------
     ' Get info from Standard Items section (already validated as having data)
-    Dim intChapters As Integer      ' number of chapters
-    intChapters = FormInputs.numTxtChapters
+    Dim lngChapters As Long      ' number of chapters
+    lngChapters = objForm.numTxtChapters
     
-    Dim intParts As Integer         'number of part titles
-    intParts = FormInputs.numTxtParts
+    Dim lngParts As Long         'number of part titles
+    lngParts = objForm.numTxtParts
     
-    Dim intFMpgs As Integer         ' number of pages of frontmatter including blanks
-    intFMpgs = FormInputs.numTxtFrontmatter
+    Dim lngFMpgs As Long         ' number of pages of frontmatter including blanks
+    lngFMpgs = objForm.numTxtFrontmatter
     
     ' The rest of the inputs are not required, so only assign the value if one exists
     ' Otherwise assign 0, so we can still use the variable later without a whole other
     ' bunch of if statements
     
     ' Get info from Back Matter section
-    Dim intIndexPgs As Integer     'Number of pages estimated for the index
-    If FormInputs.numTxtIndex <> vbNullString Then
-        intIndexPgs = FormInputs.numTxtIndex
+    Dim lngIndexPgs As Long     'Number of pages estimated for the index
+    If objForm.numTxtIndex <> vbNullString Then
+        lngIndexPgs = objForm.numTxtIndex
     Else
-        intIndexPgs = 0
+        lngIndexPgs = 0
     End If
     
-    Dim intBackmatterPgsTK As Integer 'Number of pages of backmatter TK
-    If FormInputs.numTxtBackmatter <> vbNullString Then
-        intBackmatterPgsTK = FormInputs.numTxtBackmatter
+    Dim lngBackmatterPgsTK As Long 'Number of pages of backmatter TK
+    If objForm.numTxtBackmatter <> vbNullString Then
+        lngBackmatterPgsTK = objForm.numTxtBackmatter
     Else
-        intBackmatterPgsTK = 0
-    End If
-    
-    ' Get info from Notes and Bibliography section
-    Dim intUnlinkedNotesPgs As Integer 'Number of unlinked endnotes in manuscript
-    If FormInputs.numTxtUnlinkedNotes <> vbNullString Then
-        intUnlinkedNotesPgs = FormInputs.numTxtUnlinkedNotes
-    Else
-        intUnlinkedNotesPgs = 0
-    End If
-    
-    Dim intEndnotesPgsTK As Integer 'Number of endnotes pages TK
-    If FormInputs.numTxtNotesTK <> vbNullString Then
-        intEndnotesPgsTK = FormInputs.numTxtNotesTK
-    Else
-        intEndnotesPgsTK = 0
-    End If
-    
-    Dim intBiblioPgs As Integer 'Number of pages of of bibliography currently in MS
-    If FormInputs.numTxtBibliography <> vbNullString Then
-        intBiblioPgs = FormInputs.numTxtBibliography
-    Else
-        intBiblioPgs = 0
-    End If
-    
-    Dim intBiblioPgsTK As Integer 'Number of pages of Bibliography TK
-    If FormInputs.numTxtBiblioTK <> vbNullString Then
-        intBiblioPgsTK = FormInputs.numTxtBiblioTK
-    Else
-        intBiblioPgsTK = 0
+        lngBackmatterPgsTK = 0
     End If
     
     ' Get info from Complex Items section
-    Dim intSubheads2Chap As Integer 'Number of subheads in 2 chapters
-    If FormInputs.numTxtSubheads <> vbNullString Then
-        intSubheads2Chap = FormInputs.numTxtSubheads
+    Dim lngSubheads2Chap As Long 'Number of subheads in 2 chapters
+    If objForm.numTxtSubheads <> vbNullString Then
+        lngSubheads2Chap = objForm.numTxtSubheads
     Else
-        intSubheads2Chap = 0
+        lngSubheads2Chap = 0
     End If
     
-    Dim intTablesPgs As Integer  'Number of pages for tables
-    If FormInputs.numTxtTables <> vbNullString Then
-        intTablesPgs = FormInputs.numTxtTables
+    Dim lngTablesPgs As Long  'Number of pages for tables
+    If objForm.numTxtTables <> vbNullString Then
+        lngTablesPgs = objForm.numTxtTables
     Else
-        intTablesPgs = 0
+        lngTablesPgs = 0
     End If
     
-    Dim intArtPgs As Integer  'Number of pages for in-text art
-    If FormInputs.numTxtArt <> vbNullString Then
-        intArtPgs = FormInputs.numTxtArt
+    Dim lngArtPgs As Long  'Number of pages for in-text art
+    If objForm.numTxtArt <> vbNullString Then
+        lngArtPgs = objForm.numTxtArt
     Else
-        intArtPgs = 0
+        lngArtPgs = 0
     End If
 
+    ' Calculate number of pages!
+    Dim lngMainPages As Long
+    Dim lngNotesPages As Long
+    Dim lngPartsPages As Long
+    Dim lngHeadingPages As Long
+    Dim lngEstPages As Long
     
-    Dim lngCharacterCount As Long
-    Dim lngActualPageCount As Long
-    Dim lngFinalPageCount As Long
-
-    'Get character count with space from Word doc, divide by avg. char. count of design to get page count
-    lngCharacterCount = ActiveDocument.Range.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
-        IncludeFootnotesAndEndnotes:=True)
-    lngActualPageCount = lngCharacterCount / Design
-
-    'Debug.Print "Starting page count: " & lngActualPageCount
+    lngMainPages = lngMainCharCount / lngDesignCount
+    lngNotesPages = lngNotesCharCount / lngNotesDesign
+    lngPartsPages = lngParts * 2
+    lngHeadingPages = ((lngSubheads2Chap / 2) * lngChapters * 3) / lngLinesPage  ' 3 because headings take up 3 lines each
     
-    lngFinalPageCount = lngActualPageCount
-
-    'search for page breaks, add a page for each
-    'to account for space at end of chapters / beginning of chapters.
-    'Editors should add blank pages for part title verso, etc.
-    'Page breaks should be added as manual page breaks, not paragraph returns
-    With ActiveDocument.Range.Find
-        .ClearFormatting
-        .Text = "^m"
-        .Replacement.Text = "^m"
-        .Forward = True
-        .Wrap = wdFindStop
-        .Format = False
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = False
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-    Do While .Execute(Forward:=True) = True
-        lngFinalPageCount = lngFinalPageCount + 1
-    Loop
-    End With
-
-    'Debug.Print "Page count with page breaks: " & lngFinalPageCount
+    lngEstPages = lngMainPages _
+                + lngNotesPages _
+                + lngPartsPages _
+                + lngHeadingPages _
+                + lngChapters _
+                + lngFMpgs _
+                + lngIndexPgs _
+                + lngBackmatterPgsTK _
+                + lngTablesPgs _
+                + lngArtPgs
+                
+    ' Calculate next sig up and next sig down
+    Dim lngRemainderPgs As Long
+    Dim lngLowerSig As Long
+    Dim lngUpperSig As Long
     
-    'Add any missing pages indicated by user
-    lngFinalPageCount = lngFinalPageCount + objForm.txtMissingPages.Text
-    
-    'Debug.Print "Page count with missing added: " & lngFinalPageCount
-    
-    'Determine next 16-page signature and blank pages
-    Dim lngBlanks As Long
-    Dim lngPgsOver As Long
-    lngBlanks = 0
-    lngPgsOver = (lngFinalPageCount Mod 16)
-
-    If lngPgsOver <> 0 Then
-        lngBlanks = 16 - lngPgsOver
-        lngFinalPageCount = lngFinalPageCount + lngBlanks
-        
+    lngRemainderPgs = lngEstPages Mod 16
+    lngLowerSig = lngEstPages - lngRemainderPgs
+    lngUpperSig = lngEstPages + (16 - lngRemainderPgs)
+                
+    ' Determine if we go up or down a signature
+    Dim result As Long
+    If lngRemainderPgs <= 5 Then    ' Do we want this value in a CSV on Confluence for easy update?
+        result = lngLowerSig
     Else
-        lngBlanks = 0
+        result = lngUpperSig
     End If
 
-    'Debug.Print "Final page count: " & lngFinalPageCount
-    'Debug.Print "Final blank pages: " & lngBlanks
-
-
-    Dim arrResult() As Variant
-    ReDim arrResult(0 To 2)
-
-    arrResult(0) = lngFinalPageCount
-    arrResult(1) = lngBlanks
-    arrResult(2) = lngFinalPageCount - lngBlanks
-
-    Castoff = arrResult
+    Castoff = result
 
 End Function
 Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
