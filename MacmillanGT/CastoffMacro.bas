@@ -148,7 +148,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         
         '------------Get castoff for each Design selected-------------------
         Dim lngTrimIndex As Long
-        If objForm.optTrim5x8 Then  ' already validated that there is at least 1 picked in form code
+        If FormInputs.optTrim5x8 Then  ' already validated that there is at least 1 picked in form code
             lngTrimIndex = 0
         Else
             lngTrimIndex = 1
@@ -170,7 +170,8 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             Else
     
                 '---------Calculate Page Count--------------------------------------
-                Dim lngCastoffResult(LBound(lngDesign) To UBound(lngDesign)) As Long
+                Dim lngCastoffResult() As Long
+                ReDim lngCastoffResult(d)
                 lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs)
                 
             End If
@@ -198,7 +199,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
                                         "at this page count." & vbNewLine & vbNewLine
                 End If
             Else
-                strSpineSize = "Your page count of " & lngFinalCount & _
+                strSpineSize = "Your page count of " & lngCastoffResult(0) & _
                         " is out of range of the spine-size table." & vbNewLine & vbNewLine
             End If
         End If
