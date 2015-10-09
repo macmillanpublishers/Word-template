@@ -164,7 +164,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             UBound(arrDesign(), 2) & " < "; intTrim
             
             'Error handling: lngDesign(d) must be in range of design array
-            If UBound(arrDesign(), 1) < lngDesign(d) And UBound(arrDesign(), 2) < lngTrimIndex Then
+            If UBound(arrDesign(), 1) <= lngDesign(d) And UBound(arrDesign(), 2) <= lngTrimIndex Then
                  MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
                     vbCritical, "Error 1: Design Count Out of Range"
                 Unload FormInputs
@@ -179,31 +179,13 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             End If
         Next d
         
-        ' ----- Special Tor.com things -------
+        ' ----- Get spine size if POD -------
         Dim strSpineSize As String
         strSpineSize = ""
         
-        If FormInputs.optPubTor And FormInputs.optPrintPOD Then
-            ' Warning about sub 48 page saddle-stitched tor.com books, warn if close to that
-            If lngCastoffResult(0) < 48 Then
-                strSpineSize = "NOTE: Tor.com titles less than 48 pages will be saddle-stitched." & _
-                                vbNewLine & vbNewLine
-            
-            ' Get spine size
-            ElseIf lngCastoffResult(0) >= 48 And lngCastoffResult(0) <= 1050 Then       'Limits of spine size table
-                strSpineSize = SpineSize(blnStaging, lngCastoffResult(0), strPub, FormInputs, strLogFile)
-                'Debug.Print "spine size = " & strSpineSize
-                If strSpineSize = vbNullString Then
-                    strSpineSize = "Error 2: Word was unable to generate a spine size. " & _
-                        "Contact workflows@macmillan.com for assistance."
-                Else
-                    strSpineSize = "Your spine size will be " & strSpineSize & " inches " & _
-                                        "at this page count." & vbNewLine & vbNewLine & strSpineSize
-                End If
-            Else
-                strSpineSize = "Your page count of " & lngCastoffResult(0) & _
-                        " is out of range of the spine-size table." & vbNewLine & vbNewLine
-            End If
+        If FormInputs.optPrintPOD Then
+            strSpineSize = SpineSize(blnStaging, lngCastoffResult(0), strPub, FormInputs, strLogFile)
+            'Debug.Print "spine size = " & strSpineSize
         End If
     End If
     
