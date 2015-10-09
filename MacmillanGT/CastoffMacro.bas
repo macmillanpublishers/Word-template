@@ -145,7 +145,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         Else
             ' Load CSV into an array
             Dim arrDesign() As Variant
-            arrDesign = LoadCSVtoArray(strPath)
+            arrDesign = LoadCSVtoArray(Path:=strPath, RemoveHeaderRow:=True, RemoveHeaderCol:=True)
         End If
         
         '------------Get castoff for each Design selected-------------------
@@ -244,7 +244,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             
 End Sub
 
-Private Function LoadCSVtoArray(Path As String) As Variant
+Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeaderCol As Boolean) As Variant
 
 '------Load CSV into 2d array, NOTE!!: base 0---------
 ' But also note that this now removes the header row and column too
@@ -263,7 +263,23 @@ Private Function LoadCSVtoArray(Path As String) As Variant
             Exit Function
         End If
         'Debug.Print Path
-
+        
+        ' Do we need to remove a header row?
+        Dim lngHeaderRow As Long
+        If RemoveHeaderRow = True Then
+            lngHeaderRow = 1
+        Else
+            lngHeaderRow = 0
+        End If
+        
+        ' Do we need to remove a header column?
+        Dim lngHeaderCol As Long
+        If RemoveHeaderCol = True Then
+            lngHeaderCol = 1
+        Else
+            lngHeaderCol = 0
+        End If
+        
         ' Load the csv file.
         fnum = FreeFile
         Open Path For Input As fnum
@@ -285,14 +301,14 @@ Private Function LoadCSVtoArray(Path As String) As Variant
         num_rows = UBound(lines)
         one_line = Split(lines(0), ",")
         num_cols = UBound(one_line)
-        ReDim the_array(num_rows - 1, num_cols - 1) ' -1 because we are not using the header row and column
+        ReDim the_array(num_rows - lngHeaderRow, num_cols - lngHeaderCol) ' -1 if we are not using header row/col
         
         ' Copy the data into the array.
-        For R = 1 To num_rows           ' 1 (not 0) because we are not using the header row
+        For R = lngHeaderRow To num_rows           ' start at 1 (not 0) if we are not using the header row
             If Len(lines(R)) > 0 Then
                 one_line = Split(lines(R), ",")
-                For c = 1 To num_cols   ' 1 (not 0) because we are not using the header column
-                    the_array((R - 1), (c - 1)) = one_line(c)   ' -1 because we are not using header row/column from CSV
+                For c = lngHeaderCol To num_cols   ' start at 1 (not 0) if we are not using the header column
+                    the_array((R - lngHeaderRow), (c - lngHeaderCol)) = one_line(c)   ' -1 because we are not using header row/column from CSV
                 Next c
             End If
         Next R
@@ -300,8 +316,8 @@ Private Function LoadCSVtoArray(Path As String) As Variant
         ' Prove we have the data loaded.
         ' Debug.Print LBound(the_array)
         ' Debug.Print UBound(the_array)
-        ' For R = 0 To num_rows - 1          ' -1 again because we removed the header row
-        '     For c = 0 To num_cols - 1      ' -1 again because we removed the header column
+        ' For R = 0 To num_rows - lngHeaderRow          ' -1 again if we removed the header row
+        '     For c = 0 To num_cols - lngHeaderCol      ' -1 again if we removed the header column
         '         Debug.Print the_array(R, c) & "|";
         '     Next c
         '     Debug.Print
@@ -595,7 +611,7 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
         Else
             ' Load CSV into an array
             Dim arrDesign() As Variant
-            arrDesign = LoadCSVtoArray(strFullPath) ' Note this requires heading row AND column now
+            arrDesign = LoadCSVtoArray(Path:=strFullPath, RemoveHeaderRow:=True, RemoveHeaderCol:=False) ' Note this requires heading row AND column now
         End If
     
         '---------Lookup spine size in array-------------------------------
