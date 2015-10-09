@@ -222,7 +222,6 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
     
     strReportText = _
-    vbNewLine & _
     " * * * MACMILLAN PRELIMINARY CASTOFF * * * " & vbNewLine & _
     vbNewLine & _
     "DATE: " & Date & vbNewLine & _
@@ -548,6 +547,7 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
 
 End Function
 Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
+    Dim strSpine As String
     
     If PageCount < 48 Then
         strSpine = "NOTE: POD titles less than 48 pages will be saddle-stitched."
@@ -599,7 +599,6 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
         End If
     
         '---------Lookup spine size in array-------------------------------
-        Dim strSpine As String
         Dim c As Long
         
         For c = LBound(arrDesign, 1) To UBound(arrDesign, 1)
@@ -610,7 +609,7 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
             End If
         Next c
     Else
-        strSpine = "Your page count of " & lngCastoffResult(0) & _
+        strSpine = "Your page count of " & PageCount & _
                 " is out of range of the spine-size table."
     End If
     
