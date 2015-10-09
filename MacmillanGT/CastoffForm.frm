@@ -139,9 +139,8 @@ Private Sub UserForm_Initialize()
     txtAuthor.value = "Author Name"
     txtTitle.value = "Book Title"
     numTxtPageCount = "224"
-    optPrintOffset.value = True
-    optPubSMP.value = True
-    optTrim5x8.value = True
+    optPubTor.value = True
+    'optTrim5x8.value = True
     numTxtChapters.value = "10"
     numTxtParts.value = "2"
     numTxtFrontmatter.value = "14"
@@ -188,8 +187,12 @@ Private Sub cmdYesCastoff_Click()
     End If
     
     'Has something been selected for Design?
-    If Me.chkDesignLoose Or Me.chkDesignAverage Or Me.chkDesignTight Then
+    If Me.optPubPickup Then
         blnDesignStatus = True
+    Else
+        If Me.chkDesignLoose Or Me.chkDesignAverage Or Me.chkDesignTight Then
+            blnDesignStatus = True
+        End If
     End If
     
     'OK if all required have been set, otherwise give a warning message.
