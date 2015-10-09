@@ -552,36 +552,11 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
                 + lngTablesPgs _
                 + lngArtPgs
                 
-                
-    ' Figure out what the final sig/page count will be
-    Dim result As Long
-           
-    If objForm.optPrintPOD Then
-        'POD only has to be even, not 16-page sig
-        If (lngEstPages Mod 2) = 0 Then      'page count is even
-            result = lngEstPages
-        Else                                    'page count is odd
-            result = lngEstPages + 1
-        End If
-    Else 'It's printing offset, already validated in castoff form code
-        ' Calculate next sig up and next sig down
-        Dim lngRemainderPgs As Long
-        Dim lngLowerSig As Long
-        Dim lngUpperSig As Long
-        
-        lngRemainderPgs = lngEstPages Mod 16
-        lngLowerSig = lngEstPages - lngRemainderPgs
-        lngUpperSig = lngEstPages + (16 - lngRemainderPgs)
-                    
-        ' Determine if we go up or down a signature
-        If lngRemainderPgs < 5 Then    ' Do we want this value in a CSV on Confluence for easy update?
-            result = lngLowerSig
-        Else
-            result = lngUpperSig
-        End If
-    End If
-
-    Castoff = result
+    Dim lngFinalResult As Long
+    
+    lngFinalResult = FinalSig(lngEstPages, FormInputs)
+    
+    Castoff = lngFinalResult
 
 End Function
 Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
@@ -696,5 +671,36 @@ Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
 End Function
 
     
+Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Long
+    ' Figure out what the final sig/page count will be
+    Dim result As Long
+           
+    If objCastForm.optPrintPOD Then
+        'POD only has to be even, not 16-page sig
+        If (RawEstPages Mod 2) = 0 Then      'page count is even
+            result = RawEstPages
+        Else                                    'page count is odd
+            result = RawEstPages + 1
+        End If
+    Else 'It's printing offset, already validated in castoff form code
+        ' Calculate next sig up and next sig down
+        Dim lngRemainderPgs As Long
+        Dim lngLowerSig As Long
+        Dim lngUpperSig As Long
+        
+        lngRemainderPgs = RawEstPages Mod 16
+        lngLowerSig = RawEstPages - lngRemainderPgs
+        lngUpperSig = RawEstPages + (16 - lngRemainderPgs)
+                    
+        ' Determine if we go up or down a signature
+        If lngRemainderPgs < 5 Then    ' Do we want this value in a CSV on Confluence for easy update?
+            result = lngLowerSig
+        Else
+            result = lngUpperSig
+        End If
+    End If
 
+    FinalSig = result
+    
+End Function
 
