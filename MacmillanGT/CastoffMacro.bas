@@ -72,16 +72,18 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     ' Get publisher name from option buttons
     Dim strPub As String            ' Publisher code for file names and stuff
     Dim strPubRealName As String    ' Publisher name for final output
-    If FormInputs.optPubSMP.Enabled Then
+    If FormInputs.optPubSMP Then
         strPub = "SMP"              ' CSV file on Confluence must use this code
         strPubRealName = "St. Martin's Press"
-    ElseIf FormInputs.optPubTor.Enabled Then
+    ElseIf FormInputs.optPubTor Then
         strPub = "torDOTcom"        ' CSV file on Confluence must use this code
         strPubRealName = "Tor.com"
-    ElseIf FormInputs.optPubPickup.Enabled Then
+    ElseIf FormInputs.optPubPickup Then
         strPub = "Pickup"
         strPubRealName = "Pickup Design"
     End If
+        
+    'Debug.Print strPubRealName
         
     If strPub = "Pickup" Then
         ' Call PickupDesign
@@ -223,9 +225,9 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
     ' Get trim size
     Dim strTrimSize As String
-    If FormInputs.optTrim5x8.Enabled Then
+    If FormInputs.optTrim5x8 Then
         strTrimSize = FormInputs.optTrim5x8.Caption
-    ElseIf FormInputs.optTrim6x9.Enabled Then
+    ElseIf FormInputs.optTrim6x9 Then
         strTrimSize = FormInputs.optTrim6x9.Caption
     End If
     
@@ -535,7 +537,7 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     ' Figure out what the final sig/page count will be
     Dim result As Long
            
-    If objForm.optPrintPOD.Enabled Then
+    If objForm.optPrintPOD Then
         'POD only has to be even, not 16-page sig
         If (lngEstPages Mod 2) = 0 Then      'page count is even
             result = lngEstPages
