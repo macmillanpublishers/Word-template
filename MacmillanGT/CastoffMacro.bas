@@ -88,67 +88,22 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     Dim lngCastoffResult() As Long
     
     If strPub = "Pickup" Then
+        ' If it's a pickup, use the PickupDesign math to get the page count, only 1 result
         ReDim Preserve lngCastoffResult(0)
         lngCastoffResult(0) = PickupDesign(FormInputs)
     Else
-        
         '---------Download CSV with design specs from Confluence site-------
+        Dim arrDesign() As Variant
         Dim strCastoffFile As String    'File name of CSV on Confluence
-        Dim strInfoType As String       'Type of info we want to download (here = Castoff)
-        
-        'Create name of castoff csv file to download
-        strInfoType = "Castoff"
-        strCastoffFile = strInfoType & "_" & strPub & ".csv"
     
-        'Create log file name
-        Dim arrLogInfo() As Variant
-        ReDim arrLogInfo(1 To 3)
+        'Create name of castoff csv file to download
+        strCastoffFile = "Castoff_" & strPub & ".csv"
         
-        arrLogInfo() = CreateLogFileInfo(strCastoffFile)
-          
-        'Create final path for downloaded CSV file (in log directory)
-        'not in temp dir because that is where DownloadFromConfluence downloads it to, and it cleans that file up when done
-        Dim strStyleDir As String
-        Dim strPath As String
-        Dim strLogFile As String
-        Dim strMessage As String
-        Dim strDir As String
+        arrDesign = DownloadCSV(FileName:=strCastoffFile, Staging:=blnStaging)
         
-        strStyleDir = arrLogInfo(1)
-        strDir = arrLogInfo(2)
-        strLogFile = arrLogInfo(3)
-        strPath = strDir & Application.PathSeparator & strCastoffFile
-            
-        'Check if log file already exists; if not, create it
-        CheckLog strStyleDir, strDir, strLogFile
-        
-        'Download CSV file from Confluence
-        If DownloadFromConfluence(blnStaging, strDir, strLogFile, strCastoffFile) = False Then
-            ' If download fails, check if we have an older version of the design CSV to work with
-            If IsItThere(strPath) = False Then
-                strMessage = "Looks like we can't download the design info from the internet right now. " & _
-                    "Please check your internet connection, or contact workflows@macmillan.com."
-                MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous design file available"
-                Unload FormInputs
-                Exit Sub
-            Else
-                strMessage = "Looks like we can't download the most up to date design info from the internet right now, " & _
-                    "so we'll just use the info we have on file for your castoff."
-                MsgBox strMessage, vbInformation, "Let's do this thing!"
-            End If
-        End If
-                 
-        'Double check that CSV is there
-        If IsItThere(strPath) = False Then
-            strMessage = "The Castoff macro is unable to access the design count file right now. Please check your internet " & _
-                        "connection and try again, or contact workflows@macmillan.com."
-            MsgBox strMessage, vbCritical, "Error 3: Design CSV doesn't exist"
-            Unload FormInputs
-            Exit Sub
-        Else
-            ' Load CSV into an array
-            Dim arrDesign() As Variant
-            arrDesign = LoadCSVtoArray(Path:=strPath, RemoveHeaderRow:=True, RemoveHeaderCol:=True)
+        ' Check that returned array is allocated
+        If IsArrayEmpty(arrDesign) = True Then
+            Exit Sub ' Error messages were in DownloadCSV (and DownloadFromConfluence) so none needed here
         End If
         
         '------------Get castoff for each Design selected-------------------
@@ -186,7 +141,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         strSpineSize = ""
         
         If FormInputs.optPrintPOD Then
-            strSpineSize = SpineSize(blnStaging, lngCastoffResult(0), strPub, FormInputs, strLogFile)
+            strSpineSize = SpineSize(blnStaging, lngCastoffResult(0))
             'Debug.Print "spine size = " & strSpineSize
         End If
     End If
@@ -554,71 +509,39 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
                 
     Dim lngFinalResult As Long
     
-    lngFinalResult = FinalSig(lngEstPages, FormInputs)
+    lngFinalResult = FinalSig(lngEstPages, objForm)
     
     Castoff = lngFinalResult
 
 End Function
-Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
+Private Function SpineSize(StagingSite As Boolean, PageCount As Long)
     Dim strSpine As String
     
     If PageCount < 48 Then
         strSpine = "NOTE: POD titles less than 48 pages will be saddle-stitched."
     ElseIf PageCount >= 48 And PageCount <= 1050 Then       'Limits of spine size table
-
-        '----Get Log dir to save spines CSV to --------------------------
-        Dim strLogDir As String
-        strLogDir = Left(LogFile, InStrRev(LogFile, Application.PathSeparator) - 1)
-        'Debug.Print strLogDir
     
         '----Define spine chart file name--------------------------------
         Dim strSpineFile As String
         'strSpineFile = "Spine_" & Publisher & ".csv"   ' Use this if we're doing different paper based on imprint
         strSpineFile = "POD_Spines.csv"                 ' Use this if we're doing 1 kind of paper for all POD
         
-        '----Define full path to where CSV will be-----------------------
-        Dim strFullPath As String
-        strFullPath = strLogDir & Application.PathSeparator & strSpineFile
+        Dim arrSpine() As Variant
         
-        '----Download CSV with spine sizes from Confluence site----------
-        Dim strMessage As String
+        arrSpine = DownloadCSV(FileName:=strSpineFile, Staging:=StagingSite)
         
-        'Check if log file already exists; if not, create it then download CSV file
-        If IsItThere(LogFile) = True Then
-            If DownloadFromConfluence(Staging, strLogDir, LogFile, strSpineFile) = False Then
-                ' If download fails, check if we have an older version of the spine CSV to work with
-                If IsItThere(strFullPath) = False Then
-                    strMessage = "Looks like we can't download the spine size info from the internet right now. " & _
-                        "Please check your internet connection, or contact workflows@macmillan.com."
-                    MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous spine file available"
-                    Exit Function
-                Else
-                    strMessage = "Looks like we can't download the most up to date spine size info from the internet right now, " & _
-                        "so we'll just use the info we have on file for your castoff."
-                    MsgBox strMessage, vbInformation, "Let's do this thing!"
-                End If
-            End If
-        End If
-                            
-        'Make sure CSV is there
-        If IsItThere(strFullPath) = False Then
-            strMessage = "The Castoff macro is unable to access the spine size file right now. Please check your internet " & _
-                        "connection and try again, or contact workflows@macmillan.com."
-            MsgBox strMessage, vbCritical, "Error 4: Spine CSV doesn't exist"
-            Exit Function
-        Else
-            ' Load CSV into an array
-            Dim arrDesign() As Variant
-            arrDesign = LoadCSVtoArray(Path:=strFullPath, RemoveHeaderRow:=True, RemoveHeaderCol:=False) ' Note this requires heading row AND column now
+        ' Check that returned array is allocated
+        If IsArrayEmpty(arrSpine) = True Then
+            Exit Function ' Error messages were in DownloadCSV (and DownloadFromConfluence) so none needed here
         End If
     
         '---------Lookup spine size in array-------------------------------
         Dim c As Long
         
-        For c = LBound(arrDesign, 1) To UBound(arrDesign, 1)
+        For c = LBound(arrSpine, 1) To UBound(arrSpine, 1)
             'Debug.Print arrDesign(c, 0) & " = " & PageCount
-            If arrDesign(c, 0) = PageCount Then
-                strSpine = arrDesign(c, 1)
+            If arrSpine(c, 0) = PageCount Then
+                strSpine = arrSpine(c, 1)
                 Exit For
             End If
         Next c
@@ -690,6 +613,7 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
             result = RawEstPages + 1
         End If
     Else 'It's printing offset, already validated in castoff form code
+        
         ' Calculate next sig up and next sig down
         Dim lngRemainderPgs As Long
         Dim lngLowerSig As Long
@@ -711,3 +635,71 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
     
 End Function
 
+
+Private Function DownloadCSV(FileName As String, Staging As Boolean) As Variant
+    '---------Download CSV with design specs from Confluence site-------
+
+    'Create log file name
+    Dim arrLogInfo() As Variant
+    ReDim arrLogInfo(1 To 3)
+    
+    arrLogInfo() = CreateLogFileInfo(FileName)
+      
+    'Create final path for downloaded CSV file (in log directory)
+    'not in temp dir because that is where DownloadFromConfluence downloads it to, and it cleans that file up when done
+    Dim strStyleDir As String
+    Dim strPath As String
+    Dim strLogFile As String
+    Dim strMessage As String
+    Dim strDir As String
+    
+    strStyleDir = arrLogInfo(1)
+    strDir = arrLogInfo(2)
+    strLogFile = arrLogInfo(3)
+    strPath = strDir & Application.PathSeparator & FileName
+        
+    'Check if log file already exists; if not, create it
+    CheckLog strStyleDir, strDir, strLogFile
+    
+    'Download CSV file from Confluence
+    If DownloadFromConfluence(Staging, strDir, strLogFile, FileName) = False Then
+        ' If download fails, check if we have an older version of the CSV to work with
+        If IsItThere(strPath) = False Then
+            strMessage = "Looks like we can't download the design info from the internet right now. " & _
+                "Please check your internet connection, or contact workflows@macmillan.com."
+            MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous design file available"
+            Exit Function
+        Else
+            strMessage = "Looks like we can't download the most up to date design info from the internet right now, " & _
+                "so we'll just use the info we have on file for your castoff."
+            MsgBox strMessage, vbInformation, "Let's do this thing!"
+        End If
+    End If
+    
+    ' Heading row/col different based on different InfoTypes
+    Dim blnRemoveHeaderRow As Boolean
+    Dim blnRemoveHeaderCol As Boolean
+    
+    If InStr(1, FileName, "Castoff") <> 0 Then
+        blnRemoveHeaderRow = True
+        blnRemoveHeaderCol = True
+    ElseIf InStr(1, FileName, "Spine") <> 0 Then
+        blnRemoveHeaderRow = True
+        blnRemoveHeaderCol = False
+    End If
+    
+    'Double check that CSV is there
+    Dim arrFinal() As Variant
+    If IsItThere(strPath) = False Then
+        strMessage = "The Castoff macro is unable to access the design count file right now. Please check your internet " & _
+                    "connection and try again, or contact workflows@macmillan.com."
+        MsgBox strMessage, vbCritical, "Error 3: Design CSV doesn't exist"
+        Exit Function
+    Else
+        ' Load CSV into an array
+        arrFinal = LoadCSVtoArray(Path:=strPath, RemoveHeaderRow:=blnRemoveHeaderRow, RemoveHeaderCol:=blnRemoveHeaderCol)
+    End If
+    
+    DownloadCSV = arrFinal
+    
+End Function
