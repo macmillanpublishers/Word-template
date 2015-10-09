@@ -260,6 +260,7 @@ End Sub
 Private Sub optPubSMP_Click()
     fraStandard.ForeColor = lngHexRed
     fraPickup.ForeColor = lngHexBlack
+    fraDesign.ForeColor = lngHexRed
     
     optPrintPOD.value = False
     optPrintOffset.value = True
@@ -279,6 +280,7 @@ End Sub
 Private Sub optPubTor_Click()
     fraStandard.ForeColor = lngHexRed
     fraPickup.ForeColor = lngHexBlack
+    fraDesign.ForeColor = lngHexRed
     
     optPrintPOD.value = True
     optPrintOffset.value = False
@@ -299,6 +301,7 @@ End Sub
 Private Sub optPubPickup_Click()
     fraStandard.ForeColor = lngHexBlack
     fraPickup.ForeColor = lngHexRed
+    fraDesign.ForeColor = lngHexBlack
         
     optPrintPOD.value = False
     optPrintOffset.value = True
