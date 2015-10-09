@@ -23,18 +23,6 @@ Const lngHexBlack As Long = &H0             'Black for non-required sections
 Private m_oCollectionOfEventHandlers As Collection
 
 
-Private Sub labBiblioTK_Click()
-
-End Sub
-
-Private Sub labChapters_Click()
-
-End Sub
-
-Private Sub Label1_Click()
-
-End Sub
-
 Private Sub UserForm_Initialize()
     
     ' Create instance of TextboxEvenHandler for each control
@@ -272,19 +260,58 @@ End Sub
 Private Sub optPubSMP_Click()
     fraStandard.ForeColor = lngHexRed
     fraPickup.ForeColor = lngHexBlack
+    
+    optPrintPOD.value = False
+    optPrintOffset.value = True
+    
+    optTrim6x9.Enabled = True
+    
+    chkDesignLoose.value = True
+    chkDesignLoose.Enabled = True
+    chkDesignAverage.value = True
+    chkDesignAverage.Enabled = True
+    chkDesignTight.value = True
+    chkDesignTight.Enabled = True
+    
 End Sub
 
 
 Private Sub optPubTor_Click()
     fraStandard.ForeColor = lngHexRed
     fraPickup.ForeColor = lngHexBlack
+    
     optPrintPOD.value = True
+    optPrintOffset.value = False
+    
+    optTrim5x8.value = True
+    optTrim6x9.Enabled = False
+    
+    chkDesignLoose.value = False
+    chkDesignLoose.Enabled = False
+    chkDesignAverage.value = True
+    chkDesignAverage.Enabled = True
+    chkDesignTight.value = False
+    chkDesignTight.Enabled = False
+
 End Sub
 
 
 Private Sub optPubPickup_Click()
     fraStandard.ForeColor = lngHexBlack
     fraPickup.ForeColor = lngHexRed
+        
+    optPrintPOD.value = False
+    optPrintOffset.value = True
+    
+    optTrim6x9.Enabled = True
+    
+    chkDesignLoose.value = False
+    chkDesignLoose.Enabled = False
+    chkDesignAverage.value = False
+    chkDesignAverage.Enabled = False
+    chkDesignTight.value = False
+    chkDesignTight.Enabled = False
+    
 End Sub
 
 
