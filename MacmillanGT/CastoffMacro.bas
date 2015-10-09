@@ -171,7 +171,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
                 '---------Calculate Page Count--------------------------------------
                 Dim lngCastoffResult() As Long
-                ReDim lngCastoffResult(d)
+                ReDim Preserve lngCastoffResult(d)
                 lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs)
                 
             End If
@@ -233,7 +233,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     Dim strCastoffs As String
     Dim e As Long
     For e = LBound(lngCastoffResult) To UBound(lngCastoffResult)
-        strCastoffs = vbTab & strDesign(e) & ": " & lngCastoffResult(e) & vbNewLine
+        strCastoffs = strCastoffs & vbTab & strDesign(e) & ": " & lngCastoffResult(e) & vbNewLine
     Next e
     
     
