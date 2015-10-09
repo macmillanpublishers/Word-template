@@ -576,7 +576,8 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
     
         '----Define spine chart file name--------------------------------
         Dim strSpineFile As String
-        strSpineFile = "Spine_" & Publisher & ".csv"
+        'strSpineFile = "Spine_" & Publisher & ".csv"   ' Use this if we're doing different paper based on imprint
+        strSpineFile = "POD_Spines.csv"                 ' Use this if we're doing 1 kind of paper for all POD
         
         '----Define full path to where CSV will be-----------------------
         Dim strFullPath As String
