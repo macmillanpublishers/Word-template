@@ -205,12 +205,20 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     Dim lngSchedPgCount As Long
     lngSchedPgCount = FormInputs.numTxtPageCount.value
     
-    ' Get trim size
+    ' Get trim size (here and not above because need to do for Pickup)
     Dim strTrimSize As String
     If FormInputs.optTrim5x8 Then
         strTrimSize = FormInputs.optTrim5x8.Caption
     ElseIf FormInputs.optTrim6x9 Then
         strTrimSize = FormInputs.optTrim6x9.Caption
+    End If
+    
+    ' Get print type from Form
+    Dim strPrintType As String
+    If FormInputs.optPrintOffset Then
+        strPrintType = FormInputs.optPrintOffset.Caption
+    Else
+        strPrintType = FormInputs.optPrintPOD.Caption
     End If
     
     ' Create text of castoff from arrays
@@ -229,6 +237,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     "AUTHOR: " & strAuthor & vbNewLine & _
     "PUBLISHER: " & strPubRealName & vbNewLine & _
     "EDITOR: " & strEditor & vbNewLine & _
+    "PRINTING TYPE: " & strPrintType & vbNewLine & _
     "TRIM SIZE: " & strTrimSize & vbNewLine & _
     vbNewLine & _
     "SCHEDULED PAGE COUNT: " & lngSchedPgCount & vbNewLine & _
