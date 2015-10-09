@@ -131,7 +131,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
                 '---------Calculate Page Count--------------------------------------
                 ReDim Preserve lngCastoffResult(d)
-                lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs)
+                lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs, blnStaging)
                 
             End If
         Next d
@@ -305,7 +305,7 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
     
 End Function
 
-Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As CastoffForm) As Long
+Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As CastoffForm, StagingThing As Boolean) As Long
     
     ' Get total character count (incl. notes and spaces) from document
     Dim lngTotalCharCount As Long
@@ -509,7 +509,7 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
                 
     Dim lngFinalResult As Long
     
-    lngFinalResult = FinalSig(lngEstPages, objForm)
+    lngFinalResult = FinalSig(lngEstPages, objForm, StagingThing)
     
     Castoff = lngFinalResult
 
@@ -601,7 +601,7 @@ Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
 End Function
 
     
-Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Long
+Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm, StagingUsed As Boolean) As Long
     ' Figure out what the final sig/page count will be
     Dim result As Long
            
@@ -623,8 +623,30 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
         lngLowerSig = RawEstPages - lngRemainderPgs
         lngUpperSig = RawEstPages + (16 - lngRemainderPgs)
                     
+        ' Get number of overflow pages from CSV
+        Dim arrCastoff() As Variant
+        Dim strFile As String
+        
+        If objCastForm.optPubSMP Or objCastForm.optPubPickup Then
+            strFile = "Castoff_SMP.csv"
+        Else
+            strFile = "Castoff_TorDOTcom.csv"
+        End If
+        
+        Dim lngTrimIndex As Long
+        If objCastForm.optTrim5x8 Then
+            lngTrimIndex = 0
+        Else
+            lngTrimIndex = 1
+        End If
+        
+        arrCastoff = DownloadCSV(FileName:=strFile, Staging:=StagingUsed)
+        
+        Dim lngOverflow As Long
+        lngOverflow = arrCastoff(5, lngTrimIndex)    ' 5 is index of overflow info in CSV
+        
         ' Determine if we go up or down a signature
-        If lngRemainderPgs < 5 Then    ' Do we want this value in a CSV on Confluence for easy update?
+        If lngRemainderPgs < lngOverflow Then    ' Do we want this value in a CSV on Confluence for easy update?
             result = lngLowerSig
         Else
             result = lngUpperSig
