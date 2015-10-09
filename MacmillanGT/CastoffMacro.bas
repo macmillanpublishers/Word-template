@@ -84,9 +84,12 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     End If
         
     'Debug.Print strPubRealName
-        
+    ' Get estimated page count
+    Dim lngCastoffResult() As Long
+    
     If strPub = "Pickup" Then
-        ' Call PickupDesign
+        ReDim Preserve lngCastoffResult(0)
+        lngCastoffResult(0) = PickupDesign(FormInputs)
     Else
         
         '---------Download CSV with design specs from Confluence site-------
@@ -172,7 +175,6 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             Else
     
                 '---------Calculate Page Count--------------------------------------
-                Dim lngCastoffResult() As Long
                 ReDim Preserve lngCastoffResult(d)
                 lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs)
                 
@@ -653,7 +655,34 @@ Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As S
 
 End Function
 
-
+Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
+' estimate page count based on design of previous book
+    
+    ' Get total character count of pickup book from form
+    Dim lngPrevMsCharCount As Long
+    lngPrevMsCharCount = objCastoffForm.numTxtPrevCharCount.value
+    
+    ' get final page count of pickup book from form
+    Dim lngPrevBookPageCount As Long
+    lngPrevBookPageCount = objCastoffForm.numTxtPrevPageCount.value
+    
+    ' get additional pages from form
+    Dim lngAddlPages As Long
+    lngAddlPages = objCastoffForm.numTxtAddlPgs.value
+    
+    ' get total character count of current ms from document
+    Dim lngCurrentMsCharCount As Long
+    lngCurrentMsCharCount = ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+                        IncludeFootnotesAndEndnotes:=True)
+    
+    ' divide total prev character count by page count to get avg characters per page in prev book
+    Dim lngPrevCharPerBookPage As Long
+    lngPrevCharPerBookPage = lngPrevMsCharCount / lngPrevBookPageCount
+    
+    ' divide total characters of this doc by avg characters per page to get est page count, add additional pages
+    PickupDesign = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + lngAddlPages
+    
+End Function
 
     
 
