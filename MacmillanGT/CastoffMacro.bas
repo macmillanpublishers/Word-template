@@ -226,9 +226,15 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     ' Create text of castoff from arrays
     Dim strCastoffs As String
     Dim e As Long
-    For e = LBound(lngCastoffResult) To UBound(lngCastoffResult)
-        strCastoffs = strCastoffs & vbTab & strDesign(e) & ": " & lngCastoffResult(e) & vbNewLine
-    Next e
+    
+    If FormInputs.optPubPickup Then
+        strCastoffs = lngCastoffResult(0)
+    Else
+        strCastoffs = vbNewLine
+        For e = LBound(lngCastoffResult) To UBound(lngCastoffResult)
+            strCastoffs = strCastoffs & vbTab & strDesign(e) & ": " & lngCastoffResult(e) & vbNewLine
+        Next e
+    End If
     
     
     strReportText = _
@@ -243,7 +249,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     "TRIM SIZE: " & strTrimSize & vbNewLine & _
     vbNewLine & _
     "SCHEDULED PAGE COUNT: " & lngSchedPgCount & vbNewLine & _
-    "ESTIMATED PAGE COUNT: " & vbNewLine & _
+    "ESTIMATED PAGE COUNT: " & _
     strCastoffs & _
     vbNewLine & _
     strSpineSize
