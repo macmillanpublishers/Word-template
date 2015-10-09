@@ -225,11 +225,15 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
     ' Create text of castoff from arrays
     Dim strCastoffs As String
+    Dim strPickupTitle As String
     Dim e As Long
     
+    ' If it's a pickup, there is only 1 option
     If FormInputs.optPubPickup Then
         strCastoffs = lngCastoffResult(0)
+        strPickupTitle = "PICKUP TITLE: " & FormInputs.txtPrevTitle.value & vbNewLine
     Else
+        strPickupTitle = ""
         strCastoffs = vbNewLine
         For e = LBound(lngCastoffResult) To UBound(lngCastoffResult)
             strCastoffs = strCastoffs & vbTab & strDesign(e) & ": " & lngCastoffResult(e) & vbNewLine
@@ -248,6 +252,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     "PRINTING TYPE: " & strPrintType & vbNewLine & _
     "TRIM SIZE: " & strTrimSize & vbNewLine & _
     vbNewLine & _
+    strPickupTitle & _
     "SCHEDULED PAGE COUNT: " & lngSchedPgCount & vbNewLine & _
     "ESTIMATED PAGE COUNT: " & _
     strCastoffs & _
