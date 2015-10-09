@@ -666,7 +666,14 @@ Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
     lngPrevCharPerBookPage = lngPrevMsCharCount / lngPrevBookPageCount
     
     ' divide total characters of this doc by avg characters per page to get est page count, add additional pages
-    PickupDesign = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + lngAddlPages
+    Dim lngStartingResult As Long
+    lngStartingResult = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + lngAddlPages
+    
+    ' Calculate what the final sig will be
+    Dim lngFinalPageCount As Long
+    lngFinalPageCount = FinalSig(lngStartingResult, objCastoffForm)
+    
+    PickupDesign = lngFinalPageCount
     
 End Function
 
