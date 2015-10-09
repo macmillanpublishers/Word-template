@@ -530,3 +530,31 @@ Function CheckSave()
 
 End Function
 
+Function EndnotesExist() As Boolean
+' Started from http://vbarevisited.blogspot.com/2014/03/how-to-detect-footnote-and-endnote.html
+    Dim StoryRange As Range
+    
+    EndnotesExist = False
+    
+    For Each StoryRange In ActiveDocument.StoryRanges
+        If StoryRange.StoryType = wdEndnotesStory Then
+            EndnotesExist = True
+            Exit For
+        End If
+    Next StoryRange
+End Function
+
+Function FootnotesExist() As Boolean
+' Started from http://vbarevisited.blogspot.com/2014/03/how-to-detect-footnote-and-endnote.html
+    Dim StoryRange As Range
+    
+    FootnotesExist = False
+    
+    For Each StoryRange In ActiveDocument.StoryRanges
+        If StoryRange.StoryType = wdFootnotesStory Then
+            FootnotesExist = True
+            Exit For
+        End If
+    Next StoryRange
+    
+End Function
