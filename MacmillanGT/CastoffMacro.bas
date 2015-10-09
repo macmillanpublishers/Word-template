@@ -15,9 +15,9 @@ Sub UniversalCastoff()
 
 
     '---------- Check if doc is saved ---------------------------------
-    'If CheckSave = True Then
-    '    Exit Sub
-    'End If
+    If CheckSave = True Then
+        Exit Sub
+    End If
     
     '----------Load userform------------------------
     Dim objCastoffForm As CastoffForm
@@ -198,7 +198,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
                         "Contact workflows@macmillan.com for assistance."
                 Else
                     strSpineSize = "Your spine size will be " & strSpineSize & " inches " & _
-                                        "at this page count." & vbNewLine & vbNewLine
+                                        "at this page count." & vbNewLine & vbNewLine & strSpineSize
                 End If
             Else
                 strSpineSize = "Your page count of " & lngCastoffResult(0) & _
@@ -566,64 +566,81 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
 
 End Function
 Private Function SpineSize(Staging As Boolean, PageCount As Long, Publisher As String, objForm As CastoffForm, LogFile As String)
+    
+    If PageCount < 48 Then
+        strSpine = "NOTE: POD titles less than 48 pages will be saddle-stitched."
+    ElseIf PageCount >= 48 And PageCount <= 1050 Then       'Limits of spine size table
 
-'----Get Log dir to save spines CSV to --------------------------
-    Dim strLogDir As String
-    strLogDir = Left(LogFile, InStrRev(LogFile, Application.PathSeparator) - 1)
-    'Debug.Print strLogDir
-
-'----Define spine chart file name--------------------------------
-    Dim strSpineFile As String
-    strSpineFile = "Spine_" & Publisher & ".csv"
+        '----Get Log dir to save spines CSV to --------------------------
+        Dim strLogDir As String
+        strLogDir = Left(LogFile, InStrRev(LogFile, Application.PathSeparator) - 1)
+        'Debug.Print strLogDir
     
-'----Define full path to where CSV will be-----------------------
-    Dim strFullPath As String
-    strFullPath = strLogDir & Application.PathSeparator & strSpineFile
-    
-'----Download CSV with spine sizes from Confluence site----------
-    Dim strMessage As String
-    
-    'Check if log file already exists; if not, create it then download CSV file
-    If IsItThere(LogFile) = True Then
-        If DownloadFromConfluence(Staging, strLogDir, LogFile, strSpineFile) = False Then
-            ' If download fails, check if we have an older version of the spine CSV to work with
-            If IsItThere(strFullPath) = False Then
-                strMessage = "Looks like we can't download the spine size info from the internet right now. " & _
-                    "Please check your internet connection, or contact workflows@macmillan.com."
-                MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous spine file available"
-                Exit Function
-            Else
-                strMessage = "Looks like we can't download the most up to date spine size info from the internet right now, " & _
-                    "so we'll just use the info we have on file for your castoff."
-                MsgBox strMessage, vbInformation, "Let's do this thing!"
+        '----Define spine chart file name--------------------------------
+        Dim strSpineFile As String
+        strSpineFile = "Spine_" & Publisher & ".csv"
+        
+        '----Define full path to where CSV will be-----------------------
+        Dim strFullPath As String
+        strFullPath = strLogDir & Application.PathSeparator & strSpineFile
+        
+        '----Download CSV with spine sizes from Confluence site----------
+        Dim strMessage As String
+        
+        'Check if log file already exists; if not, create it then download CSV file
+        If IsItThere(LogFile) = True Then
+            If DownloadFromConfluence(Staging, strLogDir, LogFile, strSpineFile) = False Then
+                ' If download fails, check if we have an older version of the spine CSV to work with
+                If IsItThere(strFullPath) = False Then
+                    strMessage = "Looks like we can't download the spine size info from the internet right now. " & _
+                        "Please check your internet connection, or contact workflows@macmillan.com."
+                    MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous spine file available"
+                    Exit Function
+                Else
+                    strMessage = "Looks like we can't download the most up to date spine size info from the internet right now, " & _
+                        "so we'll just use the info we have on file for your castoff."
+                    MsgBox strMessage, vbInformation, "Let's do this thing!"
+                End If
             End If
         End If
-    End If
-                        
-    'Make sure CSV is there
-    If IsItThere(strFullPath) = False Then
-        strMessage = "The Castoff macro is unable to access the spine size file right now. Please check your internet " & _
-                    "connection and try again, or contact workflows@macmillan.com."
-        MsgBox strMessage, vbCritical, "Error 4: Spine CSV doesn't exist"
-        Exit Function
+                            
+        'Make sure CSV is there
+        If IsItThere(strFullPath) = False Then
+            strMessage = "The Castoff macro is unable to access the spine size file right now. Please check your internet " & _
+                        "connection and try again, or contact workflows@macmillan.com."
+            MsgBox strMessage, vbCritical, "Error 4: Spine CSV doesn't exist"
+            Exit Function
+        Else
+            ' Load CSV into an array
+            Dim arrDesign() As Variant
+            arrDesign = LoadCSVtoArray(strFullPath) ' Note this requires heading row AND column now
+        End If
+    
+        '---------Lookup spine size in array-------------------------------
+        Dim strSpine As String
+        Dim c As Long
+        
+        For c = LBound(arrDesign, 1) To UBound(arrDesign, 1)
+            'Debug.Print arrDesign(c, 0) & " = " & PageCount
+            If arrDesign(c, 0) = PageCount Then
+                strSpine = arrDesign(c, 1)
+                Exit For
+            End If
+        Next c
     Else
-        ' Load CSV into an array
-        Dim arrDesign() As Variant
-        arrDesign = LoadCSVtoArray(strFullPath)
+        strSpine = "Your page count of " & lngCastoffResult(0) & _
+                " is out of range of the spine-size table."
+    End If
+    
+    
+    If strSpine = vbNullString Then
+        strSpine = "Word was unable to generate a spine size. " & _
+            "Contact workflows@macmillan.com for assistance."
+    Else
+        strSpine = "Your spine size will be " & strSpine & " inches " & _
+                            "at this page count."
     End If
 
-'---------Lookup spine size in array-------------------------------
-    Dim strSpine As String
-    Dim c As Long
-    
-    For c = LBound(arrDesign, 1) To UBound(arrDesign, 1)
-        'Debug.Print arrDesign(c, 0) & " = " & PageCount
-        If arrDesign(c, 0) = PageCount Then
-            strSpine = arrDesign(c, 1)
-            Exit For
-        End If
-    Next c
-    
     'Debug.Print strSpine
     SpineSize = strSpine
 
