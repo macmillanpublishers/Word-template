@@ -333,12 +333,12 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     
     ' Get total character count (incl. notes and spaces) from document
     Dim lngTotalCharCount As Long
-    lngTotalCharCount = ActiveDocument.Range.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+    lngTotalCharCount = ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
                         IncludeFootnotesAndEndnotes:=True)
                         
     ' Get char count for just embedded endnotes and footnotes
     Dim lngNotesCharCount As Long
-    lngNotesCharCount = lngTotalCharCount - ActiveDocument.Range.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+    lngNotesCharCount = lngTotalCharCount - ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
                         IncludeFootnotesAndEndnotes:=False)
           
     ' Get page count of main text
@@ -347,10 +347,25 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     lngMainTextPages = ActiveDocument.StoryRanges(wdMainTextStory).Information(wdNumberOfPagesInDocument)
         
     ' Get page count of endnotes and footnotes
+    Dim lngEndnotesPages As Long
+    Dim lngFootnotesPages As Long
     Dim lngNotesPages As Long
-    ActiveDocument.Repaginate
-    lngNotesPages = ActiveDocument.StoryRanges(wdEndnotesStory).Information(wdNumberOfPagesInDocument) + _
-                    ActiveDocument.StoryRanges(wdFootnotesStory).Information(wdNumberOfPagesInDocument)
+    
+    If EndnotesExist = True Then
+        ActiveDocument.Repaginate
+        lngEndnotesPages = ActiveDocument.StoryRanges(wdEndnotesStory).Information(wdNumberOfPagesInDocument)
+    Else
+        lngEndnotesPages = 0
+    End If
+    
+    If FootnotesExist = True Then
+        ActiveDocument.Repaginate
+        lngFootnotesPages = ActiveDocument.StoryRanges(wdFootnotesStory).Information(wdNumberOfPagesInDocument)
+    Else
+        lngFootnotesPages = 0
+    End If
+    
+    lngNotesPages = lngEndnotesPages + lngFootnotesPages
                     
     ' Calculate number of characters per page of NOTES in the MANUSCRIPT if there are linked notes
     ' If there aren't linked notes, get char/page of whole manuscript
@@ -495,18 +510,18 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
 
     ' Calculate number of pages!
     Dim lngMainPages As Long
-    Dim lngNotesPages As Long
+    Dim lngTotalNotesPages As Long
     Dim lngPartsPages As Long
     Dim lngHeadingPages As Long
     Dim lngEstPages As Long
     
     lngMainPages = lngMainCharCount / lngDesignCount
-    lngNotesPages = lngNotesCharCount / lngNotesDesign
+    lngTotalNotesPages = lngNotesCharCount / lngNotesDesign
     lngPartsPages = lngParts * 2
     lngHeadingPages = ((lngSubheads2Chap / 2) * lngChapters * 3) / lngLinesPage  ' 3 because headings take up 3 lines each
     
     lngEstPages = lngMainPages _
-                + lngNotesPages _
+                + lngTotalNotesPages _
                 + lngPartsPages _
                 + lngHeadingPages _
                 + lngChapters _
