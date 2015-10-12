@@ -21,6 +21,10 @@ Const lngHexRed As Long = &HC0          'Red for required sections
 Const lngHexBlack As Long = &H0             'Black for non-required sections
 
 Private m_oCollectionOfEventHandlers As Collection
+Private cBookTitle As String
+Private cAuthorName As String
+Private cImprint As String
+
 
 
 Private Sub UserForm_Initialize()
@@ -135,16 +139,20 @@ Private Sub UserForm_Initialize()
     
     ' ===== FOR TESTING ONLY =================
     ' ===== COMMENT OUT FOR PRODUCTION =======
-    txtEditor.value = "Editor Name"
-    txtAuthor.value = "Author Name"
-    txtTitle.value = "Book Title"
-    numTxtPageCount = "224"
-    optPubTor.value = True
-    'optTrim5x8.value = True
-    numTxtChapters.value = "10"
-    numTxtParts.value = "2"
-    numTxtFrontmatter.value = "14"
+    ' txtEditor.value = "Editor Name"
+    ' txtAuthor.value = "Author Name"
+    ' txtTitle.value = "Book Title"
+    ' numTxtPageCount = "224"
+    ' optPubTor.value = True
+    ' optTrim5x8.value = True
+    ' numTxtChapters.value = "10"
+    ' numTxtParts.value = "2"
+    ' numTxtFrontmatter.value = "14"
     
+    ' Get metadata from doc if it's styled
+    Me.BookTitle = GetText("Titlepage Book Title (tit)")
+    Me.AuthorName = GetText("Titlepage Author Name (au)")
+    Me.Imprint = GetText("Titlepage Imprint Line (imp)")
 
 End Sub
 
@@ -268,6 +276,7 @@ Private Sub optPubSMP_Click()
     optPrintPOD.value = False
     optPrintOffset.value = True
     
+    optTrim5x8.value = False
     optTrim6x9.Enabled = True
     
     chkDesignLoose.value = True
@@ -309,6 +318,7 @@ Private Sub optPubPickup_Click()
     optPrintPOD.value = False
     optPrintOffset.value = True
     
+    optTrim5x8.value = False
     optTrim6x9.Enabled = True
     
     chkDesignLoose.value = False
@@ -321,5 +331,68 @@ Private Sub optPubPickup_Click()
 End Sub
 
 
- 
+Private Sub StyledMetadata()
+    ' Check if styles are used and if so, get title and author and imprint
+    ' Maybe also count chapters, parts, FM pages?
+    
+    Dim styleName(1 To 3) As String         ' must declare number of items in array here
+    Dim strText(1 To 3) As String            ' and here
+    Dim b As Long
+    Dim strTitle As String
+    Dim strAuthor As String
+    Dim strImprint As String
+    
+    Application.ScreenUpdating = False
+    
+    styleName(1) = "Titlepage Author Name (au)"
+    styleName(2) = "Titlepage Book Title (tit)"
+    styleName(3) = "Titlepage Imprint Line (imp)"
+    
+    For b = LBound(styleName()) To UBound(styleName())
+        strText(b) = GetText(styleName(b))
+    Next b
+    
+    Debug.Print strText(1)
+    Debug.Print strText(2)
+    Debug.Print strText(3)
+    
+End Sub
 
+' ============= Now we're creating some properties for the CastoffForm inputs to get from the text if styled ========
+Public Property Let BookTitle(value As String)
+' This procedure is executed when the BookTitle Property is set.
+    cBookTitle = value
+    Me.txtTitle = cBookTitle
+End Property
+
+
+Public Property Get BookTitle() As String
+' This is executed when the user tries to access the property.
+    BookTitle = cBookTitle
+End Property
+
+
+Public Property Let AuthorName(value As String)
+    cAuthorName = value
+    Me.txtAuthor = cAuthorName
+End Property
+
+
+Public Property Get AuthorName() As String
+    AuthorName = cAuthorName
+End Property
+
+
+Public Property Let Imprint(value As String)
+    cImprint = value
+    If cImprint = Me.optPubSMP.Caption Then
+        Me.optPubSMP.value = True
+    ElseIf cImprint = Me.optPubTor.Caption Then
+        Me.optPubTor.value = True
+    End If
+End Property
+
+
+Public Property Get Imprint() As String
+    Imprint = cImprint
+End Property

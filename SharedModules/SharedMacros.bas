@@ -681,7 +681,7 @@ Function GetText(styleName As String) As String
     Dim fString As String
     Dim fCount As Integer
     
-    'Application.ScreenUpdating = False
+    Application.ScreenUpdating = False
     
     fCount = 0
     
@@ -728,6 +728,8 @@ Function GetText(styleName As String) As String
     Else
         GetText = fString
     End If
+    
+    Application.ScreenUpdating = True
     
     Exit Function
     
