@@ -677,3 +677,64 @@ Sub CreateTextFile(strText As String, suffix As String)
     End If
 End Sub
 
+Function GetText(styleName As String) As String
+    Dim fString As String
+    Dim fCount As Integer
+    
+    'Application.ScreenUpdating = False
+    
+    fCount = 0
+    
+    'Move selection to start of document
+    Selection.HomeKey Unit:=wdStory
+    
+    On Error GoTo ErrHandler
+    
+        Selection.Find.ClearFormatting
+        With Selection.Find
+            .Text = ""
+            .Replacement.Text = ""
+            .Forward = True
+            .Wrap = wdFindStop
+            .Format = True
+            .Style = ActiveDocument.Styles(styleName)
+            .MatchCase = False
+            .MatchWholeWord = False
+            .MatchWildcards = False
+            .MatchSoundsLike = False
+            .MatchAllWordForms = False
+        End With
+    
+    Do While Selection.Find.Execute = True And fCount < 100            'fCount < 100 so we don't get an infinite loop
+        fCount = fCount + 1
+        
+        'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
+        If InStr(Selection.Text, Chr(13)) > 0 Then
+            Selection.MoveEnd Unit:=wdCharacter, Count:=-1
+        End If
+        
+        'Assign selected text to variable
+        fString = fString & Selection.Text & vbNewLine
+        
+        'If the next character is a paragraph return, add that to the selection
+        'Otherwise the next Find will just select the same text with the paragraph return
+        If InStr(styleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
+            Selection.MoveEndWhile Cset:=Chr(13), Count:=1
+        End If
+    Loop
+        
+    If fCount = 0 Then
+        GetText = ""
+    Else
+        GetText = fString
+    End If
+    
+    Exit Function
+    
+ErrHandler:
+    If Err.Number = 5941 Or Err.Number = 5834 Then   ' The style is not present in the document
+        GetText = ""
+    End If
+
+End Function
+
