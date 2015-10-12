@@ -37,37 +37,6 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     blnStaging = False
     ' ============================================
     
-    ' Get designs selected from Form.
-    Dim lngDesign() As Long     ' Index number of design density in CSV file, starts at 0
-    Dim strDesign() As String   ' Text of design density
-    Dim lngDim As Long       ' Number of dimensions of lngDesign and strDesign, base 1
-    
-    lngDim = -1
-    
-    'For each design checked, increase dimension by 1 and then assign index and text of the design to an array
-    If FormInputs.chkDesignLoose Then
-        lngDim = lngDim + 1
-        ReDim Preserve lngDesign(0 To lngDim)
-        ReDim Preserve strDesign(0 To lngDim)
-        lngDesign(lngDim) = 0
-        strDesign(lngDim) = FormInputs.chkDesignLoose.Caption
-    End If
-    
-    If FormInputs.chkDesignAverage Then
-        lngDim = lngDim + 1
-        ReDim Preserve lngDesign(0 To lngDim)
-        ReDim Preserve strDesign(0 To lngDim)
-        lngDesign(lngDim) = 1
-        strDesign(lngDim) = FormInputs.chkDesignAverage.Caption
-    End If
-    
-    If FormInputs.chkDesignTight Then
-        lngDim = lngDim + 1
-        ReDim Preserve lngDesign(0 To lngDim)
-        ReDim Preserve strDesign(0 To lngDim)
-        lngDesign(lngDim) = 2
-        strDesign(lngDim) = FormInputs.chkDesignTight.Caption
-    End If
 
     ' Get publisher name from option buttons
     Dim strPub As String            ' Publisher code for file names and stuff
@@ -92,6 +61,39 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         ReDim Preserve lngCastoffResult(0)
         lngCastoffResult(0) = PickupDesign(FormInputs)
     Else
+        ' Get designs selected from Form.
+        Dim lngDesign() As Long     ' Index number of design density in CSV file, starts at 0
+        Dim strDesign() As String   ' Text of design density
+        Dim lngDim As Long       ' Number of dimensions of lngDesign and strDesign, base 1
+        
+        lngDim = -1
+        
+        'For each design checked, increase dimension by 1 and then assign index and text of the design to an array
+        If FormInputs.chkDesignLoose Then
+            lngDim = lngDim + 1
+            ReDim Preserve lngDesign(0 To lngDim)
+            ReDim Preserve strDesign(0 To lngDim)
+            lngDesign(lngDim) = 0
+            strDesign(lngDim) = FormInputs.chkDesignLoose.Caption
+        End If
+        
+        If FormInputs.chkDesignAverage Then
+            lngDim = lngDim + 1
+            ReDim Preserve lngDesign(0 To lngDim)
+            ReDim Preserve strDesign(0 To lngDim)
+            lngDesign(lngDim) = 1
+            strDesign(lngDim) = FormInputs.chkDesignAverage.Caption
+        End If
+        
+        If FormInputs.chkDesignTight Then
+            lngDim = lngDim + 1
+            ReDim Preserve lngDesign(0 To lngDim)
+            ReDim Preserve strDesign(0 To lngDim)
+            lngDesign(lngDim) = 2
+            strDesign(lngDim) = FormInputs.chkDesignTight.Caption
+        End If
+
+        
         '---------Download CSV with design specs from Confluence site-------
         Dim arrDesign() As Variant
         Dim strCastoffFile As String    'File name of CSV on Confluence
@@ -285,7 +287,7 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
             If Len(lines(R)) > 0 Then
                 one_line = Split(lines(R), ",")
                 For c = lngHeaderCol To num_cols   ' start at 1 (not 0) if we are not using the header column
-                    the_array((R - lngHeaderRow), (c - lngHeaderCol)) = one_line(c)   ' -1 because we are not using header row/column from CSV
+                    the_array((R - lngHeaderRow), (c - lngHeaderCol)) = one_line(c)   ' -1 because if are not using header row/column from CSV
                 Next c
             End If
         Next R
@@ -293,8 +295,8 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
         ' Prove we have the data loaded.
         ' Debug.Print LBound(the_array)
         ' Debug.Print UBound(the_array)
-        ' For R = 0 To num_rows - lngHeaderRow          ' -1 again if we removed the header row
-        '     For c = 0 To num_cols - lngHeaderCol      ' -1 again if we removed the header column
+        ' For R = 0 To num_rows          ' -1 again if we removed the header row
+        '     For c = 0 To num_cols      ' -1 again if we removed the header column
         '         Debug.Print the_array(R, c) & "|";
         '     Next c
         '     Debug.Print
