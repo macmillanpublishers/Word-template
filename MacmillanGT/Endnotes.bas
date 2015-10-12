@@ -19,7 +19,6 @@ Sub EndnoteDeEmbed()
     Dim addHeader As Boolean
     Dim nRng As Range, eNote As Endnote, nref As String, refCopy As String
     Dim sectionCount As Long
-    Dim StoryRange As Range
     Dim EndnotesExist As Boolean
     Dim TheOS As String
     Dim palgraveTag As Boolean
@@ -31,7 +30,6 @@ Sub EndnoteDeEmbed()
     BookmarkNum = 1
     lastRefSection = 0
     addHeader = True
-    EndnotesExist = False
     TheOS = System.OperatingSystem
     palgraveTag = False
     
@@ -41,12 +39,7 @@ Sub EndnoteDeEmbed()
         "Click OK to exit the Endnotes macro."
         Exit Sub
     End If
-    For Each StoryRange In ActiveDocument.StoryRanges
-        If StoryRange.StoryType = wdEndnotesStory Then
-            EndnotesExist = True
-            Exit For
-        End If
-    Next StoryRange
+
     If EndnotesExist = False Then
         MsgBox "Sorry, no linked endnotes found in document. Click OK to exit the Endnotes macro."
         Exit Sub
