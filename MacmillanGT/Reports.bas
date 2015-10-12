@@ -282,9 +282,15 @@ Sub BookmakerReqs()
         DoEvents
     End If
     
+    Dim strReportText As String
+    strReportText = CreateReportText(blnTemplateUsed, strErrorList, strMetadata, strIllustrationsList, strGoodStylesList)
+    
+    
+    ' Create Report File -------------------------------------
     Dim strSuffix As String
     strSuffix = "BookmakerReport" ' suffix for the report file
-    Call CreateReport(blnTemplateUsed, strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
+    
+    Call CreateTextFile(strText:=strReportText, suffix:=strSuffix)
     
     '-------------Go back to original settings-----------------
     sglPercentComplete = 1
@@ -1256,16 +1262,16 @@ Function CheckAfterPB() As String
     arrSecStartStyles(13) = "Front Sales Title (fst)"
     arrSecStartStyles(14) = "Front Sales Quote (fsq)"
     arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
-    arrSecStartStyles(16) = "Epigraph Ð non-verse (epi)"
-    arrSecStartStyles(17) = "Epigraph Ð verse (epiv)"
+    arrSecStartStyles(16) = "Epigraph _ non-verse (epi)"
+    arrSecStartStyles(17) = "Epigraph _ verse (epiv)"
     arrSecStartStyles(18) = "FM Head (fmh)"
     arrSecStartStyles(19) = "Illustration holder (ill)"
     arrSecStartStyles(20) = "Page Break (pb)"
-    arrSecStartStyles(21) = "FM Epigraph Ð non-verse (fmepi)"
-    arrSecStartStyles(22) = "FM Epigraph Ð verse (fmepiv)"
+    arrSecStartStyles(21) = "FM Epigraph _ non-verse (fmepi)"
+    arrSecStartStyles(22) = "FM Epigraph _ verse (fmepiv)"
     arrSecStartStyles(23) = "FM Head ALT (afmh)"
-    arrSecStartStyles(24) = "Part Epigraph Ð non-verse (pepi)"
-    arrSecStartStyles(25) = "Part Epigraph Ð verse (pepiv)"
+    arrSecStartStyles(24) = "Part Epigraph _ non-verse (pepi)"
+    arrSecStartStyles(25) = "Part Epigraph _ verse (pepiv)"
     arrSecStartStyles(26) = "Part Contents Main Head (pcmh)"
     arrSecStartStyles(27) = "Poem Title (vt)"
     arrSecStartStyles(28) = "Recipe Head (rh)"
@@ -1475,15 +1481,15 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
     arrTorStyles(37) = "Dedication (ded)"
     arrTorStyles(38) = "Dedication Author (dedau)"
-    arrTorStyles(39) = "Epigraph Ð non-verse (epi)"
-    arrTorStyles(40) = "Epigraph Ð verse (epiv)"
+    arrTorStyles(39) = "Epigraph _ non-verse (epi)"
+    arrTorStyles(40) = "Epigraph _ verse (epiv)"
     arrTorStyles(41) = "Epigraph Source (eps)"
     arrTorStyles(42) = "Chap Epigraph Source (ceps)"
-    arrTorStyles(43) = "Chap Epigraph Ð non-verse (cepi)"
-    arrTorStyles(44) = "Chap Epigraph Ð verse (cepiv)"
+    arrTorStyles(43) = "Chap Epigraph _ non-verse (cepi)"
+    arrTorStyles(44) = "Chap Epigraph _ verse (cepiv)"
     arrTorStyles(45) = "Chap Title Nonprinting (ctnp)"
-    arrTorStyles(46) = "FM Epigraph Ð non-verse (fmepi)"
-    arrTorStyles(47) = "FM Epigraph Ð verse (fmepiv)"
+    arrTorStyles(46) = "FM Epigraph _ non-verse (fmepi)"
+    arrTorStyles(47) = "FM Epigraph _ verse (fmepiv)"
     arrTorStyles(48) = "FM Epigraph Source (fmeps)"
     arrTorStyles(49) = "FM Head (fmh)"
     arrTorStyles(50) = "FM Subhead (fmsh)"
@@ -2021,114 +2027,61 @@ ErrHandler:
 
 End Function
 
-Private Sub CreateReport(TemplateUsed As Boolean, errorList As String, metadata As String, illustrations As String, goodStyles As String, suffix As String)
+Private Function CreateReportText(TemplateUsed As Boolean, errorList As String, metadata As String, illustrations As String, goodStyles As String) As String
 
     Application.ScreenUpdating = False
     
-    'Create report file
-    Dim activeRng As Range
-    Dim activeDoc As Document
-    Set activeDoc = ActiveDocument
-    Set activeRng = ActiveDocument.Range
-    Dim activeDocName As String
-    Dim activeDocPath As String
-    Dim reqReportDoc As String
-    Dim reqReportDocAlt As String
-    Dim fnum As Integer
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
-    
-    'activeDocName below works for .doc and .docx
-    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
-    activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
-    
-    'create text file
-    reqReportDoc = activeDocPath & activeDocName & "_" & suffix & ".txt"
-    
-    ''''for 32 char Mc OS bug- could check if this is Mac OS too < PART 1
-    If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
-        reqReportDoc = activeDocPath & "\" & activeDocName & "_" & suffix & ".txt"
-    Else
-        Dim placeholdDocName As String
-        placeholdDocName = "filenamePlacehold_Report.txt"
-        reqReportDocAlt = reqReportDoc
-        reqReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
-    End If
-    '''end ''''for 32 char Mc OS bug part 1
-    
-    'set and open file for output
-    Dim e As Integer
-    fnum = FreeFile()
-    Open reqReportDoc For Output As fnum
-    
+    Dim strReportText As String
+        
     If TemplateUsed = False Then
-        Print #fnum, vbCr
-        Print #fnum, "------------------------STYLES IN USE--------------------------" & vbCr
-        Print #fnum, "It looks like you aren't using the Macmillan style template." & vbCr
-        Print #fnum, "That's OK, but if you would like more info about your document," & vbCr
-        Print #fnum, "just attach the Macmillan style template and apply the styles" & vbCr
-        Print #fnum, "throughout the document." & vbCr
-        Print #fnum, vbCr
-        Print #fnum, goodStyles
+        strReportText = strReportText & vbCr
+        strReportText = strReportText & "------------------------STYLES IN USE--------------------------" & vbCr
+        strReportText = strReportText & "It looks like you aren't using the Macmillan style template." & vbCr
+        strReportText = strReportText & "That's OK, but if you would like more info about your document," & vbCr
+        strReportText = strReportText & "just attach the Macmillan style template and apply the styles" & vbCr
+        strReportText = strReportText & "throughout the document." & vbCr
+        strReportText = strReportText & vbCr
+        strReportText = strReportText & goodStyles
     Else
         If errorList = "" Then
-            Print #fnum, vbCr
-            Print #fnum, "                 CONGRATULATIONS! YOU PASSED!" & vbCr
-            Print #fnum, " But you're not done yet. Please check the info listed below." & vbCr
-            Print #fnum, vbCr
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & "                 CONGRATULATIONS! YOU PASSED!" & vbCr
+            strReportText = strReportText & " But you're not done yet. Please check the info listed below." & vbCr
+            strReportText = strReportText & vbCr
         Else
-            Print #fnum, vbCr
-            Print #fnum, "                             OOPS!" & vbCr
-            Print #fnum, "     Problems were found with the styles in your document." & vbCr
-            Print #fnum, vbCr
-            Print #fnum, vbCr
-            Print #fnum, "--------------------------- ERRORS ---------------------------" & vbCr
-            Print #fnum, errorList
-            Print #fnum, vbCr
-            Print #fnum, vbCr
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & "                             OOPS!" & vbCr
+            strReportText = strReportText & "     Problems were found with the styles in your document." & vbCr
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & "--------------------------- ERRORS ---------------------------" & vbCr
+            strReportText = strReportText & errorList
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & vbCr
         End If
-            Print #fnum, "--------------------------- METADATA -------------------------" & vbCr
-            Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
-            Print #fnum, "associated styles in the manuscript." & vbCr
-            Print #fnum, vbCr
-            Print #fnum, metadata
-            Print #fnum, vbCr
-            Print #fnum, vbCr
-            Print #fnum, "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
+            strReportText = strReportText & "--------------------------- METADATA -------------------------" & vbCr
+            strReportText = strReportText & "If any of the information below is wrong, please fix the" & vbCr
+            strReportText = strReportText & "associated styles in the manuscript." & vbCr
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & metadata
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
         
             If illustrations <> "no illustrations detected" & vbNewLine Then
-                Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
-                Print #fnum, "names of your illustrations." & vbCr
-                Print #fnum, vbCr
+                strReportText = strReportText & "Verify that this list of illustrations includes only the file" & vbCr
+                strReportText = strReportText & "names of your illustrations." & vbCr
+                strReportText = strReportText & vbCr
             End If
         
-            Print #fnum, illustrations
-            Print #fnum, vbCr
-            Print #fnum, vbCr
-            Print #fnum, "----------------------- MACMILLAN STYLES IN USE --------------------" & vbCr
-            Print #fnum, goodStyles
+            strReportText = strReportText & illustrations
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & vbCr
+            strReportText = strReportText & "-------------------- MACMILLAN STYLES IN USE ------------------" & vbCr
+            strReportText = strReportText & goodStyles
     End If
-    Close #fnum
-    
-    ''''for 32 char Mc OS bug-<PART 2
-    If reqReportDocAlt <> "" Then
-    Name reqReportDoc As reqReportDocAlt
-    End If
-    ''''END for 32 char Mac OS bug-<PART 2
-    
-    '----------------open Bookmaker Report for user once it is complete--------------------------.
-    Dim Shex As Object
-    
-    If Not TheOS Like "*Mac*" Then
-       Set Shex = CreateObject("Shell.Application")
-       Shex.Open (reqReportDoc)
-    Else
-        MacScript ("tell application ""TextEdit"" " & vbCr & _
-        "open " & """" & reqReportDocAlt & """" & " as alias" & vbCr & _
-        "activate" & vbCr & _
-        "end tell" & vbCr)
-    End If
-End Sub
+
+End Function
 
 Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As String
     'Creates a list of all styles in use, not just Macmillan styles
