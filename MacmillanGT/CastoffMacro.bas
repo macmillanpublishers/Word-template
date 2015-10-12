@@ -11,7 +11,8 @@ Sub UniversalCastoff()
 ' 1. Requires SharedMacros module to be installed in same template
 ' 2. Requires design character count CSV files and spine size files be saved as attachments to
 '    https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production
-' 3. Requires CastoffForm userform module and TextBoxEventHandler class module. Input validation is done there.
+'    - info on how to format
+' 3. Requires CastoffForm userform module and TextBoxEventHandler class module. Input validation is done in CastoffForm.
 
 
     '---------- Check if doc is saved ---------------------------------
@@ -40,16 +41,21 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
 
     ' Get publisher name from option buttons
     Dim strPub As String            ' Publisher code for file names and stuff
-    Dim strPubRealName As String    ' Publisher name for final output
     If FormInputs.optPubSMP Then
         strPub = "SMP"              ' CSV file on Confluence must use this code
-        strPubRealName = "St. Martin's Press"
+        If FormInputs.Imprint = vbNullString Then
+            FormInputs.Imprint = "St. Martin's Press"
+        End If
     ElseIf FormInputs.optPubTor Then
         strPub = "torDOTcom"        ' CSV file on Confluence must use this code
-        strPubRealName = "Tor.com"
+        If FormInputs.Imprint = vbNullString Then
+            FormInputs.Imprint = "Tor.com"
+        End If
     ElseIf FormInputs.optPubPickup Then
         strPub = "Pickup"
-        strPubRealName = "Pickup Design"
+        If FormInputs.Imprint = vbNullString Then
+            FormInputs.Imprint = "Pickup Design"
+        End If
     End If
         
     'Debug.Print strPubRealName
@@ -155,11 +161,9 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     Dim strEditor As String
     strEditor = FormInputs.txtEditor.value
     
-    Dim strAuthor As String
-    strAuthor = FormInputs.txtAuthor.value
+    FormInputs.AuthorName = FormInputs.txtAuthor.value
     
-    Dim strTitle As String
-    strTitle = FormInputs.txtTitle.value
+    FormInputs.BookTitle = FormInputs.txtTitle.value
     
     Dim lngSchedPgCount As Long
     lngSchedPgCount = FormInputs.numTxtPageCount.value
@@ -202,9 +206,9 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     " * * * MACMILLAN PRELIMINARY CASTOFF * * * " & vbNewLine & _
     vbNewLine & _
     "DATE: " & Date & vbNewLine & _
-    "TITLE: " & strTitle & vbNewLine & _
-    "AUTHOR: " & strAuthor & vbNewLine & _
-    "PUBLISHER: " & strPubRealName & vbNewLine & _
+    "TITLE: " & FormInputs.BookTitle & vbNewLine & _
+    "AUTHOR: " & FormInputs.AuthorName & vbNewLine & _
+    "PUBLISHER: " & FormInputs.Imprint & vbNewLine & _
     "EDITOR: " & strEditor & vbNewLine & _
     "PRINTING TYPE: " & strPrintType & vbNewLine & _
     "TRIM SIZE: " & strTrimSize & vbNewLine & _

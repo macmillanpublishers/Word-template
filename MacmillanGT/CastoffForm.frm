@@ -212,6 +212,18 @@ Private Sub cmdYesCastoff_Click()
         MsgBox "You must fill in Title Info, Publisher, Print Type, Trim Size, and Design to generate a castoff."
         blnCancel = True
         Me.Show
+        Exit Sub
+    End If
+    
+    ' Check that scheduled page count is multiple of 16
+    If Me.optPrintOffset And Me.numTxtPageCount <> vbNullString Then
+        If Me.numTxtPageCount Mod 16 > 0 Then
+            Me.Hide
+            MsgBox "Scheduled page count must be a multiple of 16."
+            blnCancel = True
+            Me.Show
+            Exit Sub
+        End If
     End If
     
     'Also all "Standard" inputs are required if SMP or Tor.com, all "Pickup" are required if "Pickup Design"
@@ -221,6 +233,7 @@ Private Sub cmdYesCastoff_Click()
             MsgBox "You must fill in the Standard Items section to get a castoff."
             blnCancel = True
             Me.Show
+            Exit Sub
         Else
             Me.Hide
         End If
@@ -231,6 +244,7 @@ Private Sub cmdYesCastoff_Click()
                 MsgBox "You must full in the Pickup Designs section to get a castoff."
                 blnCancel = True
                 Me.Show
+                Exit Sub
         Else
             Me.Hide
         End If
