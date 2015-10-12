@@ -2054,12 +2054,12 @@ Private Function CreateReportText(TemplateUsed As Boolean, errorList As String, 
             strReportText = strReportText & "     Problems were found with the styles in your document." & vbNewLine
             strReportText = strReportText & vbNewLine
             strReportText = strReportText & vbNewLine
-            strReportText = strReportText & "--------------------------- ERRORS ---------------------------" & vbNewLine
+            strReportText = strReportText & "---------------------------- ERRORS ---------------------------" & vbNewLine
             strReportText = strReportText & errorList
             strReportText = strReportText & vbNewLine
             strReportText = strReportText & vbNewLine
         End If
-            strReportText = strReportText & "--------------------------- METADATA -------------------------" & vbNewLine
+            strReportText = strReportText & "--------------------------- METADATA --------------------------" & vbNewLine
             strReportText = strReportText & "If any of the information below is wrong, please fix the" & vbNewLine
             strReportText = strReportText & "associated styles in the manuscript." & vbNewLine
             strReportText = strReportText & vbNewLine
