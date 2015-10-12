@@ -217,7 +217,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     strSpineSize
     
     '-------------Report castoff info to user----------------------------------------------------------------
-    MsgBox strReportText, vbOKOnly, "Castoff"
+    Call CreateTextFile(strText:=strReportText, suffix:="Castoff")
 
     Unload FormInputs
             

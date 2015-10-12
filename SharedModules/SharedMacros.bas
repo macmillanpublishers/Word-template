@@ -663,7 +663,7 @@ Sub CreateTextFile(strText As String, suffix As String)
     End If
     ''''END for 32 char Mac OS bug-<PART 2
     
-    '----------------open Bookmaker Report for user once it is complete--------------------------.
+    '----------------open Report for user once it is complete--------------------------.
     Dim Shex As Object
     
     If Not TheOS Like "*Mac*" Then
