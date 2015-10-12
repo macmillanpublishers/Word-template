@@ -331,34 +331,8 @@ Private Sub optPubPickup_Click()
 End Sub
 
 
-Private Sub StyledMetadata()
-    ' Check if styles are used and if so, get title and author and imprint
-    ' Maybe also count chapters, parts, FM pages?
-    
-    Dim styleName(1 To 3) As String         ' must declare number of items in array here
-    Dim strText(1 To 3) As String            ' and here
-    Dim b As Long
-    Dim strTitle As String
-    Dim strAuthor As String
-    Dim strImprint As String
-    
-    Application.ScreenUpdating = False
-    
-    styleName(1) = "Titlepage Author Name (au)"
-    styleName(2) = "Titlepage Book Title (tit)"
-    styleName(3) = "Titlepage Imprint Line (imp)"
-    
-    For b = LBound(styleName()) To UBound(styleName())
-        strText(b) = GetText(styleName(b))
-    Next b
-    
-    Debug.Print strText(1)
-    Debug.Print strText(2)
-    Debug.Print strText(3)
-    
-End Sub
-
 ' ============= Now we're creating some properties for the CastoffForm inputs to get from the text if styled ========
+
 Public Property Let BookTitle(value As String)
 ' This procedure is executed when the BookTitle Property is set.
     cBookTitle = value
@@ -385,7 +359,7 @@ End Property
 
 Public Property Let Imprint(value As String)
     cImprint = value
-    If cImprint = Me.optPubSMP.Caption Then
+    If InStr(1, cImprint, "Martin") > 0 Then  ' InStr because cImprint = Me.optPubSmp.Caption fails if apostrophe is curly
         Me.optPubSMP.value = True
     ElseIf cImprint = Me.optPubTor.Caption Then
         Me.optPubTor.value = True
