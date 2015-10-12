@@ -2034,53 +2034,55 @@ Private Function CreateReportText(TemplateUsed As Boolean, errorList As String, 
     Dim strReportText As String
         
     If TemplateUsed = False Then
-        strReportText = strReportText & vbCr
-        strReportText = strReportText & "------------------------STYLES IN USE--------------------------" & vbCr
-        strReportText = strReportText & "It looks like you aren't using the Macmillan style template." & vbCr
-        strReportText = strReportText & "That's OK, but if you would like more info about your document," & vbCr
-        strReportText = strReportText & "just attach the Macmillan style template and apply the styles" & vbCr
-        strReportText = strReportText & "throughout the document." & vbCr
-        strReportText = strReportText & vbCr
+        strReportText = strReportText & vbNewLine
+        strReportText = strReportText & "------------------------STYLES IN USE--------------------------" & vbNewLine
+        strReportText = strReportText & "It looks like you aren't using the Macmillan style template." & vbNewLine
+        strReportText = strReportText & "That's OK, but if you would like more info about your document," & vbNewLine
+        strReportText = strReportText & "just attach the Macmillan style template and apply the styles" & vbNewLine
+        strReportText = strReportText & "throughout the document." & vbNewLine
+        strReportText = strReportText & vbNewLine
         strReportText = strReportText & goodStyles
     Else
         If errorList = "" Then
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & "                 CONGRATULATIONS! YOU PASSED!" & vbCr
-            strReportText = strReportText & " But you're not done yet. Please check the info listed below." & vbCr
-            strReportText = strReportText & vbCr
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "                 CONGRATULATIONS! YOU PASSED!" & vbNewLine
+            strReportText = strReportText & " But you're not done yet. Please check the info listed below." & vbNewLine
+            strReportText = strReportText & vbNewLine
         Else
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & "                             OOPS!" & vbCr
-            strReportText = strReportText & "     Problems were found with the styles in your document." & vbCr
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & "--------------------------- ERRORS ---------------------------" & vbCr
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "                             OOPS!" & vbNewLine
+            strReportText = strReportText & "     Problems were found with the styles in your document." & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "--------------------------- ERRORS ---------------------------" & vbNewLine
             strReportText = strReportText & errorList
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & vbCr
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & vbNewLine
         End If
-            strReportText = strReportText & "--------------------------- METADATA -------------------------" & vbCr
-            strReportText = strReportText & "If any of the information below is wrong, please fix the" & vbCr
-            strReportText = strReportText & "associated styles in the manuscript." & vbCr
-            strReportText = strReportText & vbCr
+            strReportText = strReportText & "--------------------------- METADATA -------------------------" & vbNewLine
+            strReportText = strReportText & "If any of the information below is wrong, please fix the" & vbNewLine
+            strReportText = strReportText & "associated styles in the manuscript." & vbNewLine
+            strReportText = strReportText & vbNewLine
             strReportText = strReportText & metadata
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "----------------------- ILLUSTRATION LIST ---------------------" & vbNewLine
         
             If illustrations <> "no illustrations detected" & vbNewLine Then
-                strReportText = strReportText & "Verify that this list of illustrations includes only the file" & vbCr
-                strReportText = strReportText & "names of your illustrations." & vbCr
-                strReportText = strReportText & vbCr
+                strReportText = strReportText & "Verify that this list of illustrations includes only the file" & vbNewLine
+                strReportText = strReportText & "names of your illustrations." & vbNewLine
+                strReportText = strReportText & vbNewLine
             End If
         
             strReportText = strReportText & illustrations
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & vbCr
-            strReportText = strReportText & "-------------------- MACMILLAN STYLES IN USE ------------------" & vbCr
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "-------------------- MACMILLAN STYLES IN USE ------------------" & vbNewLine
             strReportText = strReportText & goodStyles
     End If
 
+    CreateReportText = strReportText
+    
 End Function
 
 Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As String
