@@ -611,3 +611,69 @@ Function IsArrayEmpty(Arr As Variant) As Boolean
     End If
 
 End Function
+
+
+Sub CreateTextFile(strText As String, suffix As String)
+
+    Application.ScreenUpdating = False
+    
+    'Create report file
+    Dim activeRng As Range
+    Dim activeDoc As Document
+    Set activeDoc = ActiveDocument
+    Set activeRng = ActiveDocument.Range
+    Dim activeDocName As String
+    Dim activeDocPath As String
+    Dim reqReportDoc As String
+    Dim reqReportDocAlt As String
+    Dim fnum As Integer
+    Dim TheOS As String
+    TheOS = System.OperatingSystem
+    
+    'activeDocName below works for .doc and .docx
+    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
+    activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
+    
+    'create text file
+    reqReportDoc = activeDocPath & activeDocName & "_" & suffix & ".txt"
+    
+    ''''for 32 char Mc OS bug- could check if this is Mac OS too < PART 1
+    If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
+        reqReportDoc = activeDocPath & "\" & activeDocName & "_" & suffix & ".txt"
+    Else
+        Dim placeholdDocName As String
+        placeholdDocName = "filenamePlacehold_Report.txt"
+        reqReportDocAlt = reqReportDoc
+        reqReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
+    End If
+    '''end ''''for 32 char Mc OS bug part 1
+    
+    'set and open file for output
+    Dim e As Integer
+    fnum = FreeFile()
+    Open reqReportDoc For Output As fnum
+    
+        Print #fnum, strText
+
+    Close #fnum
+    
+    ''''for 32 char Mc OS bug-<PART 2
+    If reqReportDocAlt <> "" Then
+    Name reqReportDoc As reqReportDocAlt
+    End If
+    ''''END for 32 char Mac OS bug-<PART 2
+    
+    '----------------open Bookmaker Report for user once it is complete--------------------------.
+    Dim Shex As Object
+    
+    If Not TheOS Like "*Mac*" Then
+       Set Shex = CreateObject("Shell.Application")
+       Shex.Open (reqReportDoc)
+    Else
+        MacScript ("tell application ""TextEdit"" " & vbCr & _
+        "open " & """" & reqReportDocAlt & """" & " as alias" & vbCr & _
+        "activate" & vbCr & _
+        "end tell" & vbCr)
+    End If
+End Sub
+
