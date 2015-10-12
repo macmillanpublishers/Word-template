@@ -15,7 +15,7 @@
 					<button id="BtnViewStyles" size="normal" image="_0001_view-styles---eye" onAction="RibbonControl.LaunchMacros" label="View Styles"/>
 				</group>
 				<group id="CustGrp2" label="Manuscript Tools" >
-					<button id="BtnCastoff" label="Castoff" image="_0013_castoff-calculator" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCastoff" label="Castoff" image="_0013_castoff---calculator" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="BtnEndnotes" label="Unlink Endnotes" image="_0007_de-embed-endnotes---unlink" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="BtnCleanup" label="Manuscript Cleanup" image="_0005_manuscript-cleanup---wineglass" size="large" onAction="RibbonControl.LaunchMacros" />
 				</group>
