@@ -69,10 +69,10 @@ Sub AutoExec()
         strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
                 "return (name of current user)" & Chr(13) & "end tell")
         strMacStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
-        strMacStartupDir = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word"
+        strMacStartupDir = Application.StartupPath
     #Else
         strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
-        strPcStartupDir = Environ("APPDATA") & "\Microsoft\Word\STARTUP"
+        strPcStartupDir = Application.StartupPath
     #End If
 '=============================================================================================
     
