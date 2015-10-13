@@ -402,8 +402,8 @@ Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     ' replaces correctly styled characters with placeholder so they don't get removed
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
-    Dim preserveCharFindArray(3) As String  ' declare number of items in array
-    Dim preserveCharReplaceArray(3) As String   'delcare number of items in array
+    Dim preserveCharFindArray(4) As String  ' declare number of items in array
+    Dim preserveCharReplaceArray(4) As String   'delcare number of items in array
     Dim preserveCharStyle As String
     Dim M As Long
     
@@ -417,10 +417,12 @@ Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     preserveCharFindArray(1) = "^t" 'tabs
     preserveCharFindArray(2) = "  "  ' two spaces
     preserveCharFindArray(3) = "   "    'three spaces
+    preserveCharFindArray(4) = "^l"  ' soft return
     
     preserveCharReplaceArray(1) = "`E|"
     preserveCharReplaceArray(2) = "`G|"
     preserveCharReplaceArray(3) = "`J|"
+    preserveCharReplaceArray(4) = "`K|"
     
     For M = 1 To UBound(preserveCharFindArray())
         With activeRng.Find
@@ -587,8 +589,8 @@ Private Sub PreserveStyledCharactersB(StoryType As WdStoryType)
     ' replaces placeholders with original characters
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
 
-    Dim preserveCharFindArray(3) As String  ' declare number of items in array
-    Dim preserveCharReplaceArray(3) As String   'declare number of items in array
+    Dim preserveCharFindArray(4) As String  ' declare number of items in array
+    Dim preserveCharReplaceArray(4) As String   'declare number of items in array
     Dim preserveCharStyle As String
     Dim N As Long
 
@@ -601,10 +603,12 @@ Private Sub PreserveStyledCharactersB(StoryType As WdStoryType)
     preserveCharFindArray(1) = "`E|" 'tabs
     preserveCharFindArray(2) = "`G|"    ' two spaces
     preserveCharFindArray(3) = "`J|"   'three spaces
+    preserveCharFindArray(4) = "`K|"   ' soft return
 
     preserveCharReplaceArray(1) = "^t"
     preserveCharReplaceArray(2) = "  "
     preserveCharReplaceArray(3) = "   "
+    preserveCharReplaceArray(4) = "^l"
 
     For N = 1 To UBound(preserveCharFindArray())
         With activeRng.Find
