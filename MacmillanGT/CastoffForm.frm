@@ -1,10 +1,10 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} CastoffForm 
    Caption         =   "Macmillan Preliminary Castoff Form"
-   ClientHeight    =   10560
+   ClientHeight    =   10785
    ClientLeft      =   45
-   ClientTop       =   -60
-   ClientWidth     =   9360
+   ClientTop       =   -1380
+   ClientWidth     =   9720
    OleObjectBlob   =   "CastoffForm.frx":0000
    ShowModal       =   0   'False
    StartUpPosition =   1  'CenterOwner
@@ -30,6 +30,7 @@ Private cImprint As String
 Private Sub UserForm_Initialize()
     
     ' Create instance of TextboxEvenHandler for each control
+    ' Which throws a warning if anything other than numerals are entered
     ' Started from http://stackoverflow.com/questions/1083603/vba-using-withevents-on-userforms
     Set m_oCollectionOfEventHandlers = New Collection
 
@@ -127,15 +128,25 @@ Private Sub UserForm_Initialize()
     'make sure frame text is 10 pt because sometimes it turns into 2pt and I don't know why
     labHeading.Font.Size = 12
     fraTitleInfo.Font.Size = 10
+    fraTitleInfo.Font.Bold = True
     fraPublisher.Font.Size = 10
+    fraPublisher.Font.Bold = True
     fraDesign.Font.Size = 10
+    fraDesign.Font.Bold = True
     fraTrimSize.Font.Size = 10
+    fraTrimSize.Font.Bold = True
     fraStandard.Font.Size = 10
+    fraStandard.Font.Bold = True
     fraBackmatter.Font.Size = 10
+    fraBackmatter.Font.Bold = True
     fraNotesBib.Font.Size = 10
+    fraNotesBib.Font.Bold = True
     fraComplex.Font.Size = 10
+    fraComplex.Font.Bold = True
     fraPickup.Font.Size = 10
+    fraPickup.Font.Bold = True
     fraPrintType.Font.Size = 10
+    fraPrintType.Font.Bold = True
     
     ' ===== FOR TESTING ONLY =================
     ' ===== COMMENT OUT FOR PRODUCTION =======
