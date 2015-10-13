@@ -653,8 +653,8 @@ End Sub
 Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
     
-    Dim tagCharStylesArray(12) As String                                   ' number of items in array should be declared here
-    Dim CharStylePreserveArray(12) As String              ' number of items in array should be declared here
+    Dim tagCharStylesArray(13) As String                                   ' number of items in array should be declared here
+    Dim CharStylePreserveArray(13) As String              ' number of items in array should be declared here
     Dim d As Long
     
     CharStylePreserveArray(1) = "span hyperlink (url)"
@@ -669,6 +669,7 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     CharStylePreserveArray(10) = "span ISBN (isbn)"  'added v. 3.7
     CharStylePreserveArray(11) = "span symbols ital (symi)"     'added v. 3.8
     CharStylePreserveArray(12) = "span symbols bold (symb)"
+    CharStylePreserveArray(13) = "span run-in computer type (comp)"
     
     
     tagCharStylesArray(1) = "`H|^&|H`"
@@ -683,6 +684,7 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     tagCharStylesArray(10) = "`Q|^&|Q`"
     tagCharStylesArray(11) = "`E|^&|E`"
     tagCharStylesArray(12) = "`G|^&|G`"
+    tagCharStylesArray(13) = "`J|^&|J`"
     
     On Error GoTo CharStyleError
     
@@ -790,8 +792,8 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-    Dim tagFindArray(21) As String              ' number of items in array should be declared here
-    Dim tagReplaceArray(21) As String         'and here
+    Dim tagFindArray(22) As String              ' number of items in array should be declared here
+    Dim tagReplaceArray(22) As String         'and here
     Dim h As Long
     
     tagFindArray(1) = "`B|(*)|B`"
@@ -815,6 +817,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagFindArray(19) = "`Q|(*)|Q`"          'v. 3.7 added
     tagFindArray(20) = "`E|(*)|E`"
     tagFindArray(21) = "`G|(*)|G`"          'v. 3.8 added
+    tagFindArray(22) = "`J|(*)|J`"
     
     tagReplaceArray(1) = "span boldface characters (bf)"
     tagReplaceArray(2) = "span italic characters (ital)"
@@ -838,6 +841,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagReplaceArray(19) = "span ISBN (isbn)"                        'v. 3.7 added
     tagReplaceArray(20) = "span symbols ital (symi)"                ' v. 3.8 added
     tagReplaceArray(21) = "span symbols bold (symb)"                ' v. 3.8 added
+    tagReplaceArray(22) = "span run-in computer type (comp)"
     
     On Error GoTo ErrorHandler:
     
