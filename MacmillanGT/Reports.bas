@@ -1530,7 +1530,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     arrTorStyles(91) = "Appendix Head (aph)"
     arrTorStyles(92) = "Appendix Text (aptx)"
     arrTorStyles(93) = "Appendix Text No-Indent (aptx1)"
-    arrTorStyles(94) = "Extract Head (exth)"
+    arrTorStyles(94) = "Extract Headline (exthl)"
     
     activeParaCount = ActiveDocument.Paragraphs.Count
     
