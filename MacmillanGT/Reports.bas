@@ -1416,7 +1416,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     Dim activeParaCount As Integer
     
     Dim arrTorStyles() As String
-    ReDim arrTorStyles(1 To 93)
+    ReDim arrTorStyles(1 To 94)
     
     Dim intBadCount As Integer
     Dim activeParaRange As Range
@@ -1530,6 +1530,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     arrTorStyles(91) = "Appendix Head (aph)"
     arrTorStyles(92) = "Appendix Text (aptx)"
     arrTorStyles(93) = "Appendix Text No-Indent (aptx1)"
+    arrTorStyles(94) = "Extract Head (exth)"
     
     activeParaCount = ActiveDocument.Paragraphs.Count
     
