@@ -37,32 +37,11 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     Dim blnStaging As Boolean
     blnStaging = False
     ' ============================================
-    
-
-    ' Get publisher name from option buttons
-    Dim strPub As String            ' Publisher code for file names and stuff
-    If FormInputs.optPubSMP Then
-        strPub = "SMP"              ' CSV file on Confluence must use this code
-        If FormInputs.Imprint = vbNullString Then
-            FormInputs.Imprint = "St. Martin's Press"
-        End If
-    ElseIf FormInputs.optPubTor Then
-        strPub = "torDOTcom"        ' CSV file on Confluence must use this code
-        If FormInputs.Imprint = vbNullString Then
-            FormInputs.Imprint = "Tor.com"
-        End If
-    ElseIf FormInputs.optPubPickup Then
-        strPub = "Pickup"
-        If FormInputs.Imprint = vbNullString Then
-            FormInputs.Imprint = "Pickup Design"
-        End If
-    End If
         
-    'Debug.Print strPubRealName
     ' Get estimated page count
     Dim lngCastoffResult() As Long
     
-    If strPub = "Pickup" Then
+    If FormInputs.chkDesignPickup.value = True Then
         ' If it's a pickup, use the PickupDesign math to get the page count, only 1 result
         ReDim Preserve lngCastoffResult(0)
         lngCastoffResult(0) = PickupDesign(FormInputs)
@@ -105,7 +84,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         Dim strCastoffFile As String    'File name of CSV on Confluence
     
         'Create name of castoff csv file to download
-        strCastoffFile = "Castoff_" & strPub & ".csv"
+        strCastoffFile = "Castoff_" & FormInputs.PublisherCode & ".csv"
         
         arrDesign = DownloadCSV(FileName:=strCastoffFile, Staging:=blnStaging)
         
@@ -115,22 +94,12 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         End If
         
         '------------Get castoff for each Design selected-------------------
-        Dim lngTrimIndex As Long
-        If FormInputs.optTrim5x8 Then  ' already validated that there is at least 1 picked in form code
-            lngTrimIndex = 0
-        Else
-            lngTrimIndex = 1
-        End If
-        
         Dim d As Long
         
         For d = LBound(lngDesign()) To UBound(lngDesign())
-            'Debug.Print _
-            UBound(arrDesign(), 1) & " < " & lngDesign(d) & vbNewLine & _
-            UBound(arrDesign(), 2) & " < "; intTrim
             
             'Error handling: lngDesign(d) must be in range of design array
-            If UBound(arrDesign(), 1) <= lngDesign(d) And UBound(arrDesign(), 2) <= lngTrimIndex Then
+            If UBound(arrDesign(), 1) <= lngDesign(d) And UBound(arrDesign(), 2) <= FormInputs.TrimIndex Then
                  MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
                     vbCritical, "Error 1: Design Count Out of Range"
                 Unload FormInputs
@@ -148,7 +117,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         Dim strSpineSize As String
         strSpineSize = ""
         
-        If FormInputs.optPrintPOD Then
+        If FormInputs.PrintType = FormInputs.optPrintPOD.Caption Then
             strSpineSize = SpineSize(blnStaging, lngCastoffResult(0))
             'Debug.Print "spine size = " & strSpineSize
         End If
@@ -156,41 +125,14 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
     '-------------Create final message---------------------------------------------------
     Dim strReportText As String
-    
-    'Get Title Information from Form
-    Dim strEditor As String
-    strEditor = FormInputs.txtEditor.value
-    
-    FormInputs.AuthorName = FormInputs.txtAuthor.value
-    
-    FormInputs.BookTitle = FormInputs.txtTitle.value
-    
-    Dim lngSchedPgCount As Long
-    lngSchedPgCount = FormInputs.numTxtPageCount.value
-    
-    ' Get trim size (here and not above because need to do for Pickup)
-    Dim strTrimSize As String
-    If FormInputs.optTrim5x8 Then
-        strTrimSize = FormInputs.optTrim5x8.Caption
-    ElseIf FormInputs.optTrim6x9 Then
-        strTrimSize = FormInputs.optTrim6x9.Caption
-    End If
-    
-    ' Get print type from Form
-    Dim strPrintType As String
-    If FormInputs.optPrintOffset Then
-        strPrintType = FormInputs.optPrintOffset.Caption
-    Else
-        strPrintType = FormInputs.optPrintPOD.Caption
-    End If
-    
+        
     ' Create text of castoff from arrays
     Dim strCastoffs As String
     Dim strPickupTitle As String
     Dim e As Long
     
     ' If it's a pickup, there is only 1 option
-    If FormInputs.optPubPickup Then
+    If FormInputs.chkDesignPickup Then
         strCastoffs = lngCastoffResult(0)
         strPickupTitle = "PICKUP TITLE: " & FormInputs.txtPrevTitle.value & vbNewLine
     Else
@@ -206,15 +148,15 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     " * * * MACMILLAN PRELIMINARY CASTOFF * * * " & vbNewLine & _
     vbNewLine & _
     "DATE: " & Date & vbNewLine & _
-    "TITLE: " & FormInputs.BookTitle & vbNewLine & _
-    "AUTHOR: " & FormInputs.AuthorName & vbNewLine & _
+    "TITLE: " & FormInputs.txtTitle & vbNewLine & _
+    "AUTHOR: " & FormInputs.txtAuthor & vbNewLine & _
     "PUBLISHER: " & FormInputs.Imprint & vbNewLine & _
-    "EDITOR: " & strEditor & vbNewLine & _
-    "PRINTING TYPE: " & strPrintType & vbNewLine & _
-    "TRIM SIZE: " & strTrimSize & vbNewLine & _
+    "EDITOR: " & FormInputs.txtEditor & vbNewLine & _
+    "PRINTING TYPE: " & FormInputs.PrintType & vbNewLine & _
+    "TRIM SIZE: " & FormInputs.TrimSize & vbNewLine & _
     vbNewLine & _
     strPickupTitle & _
-    "SCHEDULED PAGE COUNT: " & lngSchedPgCount & vbNewLine & _
+    "SCHEDULED PAGE COUNT: " & FormInputs.numTxtPageCount & vbNewLine & _
     "ESTIMATED PAGE COUNT: " & _
     strCastoffs & _
     vbNewLine & _
@@ -242,7 +184,7 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
     Dim c As Long
     
         If IsItThere(Path) = False Then
-            MsgBox "There was a problem with your Castoff.", vbCritical, "Error"
+            MsgBox "There was a problem with your Castoff.", vbCritical, "Error: CSV not available to load to array"
             Exit Function
         End If
         'Debug.Print Path
@@ -313,22 +255,22 @@ End Function
 
 Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As CastoffForm, StagingThing As Boolean) As Long
     
-    ' Get total character count (incl. notes and spaces) from document
+    ' Get total CHARACTER count (incl. notes and spaces) from document
     Dim lngTotalCharCount As Long
     lngTotalCharCount = ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
                         IncludeFootnotesAndEndnotes:=True)
                         
-    ' Get char count for just embedded endnotes and footnotes
+    ' Get CHARACTER count for text without embedded endnotes and footnotes
     Dim lngNotesCharCount As Long
     lngNotesCharCount = lngTotalCharCount - ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
                         IncludeFootnotesAndEndnotes:=False)
           
-    ' Get page count of main text
+    ' Get PAGE count of main text
     Dim lngMainTextPages As Long
     ActiveDocument.Repaginate
     lngMainTextPages = ActiveDocument.StoryRanges(wdMainTextStory).Information(wdNumberOfPagesInDocument)
         
-    ' Get page count of endnotes and footnotes
+    ' Get PAGE count of endnotes and footnotes
     Dim lngEndnotesPages As Long
     Dim lngFootnotesPages As Long
     Dim lngNotesPages As Long
@@ -350,7 +292,7 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     lngNotesPages = lngEndnotesPages + lngFootnotesPages
                     
     ' Calculate number of characters per page of NOTES in the MANUSCRIPT if there are linked notes
-    ' If there aren't linked notes, get char/page of whole manuscript
+    ' If there aren't linked notes, get char/page of whole manuscript (because we can't divide by 0)
     Dim lngMsCharPerPage As Long
     If lngNotesPages > 0 Then
         lngMsCharPerPage = lngNotesCharCount / lngNotesPages
@@ -396,19 +338,7 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     lngMainCharCount = lngTotalCharCount - lngNotesCharCount - lngUnlinkedNotesCharCount - lngBiblioMsCharCount
     lngNotesCharCount = lngNotesCharCount + lngUnlinkedNotesCharCount + lngBiblioMsCharCount + lngEndnotesTKCharCount _
                         + lngBiblioTKCharCount
-                        
-    ' Get trim size from Form
-    ' Number assigned is column index in design array
-    ' 0 = 5-1/2 x 8-1/4
-    ' 1 = 6-1/8 x 9-1/4
-    
-    Dim lngTrim As Long
-    If objForm.optTrim5x8 Then  ' already validated that there is at least 1 picked in form code
-        lngTrim = 0
-    Else
-        lngTrim = 1
-    End If
-    
+                            
     ' --------------------------------------------------
     ' For Reference: Index numbers in arrCSV (base 0)
     '
@@ -423,73 +353,27 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     
     '---------Get design character count from CSV-------------------------------
     Dim lngDesignCount As Long
-    lngDesignCount = arrCSV(lngDesignIndex, lngTrim)
+    lngDesignCount = arrCSV(lngDesignIndex, objForm.TrimIndex)
     'Debug.Print lngDesignCount
     
     '---------Get notes character count from CSV--------------------------------
     Dim lngNotesDesign As Long
-    lngNotesDesign = arrCSV(3, lngTrim)
+    lngNotesDesign = arrCSV(3, objForm.TrimIndex)
     
     '---------Get lines per page from CSV--------------------------------------
     Dim lngLinesPage As Long
-    lngLinesPage = arrCSV(4, lngTrim)
+    lngLinesPage = arrCSV(4, objForm.TrimIndex)
     
     '---------Get overflow pages from CSV--------------------------------------
     Dim lngOverflow As Long
-    lngOverflow = arrCSV(5, lngTrim)
+    lngOverflow = arrCSV(5, objForm.TrimIndex)
 
     '----------Get user inputs from Userform--------------------------------------------------
-    ' Get info from Standard Items section (already validated as having data)
-    Dim lngChapters As Long      ' number of chapters
-    lngChapters = objForm.numTxtChapters
-    
-    Dim lngParts As Long         'number of part titles
-    lngParts = objForm.numTxtParts
-    
-    Dim lngFMpgs As Long         ' number of pages of frontmatter including blanks
-    lngFMpgs = objForm.numTxtFrontmatter
     
     ' The rest of the inputs are not required, so only assign the value if one exists
     ' Otherwise assign 0, so we can still use the variable later without a whole other
     ' bunch of if statements
     
-    ' Get info from Back Matter section
-    Dim lngIndexPgs As Long     'Number of pages estimated for the index
-    If objForm.numTxtIndex <> vbNullString Then
-        lngIndexPgs = objForm.numTxtIndex
-    Else
-        lngIndexPgs = 0
-    End If
-    
-    Dim lngBackmatterPgsTK As Long 'Number of pages of backmatter TK
-    If objForm.numTxtBackmatter <> vbNullString Then
-        lngBackmatterPgsTK = objForm.numTxtBackmatter
-    Else
-        lngBackmatterPgsTK = 0
-    End If
-    
-    ' Get info from Complex Items section
-    Dim lngSubheads2Chap As Long 'Number of subheads in 2 chapters
-    If objForm.numTxtSubheads <> vbNullString Then
-        lngSubheads2Chap = objForm.numTxtSubheads
-    Else
-        lngSubheads2Chap = 0
-    End If
-    
-    Dim lngTablesPgs As Long  'Number of pages for tables
-    If objForm.numTxtTables <> vbNullString Then
-        lngTablesPgs = objForm.numTxtTables
-    Else
-        lngTablesPgs = 0
-    End If
-    
-    Dim lngArtPgs As Long  'Number of pages for in-text art
-    If objForm.numTxtArt <> vbNullString Then
-        lngArtPgs = objForm.numTxtArt
-    Else
-        lngArtPgs = 0
-    End If
-
     ' Calculate number of pages!
     Dim lngMainPages As Long
     Dim lngTotalNotesPages As Long
@@ -499,19 +383,19 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     
     lngMainPages = lngMainCharCount / lngDesignCount
     lngTotalNotesPages = lngNotesCharCount / lngNotesDesign
-    lngPartsPages = lngParts * 2
-    lngHeadingPages = ((lngSubheads2Chap / 2) * lngChapters * 3) / lngLinesPage  ' 3 because headings take up 3 lines each
+    lngPartsPages = objForm.numTxtParts * 2
+    lngHeadingPages = ((objForm.numTxtSubheads / 2) * objForm.numTxtChapters * 3) / lngLinesPage  ' 3 because headings take up 3 lines each
     
     lngEstPages = lngMainPages _
                 + lngTotalNotesPages _
                 + lngPartsPages _
                 + lngHeadingPages _
-                + lngChapters _
-                + lngFMpgs _
-                + lngIndexPgs _
-                + lngBackmatterPgsTK _
-                + lngTablesPgs _
-                + lngArtPgs
+                + objForm.numTxtChapters _
+                + objForm.numTxtFrontmatter _
+                + objForm.numTxtIndex _
+                + objForm.numTxtBackmatter _
+                + objForm.numTxtTables _
+                + objForm.numTxtArt
                 
     Dim lngFinalResult As Long
     
