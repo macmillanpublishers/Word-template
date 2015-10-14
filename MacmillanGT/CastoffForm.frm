@@ -25,11 +25,7 @@ Const lngHexBlack As Long = &H0             'Black for non-required sections
 Private m_oCollectionOfEventHandlers As Collection
 
 ' For custom properties
-Private cPublisherCodeString As String
-Private cTrimSizeString As String
-Private cTrimIndexLong As Long
 Private cImprintString As String
-Private cPublisherString As String
 
 ' ============= First we're creating some properties for the CastoffForm inputs ========
 ' ============= Inputs that are just a text entry already have a property (value) ====
@@ -39,6 +35,7 @@ Private cPublisherString As String
 ' Will be validated that user has selected one in cmdYes_Click event
 Public Property Get PrintType() As String
 ' Get value for property from option buttons
+' Which may have been set by the user or the Property Let function
     If optPrintOffset.value = True Then
         PrintType = optPrintOffset.Caption
     ElseIf optPrintPOD.value = True Then
@@ -48,6 +45,7 @@ End Property
 
 Public Property Let PrintType(strPrintType As String)
 ' When value is assigned to property, select the correct option button
+' This will be picked up from Property Get via the option buttons
 ' NOTE: when assigning values, use option button caption, not literal
     If strPrintType = Me.optPrintOffset.Caption Then
         Me.optPrintOffset.value = True
@@ -60,6 +58,7 @@ End Property
 ' Will also be validated that user has selected one in cmdYes_Click event
 Public Property Get TrimSize() As String
 ' Get Trim Size from option buttons
+' Which may have been set by the user or the Property Let function
     If Me.optTrim5x8.value = True Then
         TrimSize = Me.optTrim5x8.Caption
     ElseIf Me.optTrim6x9.value = True Then
@@ -69,6 +68,7 @@ End Property
 
 Public Property Let TrimSize(strTrimSize As String)
 ' If value assigned to property, select the correct option button
+' This will be picked up from Property Get via the option buttons
 ' NOTE: when assigning values, use option button caption, not literal
     Select Case strTrimSize
         Case Me.optTrim5x8.Caption
@@ -77,15 +77,24 @@ Public Property Let TrimSize(strTrimSize As String)
             Me.optTrim6x9.value = True
         End Select
 End Property
-' This is for the index of the trim size in the castoff CSV/array
 
+' This is for the index number of the trim size in the castoff CSV/array
+Public Property Get TrimIndex() As Long
+' Get trim based on option buttons
+' No Property Let because this is read only, no values allowed outside these two
+    If Me.optTrim5x8.value = True Then
+        TrimIndex = 0
+    ElseIf Me.optTrim6x9.value = True Then
+        TrimIndex = 1
+    End If
+End Property
 
+' This holds the actual imprint as listed on the title page, if doc is styled.
+' If not styled, uses option buttons
+' not calling "publisher" because it won't always match publisher option buttons
 Public Property Let Imprint(strImprintValue As String)
-' This is executed when the Imprint property is set.
-' This holds the imprint as listed on the title page, if doc is styled.
-' If the document is styled correctly, and the styled Imprint Line matches one of the
-' Publisher options buttons, that button will be selected. If they don't match, the
-' correct imprint can still be put in the output file
+' Store the passed value, and if it matches one of the Publisher option buttons, select it
+' NOTE: use GetText() function in SharedMacros module to get from styled doc
 
     cImprintString = strImprintValue
     
@@ -99,12 +108,33 @@ End Property
 
 Public Property Get Imprint() As String
 ' This is executed when the user tries to access the property.
-    Imprint = cImprintString
+' If the imprint has already been set, use that
+' If it hasn't, get it from the option buttons
+' The default is SMP
+
+    If cImprintString <> "" Then
+        Imprint = cImprintString
+    ElseIf Me.optPubTor.value = True Then
+        Imprint = Me.optPubTor.Caption
+    Else
+        Imprint = Me.optPubSMP.Caption
+    End If
+    
 End Property
 
+' This holds the short code for the publishers that is used in the castoff file name
+Public Property Get PublisherCode() As String
+' Get code based on options buttons
+' If publisher matches styled imprint line, the buttons have already been set
+' Read only so no property let
 
-Public Property Let PublisherCode(value As String)
-    cPublisherCodeString = value
+' Default is SMP.
+' Add new publishers here as ElseIf
+    If Me.optPubTor.value = True Then
+        PublisherCode = "torDOTcom"
+    Else
+        PublisherCode = "SMP"
+    End If
 End Property
 
 Private Sub UserForm_Initialize()
@@ -134,99 +164,92 @@ Private Sub UserForm_Initialize()
     'Set userform appearance to ensure consistent appearance on different OS
 
     Me.BackColor = lngHexVal
-    labHeading.BackColor = lngHexVal
-    labHeading2.BackColor = lngHexVal
-    labHeading2.ForeColor = lngHexRed
-    labHeading3.BackColor = lngHexVal
+    Me.labHeading.BackColor = lngHexVal
+    Me.labHeading2.BackColor = lngHexVal
+    Me.labHeading2.ForeColor = lngHexRed
+    Me.labHeading3.BackColor = lngHexVal
     
-    fraTitleInfo.BackColor = lngHexVal
-    fraTitleInfo.ForeColor = lngHexRed
-    labEditor.BackColor = lngHexVal
-    labAuthor.BackColor = lngHexVal
-    labTitle.BackColor = lngHexVal
-    labPageCount.BackColor = lngHexVal
+    Me.fraTitleInfo.BackColor = lngHexVal
+    Me.fraTitleInfo.ForeColor = lngHexRed
+    Me.labEditor.BackColor = lngHexVal
+    Me.labAuthor.BackColor = lngHexVal
+    Me.labTitle.BackColor = lngHexVal
+    Me.labPageCount.BackColor = lngHexVal
     
-    fraPublisher.BackColor = lngHexVal
-    fraPublisher.ForeColor = lngHexRed
-    optPubSMP.BackColor = lngHexVal
-    optPubTor.BackColor = lngHexVal
-    optPubPickup.BackColor = lngHexVal
+    Me.fraPublisher.BackColor = lngHexVal
+    Me.fraPublisher.ForeColor = lngHexRed
+    Me.optPubSMP.BackColor = lngHexVal
+    Me.optPubTor.BackColor = lngHexVal
+    Me.optPubPickup.BackColor = lngHexVal
     
-    fraPrintType.BackColor = lngHexVal
-    fraPrintType.ForeColor = lngHexRed
-    optPrintOffset.BackColor = lngHexVal
-    optPrintPOD.BackColor = lngHexVal
+    Me.fraPrintType.BackColor = lngHexVal
+    Me.fraPrintType.ForeColor = lngHexRed
+    Me.optPrintOffset.BackColor = lngHexVal
+    Me.optPrintPOD.BackColor = lngHexVal
     
-    fraTrimSize.BackColor = lngHexVal
-    fraTrimSize.ForeColor = lngHexRed
-    optTrim5x8.BackColor = lngHexVal
-    optTrim6x9.BackColor = lngHexVal
+    Me.fraTrimSize.BackColor = lngHexVal
+    Me.fraTrimSize.ForeColor = lngHexRed
+    Me.optTrim5x8.BackColor = lngHexVal
+    Me.optTrim6x9.BackColor = lngHexVal
     
-    fraDesign.BackColor = lngHexVal
-    fraDesign.ForeColor = lngHexRed
-    chkDesignLoose.BackColor = lngHexVal
-    chkDesignAverage.BackColor = lngHexVal
-    chkDesignTight.BackColor = lngHexVal
+    Me.fraDesign.BackColor = lngHexVal
+    Me.fraDesign.ForeColor = lngHexRed
+    Me.chkDesignLoose.BackColor = lngHexVal
+    Me.chkDesignAverage.BackColor = lngHexVal
+    Me.chkDesignTight.BackColor = lngHexVal
     
-    fraStandard.BackColor = lngHexVal
-    labChapters.BackColor = lngHexVal
-    labParts.BackColor = lngHexVal
-    labFrontmatter.BackColor = lngHexVal
+    Me.fraStandard.BackColor = lngHexVal
+    Me.labChapters.BackColor = lngHexVal
+    Me.labParts.BackColor = lngHexVal
+    Me.labFrontmatter.BackColor = lngHexVal
     
-    fraBackmatter.BackColor = lngHexVal
-    labIndex.BackColor = lngHexVal
-    labBackmatter.BackColor = lngHexVal
+    Me.fraBackmatter.BackColor = lngHexVal
+    Me.labIndex.BackColor = lngHexVal
+    Me.labBackmatter.BackColor = lngHexVal
     
-    fraNotesBib.BackColor = lngHexVal
-    labUnlinkedNotes.BackColor = lngHexVal
-    labNotesTK.BackColor = lngHexVal
-    labBibliography.BackColor = lngHexVal
-    labBiblioTK.BackColor = lngHexVal
+    Me.fraNotesBib.BackColor = lngHexVal
+    Me.labUnlinkedNotes.BackColor = lngHexVal
+    Me.labNotesTK.BackColor = lngHexVal
+    Me.labBibliography.BackColor = lngHexVal
+    Me.labBiblioTK.BackColor = lngHexVal
     
-    fraComplex.BackColor = lngHexVal
-    labSubheads.BackColor = lngHexVal
-    labTables.BackColor = lngHexVal
-    labArt.BackColor = lngHexVal
+    Me.fraComplex.BackColor = lngHexVal
+    Me.labSubheads.BackColor = lngHexVal
+    Me.labTables.BackColor = lngHexVal
+    Me.labArt.BackColor = lngHexVal
     
-    fraPickup.BackColor = lngHexVal
-    labPrevTitle.BackColor = lngHexVal
-    labPrevPageCount.BackColor = lngHexVal
-    labPrevCharCount.BackColor = lngHexVal
-    labAddlPgs.BackColor = lngHexVal
+    Me.fraPickup.BackColor = lngHexVal
+    Me.labPrevTitle.BackColor = lngHexVal
+    Me.labPrevPageCount.BackColor = lngHexVal
+    Me.labPrevCharCount.BackColor = lngHexVal
+    Me.labAddlPgs.BackColor = lngHexVal
     
-    cmdNoCastoff.BackColor = lngHexVal
-    cmdYesCastoff.BackColor = lngHexVal
-    cmdHelp.BackColor = lngHexVal
+    Me.cmdNoCastoff.BackColor = lngHexVal
+    Me.cmdYesCastoff.BackColor = lngHexVal
+    Me.cmdHelp.BackColor = lngHexVal
     
-    'set all default selections
-    optTrim5x8.value = False
-    optTrim6x9.value = False
-    chkDesignLoose.value = True
-    chkDesignAverage.value = True
-    chkDesignTight.value = True
-    
-    'make sure frame text is 10 pt because sometimes it turns into 2pt and I don't know why
+    'make sure frame text is 10 pt because sometimes it turns into 2pt when saved on Mac
     labHeading.Font.Size = 12
-    fraTitleInfo.Font.Size = 10
-    fraTitleInfo.Font.Bold = True
-    fraPublisher.Font.Size = 10
-    fraPublisher.Font.Bold = True
-    fraDesign.Font.Size = 10
-    fraDesign.Font.Bold = True
-    fraTrimSize.Font.Size = 10
-    fraTrimSize.Font.Bold = True
-    fraStandard.Font.Size = 10
-    fraStandard.Font.Bold = True
-    fraBackmatter.Font.Size = 10
-    fraBackmatter.Font.Bold = True
-    fraNotesBib.Font.Size = 10
-    fraNotesBib.Font.Bold = True
-    fraComplex.Font.Size = 10
-    fraComplex.Font.Bold = True
-    fraPickup.Font.Size = 10
-    fraPickup.Font.Bold = True
-    fraPrintType.Font.Size = 10
-    fraPrintType.Font.Bold = True
+    Me.fraTitleInfo.Font.Size = 10
+    Me.fraTitleInfo.Font.Bold = True
+    Me.fraPublisher.Font.Size = 10
+    Me.fraPublisher.Font.Bold = True
+    Me.fraDesign.Font.Size = 10
+    Me.fraDesign.Font.Bold = True
+    Me.fraTrimSize.Font.Size = 10
+    Me.fraTrimSize.Font.Bold = True
+    Me.fraStandard.Font.Size = 10
+    Me.fraStandard.Font.Bold = True
+    Me.fraBackmatter.Font.Size = 10
+    Me.fraBackmatter.Font.Bold = True
+    Me.fraNotesBib.Font.Size = 10
+    Me.fraNotesBib.Font.Bold = True
+    Me.fraComplex.Font.Size = 10
+    Me.fraComplex.Font.Bold = True
+    Me.fraPickup.Font.Size = 10
+    Me.fraPickup.Font.Bold = True
+    Me.fraPrintType.Font.Size = 10
+    Me.fraPrintType.Font.Bold = True
     
     ' ===== FOR TESTING ONLY =================
     ' ===== COMMENT OUT FOR PRODUCTION =======
@@ -241,9 +264,17 @@ Private Sub UserForm_Initialize()
     ' numTxtFrontmatter.value = "14"
     
     ' Get metadata from doc if it's styled
-    txtTitle = GetText("Titlepage Book Title (tit)")
-    txtAuthor = GetText("Titlepage Author Name (au)")
+    Me.txtTitle = GetText("Titlepage Book Title (tit)")
+    Me.txtAuthor = GetText("Titlepage Author Name (au)")
+    ' This one selects the option button if it matches the imprint line
     Me.Imprint = GetText("Titlepage Imprint Line (imp)")
+    
+    'set all default selections
+    Me.optTrim5x8.value = False
+    Me.optTrim6x9.value = False
+    Me.chkDesignLoose.value = True
+    Me.chkDesignAverage.value = True
+    Me.chkDesignTight.value = True
 
 End Sub
 
@@ -341,9 +372,6 @@ Private Sub cmdYesCastoff_Click()
         End If
     End If
     
-    ' Set some properties based on userform imputs
-    
-    
     If blnCancel = False Then
         Call CastoffStart(FormInputs:=Me)
     End If
@@ -377,12 +405,13 @@ End Sub
 
 
 Private Sub optPubSMP_Click()
-    fraStandard.ForeColor = lngHexRed
-    fraPickup.ForeColor = lngHexBlack
-    fraDesign.ForeColor = lngHexRed
+    ' Make required
+    Me.fraStandard.ForeColor = lngHexRed
+    Me.fraPickup.ForeColor = lngHexBlack
+    Me.fraDesign.ForeColor = lngHexRed
     
-    optPrintPOD.value = False
-    optPrintOffset.value = True
+    ' Default Print Type to Offset
+    Me.PrintType = "Offset"
     
     optTrim5x8.value = False
     optTrim6x9.Enabled = True
