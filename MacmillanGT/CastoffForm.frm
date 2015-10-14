@@ -16,16 +16,96 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 Public blnCancel As Boolean
+
 Const lngHexVal As Long = &HF3F3F3      'Background color of userform
 Const lngHexRed As Long = &HC0          'Red for required sections
 Const lngHexBlack As Long = &H0             'Black for non-required sections
 
+' For TextBoxEventHandler, which throws a warning if user enters non-numerals in number boxes
 Private m_oCollectionOfEventHandlers As Collection
-Private cBookTitle As String
-Private cAuthorName As String
-Private cImprint As String
+
+' For custom properties
+Private cPublisherCodeString As String
+Private cTrimSizeString As String
+Private cTrimIndexLong As Long
+Private cImprintString As String
+Private cPublisherString As String
+
+' ============= First we're creating some properties for the CastoffForm inputs ========
+' ============= Inputs that are just a text entry already have a property (value) ====
+' ============= but option buttons don't have a property for which one was selected ==
+
+' This is for the way the book will be printed
+' Will be validated that user has selected one in cmdYes_Click event
+Public Property Get PrintType() As String
+' Get value for property from option buttons
+    If optPrintOffset.value = True Then
+        PrintType = optPrintOffset.Caption
+    ElseIf optPrintPOD.value = True Then
+        PrintType = optPrintPOD.Caption
+    End If
+End Property
+
+Public Property Let PrintType(strPrintType As String)
+' When value is assigned to property, select the correct option button
+' NOTE: when assigning values, use option button caption, not literal
+    If strPrintType = Me.optPrintOffset.Caption Then
+        Me.optPrintOffset.value = True
+    ElseIf strPrintType = Me.optPrintPOD.Caption Then
+        Me.optPrintPOD.value = True
+    End If
+End Property
+
+' This one is for the string of the trim size
+' Will also be validated that user has selected one in cmdYes_Click event
+Public Property Get TrimSize() As String
+' Get Trim Size from option buttons
+    If Me.optTrim5x8.value = True Then
+        TrimSize = Me.optTrim5x8.Caption
+    ElseIf Me.optTrim6x9.value = True Then
+        TrimSize = Me.optTrim6x9.Caption
+    End If
+End Property
+
+Public Property Let TrimSize(strTrimSize As String)
+' If value assigned to property, select the correct option button
+' NOTE: when assigning values, use option button caption, not literal
+    Select Case strTrimSize
+        Case Me.optTrim5x8.Caption
+            Me.optTrim5x8.value = True
+        Case Me.optTrim6x9.Caption
+            Me.optTrim6x9.value = True
+        End Select
+End Property
+' This is for the index of the trim size in the castoff CSV/array
 
 
+Public Property Let Imprint(strImprintValue As String)
+' This is executed when the Imprint property is set.
+' This holds the imprint as listed on the title page, if doc is styled.
+' If the document is styled correctly, and the styled Imprint Line matches one of the
+' Publisher options buttons, that button will be selected. If they don't match, the
+' correct imprint can still be put in the output file
+
+    cImprintString = strImprintValue
+    
+    If InStr(1, cImprintString, "Martin") > 0 Then  ' InStr because cImprint = Me.optPubSmp.Caption fails if apostrophe is curly
+        Me.optPubSMP = True
+    ElseIf cImprintString = Me.optPubTor.Caption Then
+        Me.optPubTor = True
+    End If
+    
+End Property
+
+Public Property Get Imprint() As String
+' This is executed when the user tries to access the property.
+    Imprint = cImprintString
+End Property
+
+
+Public Property Let PublisherCode(value As String)
+    cPublisherCodeString = value
+End Property
 
 Private Sub UserForm_Initialize()
     
@@ -161,8 +241,8 @@ Private Sub UserForm_Initialize()
     ' numTxtFrontmatter.value = "14"
     
     ' Get metadata from doc if it's styled
-    Me.BookTitle = GetText("Titlepage Book Title (tit)")
-    Me.AuthorName = GetText("Titlepage Author Name (au)")
+    txtTitle = GetText("Titlepage Book Title (tit)")
+    txtAuthor = GetText("Titlepage Author Name (au)")
     Me.Imprint = GetText("Titlepage Imprint Line (imp)")
 
 End Sub
@@ -261,6 +341,9 @@ Private Sub cmdYesCastoff_Click()
         End If
     End If
     
+    ' Set some properties based on userform imputs
+    
+    
     If blnCancel = False Then
         Call CastoffStart(FormInputs:=Me)
     End If
@@ -356,42 +439,4 @@ Private Sub optPubPickup_Click()
 End Sub
 
 
-' ============= Now we're creating some properties for the CastoffForm inputs to get from the text if styled ========
 
-Public Property Let BookTitle(value As String)
-' This procedure is executed when the BookTitle Property is set.
-    cBookTitle = value
-    Me.txtTitle = cBookTitle
-End Property
-
-
-Public Property Get BookTitle() As String
-' This is executed when the user tries to access the property.
-    BookTitle = cBookTitle
-End Property
-
-
-Public Property Let AuthorName(value As String)
-    cAuthorName = value
-    Me.txtAuthor = cAuthorName
-End Property
-
-
-Public Property Get AuthorName() As String
-    AuthorName = cAuthorName
-End Property
-
-
-Public Property Let Imprint(value As String)
-    cImprint = value
-    If InStr(1, cImprint, "Martin") > 0 Then  ' InStr because cImprint = Me.optPubSmp.Caption fails if apostrophe is curly
-        Me.optPubSMP.value = True
-    ElseIf cImprint = Me.optPubTor.Caption Then
-        Me.optPubTor.value = True
-    End If
-End Property
-
-
-Public Property Get Imprint() As String
-    Imprint = cImprint
-End Property
