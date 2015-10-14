@@ -405,65 +405,87 @@ End Sub
 
 
 Private Sub optPubSMP_Click()
-    ' Make required
+    ' Make required sections' headings red, nonrequired black
     Me.fraStandard.ForeColor = lngHexRed
     Me.fraPickup.ForeColor = lngHexBlack
     Me.fraDesign.ForeColor = lngHexRed
     
-    ' Default Print Type to Offset
-    Me.PrintType = "Offset"
+    ' Default Print Type to Offset for SMP (user can choose POD though)
+    Me.PrintType = Me.optPrintOffset.Caption
     
-    optTrim5x8.value = False
-    optTrim6x9.Enabled = True
+    ' Default for trim is NEITHER selected
+    Me.optTrim5x8.value = False
+    Me.optTrim6x9.value = False
     
-    chkDesignLoose.value = True
-    chkDesignLoose.Enabled = True
-    chkDesignAverage.value = True
-    chkDesignAverage.Enabled = True
-    chkDesignTight.value = True
-    chkDesignTight.Enabled = True
+    ' MAke sure both are enabled though
+    Me.optTrim5x8.Enabled = True
+    Me.optTrim6x9.Enabled = True
+    
+    ' Make sure each design is enabled AND checked
+    Me.chkDesignLoose.value = True
+    Me.chkDesignLoose.Enabled = True
+    
+    Me.chkDesignAverage.value = True
+    Me.chkDesignAverage.Enabled = True
+    
+    Me.chkDesignTight.value = True
+    Me.chkDesignTight.Enabled = True
     
 End Sub
 
 
 Private Sub optPubTor_Click()
-    fraStandard.ForeColor = lngHexRed
-    fraPickup.ForeColor = lngHexBlack
-    fraDesign.ForeColor = lngHexRed
+    ' Make required sections' headings red, nonrequired black
+    Me.fraStandard .ForeColor = lngHexRed
+    Me.fraPickup.ForeColor = lngHexBlack
+    Me.fraDesign.ForeColor = lngHexRed
     
-    optPrintPOD.value = True
-    optPrintOffset.value = False
+    ' Only print type for Tor.com is POD (for now)
+    Me.PrintType = Me.optPrintPOD.Caption
     
-    optTrim5x8.value = True
-    optTrim6x9.Enabled = False
+    ' Only trim size is 5 x 8, disable other
+    Me.optTrim5x8.Enabled = True
+    Me.optTrim5x8.value = True
     
-    chkDesignLoose.value = False
-    chkDesignLoose.Enabled = False
-    chkDesignAverage.value = True
-    chkDesignAverage.Enabled = True
-    chkDesignTight.value = False
-    chkDesignTight.Enabled = False
+    Me.optTrim6x9.value = False
+    Me.optTrim6x9.Enabled = False
+    
+    ' only design allowed is average
+    Me.chkDesignLoose.value = False
+    Me.chkDesignLoose.Enabled = False
+    
+    Me.chkDesignAverage.value = True
+    Me.chkDesignAverage.Enabled = True
+    
+    Me.chkDesignTight.value = False
+    Me.chkDesignTight.Enabled = False
 
 End Sub
 
 
 Private Sub optPubPickup_Click()
-    fraStandard.ForeColor = lngHexBlack
-    fraPickup.ForeColor = lngHexRed
-    fraDesign.ForeColor = lngHexBlack
+    ' required sections' heading colors
+    Me.fraStandard.ForeColor = lngHexBlack
+    Me.fraPickup.ForeColor = lngHexRed
+    Me.fraDesign.ForeColor = lngHexBlack
         
-    optPrintPOD.value = False
-    optPrintOffset.value = True
+    ' I guess you could do POD but we'll default to Offset
+    Me.PrintType = Me.optPrintOffset.Caption
     
-    optTrim5x8.value = False
-    optTrim6x9.Enabled = True
+    ' enable both trims but don't pick either
+    Me.optTrim5x8.Enabled = True
+    Me.optTrim5x8.value = False
     
-    chkDesignLoose.value = False
-    chkDesignLoose.Enabled = False
-    chkDesignAverage.value = False
-    chkDesignAverage.Enabled = False
-    chkDesignTight.value = False
-    chkDesignTight.Enabled = False
+    Me.optTrim6x9.Enabled = True
+    Me.optTrim6x9.value = False
+    
+    ' don't pick any designs, we're getting design from prev title
+    Me.chkDesignLoose.value = False
+    Me.chkDesignLoose.Enabled = False
+    Me.chkDesignAverage.value = False
+    Me.chkDesignAverage.Enabled = False
+    Me.chkDesignTight.value = False
+    Me.chkDesignTight.Enabled = False
     
 End Sub
 
