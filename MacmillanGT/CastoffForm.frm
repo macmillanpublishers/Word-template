@@ -382,9 +382,6 @@ Private Sub cmdYesCastoff_Click()
         End If
     Next ctrl
     
-    Debug.Print Me.numTxtArt.value
-    
-    
     If blnCancel = False Then
         Call CastoffStart(FormInputs:=Me)
     End If
