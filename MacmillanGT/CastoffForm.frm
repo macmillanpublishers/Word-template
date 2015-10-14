@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} CastoffForm 
    Caption         =   "Macmillan Preliminary Castoff Form"
-   ClientHeight    =   10785
+   ClientHeight    =   11010
    ClientLeft      =   45
    ClientTop       =   -1380
    ClientWidth     =   9720
@@ -180,7 +180,6 @@ Private Sub UserForm_Initialize()
     Me.fraPublisher.ForeColor = lngHexRed
     Me.optPubSMP.BackColor = lngHexVal
     Me.optPubTor.BackColor = lngHexVal
-    Me.optPubPickup.BackColor = lngHexVal
     
     Me.fraPrintType.BackColor = lngHexVal
     Me.fraPrintType.ForeColor = lngHexRed
@@ -197,6 +196,7 @@ Private Sub UserForm_Initialize()
     Me.chkDesignLoose.BackColor = lngHexVal
     Me.chkDesignAverage.BackColor = lngHexVal
     Me.chkDesignTight.BackColor = lngHexVal
+    Me.chkDesignPickup.BackColor = lngHexVal
     
     Me.fraStandard.BackColor = lngHexVal
     Me.labChapters.BackColor = lngHexVal
@@ -275,6 +275,7 @@ Private Sub UserForm_Initialize()
     Me.chkDesignLoose.value = True
     Me.chkDesignAverage.value = True
     Me.chkDesignTight.value = True
+    Me.chkDesignPickup.value = False
 
 End Sub
 
@@ -317,12 +318,8 @@ Private Sub cmdYesCastoff_Click()
     End If
     
     'Has something been selected for Design?
-    If Me.optPubPickup Then
+    If Me.chkDesignLoose Or Me.chkDesignAverage Or Me.chkDesignTight Or Me.chkDesignPickup Then
         blnDesignStatus = True
-    Else
-        If Me.chkDesignLoose Or Me.chkDesignAverage Or Me.chkDesignTight Then
-            blnDesignStatus = True
-        End If
     End If
     
     'OK if all required have been set, otherwise give a warning message.
@@ -349,7 +346,7 @@ Private Sub cmdYesCastoff_Click()
     End If
     
     'Also all "Standard" inputs are required if SMP or Tor.com, all "Pickup" are required if "Pickup Design"
-    If Me.optPubSMP Or Me.optPubTor Then
+    If Me.chkDesignPickup.value = False Then
         If Me.numTxtChapters = vbNullString Or Me.numTxtParts = vbNullString Or Me.numTxtFrontmatter = vbNullString Then
             Me.Hide
             MsgBox "You must fill in the Standard Items section to get a castoff."
@@ -359,7 +356,7 @@ Private Sub cmdYesCastoff_Click()
         Else
             Me.Hide
         End If
-    ElseIf Me.optPubPickup Then
+    ElseIf Me.chkDesignPickup.value = True Then
         If Me.txtPrevTitle = vbNullString Or Me.numTxtPrevPageCount = vbNullString Or Me.numTxtPrevCharCount = vbNullString _
             Or Me.numTxtAddlPgs = vbNullString Then
                 Me.Hide
@@ -370,6 +367,8 @@ Private Sub cmdYesCastoff_Click()
         Else
             Me.Hide
         End If
+    Else ' this won't happen but let's have it anyway
+        Me.Hide
     End If
     
     If blnCancel = False Then
@@ -421,7 +420,7 @@ Private Sub optPubSMP_Click()
     Me.optTrim5x8.Enabled = True
     Me.optTrim6x9.Enabled = True
     
-    ' Make sure each design is enabled AND checked
+    ' Make sure each design is enabled AND checked (but not pickup)
     Me.chkDesignLoose.value = True
     Me.chkDesignLoose.Enabled = True
     
@@ -430,6 +429,9 @@ Private Sub optPubSMP_Click()
     
     Me.chkDesignTight.value = True
     Me.chkDesignTight.Enabled = True
+    
+    Me.chkDesignPickup.value = False
+    Me.chkDesignPickup.Enabled = True
     
 End Sub
 
@@ -459,11 +461,14 @@ Private Sub optPubTor_Click()
     
     Me.chkDesignTight.value = False
     Me.chkDesignTight.Enabled = False
+        
+    Me.chkDesignPickup.value = False
+    Me.chkDesignPickup.Enabled = False
 
 End Sub
 
 
-Private Sub optPubPickup_Click()
+Private Sub chkDesignPickup_Click()
     ' required sections' heading colors
     Me.fraStandard.ForeColor = lngHexBlack
     Me.fraPickup.ForeColor = lngHexRed
@@ -482,8 +487,10 @@ Private Sub optPubPickup_Click()
     ' don't pick any designs, we're getting design from prev title
     Me.chkDesignLoose.value = False
     Me.chkDesignLoose.Enabled = False
+    
     Me.chkDesignAverage.value = False
     Me.chkDesignAverage.Enabled = False
+    
     Me.chkDesignTight.value = False
     Me.chkDesignTight.Enabled = False
     
