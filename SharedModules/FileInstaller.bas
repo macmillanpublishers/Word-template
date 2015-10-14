@@ -215,6 +215,9 @@ Private Function IsTemplateThere(Directory As String, FileName As String, Log As
     Dim logString As String
     strFullPath = Directory & Application.PathSeparator & FileName
     
+    'Debug.Print Directory
+    'Debug.Print strFullPath
+    
     '------------------------- Check if template exists ----------------------------------
     ' Create directory if it doesn't exist
     If IsItThere(Directory) = False Then
