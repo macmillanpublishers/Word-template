@@ -303,7 +303,7 @@ Private Sub cmdYesCastoff_Click()
     End If
     
     'Has something been selected for Publisher?
-    If Me.optPubSMP Or Me.optPubTor Or Me.optPubPickup Then
+    If Me.optPubSMP Or Me.optPubTor Then
         blnPubStatus = True
     End If
     
@@ -370,6 +370,20 @@ Private Sub cmdYesCastoff_Click()
     Else ' this won't happen but let's have it anyway
         Me.Hide
     End If
+    
+    ' Assign 0 to any inputs that are empty
+    Dim c As Long
+    Dim ctrl As control
+    For Each ctrl In Me.Controls
+        If ctrl.Name Like "num*" Then
+            If ctrl.value = vbNullString Then
+                ctrl.value = 0
+            End If
+        End If
+    Next ctrl
+    
+    Debug.Print Me.numTxtArt.value
+    
     
     If blnCancel = False Then
         Call CastoffStart(FormInputs:=Me)
