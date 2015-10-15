@@ -108,7 +108,7 @@ Public Property Let Imprint(strImprintValue As String)
 
     cImprintString = strImprintValue
     
-    If InStr(1, cImprintString, "Martin") > 0 Then  ' InStr because cImprint = Me.optPubSmp.Caption fails if apostrophe is curly
+    If InStr(1, UCase(cImprintString), "MARTIN") > 0 Then  ' InStr because cImprint = Me.optPubSmp.Caption fails if apostrophe is curly
         Me.optPubSMP = True
     ElseIf cImprintString = Me.optPubTor.Caption Then
         Me.optPubTor = True
@@ -314,9 +314,10 @@ Private Sub cmdYesCastoff_Click()
         End If
     End If
     
-    'Also all "Standard" inputs are required if SMP or Tor.com, all "Pickup" are required if "Pickup Design"
+    ' Also all "Standard" inputs are required if SMP or Tor.com, all "Pickup" are required if "Pickup Design"
+    ' But OK to leave Parts blank
     If Me.chkDesignPickup.value = False Then
-        If Me.numTxtChapters_std = vbNullString Or Me.numTxtParts_std = vbNullString Or Me.numTxtFrontmatter_std = vbNullString Then
+        If Me.numTxtChapters_std = vbNullString Or Me.numTxtFrontmatter_std = vbNullString Then
             Me.Hide
             Beep
             MsgBox "You must fill in the Standard Items section to get a castoff."
