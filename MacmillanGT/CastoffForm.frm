@@ -189,8 +189,6 @@ Private Sub UserForm_Initialize()
     ' Make heading correct color
     Me.labHeading2.ForeColor = lngHexRed
     Me.labHeading.Font.Bold = True
-    Me.labHeading3.Font.Bold = True
-        
         
     ' Make all required frame titles red
     Me.fraTitleInfo.ForeColor = lngHexRed
