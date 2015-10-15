@@ -147,6 +147,10 @@ Public Property Get PublisherCode() As String
     End If
 End Property
 
+Private Sub labHeading2_Click()
+
+End Sub
+
 Private Sub UserForm_Initialize()
     
     ' Create instance of TextboxEvenHandler for each control
@@ -174,12 +178,19 @@ Private Sub UserForm_Initialize()
     'Set userform appearance to ensure consistent appearance on different OS
     
     Dim ctrl As control
+    ' MAke background of all controls the same (Mac doesn't always keep same settings)
     For Each ctrl In Controls
         'Debug.Print ctrl.Name
         If TypeName(ctrl) <> "TextBox" Then
             ctrl.BackColor = lngHexVal
         End If
     Next ctrl
+        
+    ' Make heading correct color
+    Me.labHeading2.ForeColor = lngHexRed
+    Me.labHeading.Font.Bold = True
+    Me.labHeading3.Font.Bold = True
+        
         
     ' Make all required frame titles red
     Me.fraTitleInfo.ForeColor = lngHexRed
