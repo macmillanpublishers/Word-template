@@ -29,14 +29,6 @@ Sub UniversalCastoff()
 End Sub
 
 Public Sub CastoffStart(FormInputs As CastoffForm)
-    
-    ' ============================================
-    ' FOR TESTING / DEBUGGING
-    ' If set to true, downloads CSV files from https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
-    ' instead of production page (noted above)
-    Dim blnStaging As Boolean
-    blnStaging = False
-    ' ============================================
         
     ' Get estimated page count
     Dim lngCastoffResult() As Long
@@ -86,7 +78,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         'Create name of castoff csv file to download
         strCastoffFile = "Castoff_" & FormInputs.PublisherCode & ".csv"
         
-        arrDesign = DownloadCSV(FileName:=strCastoffFile, Staging:=blnStaging)
+        arrDesign = DownloadCSV(FileName:=strCastoffFile, Staging:=FormInputs.Staging)
         
         ' Check that returned array is allocated
         If IsArrayEmpty(arrDesign) = True Then
@@ -108,7 +100,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
                 '---------Calculate Page Count--------------------------------------
                 ReDim Preserve lngCastoffResult(d)
-                lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs, blnStaging)
+                lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs)
                 
             End If
         Next d
@@ -118,7 +110,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         strSpineSize = ""
         
         If FormInputs.PrintType = FormInputs.optPrintPOD.Caption Then
-            strSpineSize = SpineSize(blnStaging, lngCastoffResult(0))
+            strSpineSize = SpineSize(FormInputs.Staging, lngCastoffResult(0))
             'Debug.Print "spine size = " & strSpineSize
         End If
     End If
@@ -134,7 +126,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     ' If it's a pickup, there is only 1 option
     If FormInputs.chkDesignPickup Then
         strCastoffs = lngCastoffResult(0)
-        strPickupTitle = "PICKUP TITLE: " & FormInputs.txtPrevTitle.value & vbNewLine
+        strPickupTitle = "PICKUP TITLE: " & FormInputs.txtPrevTitle_pickup.value & vbNewLine
     Else
         strPickupTitle = ""
         strCastoffs = vbNewLine
@@ -253,7 +245,7 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
     
 End Function
 
-Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As CastoffForm, StagingThing As Boolean) As Long
+Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As CastoffForm) As Long
     
     ' Get total CHARACTER count (incl. notes and spaces) from document
     Dim lngTotalCharCount As Long
@@ -303,23 +295,23 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     ' Get number of unlinked endnotes pages in MS from Form, estimate number of characters
     Dim lngUnlinkedNotesCharCount As Long
     ' Form code validates that empty string = 0
-    lngUnlinkedNotesCharCount = objForm.numTxtUnlinkedNotes * lngMsCharPerPage
+    lngUnlinkedNotesCharCount = objForm.numTxtUnlinkedNotes_std * lngMsCharPerPage
 
     
     ' Get number of endnotes TK from Form, estimate number of characters
     Dim lngEndnotesTKCharCount As Long
     ' Form code validates that empty string = 0
-    lngEndnotesTKCharCount = objForm.numTxtNotesTK * lngMsCharPerPage
+    lngEndnotesTKCharCount = objForm.numTxtNotesTK_std * lngMsCharPerPage
     
     ' Get number of biblio pages in manuscript from Form, estimate number of characters
     Dim lngBiblioMsCharCount As Long
     ' Form code validates that empty string = 0
-    lngBiblioMsCharCount = objForm.numTxtBibliography * lngMsCharPerPage
+    lngBiblioMsCharCount = objForm.numTxtBibliography_std * lngMsCharPerPage
     
     ' Get number of biblio pages TK from Form, estimate number of characters
     Dim lngBiblioTKCharCount As Long
     ' Form code validates that empty string = 0
-    lngBiblioTKCharCount = objForm.numTxtBiblioTK * lngMsCharPerPage
+    lngBiblioTKCharCount = objForm.numTxtBiblioTK_std * lngMsCharPerPage
     
     ' Calculate total character count of main text and notes separately
     Dim lngMainCharCount As Long
@@ -369,25 +361,25 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     
     lngMainPages = lngMainCharCount / lngDesignCount
     lngTotalNotesPages = lngNotesCharCount / lngNotesDesign
-    lngPartsPages = objForm.numTxtParts * 2
+    lngPartsPages = objForm.numTxtParts_std * 2
     ' 3 (below) because headings take up 3 lines each
     ' 2 because we ask for headings in 2 chapters
-    lngHeadingPages = ((objForm.numTxtSubheads / 2) * objForm.numTxtChapters * 3) / lngLinesPage
+    lngHeadingPages = ((objForm.numTxtSubheads_std / 2) * objForm.numTxtChapters_std * 3) / lngLinesPage
     
     lngEstPages = lngMainPages _
                 + lngTotalNotesPages _
                 + lngPartsPages _
                 + lngHeadingPages _
-                + objForm.numTxtChapters _
-                + objForm.numTxtFrontmatter _
-                + objForm.numTxtIndex _
-                + objForm.numTxtBackmatter _
-                + objForm.numTxtTables _
-                + objForm.numTxtArt
+                + objForm.numTxtChapters_std _
+                + objForm.numTxtFrontmatter_std _
+                + objForm.numTxtIndex_std _
+                + objForm.numTxtBackmatter_std _
+                + objForm.numTxtTables_std _
+                + objForm.numTxtArt_std
                 
     Dim lngFinalResult As Long
     
-    lngFinalResult = FinalSig(lngEstPages, objForm, StagingThing)
+    lngFinalResult = FinalSig(lngEstPages, objForm)
     
     Castoff = lngFinalResult
 
@@ -456,11 +448,11 @@ Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
     
     ' divide total prev character count by page count to get avg characters per page in prev book
     Dim lngPrevCharPerBookPage As Long
-    lngPrevCharPerBookPage = objCastoffForm.numTxtPrevCharCount.value / objCastoffForm.numTxtPrevPageCount.value
+    lngPrevCharPerBookPage = objCastoffForm.numTxtPrevCharCount_pickup.value / objCastoffForm.numTxtPrevPageCount_pickup.value
     
     ' divide total characters of this doc by avg characters per page to get est page count, add additional pages
     Dim lngStartingResult As Long
-    lngStartingResult = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + objCastoffForm.numTxtAddlPgs.value
+    lngStartingResult = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + objCastoffForm.numTxtAddlPgs_pickup.value
     
     ' Calculate what the final sig will be
     Dim lngFinalPageCount As Long
@@ -471,7 +463,7 @@ Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
 End Function
 
     
-Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm, StagingUsed As Boolean) As Long
+Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Long
     ' Figure out what the final sig/page count will be
     Dim result As Long
            
@@ -501,7 +493,7 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm, Stagi
         
         strFile = "Castoff_" & objCastForm.PublisherCode & ".csv"
         
-        arrCastoff = DownloadCSV(FileName:=strFile, Staging:=StagingUsed)
+        arrCastoff = DownloadCSV(FileName:=strFile, Staging:=objCastForm.Staging)
         
         Dim lngOverflow As Long
         lngOverflow = arrCastoff(5, objCastForm.TrimIndex)    ' 5 is index of overflow info in CSV

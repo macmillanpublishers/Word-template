@@ -27,7 +27,17 @@ Private m_oCollectionOfEventHandlers As Collection
 ' For custom properties
 Private cImprintString As String
 
-' ============= First we're creating some properties for the CastoffForm inputs ========
+    
+' ============================================
+' FOR TESTING / DEBUGGING
+' If set to TRUE, downloads CSV files from https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
+' instead of production page
+Public Property Get Staging() As Boolean
+    Staging = False
+End Property
+' ============================================
+
+' ============= Now we're creating some properties for the CastoffForm inputs ========
 ' ============= Inputs that are just a text entry already have a property (value) ====
 ' ============= but option buttons don't have a property for which one was selected ==
 
