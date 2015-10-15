@@ -525,5 +525,13 @@ Private Sub chkDesignPickup_Click()
     
 End Sub
 
-
+Private Sub CastoffForm_QueryClose(Cancel As Integer, CloseMode As Integer)
+  If CloseMode = vbFormControlMenu Then
+    ' user clicked the X button
+    ' cancel unloading the form, use close button procedure instead
+    ' which right now just unloads the form anyway but this way we're better served in the future.
+    Cancel = True
+    cmdNoCastoff_Click
+  End If
+End Sub
 
