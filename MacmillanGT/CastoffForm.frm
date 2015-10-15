@@ -295,6 +295,7 @@ Private Sub cmdYesCastoff_Click()
         blnCancel = False
     Else
         Me.Hide
+        Beep
         MsgBox "You must fill in Title Info, Publisher, Print Type, Trim Size, and Design to generate a castoff."
         blnCancel = True
         Me.Show
@@ -305,6 +306,7 @@ Private Sub cmdYesCastoff_Click()
     If Me.optPrintOffset And Me.numTxtPageCount <> vbNullString Then
         If Me.numTxtPageCount Mod 16 > 0 Then
             Me.Hide
+            Beep
             MsgBox "Scheduled page count must be a multiple of 16."
             blnCancel = True
             Me.Show
@@ -316,6 +318,7 @@ Private Sub cmdYesCastoff_Click()
     If Me.chkDesignPickup.value = False Then
         If Me.numTxtChapters_std = vbNullString Or Me.numTxtParts_std = vbNullString Or Me.numTxtFrontmatter_std = vbNullString Then
             Me.Hide
+            Beep
             MsgBox "You must fill in the Standard Items section to get a castoff."
             blnCancel = True
             Me.Show
@@ -327,6 +330,7 @@ Private Sub cmdYesCastoff_Click()
         If Me.txtPrevTitle_pickup = vbNullString Or Me.numTxtPrevPageCount_pickup = vbNullString Or _
             Me.numTxtPrevCharCount_pickup = vbNullString Or Me.numTxtAddlPgs_pickup = vbNullString Then
                 Me.Hide
+                Beep
                 MsgBox "You must full in the Pickup Designs section to get a castoff."
                 blnCancel = True
                 Me.Show
@@ -376,6 +380,7 @@ Private Sub cmdHelp_Click()
     "You can find more detailed information about this form at <Confluence Page>, or contact " & _
     "workflows@macmillan.com if you have any questions."
     
+    Beep
     MsgBox strHelpMessage, vbOKOnly, "Castoff Help"
 
 End Sub
