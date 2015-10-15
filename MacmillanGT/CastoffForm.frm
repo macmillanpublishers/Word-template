@@ -187,8 +187,17 @@ Private Sub UserForm_Initialize()
     Next ctrl
         
     ' Make heading correct color
+
     Me.labHeading2.ForeColor = lngHexRed
     Me.labHeading.Font.Bold = True
+    
+    ' fix spacing of heading on Mac
+    #If Mac Then
+        Me.labHeading2.Left = 426
+    #Else
+        Me.labHeading2.Left = 414
+    #End If
+    
         
     ' Make all required frame titles red
     Me.fraTitleInfo.ForeColor = lngHexRed
