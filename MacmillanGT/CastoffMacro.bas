@@ -51,7 +51,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         Dim strDesign() As String   ' Text of design density
         Dim lngDim As Long       ' Number of dimensions of lngDesign and strDesign, base 1
         
-        lngDim = -1
+        lngDim = -1     ' so we start base 0
         
         'For each design checked, increase dimension by 1 and then assign index and text of the design to an array
         If FormInputs.chkDesignLoose Then
@@ -184,7 +184,7 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
     Dim c As Long
     
         If IsItThere(Path) = False Then
-            MsgBox "There was a problem with your Castoff.", vbCritical, "Error: CSV not available to load to array"
+            MsgBox "There was a problem with your Castoff.", vbCritical, "Error: CSV not available"
             Exit Function
         End If
         'Debug.Print Path
@@ -300,38 +300,26 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
         lngMsCharPerPage = lngTotalCharCount / lngMainTextPages
     End If
     
-    ' Get number of unlinked endnotes in MS from Form, estimate number of characters
+    ' Get number of unlinked endnotes pages in MS from Form, estimate number of characters
     Dim lngUnlinkedNotesCharCount As Long
-    If objForm.numTxtUnlinkedNotes <> vbNullString Then
-        lngUnlinkedNotesCharCount = objForm.numTxtUnlinkedNotes * lngMsCharPerPage
-    Else
-        lngUnlinkedNotesCharCount = 0
-    End If
+    ' Form code validates that empty string = 0
+    lngUnlinkedNotesCharCount = objForm.numTxtUnlinkedNotes * lngMsCharPerPage
+
     
     ' Get number of endnotes TK from Form, estimate number of characters
     Dim lngEndnotesTKCharCount As Long
-    If objForm.numTxtNotesTK <> vbNullString Then
-        lngEndnotesTKCharCount = objForm.numTxtNotesTK * lngMsCharPerPage
-    Else
-        lngEndnotesTKCharCount = 0
-    End If
+    ' Form code validates that empty string = 0
+    lngEndnotesTKCharCount = objForm.numTxtNotesTK * lngMsCharPerPage
     
     ' Get number of biblio pages in manuscript from Form, estimate number of characters
     Dim lngBiblioMsCharCount As Long
-    If objForm.numTxtBibliography <> vbNullString Then
-        lngBiblioMsCharCount = objForm.numTxtBibliography * lngMsCharPerPage
-    Else
-        lngBiblioMsCharCount = 0
-    End If
+    ' Form code validates that empty string = 0
+    lngBiblioMsCharCount = objForm.numTxtBibliography * lngMsCharPerPage
     
     ' Get number of biblio pages TK from Form, estimate number of characters
     Dim lngBiblioTKCharCount As Long
-    If objForm.numTxtBiblioTK <> vbNullString Then
-        lngBiblioTKCharCount = objForm.numTxtBiblioTK * lngMsCharPerPage
-    Else
-        lngBiblioTKCharCount = 0
-    End If
-
+    ' Form code validates that empty string = 0
+    lngBiblioTKCharCount = objForm.numTxtBiblioTK * lngMsCharPerPage
     
     ' Calculate total character count of main text and notes separately
     Dim lngMainCharCount As Long
@@ -358,21 +346,19 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     
     '---------Get notes character count from CSV--------------------------------
     Dim lngNotesDesign As Long
-    lngNotesDesign = arrCSV(3, objForm.TrimIndex)
+    lngNotesDesign = arrCSV(3, objForm.TrimIndex)   ' notes always in position 3
     
     '---------Get lines per page from CSV--------------------------------------
     Dim lngLinesPage As Long
-    lngLinesPage = arrCSV(4, objForm.TrimIndex)
+    lngLinesPage = arrCSV(4, objForm.TrimIndex)     ' lines per page always in position 4
     
     '---------Get overflow pages from CSV--------------------------------------
     Dim lngOverflow As Long
-    lngOverflow = arrCSV(5, objForm.TrimIndex)
+    lngOverflow = arrCSV(5, objForm.TrimIndex)      ' overflow pages always in position 5
 
     '----------Get user inputs from Userform--------------------------------------------------
     
-    ' The rest of the inputs are not required, so only assign the value if one exists
-    ' Otherwise assign 0, so we can still use the variable later without a whole other
-    ' bunch of if statements
+    ' The rest of the inputs are not required, but are assigned 0 if left empty in form
     
     ' Calculate number of pages!
     Dim lngMainPages As Long
@@ -384,7 +370,9 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     lngMainPages = lngMainCharCount / lngDesignCount
     lngTotalNotesPages = lngNotesCharCount / lngNotesDesign
     lngPartsPages = objForm.numTxtParts * 2
-    lngHeadingPages = ((objForm.numTxtSubheads / 2) * objForm.numTxtChapters * 3) / lngLinesPage  ' 3 because headings take up 3 lines each
+    ' 3 (below) because headings take up 3 lines each
+    ' 2 because we ask for headings in 2 chapters
+    lngHeadingPages = ((objForm.numTxtSubheads / 2) * objForm.numTxtChapters * 3) / lngLinesPage
     
     lngEstPages = lngMainPages _
                 + lngTotalNotesPages _
@@ -405,6 +393,8 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
 
 End Function
 Private Function SpineSize(StagingSite As Boolean, PageCount As Long)
+    ' right now, for POD titles only
+    
     Dim strSpine As String
     
     If PageCount < 48 Then
@@ -422,6 +412,7 @@ Private Function SpineSize(StagingSite As Boolean, PageCount As Long)
         
         ' Check that returned array is allocated
         If IsArrayEmpty(arrSpine) = True Then
+            strSpine = "ERROR: cannot calculate spine size"
             Exit Function ' Error messages were in DownloadCSV (and DownloadFromConfluence) so none needed here
         End If
     
@@ -457,30 +448,19 @@ End Function
 Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
 ' estimate page count based on design of previous book
     
-    ' Get total character count of pickup book from form
-    Dim lngPrevMsCharCount As Long
-    lngPrevMsCharCount = objCastoffForm.numTxtPrevCharCount.value
-    
-    ' get final page count of pickup book from form
-    Dim lngPrevBookPageCount As Long
-    lngPrevBookPageCount = objCastoffForm.numTxtPrevPageCount.value
-    
-    ' get additional pages from form
-    Dim lngAddlPages As Long
-    lngAddlPages = objCastoffForm.numTxtAddlPgs.value
-    
     ' get total character count of current ms from document
+    ' this includes EN/FN, but at some point could calculate those differently like we do in Castoff
     Dim lngCurrentMsCharCount As Long
     lngCurrentMsCharCount = ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
                         IncludeFootnotesAndEndnotes:=True)
     
     ' divide total prev character count by page count to get avg characters per page in prev book
     Dim lngPrevCharPerBookPage As Long
-    lngPrevCharPerBookPage = lngPrevMsCharCount / lngPrevBookPageCount
+    lngPrevCharPerBookPage = objCastoffForm.numTxtPrevCharCount.value / objCastoffForm.numTxtPrevPageCount.value
     
     ' divide total characters of this doc by avg characters per page to get est page count, add additional pages
     Dim lngStartingResult As Long
-    lngStartingResult = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + lngAddlPages
+    lngStartingResult = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + objCastoffForm.numTxtAddlPgs.value
     
     ' Calculate what the final sig will be
     Dim lngFinalPageCount As Long
@@ -495,7 +475,7 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm, Stagi
     ' Figure out what the final sig/page count will be
     Dim result As Long
            
-    If objCastForm.optPrintPOD Then
+    If objCastForm.chkDesignPickup Then
         'POD only has to be even, not 16-page sig
         If (RawEstPages Mod 2) = 0 Then      'page count is even
             result = RawEstPages
@@ -514,29 +494,20 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm, Stagi
         lngUpperSig = RawEstPages + (16 - lngRemainderPgs)
                     
         ' Get number of overflow pages from CSV
+        ' DL again even if we just did, because if it's a pickup we didn't DL
+        ' later improvement: have it check date of last DL and only DL once a day
         Dim arrCastoff() As Variant
         Dim strFile As String
         
-        If objCastForm.optPubSMP Or objCastForm.optPubPickup Then
-            strFile = "Castoff_SMP.csv"
-        Else
-            strFile = "Castoff_TorDOTcom.csv"
-        End If
-        
-        Dim lngTrimIndex As Long
-        If objCastForm.optTrim5x8 Then
-            lngTrimIndex = 0
-        Else
-            lngTrimIndex = 1
-        End If
+        strFile = "Castoff_" & objCastForm.PublisherCode & ".csv"
         
         arrCastoff = DownloadCSV(FileName:=strFile, Staging:=StagingUsed)
         
         Dim lngOverflow As Long
-        lngOverflow = arrCastoff(5, lngTrimIndex)    ' 5 is index of overflow info in CSV
+        lngOverflow = arrCastoff(5, objCastForm.TrimIndex)    ' 5 is index of overflow info in CSV
         
         ' Determine if we go up or down a signature
-        If lngRemainderPgs < lngOverflow Then    ' Do we want this value in a CSV on Confluence for easy update?
+        If lngRemainderPgs < lngOverflow Then
             result = lngLowerSig
         Else
             result = lngUpperSig
@@ -582,7 +553,7 @@ Private Function DownloadCSV(FileName As String, Staging As Boolean) As Variant
             MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous design file available"
             Exit Function
         Else
-            strMessage = "Looks like we can't download the most up to date design info from the internet right now, " & _
+            strMessage = "Looks like we can't download the most up-to-date design info from the internet right now, " & _
                 "so we'll just use the info we have on file for your castoff."
             MsgBox strMessage, vbInformation, "Let's do this thing!"
         End If
@@ -592,6 +563,7 @@ Private Function DownloadCSV(FileName As String, Staging As Boolean) As Variant
     Dim blnRemoveHeaderRow As Boolean
     Dim blnRemoveHeaderCol As Boolean
     
+    ' Because the castoff CSV has header row and col, but Spine CSV only has a header row
     If InStr(1, FileName, "Castoff") <> 0 Then
         blnRemoveHeaderRow = True
         blnRemoveHeaderCol = True
