@@ -162,71 +162,21 @@ Private Sub UserForm_Initialize()
 
 
     'Set userform appearance to ensure consistent appearance on different OS
-
-    Me.BackColor = lngHexVal
-    Me.labHeading.BackColor = lngHexVal
-    Me.labHeading2.BackColor = lngHexVal
-    Me.labHeading2.ForeColor = lngHexRed
-    Me.labHeading3.BackColor = lngHexVal
     
-    Me.fraTitleInfo.BackColor = lngHexVal
+    Dim ctrl As control
+    For Each ctrl In Controls
+        'Debug.Print ctrl.Name
+        If TypeName(ctrl) <> "TextBox" Then
+            ctrl.BackColor = lngHexVal
+        End If
+    Next ctrl
+        
+    ' Make all required frame titles red
     Me.fraTitleInfo.ForeColor = lngHexRed
-    Me.labEditor.BackColor = lngHexVal
-    Me.labAuthor.BackColor = lngHexVal
-    Me.labTitle.BackColor = lngHexVal
-    Me.labPageCount.BackColor = lngHexVal
-    
-    Me.fraPublisher.BackColor = lngHexVal
     Me.fraPublisher.ForeColor = lngHexRed
-    Me.optPubSMP.BackColor = lngHexVal
-    Me.optPubTor.BackColor = lngHexVal
-    
-    Me.fraPrintType.BackColor = lngHexVal
     Me.fraPrintType.ForeColor = lngHexRed
-    Me.optPrintOffset.BackColor = lngHexVal
-    Me.optPrintPOD.BackColor = lngHexVal
-    
-    Me.fraTrimSize.BackColor = lngHexVal
     Me.fraTrimSize.ForeColor = lngHexRed
-    Me.optTrim5x8.BackColor = lngHexVal
-    Me.optTrim6x9.BackColor = lngHexVal
-    
-    Me.fraDesign.BackColor = lngHexVal
     Me.fraDesign.ForeColor = lngHexRed
-    Me.chkDesignLoose.BackColor = lngHexVal
-    Me.chkDesignAverage.BackColor = lngHexVal
-    Me.chkDesignTight.BackColor = lngHexVal
-    Me.chkDesignPickup.BackColor = lngHexVal
-    
-    Me.fraStandard.BackColor = lngHexVal
-    Me.labChapters.BackColor = lngHexVal
-    Me.labParts.BackColor = lngHexVal
-    Me.labFrontmatter.BackColor = lngHexVal
-    
-    Me.fraBackmatter.BackColor = lngHexVal
-    Me.labIndex.BackColor = lngHexVal
-    Me.labBackmatter.BackColor = lngHexVal
-    
-    Me.fraNotesBib.BackColor = lngHexVal
-    Me.labUnlinkedNotes.BackColor = lngHexVal
-    Me.labNotesTK.BackColor = lngHexVal
-    Me.labBibliography.BackColor = lngHexVal
-    Me.labBiblioTK.BackColor = lngHexVal
-    
-    Me.fraComplex.BackColor = lngHexVal
-    Me.labSubheads.BackColor = lngHexVal
-    Me.labTables.BackColor = lngHexVal
-    Me.labArt.BackColor = lngHexVal
-    
-    Me.fraPickup.BackColor = lngHexVal
-    Me.labPrevTitle.BackColor = lngHexVal
-    Me.labPrevPageCount.BackColor = lngHexVal
-    Me.labPrevCharCount.BackColor = lngHexVal
-    Me.labAddlPgs.BackColor = lngHexVal
-    
-    Me.cmdNoCastoff.BackColor = lngHexVal
-    Me.cmdYesCastoff.BackColor = lngHexVal
-    Me.cmdHelp.BackColor = lngHexVal
     
     'make sure frame text is 10 pt because sometimes it turns into 2pt when saved on Mac
     labHeading.Font.Size = 12
@@ -238,18 +188,25 @@ Private Sub UserForm_Initialize()
     Me.fraDesign.Font.Bold = True
     Me.fraTrimSize.Font.Size = 10
     Me.fraTrimSize.Font.Bold = True
-    Me.fraStandard.Font.Size = 10
-    Me.fraStandard.Font.Bold = True
-    Me.fraBackmatter.Font.Size = 10
-    Me.fraBackmatter.Font.Bold = True
-    Me.fraNotesBib.Font.Size = 10
-    Me.fraNotesBib.Font.Bold = True
-    Me.fraComplex.Font.Size = 10
-    Me.fraComplex.Font.Bold = True
-    Me.fraPickup.Font.Size = 10
-    Me.fraPickup.Font.Bold = True
+    Me.fraStandard_std.Font.Size = 10
+    Me.fraStandard_std.Font.Bold = True
+    Me.fraBackmatter_std.Font.Size = 10
+    Me.fraBackmatter_std.Font.Bold = True
+    Me.fraNotesBib_std.Font.Size = 10
+    Me.fraNotesBib_std.Font.Bold = True
+    Me.fraComplex_std.Font.Size = 10
+    Me.fraComplex_std.Font.Bold = True
+    Me.fraPickup_pickup.Font.Size = 10
+    Me.fraPickup_pickup.Font.Bold = True
     Me.fraPrintType.Font.Size = 10
     Me.fraPrintType.Font.Bold = True
+    
+    ' Default to Pickup being off and disabled
+    For Each ctrl In Controls
+        If ctrl.Name Like "*_pickup" Then
+            ctrl.Enabled = False
+        End If
+    Next ctrl
     
     ' ===== FOR TESTING ONLY =================
     ' ===== COMMENT OUT FOR PRODUCTION =======
@@ -347,7 +304,7 @@ Private Sub cmdYesCastoff_Click()
     
     'Also all "Standard" inputs are required if SMP or Tor.com, all "Pickup" are required if "Pickup Design"
     If Me.chkDesignPickup.value = False Then
-        If Me.numTxtChapters = vbNullString Or Me.numTxtParts = vbNullString Or Me.numTxtFrontmatter = vbNullString Then
+        If Me.numTxtChapters_std = vbNullString Or Me.numTxtParts_std = vbNullString Or Me.numTxtFrontmatter_std = vbNullString Then
             Me.Hide
             MsgBox "You must fill in the Standard Items section to get a castoff."
             blnCancel = True
@@ -357,8 +314,8 @@ Private Sub cmdYesCastoff_Click()
             Me.Hide
         End If
     ElseIf Me.chkDesignPickup.value = True Then
-        If Me.txtPrevTitle = vbNullString Or Me.numTxtPrevPageCount = vbNullString Or Me.numTxtPrevCharCount = vbNullString _
-            Or Me.numTxtAddlPgs = vbNullString Then
+        If Me.txtPrevTitle_pickup = vbNullString Or Me.numTxtPrevPageCount_pickup = vbNullString Or _
+            Me.numTxtPrevCharCount_pickup = vbNullString Or Me.numTxtAddlPgs_pickup = vbNullString Then
                 Me.Hide
                 MsgBox "You must full in the Pickup Designs section to get a castoff."
                 blnCancel = True
@@ -416,8 +373,8 @@ End Sub
 
 Private Sub optPubSMP_Click()
     ' Make required sections' headings red, nonrequired black
-    Me.fraStandard.ForeColor = lngHexRed
-    Me.fraPickup.ForeColor = lngHexBlack
+    Me.fraStandard_std.ForeColor = lngHexRed
+    Me.fraPickup_pickup.ForeColor = lngHexBlack
     Me.fraDesign.ForeColor = lngHexRed
     
     ' Default Print Type to Offset for SMP (user can choose POD though)
@@ -449,8 +406,8 @@ End Sub
 
 Private Sub optPubTor_Click()
     ' Make required sections' headings red, nonrequired black
-    Me.fraStandard .ForeColor = lngHexRed
-    Me.fraPickup.ForeColor = lngHexBlack
+    Me.fraStandard_std.ForeColor = lngHexRed
+    Me.fraPickup_pickup.ForeColor = lngHexBlack
     Me.fraDesign.ForeColor = lngHexRed
     
     ' Only print type for Tor.com is POD (for now)
@@ -480,30 +437,91 @@ End Sub
 
 
 Private Sub chkDesignPickup_Click()
-    ' required sections' heading colors
-    Me.fraStandard.ForeColor = lngHexBlack
-    Me.fraPickup.ForeColor = lngHexRed
-    Me.fraDesign.ForeColor = lngHexBlack
+    
+    Dim ctrl As control
+            
+    ' If you are SELECTING pickup:
+    If Me.chkDesignPickup.value = True Then
         
-    ' I guess you could do POD but we'll default to Offset
-    Me.PrintType = Me.optPrintOffset.Caption
+        ' required sections' heading colors
+        Me.fraStandard_std.ForeColor = lngHexBlack
+        Me.fraPickup_pickup.ForeColor = lngHexRed
+            
+        ' I guess you could do POD but we'll default to Offset
+        Me.PrintType = Me.optPrintOffset.Caption
+        
+        ' enable both trims but don't pick either
+        Me.optTrim5x8.Enabled = True
+        Me.optTrim5x8.value = False
+        
+        Me.optTrim6x9.Enabled = True
+        Me.optTrim6x9.value = False
+        
+        ' don't pick any designs, we're getting design from prev title
+        Me.chkDesignLoose.value = False
+        Me.chkDesignLoose.Enabled = False
+        
+        Me.chkDesignAverage.value = False
+        Me.chkDesignAverage.Enabled = False
+        
+        Me.chkDesignTight.value = False
+        Me.chkDesignTight.Enabled = False
+        
+
+        ' Enable pickup section
+        For Each ctrl In Controls
+            If ctrl.Name Like "*_pickup" Then
+                ctrl.Enabled = True
+            End If
+        Next ctrl
+                
+        ' Disable all of the optional standard inputs
+        For Each ctrl In Controls
+            If ctrl.Name Like "*_std" Then
+                ctrl.Enabled = False
+            End If
+        Next ctrl
+        
+    Else ' you are DESELECTING pickup:
+        ' required sections' heading colors
+        Me.fraStandard_std.ForeColor = lngHexRed
+        Me.fraPickup_pickup.ForeColor = lngHexBlack
+            
+        ' Clear this because it defaults to Offset for Pickup
+        Me.PrintType = vbNullString
+        
+        ' enable both trims but don't pick either
+        Me.optTrim5x8.Enabled = True
+        Me.optTrim5x8.value = False
+        
+        Me.optTrim6x9.Enabled = True
+        Me.optTrim6x9.value = False
+        
+        ' Enable and select the other three designs
+        Me.chkDesignLoose.value = True
+        Me.chkDesignLoose.Enabled = True
+        
+        Me.chkDesignAverage.value = True
+        Me.chkDesignAverage.Enabled = True
+        
+        Me.chkDesignTight.value = True
+        Me.chkDesignTight.Enabled = True
+        
+        ' Disable pickup section
+        For Each ctrl In Controls
+            If ctrl.Name Like "*_pickup" Then
+                ctrl.Enabled = False
+            End If
+        Next ctrl
+                
+        ' Enable all of the optional standard inputs
+        For Each ctrl In Controls
+            If ctrl.Name Like "*_std" Then
+                ctrl.Enabled = True
+            End If
+        Next ctrl
+    End If
     
-    ' enable both trims but don't pick either
-    Me.optTrim5x8.Enabled = True
-    Me.optTrim5x8.value = False
-    
-    Me.optTrim6x9.Enabled = True
-    Me.optTrim6x9.value = False
-    
-    ' don't pick any designs, we're getting design from prev title
-    Me.chkDesignLoose.value = False
-    Me.chkDesignLoose.Enabled = False
-    
-    Me.chkDesignAverage.value = False
-    Me.chkDesignAverage.Enabled = False
-    
-    Me.chkDesignTight.value = False
-    Me.chkDesignTight.Enabled = False
     
 End Sub
 
