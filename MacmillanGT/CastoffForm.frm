@@ -465,12 +465,9 @@ Private Sub chkDesignPickup_Click()
         ' I guess you could do POD but we'll default to Offset
         Me.PrintType = Me.optPrintOffset.Caption
         
-        ' enable both trims but don't pick either
+        ' enable both trims
         Me.optTrim5x8.Enabled = True
-        Me.optTrim5x8.value = False
-        
         Me.optTrim6x9.Enabled = True
-        Me.optTrim6x9.value = False
         
         ' don't pick any designs, we're getting design from prev title
         Me.chkDesignLoose.value = False
@@ -507,10 +504,7 @@ Private Sub chkDesignPickup_Click()
         
         ' enable both trims but don't pick either
         Me.optTrim5x8.Enabled = True
-        Me.optTrim5x8.value = False
-        
         Me.optTrim6x9.Enabled = True
-        Me.optTrim6x9.value = False
         
         ' Enable and select the other three designs
         Me.chkDesignLoose.value = True
