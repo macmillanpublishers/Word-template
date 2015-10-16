@@ -1256,16 +1256,16 @@ Function CheckAfterPB() As String
     arrSecStartStyles(13) = "Front Sales Title (fst)"
     arrSecStartStyles(14) = "Front Sales Quote (fsq)"
     arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
-    arrSecStartStyles(16) = "Epigraph Ð non-verse (epi)"
-    arrSecStartStyles(17) = "Epigraph Ð verse (epiv)"
+    arrSecStartStyles(16) = "Epigraph - non-verse (epi)"
+    arrSecStartStyles(17) = "Epigraph - verse (epiv)"
     arrSecStartStyles(18) = "FM Head (fmh)"
     arrSecStartStyles(19) = "Illustration holder (ill)"
     arrSecStartStyles(20) = "Page Break (pb)"
-    arrSecStartStyles(21) = "FM Epigraph Ð non-verse (fmepi)"
-    arrSecStartStyles(22) = "FM Epigraph Ð verse (fmepiv)"
+    arrSecStartStyles(21) = "FM Epigraph - non-verse (fmepi)"
+    arrSecStartStyles(22) = "FM Epigraph - verse (fmepiv)"
     arrSecStartStyles(23) = "FM Head ALT (afmh)"
-    arrSecStartStyles(24) = "Part Epigraph Ð non-verse (pepi)"
-    arrSecStartStyles(25) = "Part Epigraph Ð verse (pepiv)"
+    arrSecStartStyles(24) = "Part Epigraph - non-verse (pepi)"
+    arrSecStartStyles(25) = "Part Epigraph - verse (pepiv)"
     arrSecStartStyles(26) = "Part Contents Main Head (pcmh)"
     arrSecStartStyles(27) = "Poem Title (vt)"
     arrSecStartStyles(28) = "Recipe Head (rh)"
@@ -1416,7 +1416,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     Dim activeParaCount As Integer
     
     Dim arrTorStyles() As String
-    ReDim arrTorStyles(1 To 93)
+    ReDim arrTorStyles(1 To 94)
     
     Dim intBadCount As Integer
     Dim activeParaRange As Range
@@ -1475,15 +1475,15 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
     arrTorStyles(37) = "Dedication (ded)"
     arrTorStyles(38) = "Dedication Author (dedau)"
-    arrTorStyles(39) = "Epigraph Ð non-verse (epi)"
-    arrTorStyles(40) = "Epigraph Ð verse (epiv)"
+    arrTorStyles(39) = "Epigraph - non-verse (epi)"
+    arrTorStyles(40) = "Epigraph - verse (epiv)"
     arrTorStyles(41) = "Epigraph Source (eps)"
     arrTorStyles(42) = "Chap Epigraph Source (ceps)"
-    arrTorStyles(43) = "Chap Epigraph Ð non-verse (cepi)"
-    arrTorStyles(44) = "Chap Epigraph Ð verse (cepiv)"
+    arrTorStyles(43) = "Chap Epigraph - non-verse (cepi)"
+    arrTorStyles(44) = "Chap Epigraph - verse (cepiv)"
     arrTorStyles(45) = "Chap Title Nonprinting (ctnp)"
-    arrTorStyles(46) = "FM Epigraph Ð non-verse (fmepi)"
-    arrTorStyles(47) = "FM Epigraph Ð verse (fmepiv)"
+    arrTorStyles(46) = "FM Epigraph - non-verse (fmepi)"
+    arrTorStyles(47) = "FM Epigraph - verse (fmepiv)"
     arrTorStyles(48) = "FM Epigraph Source (fmeps)"
     arrTorStyles(49) = "FM Head (fmh)"
     arrTorStyles(50) = "FM Subhead (fmsh)"
@@ -1530,6 +1530,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     arrTorStyles(91) = "Appendix Head (aph)"
     arrTorStyles(92) = "Appendix Text (aptx)"
     arrTorStyles(93) = "Appendix Text No-Indent (aptx1)"
+    arrTorStyles(94) = "Extract Headline (exthl)"
     
     activeParaCount = ActiveDocument.Paragraphs.Count
     
