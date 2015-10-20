@@ -32,6 +32,8 @@ Option Explicit
 ' confirmation delete modules that reference the VBProject object, causing a permanent
 ' and irretrievable loss of code. Consult the documentation for your anti-virus
 ' software for details.
+'
+' So be sure to export and commit often!
 
 Sub ExportAllModules()
     ' Exports all VBA modules in all open template to local git repo
@@ -80,6 +82,9 @@ Sub ExportAllModules()
                     Call ExportVBComponent(VBComp:=oModule, FolderName:=strTemplateModules)
                 End If
             Next oModule
+            
+            'Also add store old path, save in repo, then re-save in old-path
+            
         End If
     Next oDoc
 End Sub
