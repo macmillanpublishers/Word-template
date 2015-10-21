@@ -83,7 +83,63 @@ Sub ExportAllModules()
                 End If
             Next oModule
             
-            'Also add store old path, save in repo, then re-save in old-path
+            
+'            ' ===============================================================================
+'            ' This whole bit below is to save the template too, but it's not working yet
+'            ' getting errors at Set oDocCopy = Application.Documents.Add(strOldPath, NewTemplate:=True)
+'            ' saying "can't execute in break mode", making me think it's trying to execute the
+'            ' AutoOpen macro in the copied file, but WordBasic.DisableAutoMacros should have
+'            ' solved that so I'm not sure what's going on.
+'s
+'            Dim strOldPath As String
+'            Dim strNewPath As String
+'            strOldPath = oDoc.Path & Application.PathSeparator & oDoc.Name
+'            Debug.Print "Original path is" & strOldPath
+'            strNewPath = strTemplateModules & Application.PathSeparator & oDoc.Name
+'            Debug.Print "New path is " & strNewPath
+'
+'            ' Save it where is it open from
+'            oDoc.Save
+'
+'            ' Now, if it's open from somewhere other than the repo, we also want to save
+'            ' a copy in the repo but keep this one open to work on
+'            ' This is most useful when working on a template in the STARTUP dir, which you may
+'            ' do because if you have a template in the STARTUP dir and then open a copy from a different location
+'            ' they both show up in the Project Viewer
+'            If strNewPath <> strOldPath Then
+'                ' If the original template is in the STARTUP dir, we need to diable it because
+'                ' we can't create a new doc with the same name as an open doc
+'                If InStr(1, LCase(strOldPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
+'                On Error Resume Next                            'Error = add-in not available, don't need to uninstall
+'                    AddIns(strOldPath).Installed = False
+'                On Error GoTo 0
+'                End If
+'
+'                ' Now we have to create a copy of the document to save; if we just SaveAs then the open doc
+'                ' becomes the one in the new saved location, but we still want it to be open from STARTUP
+'                Dim oDocCopy As Document
+'                ' Oh also if you create a copy and it has an AutoOpen macro (which MacmillanGT.dotm does)
+'                ' it will try to start that macro and cause an error, so here we disable that with = 1 here
+'                WordBasic.DisableAutoMacros (1)
+'                ' Need NewTemplate = True to carry all code into new doc
+'                Set oDocCopy = Application.Documents.Add(strOldPath, NewTemplate:=True)
+'                oDocCopy.SaveAs2 FileName:=strNewPath
+'                oDocCopy.Close
+'
+'                ' Now we need to enable the template again if it is in the STARTUP dir
+'                If InStr(1, LCase(strOldPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
+'                On Error Resume Next                            'Error = add-in not available, don't need to uninstall
+'                    AddIns(strOldPath).Installed = True
+'                On Error GoTo 0
+'                End If
+'
+'                ' Enable AutoOpen macros going forward here with = 0
+'                WordBasic.DisableAutoMacros (0)
+'
+'
+'            End If
+'            Debug.Print oDoc.Path
+            
             
         End If
     Next oDoc
