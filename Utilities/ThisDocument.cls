@@ -16,17 +16,18 @@ Option Explicit
 ' For help with VBA development
 ' Exports all modules in open templates to the local Word-template git repo
 ' Shared modules go into "SharedMacros" directory, the rest are
-' saved in the same directory as the template they live in;
-' also saves the template itself (so if you are working out of Startup,
-' it saves a copy in the Word-template/TemplateName repo)
+' saved in the same directory as the template they live in
+
+' Also imports all modules saved in git repo to the open templates
+' great for dealing with template file merge conflicts!
 
 ' ===== DEPENDENCIES ==========================================
 ' Obviously clone the git repo and add its path below
-' Each template gets its own subdirectory, name matches exactly (w/o extension)
+' Each template gets its own subdirectory in the repo, name matches exactly (w/o extension)
 ' Modules that are shared among all template must have name start with "Shared"
 
 ' ====== WARNING ==============================================
-' from http://www.cpearson.com/excel/vbe.aspx
+' verbatim from http://www.cpearson.com/excel/vbe.aspx
 ' Many VBA-based computer viruses propagate themselves by creating and/or modifying
 ' VBA code. Therefore, many virus scanners may automatically and without warning or
 ' confirmation delete modules that reference the VBProject object, causing a permanent
@@ -39,7 +40,7 @@ Sub ExportAllModules()
     ' Exports all VBA modules in all open template to local git repo
     
     ' ===== ADD PATH TO LOCAL GIT REPO HERE ========================
-    ' includes trailing slash
+    ' include trailing slash
     
     Dim strRepoPath As String
     strRepoPath = "C:\Users\erica.warren\Word-template\"
@@ -210,3 +211,141 @@ Private Function GetFileExtension(VBComp As VBIDE.VBComponent) As String
     
 End Function
 
+
+Sub ImportAllModules()
+    ' Removes all modules in all open template
+    ' and reimports them from the local Word-template git repo
+    ' SO BE SURE TO EXPORT EVERYTHING BEFORE YOU USE THIS!!
+    
+    ' ===== ADD PATH TO LOCAL GIT REPO HERE ========================
+    ' includes trailing slash
+    
+    Dim strRepoPath As String
+    strRepoPath = "C:\Users\erica.warren\Word-template\"
+    
+    ' ==============================================================
+    
+    Dim oDocument As Document
+    Dim strExtension As String              ' extension of current document
+    Dim strSubDirName As String             ' name of subdirectory of template in repo
+    Dim strDirInRepo(1 To 2) As String      ' declare number of items in array
+    Dim strModuleExt(1 To 3) As String     ' declare number of items in array
+    Dim strModuleFileName As String         ' file name with extension, no path
+    Dim a As Long
+    Dim b As Long
+    Dim counter As Long
+    Dim VBComp As VBIDE.VBComponent     ' object for module we're importing
+    Dim strFullModulePath As String     ' full path to module with extension
+    Dim strModuleName As String         ' Just the module name w/ no extension
+    Dim tempVBComp As VBIDE.VBComponent ' Temp module to import ThisDocument code
+    Dim currentVBProject As VBIDE.VBProject     ' object of the VB project the modules are in
+    Dim strNewCode As String            ' New code in ThisDocument.cls module
+    
+    For Each oDocument In Documents
+        ' We don't want to run this on this code here
+        If oDocument.Name <> "Utilities.dotm" Then
+            strExtension = Right(oDocument.Name, Len(oDocument.Name) - (InStrRev(oDocument.Name, ".") - 1))
+            strSubDirName = Left(oDocument.Name, InStrRev(oDocument.Name, ".") - 1)
+            'Debug.Print "File name is " & oDocument.Name
+            'Debug.Print "Extension is " & strExtension
+            'Debug.Print "Directory is " & strSubDirName
+            
+            ' We just want to work with .dotm and .docm (others can't have macros)
+            If strExtension = ".dotm" Or strExtension = ".docm" Then
+                ' an array of the directories we're going to be adding modules from
+                ' every template gets (1) all modules in its directory and (2) all shared modules
+                strDirInRepo(1) = strRepoPath & strSubDirName & Application.PathSeparator
+                strDirInRepo(2) = strRepoPath & "SharedModules" & Application.PathSeparator
+                      
+                ' an array of file extensions we're importing, since there are other files in the repo
+                strModuleExt(1) = "bas"
+                strModuleExt(2) = "cls"
+                strModuleExt(3) = "frm"
+                
+                ' Get rid of all code currently in there, so we don't create duplicates
+                Call DeleteAllVBACode(oDocument)
+                
+                ' set the Project object for this document
+                Set currentVBProject = Nothing
+                Set currentVBProject = oDocument.VBProject
+                
+                ' loop through the two directories
+                For a = LBound(strDirInRepo()) To UBound(strDirInRepo())
+                    ' for each directory, loop through all files of each extension
+                    For b = LBound(strModuleExt()) To UBound(strModuleExt())
+                        ' with the Dir function this returns just the files in this directory
+                        strModuleFileName = Dir(strDirInRepo(a) & "*." & strModuleExt(b))
+                        ' so loop through each file of that extension in that directory
+                        Do While strModuleFileName <> "" And counter < 100
+                            counter = counter + 1               ' to prevent infinite loops
+                            'Debug.Print strModuleFileName
+                            
+                            strModuleName = Left(strModuleFileName, InStrRev(strModuleFileName, ".") - 1)
+                            strFullModulePath = strDirInRepo(a) & strModuleFileName
+                            'Debug.Print "Full path to module is " & strFullModulePath
+                            
+                            ' Resume Next because Set VBComp = current project will cause an error if that
+                            ' module doesn't exist, and it doesn't because we just deleted everything
+                            On Error Resume Next
+                            Set VBComp = Nothing
+                            Set VBComp = currentVBProject.VBComponents(strModuleName)
+                            
+                            ' So if that Set VBComp failed because it doesnt' exist, add it!
+                            If VBComp Is Nothing Then
+                                currentVBProject.VBComponents.Import FileName:=strFullModulePath
+                            Else    ' it DOES exist already
+                                ' See then if it's the "ThisDocument" module, which can't be deleted
+                                ' So we can't import because it would just create a duplicate, not replace
+                                If VBComp.Type = vbext_ct_Document Then
+                                    ' sp we'll create a temp module of the module we want to import
+                                    Set tempVBComp = currentVBProject.VBComponents.Import(strFullModulePath)
+                                    ' then delete the content of ThisDocument and replace it with the content
+                                    ' of the temp module
+                                    With VBComp.CodeModule
+                                        .DeleteLines 1, .CountOfLines
+                                        strNewCode = tempVBComp.CodeModule.Lines(1, tempVBComp.CodeModule.CountOfLines)
+                                        .InsertLines 1, strNewCode
+                                    End With
+                                    On Error GoTo 0
+                                    ' then remove the temp module
+                                    currentVBProject.VBComponents.Remove tempVBComp
+                                End If
+                            End If
+                            ' have to do this to make the Dir function loop through all files
+                            strModuleFileName = Dir()
+                        Loop
+                        
+                        'Debug.Print strModuleFileName
+                    Next b
+                Next a
+                
+            End If
+        End If
+    ' and then might as well save the document we just updated!
+    oDocument.Save
+    Next oDocument
+    
+    
+End Sub
+
+
+Sub DeleteAllVBACode(objTemplate As Document)
+    ' Again copied from http://www.cpearson.com/excel/vbe.aspx
+    ' Though made it take an argument
+    Dim VBProj As VBIDE.VBProject
+    Dim VBComp As VBIDE.VBComponent
+    Dim CodeMod As VBIDE.CodeModule
+    
+    Set VBProj = objTemplate.VBProject
+    
+    For Each VBComp In VBProj.VBComponents
+        If VBComp.Type = vbext_ct_Document Then
+            Set CodeMod = VBComp.CodeModule
+            With CodeMod
+                .DeleteLines 1, .CountOfLines
+            End With
+        Else
+            VBProj.VBComponents.Remove VBComp
+        End If
+    Next VBComp
+End Sub
