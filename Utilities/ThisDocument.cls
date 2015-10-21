@@ -81,8 +81,10 @@ Sub ExportAllModules()
                 Else
                     Call ExportVBComponent(VBComp:=oModule, FolderName:=strTemplateModules)
                 End If
-            Next oModule
+            Next
             
+            ' Might as well save the template file too
+            oDoc.Save
             
 '            ' ===============================================================================
 '            ' This whole bit below is to save the template too, but it's not working yet
