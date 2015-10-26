@@ -13,6 +13,16 @@ Option Explicit
 Option Base 1
 
 Sub BookmakerReqs()
+    Call MakeReport(torDOTcom:=True)
+End Sub
+
+
+Sub MacmillanStyleReport()
+ Call MakeReport(torDOTcom:=False)
+End Sub
+
+
+Private Sub MakeReport(torDOTcom As Boolean)
     '-----------------------------------------------------------
     
     'Created by Erica Warren - erica.warren@macmillan.com
@@ -54,16 +64,29 @@ Sub BookmakerReqs()
     Dim funArray() As String
     ReDim funArray(1 To 10)      'Declare bounds of array here
     
-    funArray(1) = "* Is this thing on?..."
-    funArray(2) = "* Are we there yet?..."
-    funArray(3) = "* Zapping space invaders..."
-    funArray(4) = "* Leaping over tall buildings in a single bound..."
-    funArray(5) = "* Taking a quick nap..."
-    funArray(6) = "* Taking the stairs..."
-    funArray(7) = "* Partying like it's 1999..."
-    funArray(8) = "* Waiting in line at Shake Shack..."
-    funArray(9) = "* Revving engines..."
-    funArray(10) = "* Thanks for running the Bookmaker Macro!"
+    If torDOTcom = True Then
+        funArray(1) = "* Is this thing on?..."
+        funArray(2) = "* Are we there yet?..."
+        funArray(3) = "* Zapping space invaders..."
+        funArray(4) = "* Leaping over tall buildings in a single bound..."
+        funArray(5) = "* Taking a quick nap..."
+        funArray(6) = "* Taking the stairs..."
+        funArray(7) = "* Partying like it's 1999..."
+        funArray(8) = "* Waiting in line at Shake Shack..."
+        funArray(9) = "* Revving engines..."
+        funArray(10) = "* Thanks for running the Bookmaker Macro!"
+    Else
+        funArray(1) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
+        funArray(2) = "* What's in a name? Word Styles by any name would smell as sweet..."
+        funArray(3) = "* A horse! A horse! My Word Styles for a horse!"
+        funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em..."
+        funArray(5) = "* All the world's a stage, and all the Word Styles merely players..."
+        funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man..."
+        funArray(7) = "* To Style, or not to Style: that is the question..."
+        funArray(8) = "* Word Styles, Word Styles! Wherefore art thou Word Styles?..."
+        funArray(9) = "* Some Cupid kills with arrows, some with Word Styles..."
+        funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun..."
+    End If
     
     Dim x As Integer
     
@@ -72,8 +95,12 @@ Sub BookmakerReqs()
     x = Int(UBound(funArray()) * Rnd()) + 1
     
     'Debug.Print x
+    If torDOTcom = True Then
+        strTitle = "Tor.com Bookmaker Requirements Macro"
+    Else
+        strTitle = "Macmillan Style Report"
+    End If
     
-    strTitle = "Tor.com Bookmaker Requirements Macro"
     sglPercentComplete = 0.02
     strStatus = funArray(x)
     
@@ -109,10 +136,18 @@ Sub BookmakerReqs()
     End If
     
     '-------Deal with Track Changes and Comments----------------
-    If FixTrackChanges = False Then
-        Application.ScreenUpdating = True
-        Unload oProgressBkmkr
-        Exit Sub
+    ' Save state of track changes and turn off
+    Dim currentTracking As Boolean
+    currentTracking = ActiveDocument.TrackRevisions
+    ActiveDocument.TrackRevisions = False
+    
+    ' If torDOTcom, ask if want to accept all changes and delete comments
+    If torDOTcom = True Then
+        If FixTrackChanges = False Then
+            Application.ScreenUpdating = True
+            Unload oProgressBkmkr
+            Exit Sub
+        End If
     End If
     
     '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
@@ -219,7 +254,7 @@ Sub BookmakerReqs()
     Dim strBadStylesList As String
                 
     'returns array with 2 elements, 1: good styles list, 2: bad styles list
-    arrGoodBadStyles = GoodBadStyles(torDOTcom:=True, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle, _
+    arrGoodBadStyles = GoodBadStyles(Tor:=torDOTcom, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle, _
         Stories:=arrStories)
     strGoodStylesList = arrGoodBadStyles(1)
     'Debug.Print strGoodStylesList
@@ -249,7 +284,7 @@ Sub BookmakerReqs()
         strBadStylesList = ""
     End If
     
-    '-------------------Create error report----------------------------
+    '-------------------Create list of errors----------------------------
     sglPercentComplete = 0.98
     strStatus = "* Checking styles for errors..." & vbCr & strStatus
     
@@ -264,13 +299,13 @@ Sub BookmakerReqs()
     Dim strErrorList As String
     
     If blnTemplateUsed = True Then
-        strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
+        strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, blnTor:=torDOTcom)
         'strErrorList = "testing"
     Else
         strErrorList = ""
     End If
     
-    '------Create Report File-------------------------------
+    '------Create Report Text-------------------------------
     sglPercentComplete = 0.99
     strStatus = "* Creating report file..." & vbCr & strStatus
     
@@ -282,9 +317,19 @@ Sub BookmakerReqs()
         DoEvents
     End If
     
+    Dim strReportText As String
+    strReportText = CreateReportText(blnTemplateUsed, strErrorList, strMetadata, strIllustrationsList, strGoodStylesList)
+    
+    
+    ' Create Report File -------------------------------------
     Dim strSuffix As String
-    strSuffix = "BookmakerReport" ' suffix for the report file
-    Call CreateReport(blnTemplateUsed, strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
+    If torDOTcom = True Then
+        strSuffix = "BookmakerReport" ' suffix for the report file
+    Else
+        strSuffix = "StyleReport"
+    End If
+    
+    Call CreateTextFile(strText:=strReportText, suffix:=strSuffix)
     
     '-------------Go back to original settings-----------------
     sglPercentComplete = 1
@@ -303,6 +348,11 @@ Sub BookmakerReqs()
         ActiveDocument.StoryRanges(currentStory).Select
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
         ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+    End If
+    
+    ' If just style report, turn track changes back on
+    If torDOTcom = False Then
+        ActiveDocument.TrackRevisions = currentTracking
     End If
     
     Application.ScreenUpdating = True
@@ -324,324 +374,8 @@ Sub BookmakerReqs()
 
 End Sub
 
-Sub MacmillanStyleReport()
-    '=================================================
-    '                  Timer Start                  '|
-    'Dim StartTime As Double                         '|
-    'Dim SecondsElapsed As Double                    '|
-                                                    '|
-    'Remember time when macro starts                '|
-    'StartTime = Timer                               '|
-    '=================================================
-    
-    ''-----------------Check if doc is saved/protected---------------
-    If CheckSave = True Then
-        Exit Sub
-    End If
-    
-    Application.ScreenUpdating = False
-    
-    '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
-    
-    '------------ check for endnotes and footnotes -------------------------
-    Dim arrStories() As Variant
-    
-    arrStories = StoryArray
-    
-    '--------Progress Bar------------------------------
-    'Percent complete and status for progress bar (PC) and status bar (Mac)
-    'Requires ProgressBar custom UserForm and Class
-    Dim sglPercentComplete As Single
-    Dim strStatus As String
-    Dim strTitle As String
-    
-    'First status shown will be randomly pulled from array, for funzies
-    Dim funArray() As String
-    ReDim funArray(1 To 10)      'Declare bounds of array here
-    
-    funArray(1) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
-    funArray(2) = "* What's in a name? Word Styles by any name would smell as sweet..."
-    funArray(3) = "* A horse! A horse! My Word Styles for a horse!"
-    funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em..."
-    funArray(5) = "* All the world's a stage, and all the Word Styles merely players..."
-    funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man..."
-    funArray(7) = "* To Style, or not to Style: that is the question..."
-    funArray(8) = "* Word Styles, Word Styles! Wherefore art thou Word Styles?..."
-    funArray(9) = "* Some Cupid kills with arrows, some with Word Styles..."
-    funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun..."
-    
-    Dim x As Integer
-    
-    'Rnd returns random numner between (0,1], rest of expression is to return an integer (1,10)
-    Randomize           'Sets seed for Rnd below to value of system timer
-    x = Int(UBound(funArray()) * Rnd()) + 1
-    
-    'Debug.Print x
-    
-    strTitle = "Macmillan Style Report Macro"
-    sglPercentComplete = 0.02
-    strStatus = funArray(x)
-    
-    'All Progress Bar statements for PC only because can't run modeless on Mac
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
-    
-    If Not TheOS Like "*Mac*" Then
-        Dim oProgressStyleRpt As ProgressBar
-        Set oProgressStyleRpt = New ProgressBar
-    
-        oProgressStyleRpt.Title = strTitle
-        oProgressStyleRpt.Show
-    
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    
-    '--------save the current cursor location in a bookmark---------------------------
-    Dim currentStory As WdStoryType
-    currentStory = Selection.StoryType
-    Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    
-    '-----------Turn off track changes--------
-    Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
-    
-    
-    '-------Delete content controls on PC------------------------
-    'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
-    
-    If Not TheOS Like "*Mac*" Then
-        Call DeleteContentControlPC
-    End If
-    
-    '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
-    '-------because it should just be applied to the isbn numerals and hyphens-------------------
-    Call ISBNcleanup
-    
-    '-------Count number of occurences of each required style----
-    sglPercentComplete = 0.05
-    strStatus = "* Counting required styles..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Dim styleCount() As Variant
-    
-    styleCount = CountReqdStyles()
-    
-    If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to user in last function
-        Application.ScreenUpdating = True
-        Unload oProgressStyleRpt
-        Exit Sub
-    End If
-                
-    '------------Convert unapproved headings to correct heading-------
-    sglPercentComplete = 0.09
-    strStatus = "* Checking for correct heading styles..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    ' If certain styles (oldStyle) appear by themselves, converts to
-    ' the approved solo style (newStyle)
-    
-    If styleCount(4) > 0 And styleCount(5) = 0 Then
-        Call FixSectionHeadings(oldStyle:="Chap Number (cn)", newStyle:="Chap Title (ct)")
-    End If
-    
-    If styleCount(9) > 0 And styleCount(8) = 0 Then
-        Call FixSectionHeadings(oldStyle:="Part Number (pn)", newStyle:="Part Title (pt)")
-    End If
-    
-    If styleCount(11) > 0 And styleCount(10) = 0 Then
-        Call FixSectionHeadings(oldStyle:="FM Title (fmt)", newStyle:="FM Head (fmh)")
-    End If
-    
-    If styleCount(13) > 0 And styleCount(12) = 0 Then
-        Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
-    End If
-    
-    '--------Get title/author/isbn/imprint text from document-----------
-    sglPercentComplete = 0.12
-    strStatus = "* Getting title, author, ISBN from manuscript..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Dim strMetadata As String
-    strMetadata = GetMetadata
-    
-    '-------------------Get Illustrations List from Document-----------
-    sglPercentComplete = 0.15
-    strStatus = "* Generating illustration list..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Dim strIllustrationsList As String
-    strIllustrationsList = IllustrationsList
-        
-    '-------------------Get list of good and bad styles from document---------
-    sglPercentComplete = 0.18
-    strStatus = "* Generating list of Macmillan styles..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Dim arrGoodBadStyles() As Variant
-    Dim strGoodStylesList As String
-    Dim strBadStylesList As String
-    
-    arrGoodBadStyles = GoodBadStyles(torDOTcom:=False, ProgressBar:=oProgressStyleRpt, _
-                        Status:=strStatus, ProgTitle:=strTitle, Stories:=arrStories)
-    strGoodStylesList = arrGoodBadStyles(1)
-    strBadStylesList = arrGoodBadStyles(2)
-    
-    'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
-    Dim blnTemplateUsed As Boolean
-    Dim strSearchPattern As String
-    ' Searching for "Footnote Text" or "Endnote Text" followed by page number, then
-    ' followed by anything NOT including a close bracket. If there are other Mac styles
-    ' it won't select the whole string
-    
-    strSearchPattern = "[EF]{1}[dnot]{4}[eot]{2,} Text -- p. [0-9]{1,}[!\)]{1,}"
-    
-    If strGoodStylesList = vbNullString Then
-        blnTemplateUsed = False
-    ' Test if good styles are just Endnote Text and Footnote Text
-    ElseIf PatternMatch(SearchPattern:=strSearchPattern, SearchText:=strGoodStylesList, WholeString:=True) = True Then
-        blnTemplateUsed = False
-    Else
-        blnTemplateUsed = True
-    End If
-    
-    'If template not used, just returns list of styles in use
-    If blnTemplateUsed = False Then
-        strGoodStylesList = StylesInUse(ProgressBar:=oProgressStyleRpt, Status:=strStatus, ProgTitle:=strTitle, Stories:=arrStories)
-        strBadStylesList = ""
-    End If
-        
-    '-------------------Create error report----------------------------
-    sglPercentComplete = 0.98
-    strStatus = "* Checking styles for errors..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Dim strErrorList As String
-    
-    If blnTemplateUsed = True Then
-        strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, torDOTcom:=True)
-        'strErrorList = "testing"
-    Else
-        strErrorList = ""
-    End If
-    
-    '-----------------------create text file------------------------------
-    sglPercentComplete = 0.99
-    strStatus = "* Creating report file..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Dim strSuffix As String
-    strSuffix = "StyleReport"       'suffix for report file, no spaces
-    Call CreateReport(blnTemplateUsed, strErrorList, strMetadata, strIllustrationsList, strGoodStylesList, strSuffix)
-    
-    '-----------------------return settings to original-----------------
-    sglPercentComplete = 1
-    strStatus = "* Finishing up" & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressStyleRpt.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    'return cursor to original position and delete bookmark
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        ActiveDocument.StoryRanges(currentStory).Select
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
-    Application.ScreenUpdating = True
-    Application.DisplayStatusBar = currentStatusBar             ' return status bar to original setting
-    Application.ScreenRefresh
-    
-    If Not TheOS Like "*Mac*" Then
-        Unload oProgressStyleRpt
-    End If
-    
-    '================================================================================================
-    '----------------------Timer End-------------------------------------------
-    ''''Determine how many seconds code took to run
-      'SecondsElapsed = Round(Timer - StartTime, 2)
-    
-    ''''Notify user in seconds
-      'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
-    '================================================================================================
 
-End Sub
-
-Private Function GoodBadStyles(torDOTcom As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As Variant
+Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As Variant
     'Creates a list of Macmillan styles in use
     'And a separate list of non-Macmillan styles in use
     
@@ -899,7 +633,7 @@ NextLoop:
     
     'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
     Dim strTorBadStyles As String
-    If torDOTcom = True Then
+    If Tor = True Then
         strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle, Stories:=Stories)
         strBadStyles = strBadStyles & strTorBadStyles
     End If
@@ -929,7 +663,7 @@ ErrHandler:
 End Function
 
 
-Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant, torDOTcom As Boolean) As String
+Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant, blnTor As Boolean) As String
     Dim errorList As String
     
     errorList = ""
@@ -976,7 +710,7 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
         errorList = errorList & "** ERROR: No styled ISBN detected." _
         & vbNewLine & vbNewLine
     Else
-        If torDOTcom = True Then
+        If blnTor = True Then
             'check for correct book type following ISBN, in parens.
             errorList = errorList & BookTypeCheck
         End If
@@ -1055,7 +789,7 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
         "Chap Number (cn)", "Chap Title (ct)")
     
     'If Illustrations and sources exist, check that source comes after Ill and Cap
-    If torDOTcom = True Then
+    If blnTor = True Then
         If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & CheckPrev2Paras("Illustration holder (ill)", _
             "Caption (cap)", "Illustration Source (is)")
     End If
@@ -1064,7 +798,7 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
     errorList = errorList & CheckAfterPB
     
     'Add bad styles to error message
-        errorList = errorList & badStyles
+    errorList = errorList & badStyles
     
     If errorList <> "" Then
         errorList = errorList & vbNewLine & "If you have any questions about how to handle these errors, " & vbNewLine & _
@@ -1077,66 +811,6 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
 
 End Function
 
-Private Function GetText(styleName As String) As String
-    Dim fString As String
-    Dim fCount As Integer
-    
-    'Application.ScreenUpdating = False
-    
-    fCount = 0
-    
-    'Move selection to start of document
-    Selection.HomeKey Unit:=wdStory
-    
-    On Error GoTo ErrHandler
-    
-        Selection.Find.ClearFormatting
-        With Selection.Find
-            .Text = ""
-            .Replacement.Text = ""
-            .Forward = True
-            .Wrap = wdFindStop
-            .Format = True
-            .Style = ActiveDocument.Styles(styleName)
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-        End With
-    
-    Do While Selection.Find.Execute = True And fCount < 100            'fCount < 100 so we don't get an infinite loop
-        fCount = fCount + 1
-        
-        'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
-        If InStr(Selection.Text, Chr(13)) > 0 Then
-            Selection.MoveEnd Unit:=wdCharacter, Count:=-1
-        End If
-        
-        'Assign selected text to variable
-        fString = fString & Selection.Text & vbNewLine
-        
-        'If the next character is a paragraph return, add that to the selection
-        'Otherwise the next Find will just select the same text with the paragraph return
-        If InStr(styleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
-            Selection.MoveEndWhile Cset:=Chr(13), Count:=1
-        End If
-    Loop
-        
-    If fCount = 0 Then
-        GetText = ""
-    Else
-        GetText = fString
-    End If
-    
-    Exit Function
-    
-ErrHandler:
-    If Err.Number = 5941 Or Err.Number = 5834 Then   ' The style is not present in the document
-        GetText = ""
-    End If
-
-End Function
 
 Function CheckPrevStyle(findStyle As String, prevStyle As String) As String
     Dim jString As String
@@ -1378,9 +1052,6 @@ Private Function FixTrackChanges() As Boolean
     FixTrackChanges = True
     
     Application.DisplayAlerts = False
-    
-    'Turn off track changes
-    ActiveDocument.TrackRevisions = False
     
     'See if there are tracked changes or comments in document
     On Error Resume Next
@@ -1724,7 +1395,7 @@ Private Function GetMetadata() As String
     Dim b As Integer
     Dim strTitleData As String
     
-    'Application.ScreenUpdating = False
+    Application.ScreenUpdating = False
     
     styleNameB(1) = "Titlepage Book Title (tit)"
     styleNameB(2) = "Titlepage Author Name (au)"
@@ -2022,114 +1693,63 @@ ErrHandler:
 
 End Function
 
-Private Sub CreateReport(TemplateUsed As Boolean, errorList As String, metadata As String, illustrations As String, goodStyles As String, suffix As String)
+Private Function CreateReportText(TemplateUsed As Boolean, errorList As String, metadata As String, illustrations As String, goodStyles As String) As String
 
     Application.ScreenUpdating = False
     
-    'Create report file
-    Dim activeRng As Range
-    Dim activeDoc As Document
-    Set activeDoc = ActiveDocument
-    Set activeRng = ActiveDocument.Range
-    Dim activeDocName As String
-    Dim activeDocPath As String
-    Dim reqReportDoc As String
-    Dim reqReportDocAlt As String
-    Dim fnum As Integer
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
-    
-    'activeDocName below works for .doc and .docx
-    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
-    activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
-    
-    'create text file
-    reqReportDoc = activeDocPath & activeDocName & "_" & suffix & ".txt"
-    
-    ''''for 32 char Mc OS bug- could check if this is Mac OS too < PART 1
-    If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
-        reqReportDoc = activeDocPath & "\" & activeDocName & "_" & suffix & ".txt"
-    Else
-        Dim placeholdDocName As String
-        placeholdDocName = "filenamePlacehold_Report.txt"
-        reqReportDocAlt = reqReportDoc
-        reqReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
-    End If
-    '''end ''''for 32 char Mc OS bug part 1
-    
-    'set and open file for output
-    Dim e As Integer
-    fnum = FreeFile()
-    Open reqReportDoc For Output As fnum
-    
+    Dim strReportText As String
+        
     If TemplateUsed = False Then
-        Print #fnum, vbCr
-        Print #fnum, "------------------------STYLES IN USE--------------------------" & vbCr
-        Print #fnum, "It looks like you aren't using the Macmillan style template." & vbCr
-        Print #fnum, "That's OK, but if you would like more info about your document," & vbCr
-        Print #fnum, "just attach the Macmillan style template and apply the styles" & vbCr
-        Print #fnum, "throughout the document." & vbCr
-        Print #fnum, vbCr
-        Print #fnum, goodStyles
+        strReportText = strReportText & vbNewLine
+        strReportText = strReportText & "------------------------STYLES IN USE--------------------------" & vbNewLine
+        strReportText = strReportText & "It looks like you aren't using the Macmillan style template." & vbNewLine
+        strReportText = strReportText & "That's OK, but if you would like more info about your document," & vbNewLine
+        strReportText = strReportText & "just attach the Macmillan style template and apply the styles" & vbNewLine
+        strReportText = strReportText & "throughout the document." & vbNewLine
+        strReportText = strReportText & vbNewLine
+        strReportText = strReportText & goodStyles
     Else
         If errorList = "" Then
-            Print #fnum, vbCr
-            Print #fnum, "                 CONGRATULATIONS! YOU PASSED!" & vbCr
-            Print #fnum, " But you're not done yet. Please check the info listed below." & vbCr
-            Print #fnum, vbCr
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "                 CONGRATULATIONS! YOU PASSED!" & vbNewLine
+            strReportText = strReportText & " But you're not done yet. Please check the info listed below." & vbNewLine
+            strReportText = strReportText & vbNewLine
         Else
-            Print #fnum, vbCr
-            Print #fnum, "                             OOPS!" & vbCr
-            Print #fnum, "     Problems were found with the styles in your document." & vbCr
-            Print #fnum, vbCr
-            Print #fnum, vbCr
-            Print #fnum, "--------------------------- ERRORS ---------------------------" & vbCr
-            Print #fnum, errorList
-            Print #fnum, vbCr
-            Print #fnum, vbCr
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "                             OOPS!" & vbNewLine
+            strReportText = strReportText & "     Problems were found with the styles in your document." & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "---------------------------- ERRORS ---------------------------" & vbNewLine
+            strReportText = strReportText & errorList
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & vbNewLine
         End If
-            Print #fnum, "--------------------------- METADATA -------------------------" & vbCr
-            Print #fnum, "If any of the information below is wrong, please fix the" & vbCr
-            Print #fnum, "associated styles in the manuscript." & vbCr
-            Print #fnum, vbCr
-            Print #fnum, metadata
-            Print #fnum, vbCr
-            Print #fnum, vbCr
-            Print #fnum, "----------------------- ILLUSTRATION LIST ---------------------" & vbCr
+            strReportText = strReportText & "--------------------------- METADATA --------------------------" & vbNewLine
+            strReportText = strReportText & "If any of the information below is wrong, please fix the" & vbNewLine
+            strReportText = strReportText & "associated styles in the manuscript." & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & metadata
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "----------------------- ILLUSTRATION LIST ---------------------" & vbNewLine
         
             If illustrations <> "no illustrations detected" & vbNewLine Then
-                Print #fnum, "Verify that this list of illustrations includes only the file" & vbCr
-                Print #fnum, "names of your illustrations." & vbCr
-                Print #fnum, vbCr
+                strReportText = strReportText & "Verify that this list of illustrations includes only the file" & vbNewLine
+                strReportText = strReportText & "names of your illustrations." & vbNewLine
+                strReportText = strReportText & vbNewLine
             End If
         
-            Print #fnum, illustrations
-            Print #fnum, vbCr
-            Print #fnum, vbCr
-            Print #fnum, "----------------------- MACMILLAN STYLES IN USE --------------------" & vbCr
-            Print #fnum, goodStyles
+            strReportText = strReportText & illustrations
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & vbNewLine
+            strReportText = strReportText & "-------------------- MACMILLAN STYLES IN USE ------------------" & vbNewLine
+            strReportText = strReportText & goodStyles
     End If
-    Close #fnum
+
+    CreateReportText = strReportText
     
-    ''''for 32 char Mc OS bug-<PART 2
-    If reqReportDocAlt <> "" Then
-    Name reqReportDoc As reqReportDocAlt
-    End If
-    ''''END for 32 char Mac OS bug-<PART 2
-    
-    '----------------open Bookmaker Report for user once it is complete--------------------------.
-    Dim Shex As Object
-    
-    If Not TheOS Like "*Mac*" Then
-       Set Shex = CreateObject("Shell.Application")
-       Shex.Open (reqReportDoc)
-    Else
-        MacScript ("tell application ""TextEdit"" " & vbCr & _
-        "open " & """" & reqReportDocAlt & """" & " as alias" & vbCr & _
-        "activate" & vbCr & _
-        "end tell" & vbCr)
-    End If
-End Sub
+End Function
 
 Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As String
     'Creates a list of all styles in use, not just Macmillan styles

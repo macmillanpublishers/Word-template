@@ -530,3 +530,213 @@ Function CheckSave()
 
 End Function
 
+Function EndnotesExist() As Boolean
+' Started from http://vbarevisited.blogspot.com/2014/03/how-to-detect-footnote-and-endnote.html
+    Dim StoryRange As Range
+    
+    EndnotesExist = False
+    
+    For Each StoryRange In ActiveDocument.StoryRanges
+        If StoryRange.StoryType = wdEndnotesStory Then
+            EndnotesExist = True
+            Exit For
+        End If
+    Next StoryRange
+End Function
+
+Function FootnotesExist() As Boolean
+' Started from http://vbarevisited.blogspot.com/2014/03/how-to-detect-footnote-and-endnote.html
+    Dim StoryRange As Range
+    
+    FootnotesExist = False
+    
+    For Each StoryRange In ActiveDocument.StoryRanges
+        If StoryRange.StoryType = wdFootnotesStory Then
+            FootnotesExist = True
+            Exit For
+        End If
+    Next StoryRange
+    
+End Function
+
+
+Function IsArrayEmpty(Arr As Variant) As Boolean
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' By Chip Pearson, http://www.cpearson.com/excel/vbaarrays.htm
+'
+' IsArrayEmpty
+' This function tests whether the array is empty (unallocated). Returns TRUE or FALSE.
+'
+' The VBA IsArray function indicates whether a variable is an array, but it does not
+' distinguish between allocated and unallocated arrays. It will return TRUE for both
+' allocated and unallocated arrays. This function tests whether the array has actually
+' been allocated.
+'
+' This function is really the reverse of IsArrayAllocated.
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+    Dim LB As Long
+    Dim UB As Long
+    
+    Err.Clear
+    On Error Resume Next
+    If IsArray(Arr) = False Then
+        ' we weren't passed an array, return True
+        IsArrayEmpty = True
+    End If
+    
+    ' Attempt to get the UBound of the array. If the array is
+    ' unallocated, an error will occur.
+    UB = UBound(Arr, 1)
+    If (Err.Number <> 0) Then
+        IsArrayEmpty = True
+    Else
+        ''''''''''''''''''''''''''''''''''''''''''
+        ' On rare occassion, under circumstances I
+        ' cannot reliably replictate, Err.Number
+        ' will be 0 for an unallocated, empty array.
+        ' On these occassions, LBound is 0 and
+        ' UBoung is -1.
+        ' To accomodate the weird behavior, test to
+        ' see if LB > UB. If so, the array is not
+        ' allocated.
+        ''''''''''''''''''''''''''''''''''''''''''
+        Err.Clear
+        LB = LBound(Arr)
+        If LB > UB Then
+            IsArrayEmpty = True
+        Else
+            IsArrayEmpty = False
+        End If
+    End If
+
+End Function
+
+
+Sub CreateTextFile(strText As String, suffix As String)
+
+    Application.ScreenUpdating = False
+    
+    'Create report file
+    Dim activeRng As Range
+    Dim activeDoc As Document
+    Set activeDoc = ActiveDocument
+    Set activeRng = ActiveDocument.Range
+    Dim activeDocName As String
+    Dim activeDocPath As String
+    Dim reqReportDoc As String
+    Dim reqReportDocAlt As String
+    Dim fnum As Integer
+    Dim TheOS As String
+    TheOS = System.OperatingSystem
+    
+    'activeDocName below works for .doc and .docx
+    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
+    activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
+    
+    'create text file
+    reqReportDoc = activeDocPath & activeDocName & "_" & suffix & ".txt"
+    
+    ''''for 32 char Mc OS bug- could check if this is Mac OS too < PART 1
+    If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
+        reqReportDoc = activeDocPath & "\" & activeDocName & "_" & suffix & ".txt"
+    Else
+        Dim placeholdDocName As String
+        placeholdDocName = "filenamePlacehold_Report.txt"
+        reqReportDocAlt = reqReportDoc
+        reqReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
+    End If
+    '''end ''''for 32 char Mc OS bug part 1
+    
+    'set and open file for output
+    Dim e As Integer
+    fnum = FreeFile()
+    Open reqReportDoc For Output As fnum
+    
+        Print #fnum, strText
+
+    Close #fnum
+    
+    ''''for 32 char Mc OS bug-<PART 2
+    If reqReportDocAlt <> "" Then
+    Name reqReportDoc As reqReportDocAlt
+    End If
+    ''''END for 32 char Mac OS bug-<PART 2
+    
+    '----------------open Report for user once it is complete--------------------------.
+    Dim Shex As Object
+    
+    If Not TheOS Like "*Mac*" Then
+       Set Shex = CreateObject("Shell.Application")
+       Shex.Open (reqReportDoc)
+    Else
+        MacScript ("tell application ""TextEdit"" " & vbCr & _
+        "open " & """" & reqReportDocAlt & """" & " as alias" & vbCr & _
+        "activate" & vbCr & _
+        "end tell" & vbCr)
+    End If
+End Sub
+
+Function GetText(styleName As String) As String
+    Dim fString As String
+    Dim fCount As Integer
+    
+    Application.ScreenUpdating = False
+    
+    fCount = 0
+    
+    'Move selection to start of document
+    Selection.HomeKey Unit:=wdStory
+    
+    On Error GoTo ErrHandler
+    
+        Selection.Find.ClearFormatting
+        With Selection.Find
+            .Text = ""
+            .Replacement.Text = ""
+            .Forward = True
+            .Wrap = wdFindStop
+            .Format = True
+            .Style = ActiveDocument.Styles(styleName)
+            .MatchCase = False
+            .MatchWholeWord = False
+            .MatchWildcards = False
+            .MatchSoundsLike = False
+            .MatchAllWordForms = False
+        End With
+    
+    Do While Selection.Find.Execute = True And fCount < 100            'fCount < 100 so we don't get an infinite loop
+        fCount = fCount + 1
+        
+        'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
+        If InStr(Selection.Text, Chr(13)) > 0 Then
+            Selection.MoveEnd Unit:=wdCharacter, Count:=-1
+        End If
+        
+        'Assign selected text to variable
+        fString = fString & Selection.Text & vbNewLine
+        
+        'If the next character is a paragraph return, add that to the selection
+        'Otherwise the next Find will just select the same text with the paragraph return
+        If InStr(styleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
+            Selection.MoveEndWhile Cset:=Chr(13), Count:=1
+        End If
+    Loop
+        
+    If fCount = 0 Then
+        GetText = ""
+    Else
+        GetText = fString
+    End If
+    
+    Application.ScreenUpdating = True
+    
+    Exit Function
+    
+ErrHandler:
+    If Err.Number = 5941 Or Err.Number = 5834 Then   ' The style is not present in the document
+        GetText = ""
+    End If
+
+End Function
+

@@ -46,6 +46,11 @@ Sub LibraryOfCongressTags()
     currentStatusBar = Application.DisplayStatusBar
     Application.DisplayStatusBar = True
     
+    ' -------------- turn off track changes -----------------
+    Dim currentTracking As Boolean
+    currentTracking = ActiveDocument.TrackRevisions
+    ActiveDocument.TrackRevisions = False
+    
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
     'Requires ProgressBar custom UserForm and Class
@@ -111,7 +116,7 @@ Sub LibraryOfCongressTags()
     
     '-------------------------tagging Title page---------------------------
     sglPercentComplete = 0.2
-    strStatus = "* Adding tags for Title page..." & vbCr & strStatus
+    strStatus = "* Adding tags for Title page..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -126,7 +131,7 @@ Sub LibraryOfCongressTags()
     
     '-------------------------tagging Copyright page---------------------------
     sglPercentComplete = 0.3
-    strStatus = "* Adding tags for Copyright page..." & vbCr & strStatus
+    strStatus = "* Adding tags for Copyright page..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -141,7 +146,7 @@ Sub LibraryOfCongressTags()
         
     '-------------------------tagging Series page---------------------------
     sglPercentComplete = 0.4
-    strStatus = "* Adding tags for Series page..." & vbCr & strStatus
+    strStatus = "* Adding tags for Series page..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -156,7 +161,7 @@ Sub LibraryOfCongressTags()
     
     '-------------------------tagging Table of Contents---------------------------
     sglPercentComplete = 0.5
-    strStatus = "* Adding tags for Table of Contents..." & vbCr & strStatus
+    strStatus = "* Adding tags for Table of Contents..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -171,7 +176,7 @@ Sub LibraryOfCongressTags()
     
     '-------------------------tagging Chapters---------------------------
     sglPercentComplete = 0.6
-    strStatus = "* Adding tags for chapters..." & vbCr & strStatus
+    strStatus = "* Adding tags for chapters..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -192,7 +197,7 @@ Sub LibraryOfCongressTags()
     
     '-------------------------Checking tags--------------------------
     sglPercentComplete = 0.7
-    strStatus = "* Running tag check & generating report..." & vbCr & strStatus
+    strStatus = "* Running tag check & generating report..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -231,7 +236,7 @@ Sub LibraryOfCongressTags()
     
     '-------------------------Save as text doc---------------------------
     sglPercentComplete = 0.8
-    strStatus = "* Saving as text document..." & vbCr & strStatus
+    strStatus = "* Saving as text document..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -247,7 +252,7 @@ Sub LibraryOfCongressTags()
     
     '-------------------------Delete tags from orig doc---------------------------
     sglPercentComplete = 0.9
-    strStatus = "* Cleaning up file..." & vbCr & strStatus
+    strStatus = "* Cleaning up file..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -262,7 +267,7 @@ Sub LibraryOfCongressTags()
     
     '-------------------------cleanup---------------------------
     sglPercentComplete = 0.99
-    strStatus = "* Finishing up..." & vbCr & strStatus
+    strStatus = "* Finishing up..." & vbNewLine & strStatus
     
     If Not TheOS Like "*Mac*" Then
         oProgressCIP.Increment sglPercentComplete, strStatus
@@ -278,6 +283,7 @@ Sub LibraryOfCongressTags()
         ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
     End If
     
+    ActiveDocument.TrackRevisions = currentTracking
     Application.ScreenUpdating = True
     Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
     Application.ScreenRefresh
@@ -1482,18 +1488,7 @@ Private Function zz_TagReport()
 
     Application.ScreenUpdating = False
     
-    Dim activeDoc As Document
-    Set activeDoc = ActiveDocument
     Set activeRng = ActiveDocument.Range
-    Dim activeDocName As String
-    Dim activeDocPath As String
-    Dim LOCreportDoc As String
-    Dim LOCreportDocAlt As String
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
-    Dim fnum As Integer
-    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
-    activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
     
     'count occurences of all but Chapter Heads
     Dim MyDoc As String, txt As String, t As String
@@ -1551,8 +1546,6 @@ Private Function zz_TagReport()
         zz_TagReport = True
     End If
         
-    
-    
     'Prepare error message
     Dim errorList As String
     errorList = ""
@@ -1565,73 +1558,39 @@ Private Function zz_TagReport()
     If chTagCount = 0 Then errorList = errorList & "WARNING: No Chapter Heading tags were found." & vbNewLine
     If LOCtagCount(9) = 0 Then errorList = errorList & "WARNING: No 'End of Last Chapter' tag was found." & vbNewLine
     
-    'create text file
-    LOCreportDoc = activeDocPath & activeDocName & "_LOCtagReport.txt"
-    
-    ''''for 32 char Mc OS bug- could check if this is Mac OS too< PART 1
-    If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
-        LOCreportDoc = activeDocPath & "\" & activeDocName & "_LOCtagReport.txt"
-    Else
-        Dim placeholdDocName As String
-        placeholdDocName = "filenamePlacehold_LOCreport.txt"
-        LOCreportDocAlt = LOCreportDoc
-        LOCreportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
-    End If
-    '''end ''''for 32 char Mc OS bug part 1
-    
-    'set and open file for output
-    fnum = FreeFile()
-    Open LOCreportDoc For Output As fnum
+    'Create full message text
+    Dim strTagReportText As String
+
     If errorList = "" Then
-        Print #fnum, "Congratulations!" & vbCr
-        Print #fnum, "LOC Tags look good for " & activeDoc.Name & vbCr
-        Print #fnum, "See summary below:" & vbCr
-        Print #fnum, vbCr
+        strTagReportText = strTagReportText & "Congratulations!" & vbNewLine
+        strTagReportText = strTagReportText & "LOC Tags look good for " & ActiveDocument.Name & vbNewLine
+        strTagReportText = strTagReportText & "See summary below:" & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
     Else
-        Print #fnum, "BAD NEWS:" & vbCr
-        Print #fnum, vbCr
-        Print #fnum, "Problems were found with LOC tags in your document '" & activeDoc.Name & "':" & vbCr
-        Print #fnum, vbCr
-        Print #fnum, vbCr
-        Print #fnum, "------------------------- ERRORS -------------------------" & vbCr
-        Print #fnum, errorList
-        Print #fnum, vbCr
-        Print #fnum, vbCr
+        strTagReportText = strTagReportText & "BAD NEWS:" & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
+        strTagReportText = strTagReportText & "Problems were found with LOC tags in your document '" & ActiveDocument.Name & "':" & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
+        strTagReportText = strTagReportText & "------------------------- ERRORS -------------------------" & vbNewLine
+        strTagReportText = strTagReportText & errorList
+        strTagReportText = strTagReportText & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
     End If
-        Print #fnum, "------------------------- Tag Summary -------------------------" & vbCr
-        Print #fnum, LOCtagCount(1) & "  Title page open tag(s) found <tp>"
-        Print #fnum, LOCtagCount(2) & "  Title page close tag(s) found </tp>"
-        Print #fnum, LOCtagCount(3) & "  Copyright page open tag(s) found <cp>"
-        Print #fnum, LOCtagCount(4) & "  Copyright page close tag(s) found </cp>"
-        Print #fnum, LOCtagCount(5) & "  Series page open tag(s) found <sp>"
-        Print #fnum, LOCtagCount(6) & "  Series page close tag(s) found </sp>"
-        Print #fnum, LOCtagCount(7) & "  Table of Contents open tag(s) found <toc>"
-        Print #fnum, LOCtagCount(8) & "  Table of Contents close tag(s) found </toc>"
-        Print #fnum, chTagCount & "  Chapter beginning tag(s) found (<ch1>, <ch2>, etc)"
-        Print #fnum, LOCtagCount(9) & "  End of last chapter tag(s) found </ch>"
-    Close #fnum
-    
-    ''''for 32 char Mc OS bug-<PART 2
-    If LOCreportDocAlt <> "" Then
-    Name LOCreportDoc As LOCreportDocAlt
-    End If
-    ''''END for 32 char Mc OS bug-<PART 2
-    
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
-    
-    'open LOC tags Report for user once it is complete.
-    Dim Shex As Object
-    
-    If Not TheOS Like "*Mac*" Then
-       Set Shex = CreateObject("Shell.Application")
-       Shex.Open (LOCreportDoc)
-    Else
-        MacScript ("tell application ""TextEdit"" " & vbCr & _
-        "open " & """" & LOCreportDocAlt & """" & " as alias" & vbCr & _
-        "activate" & vbCr & _
-        "end tell" & vbCr)
-    End If
+        strTagReportText = strTagReportText & "------------------------- Tag Summary -------------------------" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(1) & "  Title page open tag(s) found <tp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(2) & "  Title page close tag(s) found </tp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(3) & "  Copyright page open tag(s) found <cp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(4) & "  Copyright page close tag(s) found </cp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(5) & "  Series page open tag(s) found <sp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(6) & "  Series page close tag(s) found </sp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(7) & "  Table of Contents open tag(s) found <toc>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(8) & "  Table of Contents close tag(s) found </toc>" & vbNewLine
+        strTagReportText = strTagReportText & chTagCount & "  Chapter beginning tag(s) found (<ch1>, <ch2>, etc)" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(9) & "  End of last chapter tag(s) found </ch>" & vbNewLine
+        
+    ' Print to text file
+    Call CreateTextFile(strText:=strTagReportText, suffix:="CIPtagReport")
 
 End Function
 
