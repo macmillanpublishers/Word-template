@@ -3,7 +3,7 @@
 The Macmillan template files collect the Microsoft Word style sets, macros, and custom Ribbon tab (PC) or toolbar (Mac) for editorial production work. Except for the Installer macro (which launches on file open), all macros are launched from a custom Ribbon tab (Windows) or a custom toolbar (Mac) saved in the MacmillanGT.dotm template. There are many dependencies among the different modules so it is suggested that all modules be installed in the appropriate templates.
 
 
-## Installers/
+## MacmillanTemplateInstaller_v2/
 
 ### MacmillanTemplateInstaller_v2.docm
 
@@ -92,6 +92,19 @@ Tells the user the current version number of MacmillanGT.dotm and macmillan.dotm
 
 Opens windows and page view useful for working with styles. [More info.](http://confluence.macmillan.com/display/PBL/View+Styles+with+a+Macro)
 
+
+## GtUpdater/
+
+### GtUpdater.dotm
+
+Contains SharedFileInstaller and checks daily if MacmillanGT.dotm is up to date.
+
+
+## Utilities/
+
+### Utilities.dotm
+
+Contains two helpful macros: ExportAllModules exports all code modules of open template to local git repo, and ImportAllModules which imports all required modules from local git repo (Great for template merge conflicts).
 
 # Dependencies
 

@@ -97,7 +97,8 @@ Sub AutoExec()
     End If
     
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call FileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
 End Sub
+
 

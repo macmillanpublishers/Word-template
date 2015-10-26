@@ -1,4 +1,4 @@
-Attribute VB_Name = "FileInstaller"
+Attribute VB_Name = "SharedFileInstaller"
 ' created by Erica Warren - erica.warren@macmillan.com
 
 ' ======== PURPOSE ===================================
@@ -214,9 +214,6 @@ Private Function IsTemplateThere(Directory As String, FileName As String, Log As
     Dim strFullPath As String
     Dim logString As String
     strFullPath = Directory & Application.PathSeparator & FileName
-    
-    'Debug.Print Directory
-    'Debug.Print strFullPath
     
     '------------------------- Check if template exists ----------------------------------
     ' Create directory if it doesn't exist
