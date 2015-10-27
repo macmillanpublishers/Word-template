@@ -73,7 +73,7 @@ Sub BookmakerReqs()
     
     'Debug.Print x
     
-    strTitle = "Tor.com Bookmaker Requirements Macro"
+    strTitle = "Bookmaker Requirements Macro"
     sglPercentComplete = 0.02
     strStatus = funArray(x)
     
@@ -1474,7 +1474,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
         If N Mod 100 = 0 Then
             'Percent complete and status for progress bar (PC) and status bar (Mac)
             sglPercentComplete = (((N / activeParaCount) * 0.1) + 0.76)
-            strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for Tor.com approved styles..." & vbCr & StatusBar
+            strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for approved Bookmaker styles..." & vbCr & StatusBar
     
             'All Progress Bar statements for PC only because won't run modeless on Mac
             If Not TheOS Like "*Mac*" Then
@@ -1509,7 +1509,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                     If intBadCount = UBound(arrTorStyles()) Then
                         Set activeParaRange = ActiveDocument.StoryRanges(a).Paragraphs(N).Range
                         pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
-                        strBadStyles = strBadStyles & "** ERROR: Non-Tor.com style on page " & pageNumber _
+                        strBadStyles = strBadStyles & "** ERROR: Non-Bookmaker style on page " & pageNumber _
                             & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
                             'Debug.Print strBadStyles
                     End If
@@ -1522,7 +1522,7 @@ ErrResume:
     
     Next N
     
-    StatusBar = "* Checking paragraphs for Tor.com approved styles..." & vbCr & StatusBar
+    StatusBar = "* Checking paragraphs for approved Bookmaker styles..." & vbCr & StatusBar
     
     'Debug.Print strBadStyles
     
