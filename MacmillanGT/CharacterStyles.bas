@@ -756,10 +756,11 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
     
     tagStyleFindArray(g) = True
         
-        If tagStyleFindArray(8) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(2) = True                                                        'bold and italic                        v. 3.1 update
-        If tagStyleFindArray(9) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(4) = True: tagStyleFindArray(2) = False           'bold and smallcaps                 v. 3.1 update
-        If tagStyleFindArray(10) = True Then tagStyleFindArray(2) = True: tagStyleFindArray(4) = True: tagStyleFindArray(1) = False           'smallcaps and italic               v. 3.1 update
-    
+        If tagStyleFindArray(8) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(2) = True     'bold and italic                        v. 3.1 update
+        If tagStyleFindArray(9) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(4) = True: tagStyleFindArray(2) = False  'bold and smallcaps                 v. 3.1 update
+        If tagStyleFindArray(10) = True Then tagStyleFindArray(2) = True: tagStyleFindArray(4) = True: tagStyleFindArray(1) = False 'smallcaps and italic               v. 3.1 update
+        If tagStyleFindArray(11) = True Then tagStyleFindArray(2) = False: tagStyleFindArray(4) = False ' reset tags for strikethrough
+        
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
