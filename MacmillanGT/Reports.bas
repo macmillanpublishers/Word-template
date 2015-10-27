@@ -922,6 +922,7 @@ NextLoop:
     Exit Function
     
 ErrHandler:
+    Debug.Print Err.Number & " : " & Err.Description
     If Err.Number = 5834 Or Err.Number = 5941 Then
         Resume NextLoop
     End If
@@ -1416,9 +1417,12 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     Dim activeParaCount As Integer
     
     Dim strCsvFileName As String
-    Dim strLogInfo(1 To 3) As String
+    Dim strLogInfo() As Variant
+    ReDim strLogInfo(1 To 3)
     Dim strFullPathToCsv As String
     Dim arrTorStyles() As Variant
+    Dim strLogDir As String
+    Dim strPathToLogFile As String
     
     Dim intBadCount As Integer
     Dim activeParaRange As Range
@@ -1441,14 +1445,15 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     strCsvFileName = "Styles_Bookmaker.csv"
     
     ' We need the info about the log file for any download
-    strLogInfo = CreateLogFileInfo(FileName:=strCsvFileName)
-    
-    strFullPathToCsv = strLogInfo(2) & Application.PathSeparator & strCsvFileName
+    strLogInfo() = CreateLogFileInfo(FileName:=strCsvFileName)
+    strLogDir = strLogInfo(2)
+    strPathToLogFile = strLogInfo(3)
+    strFullPathToCsv = strLogDir & Application.PathSeparator & strCsvFileName
     
     ' download the list of good Tor styles from Confluence
     If DownloadFromConfluence(StagingURL:=False, _
-                                FinalDir:=strLogInfo(2), _
-                                LogFile:=strLogInfo(3), _
+                                FinalDir:=strLogDir, _
+                                LogFile:=strPathToLogFile, _
                                 FileName:=strCsvFileName) = False Then
         ' If it's False, DL failed. Is a previous version there?
         If IsItThere(strFullPathToCsv) = False Then
@@ -1465,6 +1470,10 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     'List of styles approved for use in Bookmaker
     'Organized by approximate frequency in manuscripts (most freq at top)
     arrTorStyles = LoadCSVtoArray(Path:=strFullPathToCsv, RemoveHeaderRow:=True, RemoveHeaderCol:=False)
+    Debug.Print LBound(arrTorStyles())
+    Debug.Print arrTorStyles(LBound(arrTorStyles()))
+    Debug.Print arrTorStyles(UBound(arrTorStyles()))
+    Debug.Print UBound(arrTorStyles())
     
     activeParaCount = ActiveDocument.Paragraphs.Count
     
@@ -1490,15 +1499,16 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
         For a = LBound(Stories()) To UBound(Stories())
             If N <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
                 paraStyle = ActiveDocument.StoryRanges(Stories(a)).Paragraphs(N).Style
-                'Debug.Print paraStyle
+                Debug.Print paraStyle
                 
                 If Right(paraStyle, 1) = ")" Then
                     
                     On Error GoTo ErrHandler
                     
                     intBadCount = 0
-                    
+                    Debug.Print ActiveDocument
                     For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
+                        Debug.Print arrTorStyles(M)
                         If paraStyle <> arrTorStyles(M) Then
                             intBadCount = intBadCount + 1
                         Else
@@ -1530,6 +1540,7 @@ ErrResume:
     Exit Function
 
 ErrHandler:
+    Debug.Print Err.Number & " " & Err.Description & " | " & Err.HelpContext
     If Err.Number = 5941 Or Err.Number = 5834 Then       'style is not in document
         Resume ErrResume
     End If

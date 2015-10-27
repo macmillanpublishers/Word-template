@@ -45,7 +45,7 @@ ErrHandler:
 End Function
 
 Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String, LogFile As String, FileName As String) As Boolean
-'FinalPath is directory w/o file name
+'FinalDir is directory w/o file name
 
     Dim logString As String
     Dim strTmpPath As String
@@ -594,21 +594,22 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
             If Len(lines(R)) > 0 Then
                 one_line = Split(lines(R), ",")
                 For c = lngHeaderCol To num_cols   ' start at 1 (not 0) if we are not using the header column
+                    'Debug.Print one_line(c)
                     the_array((R - lngHeaderRow), (c - lngHeaderCol)) = one_line(c)   ' -1 because if are not using header row/column from CSV
                 Next c
             End If
         Next R
     
         ' Prove we have the data loaded.
-        ' Debug.Print LBound(the_array)
-        ' Debug.Print UBound(the_array)
-        ' For R = 0 To num_rows          ' -1 again if we removed the header row
-        '     For c = 0 To num_cols      ' -1 again if we removed the header column
-        '         Debug.Print the_array(R, c) & "|";
-        '     Next c
-        '     Debug.Print
-        ' Next R
-        ' Debug.Print "======="
+'         Debug.Print LBound(the_array)
+'         Debug.Print UBound(the_array)
+'         For R = 0 To (num_rows - 1)          ' -1 again if we removed the header row
+'             For c = 0 To num_cols      ' -1 again if we removed the header column
+'                 Debug.Print the_array(R, c) & " | ";
+'             Next c
+'             Debug.Print
+'         Next R
+'         Debug.Print "======="
     
     LoadCSVtoArray = the_array
     
