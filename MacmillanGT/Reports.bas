@@ -807,7 +807,7 @@ CheckGoodStyles:
     styleNameM(14) = "span material to come (tk)"
     styleNameM(15) = "span carry query (cq)"
     styleNameM(16) = "span preserve characters (pre)"
-    styleNameM(17) = "bookmaker force page break (br)"
+    styleNameM(17) = "span strikethrough characters (str)"
     styleNameM(18) = "bookmaker keep together (kt)"
     styleNameM(19) = "span ISBN (isbn)"
     styleNameM(20) = "span symbols ital (symi)"
@@ -1469,11 +1469,8 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     
     'List of styles approved for use in Bookmaker
     'Organized by approximate frequency in manuscripts (most freq at top)
+    'returned array is dimensioned with 1 column, need to specify row and column (base 0)
     arrTorStyles = LoadCSVtoArray(Path:=strFullPathToCsv, RemoveHeaderRow:=True, RemoveHeaderCol:=False)
-    Debug.Print LBound(arrTorStyles())
-    Debug.Print arrTorStyles(LBound(arrTorStyles()))
-    Debug.Print arrTorStyles(UBound(arrTorStyles()))
-    Debug.Print UBound(arrTorStyles())
     
     activeParaCount = ActiveDocument.Paragraphs.Count
     
@@ -1502,20 +1499,22 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                 Debug.Print paraStyle
                 
                 If Right(paraStyle, 1) = ")" Then
-                    
+                    Debug.Print "Current paragraph is: " & paraStyle
                     On Error GoTo ErrHandler
                     
-                    intBadCount = 0
-                    Debug.Print ActiveDocument
+                    intBadCount = -1        ' -1 because the array is base 0
+                    
                     For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
-                        Debug.Print arrTorStyles(M)
-                        If paraStyle <> arrTorStyles(M) Then
+                        'Debug.Print arrTorStyles(M, 0)
+                        
+                        If paraStyle <> arrTorStyles(M, 0) Then
                             intBadCount = intBadCount + 1
                         Else
                             Exit For
                         End If
                     Next M
-                
+                    
+                    Debug.Print intBadCount
                     If intBadCount = UBound(arrTorStyles()) Then
                         Set activeParaRange = ActiveDocument.StoryRanges(a).Paragraphs(N).Range
                         pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
