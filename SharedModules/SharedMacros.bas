@@ -530,7 +530,6 @@ Function CheckSave()
 
 End Function
 
-<<<<<<< HEAD
 Function EndnotesExist() As Boolean
 ' Started from http://vbarevisited.blogspot.com/2014/03/how-to-detect-footnote-and-endnote.html
     Dim StoryRange As Range
@@ -738,7 +737,7 @@ ErrHandler:
     If Err.Number = 5941 Or Err.Number = 5834 Then   ' The style is not present in the document
         GetText = ""
     End If
-	
+        
 End Function
 
 Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeaderCol As Boolean) As Variant
