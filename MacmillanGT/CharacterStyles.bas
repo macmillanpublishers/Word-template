@@ -8,6 +8,8 @@ Attribute VB_Name = "CharacterStyles"
 ' ======== DEPENDENCIES =======================
 ' 1. Requires ProgressBar userform module
 
+' Note: have already used all numerals and capital letters for tagging, starting with lowercase letters. through a.
+
 Option Explicit
 Option Base 1
 
@@ -725,8 +727,8 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     '------------tag key styles-------------------------------
-    Dim tagStyleFindArray(10) As Boolean              ' number of items in array should be declared here
-    Dim tagStyleReplaceArray(10) As String         'and here
+    Dim tagStyleFindArray(11) As Boolean              ' number of items in array should be declared here
+    Dim tagStyleReplaceArray(11) As String         'and here
     Dim g As Long
     
     tagStyleFindArray(1) = False        'Bold
@@ -735,7 +737,9 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
     tagStyleFindArray(4) = False        'Smallcaps
     tagStyleFindArray(5) = False        'Subscript
     tagStyleFindArray(6) = False        'Superscript
-    tagStyleFindArray(7) = False        'Highlights                                                          v. 3.1 update
+    tagStyleFindArray(7) = False        'Highlights
+    ' note 8 - 10 are below
+    tagStyleFindArray(11) = False       'Strikethrough
     
     tagStyleReplaceArray(1) = "`B|^&|B`"
     tagStyleReplaceArray(2) = "`I|^&|I`"
@@ -746,15 +750,17 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
     tagStyleReplaceArray(8) = "`A|^&|A`"
     tagStyleReplaceArray(9) = "`C|^&|C`"
     tagStyleReplaceArray(10) = "`D|^&|D`"
+    tagStyleReplaceArray(11) = "`a|^&|a`"
     
     For g = 1 To UBound(tagStyleFindArray())
     
     tagStyleFindArray(g) = True
         
-        If tagStyleFindArray(8) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(2) = True                                                        'bold and italic                        v. 3.1 update
-        If tagStyleFindArray(9) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(4) = True: tagStyleFindArray(2) = False           'bold and smallcaps                 v. 3.1 update
-        If tagStyleFindArray(10) = True Then tagStyleFindArray(2) = True: tagStyleFindArray(4) = True: tagStyleFindArray(1) = False           'smallcaps and italic               v. 3.1 update
-    
+        If tagStyleFindArray(8) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(2) = True     'bold and italic                        v. 3.1 update
+        If tagStyleFindArray(9) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(4) = True: tagStyleFindArray(2) = False  'bold and smallcaps                 v. 3.1 update
+        If tagStyleFindArray(10) = True Then tagStyleFindArray(2) = True: tagStyleFindArray(4) = True: tagStyleFindArray(1) = False 'smallcaps and italic               v. 3.1 update
+        If tagStyleFindArray(11) = True Then tagStyleFindArray(2) = False: tagStyleFindArray(4) = False ' reset tags for strikethrough
+        
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
@@ -768,8 +774,9 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
             .Font.SmallCaps = tagStyleFindArray(4)
             .Font.Subscript = tagStyleFindArray(5)
             .Font.Superscript = tagStyleFindArray(6)
-            .Highlight = tagStyleFindArray(7)                                                              ' v. 3.1 update
-            .Replacement.Highlight = False                                                              ' v. 3.1 update
+            .Highlight = tagStyleFindArray(7)
+            .Font.StrikeThrough = tagStyleFindArray(11)
+            .Replacement.Highlight = False
             .MatchCase = False
             .MatchWholeWord = False
             .MatchWildcards = True
@@ -792,8 +799,8 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-    Dim tagFindArray(22) As String              ' number of items in array should be declared here
-    Dim tagReplaceArray(22) As String         'and here
+    Dim tagFindArray(23) As String              ' number of items in array should be declared here
+    Dim tagReplaceArray(23) As String         'and here
     Dim h As Long
     
     tagFindArray(1) = "`B|(*)|B`"
@@ -818,6 +825,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagFindArray(20) = "`E|(*)|E`"
     tagFindArray(21) = "`G|(*)|G`"          'v. 3.8 added
     tagFindArray(22) = "`J|(*)|J`"
+    tagFindArray(23) = "`a|(*)|a`"
     
     tagReplaceArray(1) = "span boldface characters (bf)"
     tagReplaceArray(2) = "span italic characters (ital)"
@@ -842,6 +850,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagReplaceArray(20) = "span symbols ital (symi)"                ' v. 3.8 added
     tagReplaceArray(21) = "span symbols bold (symb)"                ' v. 3.8 added
     tagReplaceArray(22) = "span run-in computer type (comp)"
+    tagReplaceArray(23) = "span strikethrough characters (str)"
     
     On Error GoTo ErrorHandler:
     
@@ -949,6 +958,14 @@ ErrorHandler:
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .SmallCaps = True
                     .Italic = True
+                End With
+                Resume
+                
+            Case "span strikethrough characters (str)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .StrikeThrough = True
                 End With
                 Resume
             
