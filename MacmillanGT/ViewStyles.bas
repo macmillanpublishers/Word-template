@@ -18,72 +18,64 @@ Sub StylesViewLaunch()
 
 End Sub
 Private Sub PC_BestStylesView()
-' added by EW for v. 3.2
-' Setup for PC
-
-'Open styles pane if closed, close if open
-If Application.TaskPanes(wdTaskPaneFormatting).Visible = False Then
-    Application.TaskPanes(wdTaskPaneFormatting).Visible = True
+    ' added by EW for v. 3.2
+    ' Setup for PC
     
-    'Selects three center boxes in Styles Pane Options, always
-    ActiveDocument.FormattingShowFont = True
-    ActiveDocument.FormattingShowParagraph = True
-    ActiveDocument.FormattingShowNumbering = True
-
-    'Shows all styles in document
-    ActiveDocument.FormattingShowFilter = wdShowFilterStylesAvailable
+    'in print view, toggle to draft view and open styles stuff
+    If ActiveDocument.ActiveWindow.View.Type = wdPrintView Then
+        Application.TaskPanes(wdTaskPaneFormatting).Visible = True
+        
+        'Selects three center boxes in Styles Pane Options, always
+        ActiveDocument.FormattingShowFont = True
+        ActiveDocument.FormattingShowParagraph = True
+        ActiveDocument.FormattingShowNumbering = True
     
-    'Sorts styles alphabetically
-    ActiveDocument.StyleSortMethod = wdStyleSortByName
-Else
-    Application.TaskPanes(wdTaskPaneFormatting).Visible = False
-End If
-
-'Open Style Inspector if closed, else close if open
-If Application.TaskPanes(wdTaskPaneStyleInspector).Visible = False Then
-    Application.TaskPanes(wdTaskPaneStyleInspector).Visible = True
-Else
-    Application.TaskPanes(wdTaskPaneStyleInspector).Visible = False
-End If
-
-'Shows nonprinting characters and hidden text if off, turns off if already on
-If ActiveDocument.ActiveWindow.View.ShowAll = False Then
-    ActiveDocument.ActiveWindow.View.ShowAll = True
-Else
-    ActiveDocument.ActiveWindow.View.ShowAll = False
-End If
-
-' Switches to Normal/Draft view if in Print, or vice versa
-If ActiveDocument.ActiveWindow.View.Type = wdNormalView Then
-    ActiveDocument.ActiveWindow.View.Type = wdPrintView
-Else
-    ActiveDocument.ActiveWindow.View.Type = wdNormalView
-    ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5) 'Sets Styles margin area in draft view to 1.5 in
-End If
+        'Shows all styles in document
+        ActiveDocument.FormattingShowFilter = wdShowFilterStylesAvailable
+        
+        'Sorts styles alphabetically
+        ActiveDocument.StyleSortMethod = wdStyleSortByName
+        
+        'Open Style Inspector
+        Application.TaskPanes(wdTaskPaneStyleInspector).Visible = True
+        
+        ' Show nonprinting characters
+        ActiveDocument.ActiveWindow.View.ShowAll = True
+        
+        ' Switch to Draft view with margin
+        ActiveDocument.ActiveWindow.View.Type = wdNormalView
+        ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5) 'Sets Styles margin area in draft view to 1.5 in
+        
+    Else    'we're already in draft view, switch back to print and close everything
+        Application.TaskPanes(wdTaskPaneFormatting).Visible = False
+        ' Close style inspector
+        Application.TaskPanes(wdTaskPaneStyleInspector).Visible = False
+        ' hide nonprinting characters
+        ActiveDocument.ActiveWindow.View.ShowAll = False
+        ' Switch to Normal (print) view
+        ActiveDocument.ActiveWindow.View.Type = wdPrintView
+        
+    End If
 
 
 End Sub
 Private Sub Mac_BestStylesView()
-' added by EW for v. 3.2
-' Setup for Mac
-
-'toggles the Styles Toolbox! Hurray!
-Application.Dialogs(1755).Show
-
-'Shows nonprinting characters and hidden text
-If ActiveDocument.ActiveWindow.View.ShowAll = False Then
-    ActiveDocument.ActiveWindow.View.ShowAll = True
-Else
-    ActiveDocument.ActiveWindow.View.ShowAll = False
-End If
-
-'Switches to Normal/Draft view
-If ActiveDocument.ActiveWindow.View.Type = wdNormalView Then
-    ActiveDocument.ActiveWindow.View.Type = wdPrintView
-Else
-    ActiveDocument.ActiveWindow.View.Type = wdNormalView
-    ActiveDocument.ActiveWindow.StyleAreaWidth = InchesToPoints(1.5)    'Sets Styles margin area in draft view to 1.5 in.
-End If
+    ' added by EW for v. 3.2
+    ' Setup for Mac
+    
+    'if in normal/print view switch to draft and open other stuff
+    If ActiveDocument.ActiveWindow.View.Type = wdNormalView Then
+        ActiveDocument.ActiveWindow.View.Type = wdPrintView
+        ActiveDocument.ActiveWindow.View.ShowAll = False
+        Application.Dialogs(1755).Show ' its a toggle, so if it's open it will close with this
+    Else
+        With ActiveDocument.ActiveWindow
+            .View.Type = wdNormalView
+            .StyleAreaWidth = InchesToPoints(1.5)    'Sets Styles margin area in draft view to 1.5 in.
+            .View.ShowAll = True
+        End With
+        Application.Dialogs(1755).Show
+    End If
 
                            
 End Sub

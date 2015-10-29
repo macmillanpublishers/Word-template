@@ -73,7 +73,7 @@ Sub BookmakerReqs()
     
     'Debug.Print x
     
-    strTitle = "Tor.com Bookmaker Requirements Macro"
+    strTitle = "Bookmaker Requirements Macro"
     sglPercentComplete = 0.02
     strStatus = funArray(x)
     
@@ -807,7 +807,7 @@ CheckGoodStyles:
     styleNameM(14) = "span material to come (tk)"
     styleNameM(15) = "span carry query (cq)"
     styleNameM(16) = "span preserve characters (pre)"
-    styleNameM(17) = "bookmaker force page break (br)"
+    styleNameM(17) = "span strikethrough characters (str)"
     styleNameM(18) = "bookmaker keep together (kt)"
     styleNameM(19) = "span ISBN (isbn)"
     styleNameM(20) = "span symbols ital (symi)"
@@ -922,6 +922,7 @@ NextLoop:
     Exit Function
     
 ErrHandler:
+    Debug.Print Err.Number & " : " & Err.Description
     If Err.Number = 5834 Or Err.Number = 5941 Then
         Resume NextLoop
     End If
@@ -1415,8 +1416,13 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     Dim paraStyle As String
     Dim activeParaCount As Integer
     
-    Dim arrTorStyles() As String
-    ReDim arrTorStyles(1 To 94)
+    Dim strCsvFileName As String
+    Dim strLogInfo() As Variant
+    ReDim strLogInfo(1 To 3)
+    Dim strFullPathToCsv As String
+    Dim arrTorStyles() As Variant
+    Dim strLogDir As String
+    Dim strPathToLogFile As String
     
     Dim intBadCount As Integer
     Dim activeParaRange As Range
@@ -1434,103 +1440,37 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     
     Application.ScreenUpdating = False
     
-    'List of styles approved for use in Tor.com automated workflow
-    'Organized by approximate frequency in manuscripts (most freq at top)
     
-    arrTorStyles(1) = "Text - Standard (tx)"
-    arrTorStyles(2) = "Text - Std No-Indent (tx1)"
-    arrTorStyles(3) = "Chap Title (ct)"
-    arrTorStyles(4) = "Chap Number (cn)"
-    arrTorStyles(5) = "Chap Opening Text No-Indent (cotx1)"
-    arrTorStyles(6) = "Page Break (pb)"
-    arrTorStyles(7) = "Space Break (#)"
-    arrTorStyles(8) = "Space Break with Ornament (orn)"
-    arrTorStyles(9) = "Titlepage Author Name (au)"
-    arrTorStyles(10) = "Titlepage Book Subtitle (stit)"
-    arrTorStyles(11) = "Titlepage Book Title (tit)"
-    arrTorStyles(12) = "Titlepage Cities (cit)"
-    arrTorStyles(13) = "Titlepage Imprint Line (imp)"
-    arrTorStyles(14) = "Copyright Text double space (crtxd)"
-    arrTorStyles(15) = "Copyright Text single space (crtx)"
-    arrTorStyles(16) = "Extract (ext)"
-    arrTorStyles(17) = "Extract Head (exth)"
-    arrTorStyles(18) = "Extract-No Indent (ext1)"
-    arrTorStyles(19) = "Halftitle Book Title (htit)"
-    arrTorStyles(20) = "Illustration holder (ill)"
-    arrTorStyles(21) = "Illustration Source (is)"
-    arrTorStyles(22) = "Part Number (pn)"
-    arrTorStyles(23) = "Part Title (pt)"
-    arrTorStyles(24) = "About Author Text Head (atah)"
-    arrTorStyles(25) = "About Author Text (atatx)"
-    arrTorStyles(26) = "About Author Text No-Indent (atatx1)"
-    arrTorStyles(27) = "Ad Card List of Titles (acl)"
-    arrTorStyles(28) = "Ad Card Main Head (acmh)"
-    arrTorStyles(29) = "Ad Card Subhead (acsh)"
-    arrTorStyles(30) = "Text - Standard Space After (tx#)"
-    arrTorStyles(31) = "Text - Standard Space Around (#tx#)"
-    arrTorStyles(32) = "Text - Standard Space Before (#tx)"
-    arrTorStyles(33) = "Text - Std No-Indent Space After (tx1#)"
-    arrTorStyles(34) = "Text - Std No-Indent Space Around (#tx1#)"
-    arrTorStyles(35) = "Text - Std No-Indent Space Before (#tx1)"
-    arrTorStyles(36) = "Chap Opening Text No-Indent Space After (cotx1#)"
-    arrTorStyles(37) = "Dedication (ded)"
-    arrTorStyles(38) = "Dedication Author (dedau)"
-    arrTorStyles(39) = "Epigraph - non-verse (epi)"
-    arrTorStyles(40) = "Epigraph - verse (epiv)"
-    arrTorStyles(41) = "Epigraph Source (eps)"
-    arrTorStyles(42) = "Chap Epigraph Source (ceps)"
-    arrTorStyles(43) = "Chap Epigraph - non-verse (cepi)"
-    arrTorStyles(44) = "Chap Epigraph - verse (cepiv)"
-    arrTorStyles(45) = "Chap Title Nonprinting (ctnp)"
-    arrTorStyles(46) = "FM Epigraph - non-verse (fmepi)"
-    arrTorStyles(47) = "FM Epigraph - verse (fmepiv)"
-    arrTorStyles(48) = "FM Epigraph Source (fmeps)"
-    arrTorStyles(49) = "FM Head (fmh)"
-    arrTorStyles(50) = "FM Subhead (fmsh)"
-    arrTorStyles(51) = "FM Text (fmtx)"
-    arrTorStyles(52) = "FM Text No-Indent (fmtx1)"
-    arrTorStyles(53) = "FM Text No-Indent Space After (fmtx1#)"
-    arrTorStyles(54) = "FM Text No-Indent Space Around (#fmtx1#)"
-    arrTorStyles(55) = "FM Text No-Indent Space Before (#fmtx1)"
-    arrTorStyles(56) = "FM Text Space After (fmtx#)"
-    arrTorStyles(57) = "FM Text Space Around (#fmtx#)"
-    arrTorStyles(58) = "FM Text Space Before (#fmtx)"
-    arrTorStyles(59) = "Front Sales Quote (fsq)"
-    arrTorStyles(60) = "Front Sales Quote NoIndent (fsq1)"
-    arrTorStyles(61) = "Front Sales Quote Source (fsqs)"
-    arrTorStyles(62) = "Front Sales Title (fst)"
-    arrTorStyles(63) = "Front Sales Text (fstx)"
-    arrTorStyles(64) = "Space Break with ALT Ornament (orn2)"
-    arrTorStyles(65) = "Space Break - 1-Line (ls1)"
-    arrTorStyles(66) = "Space Break - 2-Line (ls2)"
-    arrTorStyles(67) = "Space Break - 3-Line (ls3)"
-    arrTorStyles(68) = "Text - Computer Type (com)"
-    arrTorStyles(69) = "Text - Computer Type No-Indent (com1)"
-    arrTorStyles(70) = "Text - Standard ALT (atx)"
-    arrTorStyles(71) = "Text - Std No-Indent ALT (atx1)"
-    arrTorStyles(72) = "Caption (cap)"
-    arrTorStyles(73) = "Titlepage Contributor Name (con)"
-    arrTorStyles(74) = "Titlepage Translator Name (tran)"
-    arrTorStyles(75) = "Chap Ornament (corn)"
-    arrTorStyles(76) = "Chap Ornament ALT (corn2)"
-    arrTorStyles(77) = "Chap Opening Text (cotx)"
-    arrTorStyles(78) = "Chap Opening Text Space After (cotx#)"
-    arrTorStyles(79) = "Design Note (dn)"
-    arrTorStyles(80) = "BM Head (bmh)"
-    arrTorStyles(81) = "BM Subhead (bmsh)"
-    arrTorStyles(82) = "BM Text (bmtx)"
-    arrTorStyles(83) = "BM Text No-Indent (bmtx1)"
-    arrTorStyles(84) = "BM Text No-Indent Space After (bmtx1#)"
-    arrTorStyles(85) = "BM Text No-Indent Space Around (#bmtx1#)"
-    arrTorStyles(86) = "BM Text No-Indent Space Before (#bmtx1)"
-    arrTorStyles(87) = "BM Text Space After (bmtx#)"
-    arrTorStyles(88) = "BM Text Space Around (#bmtx#)"
-    arrTorStyles(89) = "BM Text Space Before (#bmtx)"
-    arrTorStyles(90) = "BM Title (bmt)"
-    arrTorStyles(91) = "Appendix Head (aph)"
-    arrTorStyles(92) = "Appendix Text (aptx)"
-    arrTorStyles(93) = "Appendix Text No-Indent (aptx1)"
-    arrTorStyles(94) = "Extract Headline (exthl)"
+    ' This is the file we want to download
+    strCsvFileName = "Styles_Bookmaker.csv"
+    
+    ' We need the info about the log file for any download
+    strLogInfo() = CreateLogFileInfo(FileName:=strCsvFileName)
+    strLogDir = strLogInfo(2)
+    strPathToLogFile = strLogInfo(3)
+    strFullPathToCsv = strLogDir & Application.PathSeparator & strCsvFileName
+    
+    ' download the list of good Tor styles from Confluence
+    If DownloadFromConfluence(StagingURL:=False, _
+                                FinalDir:=strLogDir, _
+                                LogFile:=strPathToLogFile, _
+                                FileName:=strCsvFileName) = False Then
+        ' If it's False, DL failed. Is a previous version there?
+        If IsItThere(strFullPathToCsv) = False Then
+            ' Sorry can't DL right now, no previous file in directory
+            MsgBox "Sorry, I can't download the Bookmaker style info right now."
+            Exit Function
+        Else
+            ' Can't DL new file but old one exists, let's use that
+            MsgBox "I can't download the Bookmaker style info right now, so I'll just use the old info I have on file."
+        End If
+    End If
+    
+    
+    'List of styles approved for use in Bookmaker
+    'Organized by approximate frequency in manuscripts (most freq at top)
+    'returned array is dimensioned with 1 column, need to specify row and column (base 0)
+    arrTorStyles = LoadCSVtoArray(Path:=strFullPathToCsv, RemoveHeaderRow:=True, RemoveHeaderCol:=False)
     
     activeParaCount = ActiveDocument.Paragraphs.Count
     
@@ -1540,7 +1480,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
         If N Mod 100 = 0 Then
             'Percent complete and status for progress bar (PC) and status bar (Mac)
             sglPercentComplete = (((N / activeParaCount) * 0.1) + 0.76)
-            strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for Tor.com approved styles..." & vbCr & StatusBar
+            strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for approved Bookmaker styles..." & vbCr & StatusBar
     
             'All Progress Bar statements for PC only because won't run modeless on Mac
             If Not TheOS Like "*Mac*" Then
@@ -1556,26 +1496,29 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
         For a = LBound(Stories()) To UBound(Stories())
             If N <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
                 paraStyle = ActiveDocument.StoryRanges(Stories(a)).Paragraphs(N).Style
-                'Debug.Print paraStyle
+                Debug.Print paraStyle
                 
                 If Right(paraStyle, 1) = ")" Then
-                    
+                    Debug.Print "Current paragraph is: " & paraStyle
                     On Error GoTo ErrHandler
                     
-                    intBadCount = 0
+                    intBadCount = -1        ' -1 because the array is base 0
                     
                     For M = LBound(arrTorStyles()) To UBound(arrTorStyles())
-                        If paraStyle <> arrTorStyles(M) Then
+                        'Debug.Print arrTorStyles(M, 0)
+                        
+                        If paraStyle <> arrTorStyles(M, 0) Then
                             intBadCount = intBadCount + 1
                         Else
                             Exit For
                         End If
                     Next M
-                
+                    
+                    Debug.Print intBadCount
                     If intBadCount = UBound(arrTorStyles()) Then
                         Set activeParaRange = ActiveDocument.StoryRanges(a).Paragraphs(N).Range
                         pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
-                        strBadStyles = strBadStyles & "** ERROR: Non-Tor.com style on page " & pageNumber _
+                        strBadStyles = strBadStyles & "** ERROR: Non-Bookmaker style on page " & pageNumber _
                             & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
                             'Debug.Print strBadStyles
                     End If
@@ -1588,7 +1531,7 @@ ErrResume:
     
     Next N
     
-    StatusBar = "* Checking paragraphs for Tor.com approved styles..." & vbCr & StatusBar
+    StatusBar = "* Checking paragraphs for approved Bookmaker styles..." & vbCr & StatusBar
     
     'Debug.Print strBadStyles
     
@@ -1596,6 +1539,7 @@ ErrResume:
     Exit Function
 
 ErrHandler:
+    Debug.Print Err.Number & " " & Err.Description & " | " & Err.HelpContext
     If Err.Number = 5941 Or Err.Number = 5834 Then       'style is not in document
         Resume ErrResume
     End If
