@@ -384,7 +384,7 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
     ' Figure out what the final sig/page count will be
     Dim result As Long
            
-    If objCastForm.chkDesignPickup Then
+    If objCastForm.PrintType = objCastForm.optPrintPOD.Caption Then
         'POD only has to be even, not 16-page sig
         If (RawEstPages Mod 2) = 0 Then      'page count is even
             result = RawEstPages
