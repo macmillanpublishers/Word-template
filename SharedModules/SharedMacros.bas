@@ -825,7 +825,7 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
  
 End Function
 
-Private Sub CloseOpenDocs()
+Sub CloseOpenDocs()
 
     '-------------Check for/close open documents---------------------------------------------
     Dim strInstallerName As String
