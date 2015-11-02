@@ -323,40 +323,7 @@ Private Sub OpenDocPC(FilePath As String)
         Documents.Open FileName:=FilePath, ReadOnly:=True, Visible:=False      'Win Word DOES allow Visible as an argument :)
 End Sub
 
-Private Sub CloseOpenDocs()
 
-    '-------------Check for/close open documents---------------------------------------------
-    Dim strInstallerName As String
-    Dim strSaveWarning As String
-    Dim objDocument As Document
-    Dim b As Long
-    Dim doc As Document
-    
-    strInstallerName = ThisDocument.Name
-        'Debug.Print "Installer Name: " & strInstallerName
-        'Debug.Print "Open docs: " & Documents.Count
-
-    If Documents.Count > 1 Then
-        strSaveWarning = "All other Word documents must be closed to run the installer." & vbNewLine & vbNewLine & _
-            "Click OK and I will save and close your documents." & vbNewLine & _
-            "Click Cancel to exit without installing and close the documents yourself."
-        If MsgBox(strSaveWarning, vbOKCancel, "Close documents?") = vbCancel Then
-            ActiveDocument.Close
-            Exit Sub
-        Else
-            For Each doc In Documents
-                On Error Resume Next        'To skip error if user is prompted to save new doc and clicks Cancel
-                    Debug.Print doc.Name
-                    If doc.Name <> strInstallerName Then       'But don't close THIS document
-                        doc.Save   'separate step to trigger Save As prompt for previously unsaved docs
-                        doc.Close
-                    End If
-                On Error GoTo 0
-            Next doc
-        End If
-    End If
-    
-End Sub
 
 Private Function ImportVariable(strFile As String) As String
  
