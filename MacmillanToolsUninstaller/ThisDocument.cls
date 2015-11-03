@@ -42,7 +42,7 @@ Private Sub Document_Open()
     #If Mac Then
         strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
                 "return (name of current user)" & Chr(13) & "end tell")
-        strStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+        strStyleDir = "Macintosh HD/Users/" & strMacUser & "/Documents/MacmillanStyleTemplate"
     #Else
         strStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
     #End If
@@ -56,7 +56,7 @@ Private Sub Document_Open()
     ' Clear out the log directory
     If IsItThere(Path:=strLogDir) = True Then
         #If Mac Then
-            Call DeleteFilesInFoldersMac(FolderWithFiles:=strLogDir)
+            Call DeleteFilesInFolderMac(FolderWithFiles:=strLogDir)
         #Else
             Kill strLogDir & Application.PathSeparator & "*.*"
         #End If
@@ -67,12 +67,12 @@ Private Sub Document_Open()
     ' Clear out Style Template directory
     If IsItThere(Path:=strStyleDir) = True Then
         #If Mac Then
-            Call DeleteFilesInFoldersMac(FolderWithFiles:=strStyleDir)
+            Call DeleteFilesInFolderMac(FolderWithFiles:=strStyleDir)
         #Else
             Kill strStyleDir & Application.PathSeparator & "*.*"
         #End If
         ' Delete the style folder itself
-        'Debug.Print strStyleDir
+        Debug.Print "strStyleDir = " & strStyleDir
         'Dir ("C:\")
         RmDir strStyleDir
     End If
@@ -97,7 +97,7 @@ Private Sub Document_Open()
     
 
     On Error GoTo 0
-    ActiveDocument.Close (wdDoNotSaveChanges)
+    'ActiveDocument.Close (wdDoNotSaveChanges)
     Exit Sub
     
 ErrorHandler:
