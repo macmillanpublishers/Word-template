@@ -11,9 +11,9 @@ Sub TagText()
     Set thisDoc = ActiveDocument
     
     ' Add check if doc is saved
-    If CheckSave = True Then
-        Exit Sub
-    End If
+'    If CheckSave = True Then
+'        Exit Sub
+'    End If
     
     ' ======== Start the tagging ========
     ' Rename built-in style with parens
@@ -28,6 +28,7 @@ Sub TagText()
     On Error GoTo ErrorHandler1
     For a = 1 To lngParaCount
         strCurrentStyle = thisDoc.Paragraphs(a).Style
+        'Debug.Print a & ": " & strCurrentStyle
         
         ' Macmillan styles all end in close parens
         If Right(strCurrentStyle, 1) <> ")" Then
@@ -55,8 +56,8 @@ Sub TagText()
     Dim strPrevStyle As String
     Dim strNextStyle As String
     Dim strExtractStyle(1 To 9) As String
-    Dim blnPrevExt As Boolean
-    Dim blnNextExt As Boolean
+    Dim blnPrevStyle As Boolean
+    Dim blnNextStyle As Boolean
     Dim strNewStyle As String
     Dim strName As String
     Dim strCode As String
@@ -70,7 +71,7 @@ Sub TagText()
     strSearchStyle(3) = "FM Text (fmtx)"
     strSearchStyle(4) = "FM Text No-Indent (fmtx1)"
     strSearchStyle(5) = "BM Text (bmtx)"
-    strSearchStyle(6) = "BM Text (bmtx1)"
+    strSearchStyle(6) = "BM Text No-Indent (bmtx1)"
     
     ' Category of style that needs space around it - from style names
     strExtractStyle(1) = "Extract"
@@ -83,18 +84,22 @@ Sub TagText()
     strExtractStyle(8) = "Verse"
     strExtractStyle(9) = "Poem"
     
-    ' Does this need to be Selection.Find? If so, use the following first
-    ' Selection.HomeKey Unit:=wdStory
-    On Error GoTo ErrorContinue
+    
+    
+    
     For b = LBound(strSearchStyle()) To UBound(strSearchStyle())
+        On Error GoTo ErrorContinue
+        Selection.HomeKey Unit:=wdStory
+        'Debug.Print "Searching for " & strSearchStyle(b) & " paragraphs"
         lngCount = 0
-        With thisDoc.Range.Find
+        
+        With Selection.Find
             .ClearFormatting
             .Text = ""
             .Forward = True
             .Wrap = wdFindStop
             .Format = True
-            .Style = strSearchStyle(b)  'OR .Style = thisDoc.Styles(strSearchStyle(b)) ?
+            .Style = thisDoc.Styles(strSearchStyle(b)) '?
             .MatchCase = False
             .MatchWholeWord = False
             .MatchWildcards = False
@@ -103,48 +108,55 @@ Sub TagText()
             
             Do While .Execute(Forward:=True) = True And lngCount < 10000
                 lngCount = lngCount + 1     ' To prevent infinite loops
+                'Debug.Print lngCount
                 ' This below might have to be Selection ... will that mess up the Range.Find above?
-                lngParaIndex = thisDoc.Range(0, thisDoc.Range.Paragraphs(1).Range.End).Paragraphs.Count
-                Debug.Print "Current paragraph is " & lngParaIndex
-                
+                lngParaIndex = thisDoc.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
+                'Debug.Print "Current paragraph is " & lngParaIndex
+
                 strThisStyle = thisDoc.Paragraphs(lngParaIndex).Style
-                
+                'Debug.Print "This style is: " & strThisStyle
+
                 ' Verify we're not looking at the first paragraph of the document
                 If lngParaIndex > 1 Then
                     strPrevStyle = thisDoc.Paragraphs(lngParaIndex - 1).Style
                 Else    ' this is the first paragraph, just have it match current style so it won't change below
                     strPrevStyle = strThisStyle
                 End If
-                
+
                 ' Verify we're not looking at the last paragraph of the document
                 If lngParaIndex < lngParaCount Then
                     strNextStyle = thisDoc.Paragraphs(lngParaIndex + 1).Style
                 Else    ' we're at the last paragraph anda can't look after, so match current
                     strNextStyle = strThisStyle
                 End If
-                
-                ' Only test if styles don't match; we know thisStyle is OK
+
+                'Debug.Print "Previous style is: " & strPrevStyle
+                'Debug.Print "Next style is: " & strNextStyle
+'
+'                ' Only test if styles don't match; we know thisStyle is OK
                 If strThisStyle <> strPrevStyle Or strThisStyle <> strNextStyle Then
                     ' reset variables
                     blnPrevStyle = False
                     blnNextStyle = False
-                    
+
                     ' Test prev/next paras for extract styles
                     For c = LBound(strExtractStyle()) To UBound(strExtractStyle())
+                        'Debug.Print "Searching for: " & strExtractStyle(c)
+
                         If InStr(strPrevStyle, strExtractStyle(c)) > 0 Then
                             blnPrevStyle = True
                         ElseIf InStr(strNextStyle, strExtractStyle(c)) > 0 Then
                             blnNextStyle = True
                         End If
-                        
+
                         ' If both are true then stop looking
                         If blnPrevStyle = True And blnNextStyle = True Then
                             Exit For
                         End If
                     Next c
-                    
+
                     On Error GoTo 0
-                    
+
                     If blnPrevStyle = False And blnNextStyle = False Then   ' styles are fine as is, check next paragraph
                         GoTo ContinueLoop
                     Else
@@ -155,26 +167,29 @@ Sub TagText()
                         strCode = Mid(strThisStyle, lngCodeStart, lngCodeLen)
                         lngNameLen = lngOpenParens - 1
                         strName = Mid(strThisStyle, 1, lngNameLen)
-                        
+
                         On Error GoTo ErrorNewStyle
-                        
+
                         ' create new style name based on extract paras before and/or after
                         If blnPrevStyle = True And blnNextStyle = False Then    ' need space after
-                            strNewStyle = strName & "Space After (" & strCode & "#)"
-                        ElseIf blnPrevStyle = False And blnNextStyle = True Then    ' need space before
                             strNewStyle = strName & "Space Before (#" & strCode & ")"
+                        ElseIf blnPrevStyle = False And blnNextStyle = True Then    ' need space before
+                            strNewStyle = strName & "Space After (" & strCode & "#)"
                         ElseIf blnPrevStyle = True And blnNextStyle = True Then     ' need space around
                             strNewStyle = strName & "Space Around (#" & strCode & "#)"
                         Else
                             strNewStyle = strThisStyle
                         End If
-                        
+
+                        'Debug.Print "New style is: " & strNewStyle
+
                         ' change style of paragraph in question
                         thisDoc.Paragraphs(lngParaIndex).Style = strNewStyle
                         On Error GoTo 0
-                        
+
                     End If
                 End If
+                Selection.Collapse Direction:=wdCollapseEnd
 ContinueLoop:
             Loop
         End With
@@ -243,7 +258,7 @@ ErrorNewStyle:
         End With
         Resume
     Else
-        Debug.Print "ErrorNewStyle: " & Err.Number & " " & Err.Description
+        'Debug.Print "ErrorNewStyle: " & Err.Number & " " & Err.Description
         Exit Sub
     End If
 
