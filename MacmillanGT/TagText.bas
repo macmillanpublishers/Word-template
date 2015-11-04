@@ -143,10 +143,13 @@ Sub TagText()
                     For c = LBound(strExtractStyle()) To UBound(strExtractStyle())
                         'Debug.Print "Searching for: " & strExtractStyle(c)
                         
-                        ' Using InStr so we don't have to list/loop through EVERY Extract/Epigraph/Etc style
+                        ' Using InStr again so we don't have to list/loop through EVERY Extract/Epigraph/Etc style
                         If InStr(strPrevStyle, strExtractStyle(c)) > 0 Then
                             blnPrevStyle = True
-                        ElseIf InStr(strNextStyle, strExtractStyle(c)) > 0 Then
+                        End If
+                        
+                        ' Need two separate steps so we can capture instances where same style is before and after
+                        If InStr(strNextStyle, strExtractStyle(c)) > 0 Then
                             blnNextStyle = True
                         End If
 
