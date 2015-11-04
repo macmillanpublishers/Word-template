@@ -84,13 +84,10 @@ Sub TagText()
     strExtractStyle(8) = "Verse"
     strExtractStyle(9) = "Poem"
     
-    
-    
-    
     For b = LBound(strSearchStyle()) To UBound(strSearchStyle())
         On Error GoTo ErrorContinue
         Selection.HomeKey Unit:=wdStory
-        'Debug.Print "Searching for " & strSearchStyle(b) & " paragraphs"
+        Debug.Print "Searching for " & strSearchStyle(b) & " paragraphs"
         lngCount = 0
         
         With Selection.Find
@@ -111,10 +108,10 @@ Sub TagText()
                 'Debug.Print lngCount
                 ' This below might have to be Selection ... will that mess up the Range.Find above?
                 lngParaIndex = thisDoc.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
-                'Debug.Print "Current paragraph is " & lngParaIndex
+                Debug.Print "Current paragraph is " & lngParaIndex
 
                 strThisStyle = thisDoc.Paragraphs(lngParaIndex).Style
-                'Debug.Print "This style is: " & strThisStyle
+                Debug.Print "This style is: " & strThisStyle
 
                 ' Verify we're not looking at the first paragraph of the document
                 If lngParaIndex > 1 Then
@@ -130,8 +127,8 @@ Sub TagText()
                     strNextStyle = strThisStyle
                 End If
 
-                'Debug.Print "Previous style is: " & strPrevStyle
-                'Debug.Print "Next style is: " & strNextStyle
+                Debug.Print "Previous style is: " & strPrevStyle
+                Debug.Print "Next style is: " & strNextStyle
 '
 '                ' Only test if styles don't match; we know thisStyle is OK
                 If strThisStyle <> strPrevStyle Or strThisStyle <> strNextStyle Then
@@ -141,7 +138,7 @@ Sub TagText()
 
                     ' Test prev/next paras for extract styles
                     For c = LBound(strExtractStyle()) To UBound(strExtractStyle())
-                        'Debug.Print "Searching for: " & strExtractStyle(c)
+                        Debug.Print "Searching for: " & strExtractStyle(c)
 
                         If InStr(strPrevStyle, strExtractStyle(c)) > 0 Then
                             blnPrevStyle = True
@@ -159,6 +156,7 @@ Sub TagText()
 
                     If blnPrevStyle = False And blnNextStyle = False Then   ' styles are fine as is, check next paragraph
                         GoTo ContinueLoop
+                        Debug.Print "Don't change style"
                     Else
                         ' pull out the style name and code to use to create the new code
                         lngOpenParens = InStr(strThisStyle, "(")
@@ -181,7 +179,7 @@ Sub TagText()
                             strNewStyle = strThisStyle
                         End If
 
-                        'Debug.Print "New style is: " & strNewStyle
+                        Debug.Print "New style is: " & strNewStyle
 
                         ' change style of paragraph in question
                         thisDoc.Paragraphs(lngParaIndex).Style = strNewStyle
@@ -189,6 +187,8 @@ Sub TagText()
 
                     End If
                 End If
+                ' Now collapse the selection to the end of the paragraph, otherwise
+                ' the following Find just searches within the current selection
                 Selection.Collapse Direction:=wdCollapseEnd
 ContinueLoop:
             Loop
