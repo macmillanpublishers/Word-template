@@ -10,31 +10,6 @@ Sub TagText()
     Dim thisDoc As Document
     Set thisDoc = ActiveDocument
     
-    ' Add check if doc is saved
-    If CheckSave = True Then
-        Exit Sub
-    End If
-    
-    ' ======== Progress Bar stuffs ========
-    Dim strStatus As String
-    Dim sglPercentComplete As Single
-    
-    strStatus = "* Starting macro..."  ' change to something fun eventually
-    sglPercentComplete = 0.05
-    
-    Dim objProgressTag As ProgressBar
-    Set objProgressTag = New ProgressBar  ' Triggers Initialize event which uses Show methond for PC
-    
-    objProgressTag.Title = "Text Tagging Macro"
-    Call UpdateBarAndWait(Bar:=objProgressTag, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    ' NOTE in some cases changing the paragraph style will override local direct character formatting
-    ' e.g., when the whole paragraph is italics. If you don't want that to happen,
-    ' run the Character Styles tagging macro first
-    ' ######## ADD HERE ############
-    ' Cover 30% of progress bar
-    ' Finish at 35% complete
-    
     ' ======== Start the tagging ========
     ' Rename built-in style that has parens
     thisDoc.Styles("Normal (Web)").NameLocal = "_"

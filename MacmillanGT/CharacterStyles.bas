@@ -16,7 +16,7 @@ Option Base 1
 Dim activeRng As Range
 
 Sub MacmillanCharStyles()
-
+    
     
     '------------------Time Start-----------------
     'Dim StartTime As Double
@@ -24,6 +24,9 @@ Sub MacmillanCharStyles()
     
     'Remember time when macro starts
     'StartTime = Timer
+    
+    Dim thisDoc As Document
+    Set thisDoc = ActiveDocument
     
     ''-----------------Check if doc is saved/protected---------------
     If CheckSave = True Then
@@ -85,12 +88,12 @@ Sub MacmillanCharStyles()
     Application.ScreenUpdating = False
     
     '--------save the current cursor location in a bookmark---------------------------
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+    thisDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
     
     '-----------Turn off track changes--------
     Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
+    currentTracking = thisDoc.TrackRevisions
+    thisDoc.TrackRevisions = False
     
     '-----------Delete field codes ----------
     Dim s As Long
@@ -104,7 +107,7 @@ Sub MacmillanCharStyles()
     '-----------------------Tag space break styles----------------------------
     Call zz_clearFind                          'Clear find object
     
-    sglPercentComplete = 0.15
+    sglPercentComplete = 0.12
     strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -115,7 +118,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '----------------------------Fix hyperlinks---------------------------------------
-    sglPercentComplete = 0.25
+    sglPercentComplete = 0.19
     strStatus = "* Applying styles to hyperlinks..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -123,7 +126,8 @@ Sub MacmillanCharStyles()
     'Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
     'Also if you AutoFormat a second time if undoes all of the formatting already applied to hyperlinks
     For s = 1 To UBound(stStories())
-        Call StyleHyperlinksA(StoryType:=(stStories(s)))                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+        'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+        Call StyleHyperlinksA(HyperADoc = thisDoc, StoryType:=(stStories(s)))
     Next s
     
     Call AutoFormatHyperlinks
@@ -136,7 +140,7 @@ Sub MacmillanCharStyles()
 
     
     '--------------------------Remove unstyled space breaks---------------------------
-    sglPercentComplete = 0.4
+    sglPercentComplete = 0.31
     strStatus = "* Removing unstyled breaks..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -147,7 +151,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '--------------------------Tag existing character styles------------------------
-    sglPercentComplete = 0.55
+    sglPercentComplete = 0.44
     strStatus = "* Tagging character styles..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -158,7 +162,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '-------------------------Tag direct formatting----------------------------------
-    sglPercentComplete = 0.7
+    sglPercentComplete = 0.59
     strStatus = "* Tagging direct formatting..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -169,7 +173,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
 
     '----------------------------Apply Macmillan character styles to tagged text--------
-    sglPercentComplete = 0.85
+    sglPercentComplete = 0.7
     strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -180,7 +184,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '---------------------------Remove tags from styled space breaks---------------------
-    sglPercentComplete = 0.95
+    sglPercentComplete = 0.85
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -190,6 +194,14 @@ Sub MacmillanCharStyles()
     Next s
     Call zz_clearFind
     
+    '---------------------------Tag non-Macmillan-styled paragraphs as TX or TX1 --------
+    sglPercentComplete = 0.91
+    strStatus = "* Tagging unstyled paragraphs as Text - Standard (tx)"
+    
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
+    
+    Call TagParagraphs(CurrentDoc:=thisDoc)
+    
     '---------------------------Return settings to original------------------------------
     sglPercentComplete = 1
     strStatus = "* Finishing up..." & vbCr & strStatus
@@ -197,12 +209,12 @@ Sub MacmillanCharStyles()
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     'Go back to original insertion point and delete bookmark
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    If thisDoc.Bookmarks.Exists("OriginalInsertionPoint") = True Then
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+        thisDoc.Bookmarks("OriginalInsertionPoint").Delete
     End If
     
-    ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
+    thisDoc.TrackRevisions = currentTracking         ' return track changes to original setting
     Application.DisplayStatusBar = currentStatusBar
     Application.ScreenUpdating = True
     Application.ScreenRefresh
@@ -221,7 +233,7 @@ Sub MacmillanCharStyles()
 
 End Sub
 
-Private Sub StyleHyperlinksA(StoryType As WdStoryType)
+Private Sub StyleHyperlinksA(HyperADoc As Document, StoryType As WdStoryType)
     ' added by Erica 2014-10-07, v. 3.4
     ' removes all live hyperlinks but leaves hyperlink text intact
     ' then styles all URLs as "span hyperlink (url)" style
@@ -229,7 +241,7 @@ Private Sub StyleHyperlinksA(StoryType As WdStoryType)
     ' this first bit removes all live hyperlinks from document
     ' we want to remove these from urls AND text; will add back to just urls later
     
-    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    Set activeRng = HyperADoc.StoryRanges(StoryType)
     ' remove all embedded hyperlinks regardless of character style
     With activeRng
         While .Hyperlinks.Count > 0
@@ -252,7 +264,7 @@ Private Sub StyleHyperlinksA(StoryType As WdStoryType)
             .ClearFormatting
             .Replacement.ClearFormatting
             .Style = HyperlinkStyleArray(p)
-            .Replacement.Style = ActiveDocument.Styles("Default Paragraph Font")
+            .Replacement.Style = HyperADoc.Styles("Default Paragraph Font")
             .Text = ""
             .Replacement.Text = ""
             .Forward = True
@@ -276,11 +288,11 @@ LinksErrorHandler:
             
             'If style is not present, add style
             Dim myStyle As Style
-            Set myStyle = ActiveDocument.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
+            Set myStyle = HyperADoc.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
             
             'If missing style was Macmillan built-in style, add character highlighting
             If myStyle = "span hyperlink (url)" Then
-                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
+                HyperADoc.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
             End If
         
         End If
@@ -902,7 +914,7 @@ ErrorHandler:
 
 End Sub
 
-Sub DeleteFields(StoryTypes As Variant)
+Private Sub DeleteFields(StoryTypes As Variant)
     Dim strContents As String
     
     ' This has some kind of problem with some type of fields in endnotes? Investiagte
@@ -919,3 +931,89 @@ Sub DeleteFields(StoryTypes As Variant)
     End With
 End Sub
 
+Private Sub TagParagraphs(CurrentDoc As Document)
+' Applies Text - Standard or Text - Std No-Indent styles to any paragraphs without Macmillan styles applied
+
+    ' Rename built-in style that has parens
+    CurrentDoc.Styles("Normal (Web)").NameLocal = "_"
+    
+    Dim lngParaCount As Long
+    Dim a As Long
+    Dim strCurrentStyle As String
+    Dim strTX As String
+    Dim strTX1 As String
+    Dim strNewStyle As String
+    
+    ' Making these variables so we don't get any fat-finger errors with the style names
+    strTX = "Text - Standard (tx)"
+    strTX1 = "Text - Std No-Indent (tx1)"
+    
+    lngParaCount = CurrentDoc.Paragraphs.Count
+    
+    On Error GoTo ErrorHandler1     ' adds this style if it is not in the
+    For a = 1 To lngParaCount
+        
+        strCurrentStyle = CurrentDoc.Paragraphs(a).Style
+        'Debug.Print a & ": " & strCurrentStyle
+        
+        ' Macmillan styles all end in close parens
+        If Right(strCurrentStyle, 1) <> ")" Then
+            ' If flush left, make No-Indent
+            If CurrentDoc.Paragraphs(a).FirstLineIndent = 0 Then
+                strNewStyle = strTX1
+            Else
+                strNewStyle = strTX
+            End If
+            
+            ' Change the style of the paragraph in question
+            ' This is where it will error if no style present
+            CurrentDoc.Paragraphs(a).Style = strNewStyle
+            
+        End If
+    Next a
+    On Error GoTo 0
+    
+    ' Change Normal (Web) back
+    CurrentDoc.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
+
+    Exit Sub
+    
+ErrorHandler1:
+    If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
+        Dim myStyle As Style
+        Set myStyle = CurrentDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
+        With myStyle
+            .QuickStyle = True
+            .Font.Name = "Times New Roman"
+            .Font.Size = 12
+            With .ParagraphFormat
+                .LineSpacingRule = wdLineSpaceDouble
+                .SpaceAfter = 0
+                .SpaceBefore = 0
+                
+                With .Borders
+                    Select Case strNewStyle
+                        Case strTX
+                            .OutsideLineStyle = wdLineStyleSingle
+                            .OutsideLineWidth = wdLineWidth600pt
+                        
+                        Case strTX1
+                            .OutsideLineStyle = wdLineStyleDouble
+                            .OutsideLineWidth = wdLineWidth225pt
+                            
+                    End Select
+                .OutsideColor = RGB(102, 204, 255)
+                
+                End With
+            End With
+        End With
+        
+        ' Now go back and try to assign that style again
+        Resume
+    
+    Else
+        Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
+        On Error GoTo 0
+        Exit Sub
+    End If
+End Sub
