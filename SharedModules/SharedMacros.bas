@@ -3,14 +3,21 @@ Attribute VB_Name = "SharedMacros"
 ' All should be declared as Public for use from other modules
 
 Option Explicit
-Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 
-Public Sub Doze(ByVal lngPeriod As Long)
-    DoEvents
-    Sleep lngPeriod
-    ' Call it in desired location to sleep for 1 seconds like this:
-    ' Doze 1000
-End Sub
+' Doze sub only works on Windows, this declare only works on Win32
+' Need to adjust Declare for Win64 compatibility, see https://msdn.microsoft.com/en-us/library/office/ee691831%28v=office.14%29.aspx#odc_office2010_Compatibility32bit64bit_IntroducingVBA7CodeBase
+' But I don't think we need any more now that we're using the UpdateBarAndWait sub below,
+' So I'm just commenting out the whole thing for now
+'Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+'
+'Public Sub Doze(ByVal lngPeriod As Long)
+'    DoEvents
+'    Sleep lngPeriod
+'    ' Call it in desired location to sleep for 1 seconds like this:
+'    ' Doze 1000
+'End Sub
+
+
 Public Function IsItThere(Path)
 ' Check if file or directory exists on PC or Mac
     
@@ -40,7 +47,7 @@ ErrHandler:
     If Err.Number = 68 Then     ' "Device unavailable"
         IsItThere = False
     Else
-        'Debug.Print "IsItThere Error " & Err.Number & ": " & Err.Description
+        Debug.Print "IsItThere Error " & Err.Number & ": " & Err.Description
     End If
 End Function
 

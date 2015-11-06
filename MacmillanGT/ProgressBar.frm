@@ -15,23 +15,25 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 ' By Erica Warren - erica.warren@macmillan.com
-' Started with code here: https://strugglingtoexcel.wordpress.com/2014/09/22/class-progress-bar-excel-vba/
-' But adjusted to work in Word, simplified, added some things
 
 ' ==== USE ==========================
 ' Displays a userform progress bar to use while another macro is running
 ' Is modelss on PC so the calling macro will continue to run while progress bar is displayed
 
 ' ##### IMPORTANT NOTES!!!  #####
-' Word 2011 for Mac can't display userforms modeless so it won't work, however
-' all is not lost; the Increment method below will instead update the status bar
+' Word 2011 for Mac can't display userforms modeless so this won't work, however
+' all is not lost; the Increment method below will instead update the status bar on Man,
 ' but be sure not to use ProgressBar.Show method in calling sub
-' (Use Load; the Initialize event will show the userform on PC
+' (Use Load; the Initialize event will show the userform on PC)
 
 ' ALSO! Because this is modeless the calling sub will continue to run; this can cause
 ' problems if the Increment method hasn't finished yet. So there is a Done property; include a line to set it
 ' as False before using the Increment method, and then use a loop after the Increment method to test for
 ' ProgressBar.Done = True before continuing.
+
+' Also also, requires SharedMacros modules kinda, because it includes a very helpful
+' procedure called UpdateBarAndWait, which, as it says, updates the progress bar and waits
+' for ProgressBar.Done = True before continuing
 
 Option Explicit
 
@@ -82,6 +84,7 @@ Me.LabelProgress.Width = cBarWidth
     ' But lucky you, the Increment method will update the Mac Status Bar instead
     ' So go right on ahead with this, just DON'T use ProgressBar.Show method in the calling sub
     ' We'll show it below for PCs only
+    Me.Hide ' In case someone uses the Show method without the Load method
     Application.DisplayStatusBar = True
 #Else
     Me.Show

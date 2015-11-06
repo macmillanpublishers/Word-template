@@ -35,7 +35,8 @@ End Sub
 Private Sub PrintStylesMac()
 
     ' ===== DEPENDENCIES ==========================================================
-    ' Requires modules AttachTemplateMacro (and thus also Macmillan style templates) and SharedMacros
+    ' Requires modules AttachTemplateMacro (and thus also Macmillan style templates)
+    ' and ProgressBar userform/class
 
     
     ' ===== LIMITATIONS ==========================================================
@@ -223,7 +224,7 @@ Private Sub PrintStylesMac()
 
     ' Now open the print dialog so user can print the document.
     sglPercentComplete = 0.97
-    strStatus = strStatus & "* Printing document with style names in  margin..." & vbNewLine
+    strStatus = "* Printing document with style names in  margin..." & vbNewLine & strStatus
     
     Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
@@ -266,7 +267,7 @@ End Sub
 Private Sub PrintStylesPC()
 
     ' ===== DEPENDENCIES ==========================================================
-    ' Requires modules AttachTemplateMacro (and thus also Macmillan style templates) and SharedMacros
+    ' Requires modules AttachTemplateMacro (and thus also Macmillan style templates), SharedMacros, and ProgressBar
     ' Before you run this, create a text box with the listed settings below, then select the
     ' text box and go to Insert > Text Box > Save Selection to Text Box Gallery (Word 2013). In the
     ' Create New Building Block dialog that opens, name the Building Block "StyleNames1" and
@@ -298,7 +299,7 @@ Private Sub PrintStylesPC()
     
     Application.ScreenUpdating = False
     
-    ' ===== Progress Bar / Status Bar ========================
+    ' ===== Progress Bar ========================
     Dim currentStatusBar As Boolean
     currentStatusBar = Application.DisplayStatusBar
     Application.DisplayStatusBar = True
@@ -312,11 +313,10 @@ Private Sub PrintStylesPC()
     strStatus = "* Getting started..."
     
     Dim objProgressPrint As ProgressBar
-    Set objProgressPrint = New ProgressBar
+    Set objProgressPrint = New ProgressBar  ' Triggers Initialize event, which uses Show methond
     objProgressPrint.Title = strTitle
-    objProgressPrint.Show
-    objProgressPrint.Increment sglPercentComplete, strStatus
-    Doze 50
+
+    Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
 
     
     ' ===== Copy and Paste into a new doc ===================
@@ -343,8 +343,7 @@ Private Sub PrintStylesPC()
     sglPercentComplete = 0.03
     strStatus = "* Creating dupe document to tag with style names..." & vbNewLine & strStatus
     
-    objProgressPrint.Increment sglPercentComplete, strStatus
-    Doze 50
+    Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
     
     ' Copy the text of the document into a new document, so we don't screw up the original
     ' Needs to have the BoundMS template attached before copying so the styles match
@@ -370,6 +369,7 @@ Private Sub PrintStylesPC()
     
     'If the template isn't EXACTLY the same (e.g., document was originally styled with an earlier version)
     'you'll still get the error that there are too many styles, so send 'n' to choose "No" from the alert
+    ' Not the best solution because if they error isn't thrown it still sends the key and "n" gets typed in doc
     SendKeys "n"
     tempDoc.Content.PasteSpecial DataType:=wdPasteHTML ' maintains styles
         
@@ -377,8 +377,7 @@ Private Sub PrintStylesPC()
     sglPercentComplete = 0.05
     strStatus = "* Adjusting margins to fit style names..." & vbNewLine & strStatus
 
-    objProgressPrint.Increment sglPercentComplete, strStatus
-    Doze 50
+    Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
     
     ' if possible, we want the total margin size to stay the same
     ' so that the paragraphs don't reflow
@@ -403,8 +402,7 @@ Private Sub PrintStylesPC()
     sglPercentComplete = 0.07
     strStatus = "* Setting format for style names..." & vbNewLine & strStatus
     
-    objProgressPrint.Increment sglPercentComplete, strStatus
-    Doze 50
+    Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
         
     ' But save settings first and then change back -- are these settings sticky?
     Dim currentSize As Long
@@ -454,8 +452,7 @@ Private Sub PrintStylesPC()
             sglPercentComplete = Round((((a / activeParas) * 0.85) + 0.1), 2)
             strStatusLoop = "* Adding style names to paragraph " & a & " of " & activeParas & "..." & vbNewLine & strStatus
 
-            objProgressPrint.Increment sglPercentComplete, strStatusLoop
-            Doze 50
+            Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
             
             'SecondsElapsed = Round(Timer - StartTime, 2)
             'Debug.Print "Paragraph " & a & " in " & SecondsElapsed & " seconds"
@@ -480,8 +477,7 @@ Private Sub PrintStylesPC()
     sglPercentComplete = 0.97
     strStatus = strStatus & "* Printing document with style names in  margin..." & vbNewLine
     
-    objProgressPrint.Increment sglPercentComplete, strStatus
-    Doze 50
+    Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dialogs(wdDialogFilePrint).Show
     
@@ -489,8 +485,7 @@ Private Sub PrintStylesPC()
     sglPercentComplete = 1
     strStatus = strStatus & "* Finishing up..." & vbNewLine
 
-    objProgressPrint.Increment sglPercentComplete, strStatus
-    Doze 50
+    Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
     
 Cleanup:
         ' reset Normal style because I'm not sure if it's sticky or not

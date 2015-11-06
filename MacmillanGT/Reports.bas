@@ -18,7 +18,7 @@ End Sub
 
 
 Sub MacmillanStyleReport()
- Call MakeReport(torDOTcom:=False)
+    Call MakeReport(torDOTcom:=False)
 End Sub
 
 
@@ -104,24 +104,11 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 0.02
     strStatus = funArray(x)
     
-    'All Progress Bar statements for PC only because won't run modeless on Mac
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
-    
-    If Not TheOS Like "*Mac*" Then
-        Dim oProgressBkmkr As ProgressBar
-        Set oProgressBkmkr = New ProgressBar
-    
-        oProgressBkmkr.Title = strTitle
-        oProgressBkmkr.Show
-    
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Dim oProgressBkmkr As ProgressBar
+    Set oProgressBkmkr = New ProgressBar    ' Triggers Initialize
+
+    oProgressBkmkr.Title = strTitle
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     '--------save the current cursor location in a bookmark---------------------------
     Dim currentStory As WdStoryType
@@ -158,13 +145,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 0.05
     strStatus = "* Counting required styles..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim styleCount() As Variant
     
@@ -179,13 +160,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 0.08
     strStatus = "* Correcting heading styles..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     ' If certain styles (oldStyle) appear by themselves, converts to
     ' the approved solo style (newStyle)
@@ -211,13 +186,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     Application.ScreenUpdating = True
     strStatus = "* Getting book metadata from manuscript..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim strMetadata As String
     strMetadata = GetMetadata
@@ -226,13 +195,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 0.15
     strStatus = "* Getting list of illustrations..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim strIllustrationsList As String
     strIllustrationsList = IllustrationsList
@@ -241,13 +204,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 0.18
     strStatus = "* Getting list of styles in use..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim arrGoodBadStyles() As Variant
     Dim strGoodStylesList As String
@@ -288,13 +245,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 0.98
     strStatus = "* Checking styles for errors..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim strErrorList As String
     
@@ -309,13 +260,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 0.99
     strStatus = "* Creating report file..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim strReportText As String
     strReportText = CreateReportText(blnTemplateUsed, strErrorList, strMetadata, strIllustrationsList, strGoodStylesList)
@@ -335,13 +280,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 1
     strStatus = "* Finishing up..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     'return cursor to original position and delete bookmark
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
@@ -359,9 +298,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
     Application.ScreenRefresh
     
-    If Not TheOS Like "*Mac*" Then
-        Unload oProgressBkmkr
-    End If
+    Unload oProgressBkmkr
     
     '============================================================================
     '----------------------Timer End-------------------------------------------
@@ -423,14 +360,7 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
                         vbCr & Status
             
             'Debug.Print sglPercentComplete
-            If Not TheOS Like "*Mac*" Then
-                ProgressBar.Increment sglPercentComplete, strStatus
-                Doze 50 'Wait 50 milliseconds for progress bar to update
-            Else
-                'Mac will just use status bar
-                Application.StatusBar = ProgTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
-                DoEvents
-            End If
+            Call UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
         End If
         
         For a = LBound(Stories()) To UBound(Stories())
@@ -551,18 +481,11 @@ CheckGoodStyles:
     
     For M = 1 To UBound(styleNameM())
         
-            'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((M / UBound(styleNameM())) * 0.13) + 0.63)
-            strStatus = "* Checking for " & styleNameM(M) & " styles..." & vbCr & Status
+        'Percent complete and status for progress bar (PC) and status bar (Mac)
+        sglPercentComplete = (((M / UBound(styleNameM())) * 0.13) + 0.63)
+        strStatus = "* Checking for " & styleNameM(M) & " styles..." & vbCr & Status
     
-            If Not TheOS Like "*Mac*" Then
-                ProgressBar.Increment sglPercentComplete, strStatus
-                Doze 50 'Wait 50 milliseconds for progress bar to update
-            Else
-                'Mac will just use status bar
-                Application.StatusBar = ProgTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
-                DoEvents
-            End If
+        Call UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
         
         On Error GoTo ErrHandler
         
@@ -916,6 +839,7 @@ Function CheckAfterPB() As String
     
     Application.ScreenUpdating = False
     
+    ' These are all styles allowed to follow a page break
     arrSecStartStyles(1) = "Chap Title (ct)"
     arrSecStartStyles(2) = "Chap Number (cn)"
     arrSecStartStyles(3) = "Chap Title Nonprinting (ctnp)"
@@ -1153,16 +1077,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
             sglPercentComplete = (((N / activeParaCount) * 0.1) + 0.76)
             strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for approved Bookmaker styles..." & vbCr & StatusBar
     
-            'All Progress Bar statements for PC only because won't run modeless on Mac
-            If Not TheOS Like "*Mac*" Then
-                ProgressBar2.Increment sglPercentComplete, strStatus
-                Doze 50 'Wait 50 milliseconds for progress bar to update
-            Else
-                'Mac will just use status bar
-                Application.StatusBar = ProgressTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
-                DoEvents
-            End If
-        End If
+            Call UpdateBarAndWait(Bar:=ProgressBar2, Status:=strStatus, Percent:=sglPercentComplete)
         
         For a = LBound(Stories()) To UBound(Stories())
             If N <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
@@ -1732,14 +1647,8 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
             sglPercentComplete = (((J / activeParaCount) * 0.12) + 0.86)
             strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
     
-            If Not TheOS Like "*Mac*" Then
-                ProgressBar.Increment sglPercentComplete, strStatus
-                Doze 50 'Wait 50 milliseconds for progress bar to update
-            Else
-                'Mac will just use status bar
-                Application.StatusBar = ProgTitle & " " & Round((100 * sglPercentComplete), 0) & "% complete | " & strStatus
-                DoEvents
-            End If
+            Call UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
+            
         End If
         
         For a = LBound(Stories()) To UBound(Stories())

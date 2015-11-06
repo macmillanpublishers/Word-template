@@ -3,7 +3,7 @@ Attribute VB_Name = "LOCtagsMacro"
 ' Produces a text file of the manuscript with tags added for CIP application
 
 ' ======= DEPENDENCIES =======================
-' 1. Requires ProgressBar userform
+' 1. Requires ProgressBar userform and SharedMacros module
 ' 2. Manuscript must be tagged with Macmillan styles.
       
 Option Explicit
@@ -33,8 +33,8 @@ Sub LibraryOfCongressTags()
     exitOnError = zz_errorChecksB()
     
     If exitOnError <> False Then
-    Call zz_clearFindB
-    Exit Sub
+        Call zz_clearFindB
+        Exit Sub
     End If
     
     skipChapterTags = volumestylecheck()
@@ -84,23 +84,11 @@ Sub LibraryOfCongressTags()
     strStatus = funArray(x)
     
     'All Progress Bar statements for PC only because won't run modeless on Mac
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
-    
-    If Not TheOS Like "*Mac*" Then
-        Dim oProgressCIP As ProgressBar
-        Set oProgressCIP = New ProgressBar
-    
-        oProgressCIP.Title = strTitle
-        oProgressCIP.Show
-    
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Dim oProgressCIP As ProgressBar
+    Set oProgressCIP = New ProgressBar  ' Triggers Initialize event, which uses Show method for PC
+
+    oProgressCIP.Title = strTitle
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     '--------save the current cursor location in a bookmark---------------------------
     Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
@@ -109,7 +97,7 @@ Sub LibraryOfCongressTags()
     '----------remove content controls from PC---
     ' can't remove from Mac, breaks whole sub
     If Not TheOS Like "*Mac*" Then
-    Call ClearContentControls
+        Call ClearContentControls
     End If
     
     '=========================the rest of the macro========================
@@ -118,13 +106,7 @@ Sub LibraryOfCongressTags()
     sglPercentComplete = 0.2
     strStatus = "* Adding tags for Title page..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call tagTitlePage
     Call zz_clearFindB
@@ -133,13 +115,7 @@ Sub LibraryOfCongressTags()
     sglPercentComplete = 0.3
     strStatus = "* Adding tags for Copyright page..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call tagCopyrightPage
     Call zz_clearFindB
@@ -148,13 +124,7 @@ Sub LibraryOfCongressTags()
     sglPercentComplete = 0.4
     strStatus = "* Adding tags for Series page..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call tagSeriesPage
     Call zz_clearFindB
@@ -163,13 +133,7 @@ Sub LibraryOfCongressTags()
     sglPercentComplete = 0.5
     strStatus = "* Adding tags for Table of Contents..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call tagTOC
     Call zz_clearFindB
@@ -178,13 +142,7 @@ Sub LibraryOfCongressTags()
     sglPercentComplete = 0.6
     strStatus = "* Adding tags for chapters..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     If skipChapterTags = False Then
         Call tagChapterHeads
@@ -199,36 +157,17 @@ Sub LibraryOfCongressTags()
     sglPercentComplete = 0.7
     strStatus = "* Running tag check & generating report..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     If zz_TagReport = False Then
-        If Not TheOS Like "*Mac*" Then
-            oProgressCIP.Hide
-        End If
+        oProgressCIP.Hide
         
         Dim strMessage As String
         strMessage = "CIP tags cannot be added because no paragraphs were tagged with Macmillan styles for the titlepage, " & _
             "copyright page, table of contents, or chapter title pages. Please add the correct styles and try again."
         MsgBox strMessage, vbCritical, "No Styles Found"
         
-        Application.ScreenUpdating = True
-        Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
-        Application.ScreenRefresh
-        
-        If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-            Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-            ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-        End If
-
-        If Not TheOS Like "*Mac*" Then
-            Unload oProgressCIP
-        End If
+        GoTo Cleanup
         
         Exit Sub
         
@@ -238,29 +177,16 @@ Sub LibraryOfCongressTags()
     sglPercentComplete = 0.8
     strStatus = "* Saving as text document..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call SaveAsTextFile
     
 
-    
     '-------------------------Delete tags from orig doc---------------------------
     sglPercentComplete = 0.9
     strStatus = "* Cleaning up file..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call cleanFile
     Call zz_clearFindB
@@ -269,28 +195,23 @@ Sub LibraryOfCongressTags()
     sglPercentComplete = 0.99
     strStatus = "* Finishing up..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
    
+Cleanup:
     'return cursor to original position and delete bookmark
     If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
         ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
     End If
     
+    ' return settings to original
     ActiveDocument.TrackRevisions = currentTracking
     Application.ScreenUpdating = True
     Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
     Application.ScreenRefresh
     
-    If Not TheOS Like "*Mac*" Then
-        Unload oProgressCIP
-    End If
+    ' Get rid of the progress bar
+    Unload oProgressCIP
     
     'If skipChapterTags = True Then
     '    MsgBox "Library of Congress tagging is complete except for Chapter tags." & vbNewLine & vbNewLine & "Chapter tags will need to be manually applied."

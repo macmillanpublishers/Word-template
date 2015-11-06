@@ -15,6 +15,26 @@ Sub TagText()
         Exit Sub
     End If
     
+    ' ======== Progress Bar stuffs ========
+    Dim strStatus As String
+    Dim sglPercentComplete As Single
+    
+    strStatus = "* Starting macro..."  ' change to something fun eventually
+    sglPercentComplete = 0.05
+    
+    Dim objProgressTag As ProgressBar
+    Set objProgressTag = New ProgressBar  ' Triggers Initialize event which uses Show methond for PC
+    
+    objProgressTag.Title = "Text Tagging Macro"
+    Call UpdateBarAndWait(Bar:=objProgressTag, Status:=strStatus, Percent:=sglPercentComplete)
+    
+    ' NOTE in some cases changing the paragraph style will override local direct character formatting
+    ' e.g., when the whole paragraph is italics. If you don't want that to happen,
+    ' run the Character Styles tagging macro first
+    ' ######## ADD HERE ############
+    ' Cover 30% of progress bar
+    ' Finish at 35% complete
+    
     ' ======== Start the tagging ========
     ' Rename built-in style that has parens
     thisDoc.Styles("Normal (Web)").NameLocal = "_"
@@ -25,11 +45,16 @@ Sub TagText()
     lngParaCount = thisDoc.Paragraphs.Count
     
     ' ======== Tag non-macmillan styles with TX or TX1 ========
-    ' NOTE in some cases this will override local direct character formatting
-    ' e.g., when the whole paragraph is italics. If you don't want that to happen,
-    ' run the Character Styles tagging macro first
     On Error GoTo ErrorHandler1     ' cancels macro if we don't have this style.
     For a = 1 To lngParaCount
+        
+        If a Mod 100 = 0 Then
+            sglPercentComplete = (((a / lngParaCount) * 0.3) + 0.35)
+            strStatus = "* Tagging unstyled paragraphs ..."
+        End If
+        
+        
+        
         strCurrentStyle = thisDoc.Paragraphs(a).Style
         'Debug.Print a & ": " & strCurrentStyle
         

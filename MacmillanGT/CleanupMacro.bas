@@ -135,8 +135,8 @@ Sub MacmillanManuscriptCleanup()
     Dim exitOnError As Boolean
     
     exitOnError = zz_errorChecks()      ''Doc is unsaved, protected, or uses backtick character?
-    If exitOnError <> False Then
-    Exit Sub
+        If exitOnError <> False Then
+        Exit Sub
     End If
     
     Application.ScreenUpdating = False
@@ -186,24 +186,13 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.05
     strStatus = funArray(x)
 
-    'All Progress Bar statements for PC only because won't run modeless on Mac
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
+    Dim oProgressCleanup As ProgressBar
+    Set oProgressCleanup = New ProgressBar  ' Triggers Initialize event, which also triggers Show method on PC only
+
+    oProgressCleanup.Title = strTitle
     
-    If Not TheOS Like "*Mac*" Then
-        Dim oProgressCleanup As ProgressBar
-        Set oProgressCleanup = New ProgressBar
-    
-        oProgressCleanup.Title = strTitle
-        oProgressCleanup.Show
-    
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    ' This sub calls ProgressBar.Increment and waits for it to finish before returning here
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
     
     '--------save the current cursor location in a bookmark---------------------------
     ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
@@ -220,14 +209,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.2
     strStatus = "* Fixing quotes, unicode, section breaks..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
     
     Dim s As Long
     
@@ -241,14 +223,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.4
     strStatus = "* Preserving styled whitespace characters..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
     
     For s = 1 To UBound(stStories())
         Call PreserveStyledCharactersA(StoryType:=(stStories(s)))              ' EW added v. 3.2, tags styled page breaks, tabs
@@ -259,14 +234,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.6
     strStatus = "* Removing unstyled whitespace, fixing ellipses and dashes..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
     
     For s = 1 To UBound(stStories())
         Call RmWhiteSpaceB(StoryType:=(stStories(s)))    'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
@@ -278,14 +246,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.8
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
     
     For s = 1 To UBound(stStories())
         Call PreserveStyledCharactersB(StoryType:=(stStories(s)))    ' EW added v. 3.2, replaces character tags with actual character
@@ -303,15 +264,8 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.95
     strStatus = "* Removing bookmarks..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
+
     Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
     Call zz_clearFind
     
@@ -319,23 +273,14 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 1#
     strStatus = "* Finishing up..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
+
     ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
     Application.DisplayStatusBar = currentStatusBar
     Application.ScreenUpdating = True
     Application.ScreenRefresh
     
-    If Not TheOS Like "*Mac*" Then
-        Unload oProgressCleanup
-    End If
+    Unload oProgressCleanup
     
     MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
     
@@ -411,8 +356,8 @@ Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     
     On Error GoTo ErrHandler
     
-        Dim keyStyle As Word.Style
-        Set keyStyle = ActiveDocument.Styles(preserveCharStyle)
+    Dim keyStyle As Word.Style
+    Set keyStyle = ActiveDocument.Styles(preserveCharStyle)
     
     preserveCharFindArray(1) = "^t" 'tabs
     preserveCharFindArray(2) = "  "  ' two spaces
