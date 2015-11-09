@@ -21,7 +21,7 @@ Sub TagText()
     ' Add some fun statuses?
     
     strTitle = "Text Standard Tagging Macro"
-    sglPercentComplete = 0.1
+    sglPercentComplete = 0.14
     strStatus = "* Getting started..." & vbNewLine
     
     Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
@@ -49,7 +49,7 @@ Sub TagText()
         
         If a Mod 100 = 0 Then
             ' Increment progress bar
-            sglPercentComplete = (((a / lngParaCount) * 0.27) + 0.1)
+            sglPercentComplete = (((a / lngParaCount) * 0.31) + 0.14)
             strStatus = "* Tagging non-Macmillan paragraphs with Text - Standard (tx): " & a & " of " & lngParaCount _
                 & vbNewLine & strStatus
             Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
@@ -121,7 +121,7 @@ Sub TagText()
     
     For b = LBound(strSearchStyle()) To UBound(strSearchStyle())
         
-        sglPercentComplete = (((b / lngParaCount) * 0.3) + 0.37)
+        sglPercentComplete = (((b / lngParaCount) * 0.45) + 0.45)
         strStatus = "* Fixing space around " & strSearchStyle(b) & "..." & vbNewLine & strStatus
         Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
         
@@ -240,6 +240,12 @@ ContinueLoop:
         End With
 ContinueNextB:
     Next b
+    
+    ' Cleanup stuff
+    sglPercentComplete = 0.99
+    strStatus = "* Finishing up..." & vbNewLine & strStatus
+    
+    Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
     
     Exit Sub
     
