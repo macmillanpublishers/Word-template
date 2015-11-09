@@ -25,9 +25,6 @@ Sub MacmillanCharStyles()
     'Remember time when macro starts
     'StartTime = Timer
     
-    Dim thisDoc As Document
-    Set thisDoc = ActiveDocument
-    
     ''-----------------Check if doc is saved/protected---------------
     If CheckSave = True Then
         Exit Sub
@@ -88,12 +85,12 @@ Sub MacmillanCharStyles()
     Application.ScreenUpdating = False
     
     '--------save the current cursor location in a bookmark---------------------------
-    thisDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
     
     '-----------Turn off track changes--------
     Dim currentTracking As Boolean
-    currentTracking = thisDoc.TrackRevisions
-    thisDoc.TrackRevisions = False
+    currentTracking = ActiveDocument.TrackRevisions
+    ActiveDocument.TrackRevisions = False
     
     '-----------Delete field codes ----------
     Dim s As Long
@@ -124,10 +121,10 @@ Sub MacmillanCharStyles()
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     'Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
-    'Also if you AutoFormat a second time if undoes all of the formatting already applied to hyperlinks
+    'Also if you AutoFormat a second time it undoes all of the formatting already applied to hyperlinks
     For s = 1 To UBound(stStories())
         'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
-        Call StyleHyperlinksA(HyperADoc = thisDoc, StoryType:=(stStories(s)))
+        Call StyleHyperlinksA(StoryType:=(stStories(s)))
     Next s
     
     Call AutoFormatHyperlinks
@@ -194,14 +191,6 @@ Sub MacmillanCharStyles()
     Next s
     Call zz_clearFind
     
-    '---------------------------Tag non-Macmillan-styled paragraphs as TX or TX1 --------
-    sglPercentComplete = 0.91
-    strStatus = "* Tagging unstyled paragraphs as Text - Standard (tx)"
-    
-    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    Call TagParagraphs(CurrentDoc:=thisDoc)
-    
     '---------------------------Return settings to original------------------------------
     sglPercentComplete = 1
     strStatus = "* Finishing up..." & vbCr & strStatus
@@ -209,12 +198,12 @@ Sub MacmillanCharStyles()
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     'Go back to original insertion point and delete bookmark
-    If thisDoc.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
         Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        thisDoc.Bookmarks("OriginalInsertionPoint").Delete
+        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
     End If
     
-    thisDoc.TrackRevisions = currentTracking         ' return track changes to original setting
+    ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
     Application.DisplayStatusBar = currentStatusBar
     Application.ScreenUpdating = True
     Application.ScreenRefresh
@@ -233,7 +222,7 @@ Sub MacmillanCharStyles()
 
 End Sub
 
-Private Sub StyleHyperlinksA(HyperADoc As Document, StoryType As WdStoryType)
+Private Sub StyleHyperlinksA(StoryType As WdStoryType)
     ' added by Erica 2014-10-07, v. 3.4
     ' removes all live hyperlinks but leaves hyperlink text intact
     ' then styles all URLs as "span hyperlink (url)" style
@@ -241,7 +230,7 @@ Private Sub StyleHyperlinksA(HyperADoc As Document, StoryType As WdStoryType)
     ' this first bit removes all live hyperlinks from document
     ' we want to remove these from urls AND text; will add back to just urls later
     
-    Set activeRng = HyperADoc.StoryRanges(StoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     ' remove all embedded hyperlinks regardless of character style
     With activeRng
         While .Hyperlinks.Count > 0
@@ -264,7 +253,7 @@ Private Sub StyleHyperlinksA(HyperADoc As Document, StoryType As WdStoryType)
             .ClearFormatting
             .Replacement.ClearFormatting
             .Style = HyperlinkStyleArray(p)
-            .Replacement.Style = HyperADoc.Styles("Default Paragraph Font")
+            .Replacement.Style = ActiveDocument.Styles("Default Paragraph Font")
             .Text = ""
             .Replacement.Text = ""
             .Forward = True
@@ -288,11 +277,11 @@ LinksErrorHandler:
             
             'If style is not present, add style
             Dim myStyle As Style
-            Set myStyle = HyperADoc.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
+            Set myStyle = ActiveDocument.Styles.Add(Name:=HyperlinkStyleArray(p), Type:=wdStyleTypeCharacter)
             
             'If missing style was Macmillan built-in style, add character highlighting
             If myStyle = "span hyperlink (url)" Then
-                HyperADoc.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
+                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
             End If
         
         End If
@@ -358,11 +347,10 @@ Private Sub AutoFormatHyperlinks()
     Dim oNote As Range
     Dim oRng As Range
     
-    Set oDoc = ActiveDocument
     'oDoc.Save      ' Already saved active doc?
     Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False)
     
-    If ActiveDocument.Footnotes.Count >= 1 Then
+    If oDoc.Footnotes.Count >= 1 Then
         Dim oFN As Footnote
         For Each oFN In oDoc.Footnotes
             Set oNote = oFN.Range
@@ -377,7 +365,7 @@ Private Sub AutoFormatHyperlinks()
         Set oFN = Nothing
     End If
     
-    If ActiveDocument.Endnotes.Count >= 1 Then
+    If oDoc.Endnotes.Count >= 1 Then
         Dim oEN As Endnote
         For Each oEN In oDoc.Endnotes
             Set oNote = oEN.Range
@@ -393,7 +381,6 @@ Private Sub AutoFormatHyperlinks()
     End If
     
     oTemp.Close SaveChanges:=wdDoNotSaveChanges
-    Set oDoc = Nothing
     Set oTemp = Nothing
     Set oRng = Nothing
     Set oNote = Nothing
@@ -434,7 +421,7 @@ Private Sub StyleHyperlinksB(StoryType As WdStoryType)
 End Sub
 
 Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
-    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    Set activeRng = WhiteSpaceDocA.StoryRanges(StoryType)
     
     Dim tagArray(13) As String                                   ' number of items in array should be declared here
     Dim StylePreserveArray(13) As String              ' number of items in array should be declared here
@@ -929,91 +916,4 @@ Private Sub DeleteFields(StoryTypes As Variant)
             End With
         Wend
     End With
-End Sub
-
-Private Sub TagParagraphs(CurrentDoc As Document)
-' Applies Text - Standard or Text - Std No-Indent styles to any paragraphs without Macmillan styles applied
-
-    ' Rename built-in style that has parens
-    CurrentDoc.Styles("Normal (Web)").NameLocal = "_"
-    
-    Dim lngParaCount As Long
-    Dim a As Long
-    Dim strCurrentStyle As String
-    Dim strTX As String
-    Dim strTX1 As String
-    Dim strNewStyle As String
-    
-    ' Making these variables so we don't get any fat-finger errors with the style names
-    strTX = "Text - Standard (tx)"
-    strTX1 = "Text - Std No-Indent (tx1)"
-    
-    lngParaCount = CurrentDoc.Paragraphs.Count
-    
-    On Error GoTo ErrorHandler1     ' adds this style if it is not in the
-    For a = 1 To lngParaCount
-        
-        strCurrentStyle = CurrentDoc.Paragraphs(a).Style
-        'Debug.Print a & ": " & strCurrentStyle
-        
-        ' Macmillan styles all end in close parens
-        If Right(strCurrentStyle, 1) <> ")" Then
-            ' If flush left, make No-Indent
-            If CurrentDoc.Paragraphs(a).FirstLineIndent = 0 Then
-                strNewStyle = strTX1
-            Else
-                strNewStyle = strTX
-            End If
-            
-            ' Change the style of the paragraph in question
-            ' This is where it will error if no style present
-            CurrentDoc.Paragraphs(a).Style = strNewStyle
-            
-        End If
-    Next a
-    On Error GoTo 0
-    
-    ' Change Normal (Web) back
-    CurrentDoc.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
-
-    Exit Sub
-    
-ErrorHandler1:
-    If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
-        Dim myStyle As Style
-        Set myStyle = CurrentDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
-        With myStyle
-            .QuickStyle = True
-            .Font.Name = "Times New Roman"
-            .Font.Size = 12
-            With .ParagraphFormat
-                .LineSpacingRule = wdLineSpaceDouble
-                .SpaceAfter = 0
-                .SpaceBefore = 0
-                
-                With .Borders
-                    Select Case strNewStyle
-                        Case strTX
-                            .OutsideLineStyle = wdLineStyleSingle
-                            .OutsideLineWidth = wdLineWidth600pt
-                        
-                        Case strTX1
-                            .OutsideLineStyle = wdLineStyleDouble
-                            .OutsideLineWidth = wdLineWidth225pt
-                            
-                    End Select
-                .OutsideColor = RGB(102, 204, 255)
-                
-                End With
-            End With
-        End With
-        
-        ' Now go back and try to assign that style again
-        Resume
-    
-    Else
-        Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
-        On Error GoTo 0
-        Exit Sub
-    End If
 End Sub
