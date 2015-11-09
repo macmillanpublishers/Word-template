@@ -71,7 +71,7 @@ Sub MacmillanCharStyles()
     'Debug.Print x
     
     strTitle = "Macmillan Character Styles Macro"
-    sglPercentComplete = 0.05
+    sglPercentComplete = 0.09
     strStatus = funArray(x)
     
     Dim oProgressChar As ProgressBar
@@ -104,7 +104,7 @@ Sub MacmillanCharStyles()
     '-----------------------Tag space break styles----------------------------
     Call zz_clearFind                          'Clear find object
     
-    sglPercentComplete = 0.12
+    sglPercentComplete = 0.18
     strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -115,7 +115,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '----------------------------Fix hyperlinks---------------------------------------
-    sglPercentComplete = 0.19
+    sglPercentComplete = 0.28
     strStatus = "* Applying styles to hyperlinks..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -137,7 +137,7 @@ Sub MacmillanCharStyles()
 
     
     '--------------------------Remove unstyled space breaks---------------------------
-    sglPercentComplete = 0.31
+    sglPercentComplete = 0.39
     strStatus = "* Removing unstyled breaks..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -148,7 +148,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '--------------------------Tag existing character styles------------------------
-    sglPercentComplete = 0.44
+    sglPercentComplete = 0.52
     strStatus = "* Tagging character styles..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -159,7 +159,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '-------------------------Tag direct formatting----------------------------------
-    sglPercentComplete = 0.59
+    sglPercentComplete = 0.65
     strStatus = "* Tagging direct formatting..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -170,7 +170,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
 
     '----------------------------Apply Macmillan character styles to tagged text--------
-    sglPercentComplete = 0.7
+    sglPercentComplete = 0.81
     strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -181,7 +181,7 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '---------------------------Remove tags from styled space breaks---------------------
-    sglPercentComplete = 0.85
+    sglPercentComplete = 0.95
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
