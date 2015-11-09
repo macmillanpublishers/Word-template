@@ -10,6 +10,23 @@ Sub TagText()
     Dim thisDoc As Document
     Set thisDoc = ActiveDocument
     
+    ' Start progress bar
+    Dim sglPercentComplete As Single
+    Dim strStatus As String
+    Dim strTitle As String
+    Dim objTagProgress As ProgressBar
+    
+    Set objTagProgress = New ProgressBar
+    
+    ' Add some fun statuses?
+    
+    strTitle = "Text Standard Tagging Macro"
+    sglPercentComplete = 0.1
+    strStatus = "* Getting started..." & vbNewLine
+    
+    Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
+    
+    
     ' ======== Start the tagging ========
     ' Rename built-in style that has parens
     thisDoc.Styles("Normal (Web)").NameLocal = "_"
@@ -17,18 +34,26 @@ Sub TagText()
     Dim lngParaCount As Long
     Dim a As Long
     Dim strCurrentStyle As String
+    Dim strTX As String
+    Dim strTX1 As String
+    Dim strNewStyle As String
+    
+    ' Making these variables so we don't get any input errors with the style names t/o
+    strTX = "Text - Standard (tx)"
+    strTX1 = "Text - Std No-Indent (tx1)"
+    
     lngParaCount = thisDoc.Paragraphs.Count
     
-    ' ======== Tag non-macmillan styles with TX or TX1 ========
-    On Error GoTo ErrorHandler1     ' cancels macro if we don't have this style.
+    On Error GoTo ErrorHandler1     ' adds this style if it is not in the
     For a = 1 To lngParaCount
         
         If a Mod 100 = 0 Then
-            sglPercentComplete = (((a / lngParaCount) * 0.3) + 0.35)
-            strStatus = "* Tagging unstyled paragraphs ..."
+            ' Increment progress bar
+            sglPercentComplete = (((a / lngParaCount) * 0.27) + 0.1)
+            strStatus = "* Tagging non-Macmillan paragraphs with Text - Standard (tx): " & a & " of " & lngParaCount _
+                & vbNewLine & strStatus
+            Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
         End If
-        
-        
         
         strCurrentStyle = thisDoc.Paragraphs(a).Style
         'Debug.Print a & ": " & strCurrentStyle
@@ -37,13 +62,20 @@ Sub TagText()
         If Right(strCurrentStyle, 1) <> ")" Then
             ' If flush left, make No-Indent
             If thisDoc.Paragraphs(a).FirstLineIndent = 0 Then
-                thisDoc.Paragraphs(a).Style = "Text - Std No-Indent (tx1)"
+                strNewStyle = strTX1
             Else
-                thisDoc.Paragraphs(a).Style = "Text - Standard (tx)"
+                strNewStyle = strTX
             End If
+            
+            ' Change the style of the paragraph in question
+            ' This is where it will error if no style present
+            thisDoc.Paragraphs(a).Style = strNewStyle
+            
         End If
     Next a
     On Error GoTo 0
+    
+    strStatus = "* Tagging non-Macmillan paragraphs with Text - Standard (tx)..." & vbNewLine & strStatus
     
     ' Change Normal (Web) back
     thisDoc.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
@@ -88,7 +120,13 @@ Sub TagText()
     strExtractStyle(9) = "Poem"
     
     For b = LBound(strSearchStyle()) To UBound(strSearchStyle())
+        
+        sglPercentComplete = (((b / lngParaCount) * 0.3) + 0.37)
+        strStatus = "* Fixing space around " & strSearchStyle(b) & "..." & vbNewLine & strStatus
+        Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
+        
         On Error GoTo ErrorContinue ' Tests for error because style not present, continues with next style if so
+        
         Selection.HomeKey Unit:=wdStory     ' Have to start search from the beginning of the doc
         'Debug.Print "Searching for " & strSearchStyle(b) & " paragraphs"
         lngCount = 0
@@ -207,10 +245,40 @@ ContinueNextB:
     
 ErrorHandler1:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
-        MsgBox "This macro requires the Macmillan styles in the document. Please add the Macmillan styles and try again."
-        Exit Sub
+        Dim myStyle As Style
+        Set myStyle = CurrentDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
+        With myStyle
+            .QuickStyle = True
+            .Font.Name = "Times New Roman"
+            .Font.Size = 12
+            With .ParagraphFormat
+                .LineSpacingRule = wdLineSpaceDouble
+                .SpaceAfter = 0
+                .SpaceBefore = 0
+                
+                With .Borders
+                    Select Case strNewStyle
+                        Case strTX
+                            .OutsideLineStyle = wdLineStyleSingle
+                            .OutsideLineWidth = wdLineWidth600pt
+                        
+                        Case strTX1
+                            .OutsideLineStyle = wdLineStyleDouble
+                            .OutsideLineWidth = wdLineWidth225pt
+                            
+                    End Select
+                .OutsideColor = RGB(102, 204, 255)
+                
+                End With
+            End With
+        End With
+        
+        ' Now go back and try to assign that style again
+        Resume
+    
     Else
         Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
+        On Error GoTo 0
         Exit Sub
     End If
     
@@ -270,3 +338,4 @@ ErrorNewStyle:
     End If
 
 End Sub
+
