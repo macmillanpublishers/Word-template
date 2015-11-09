@@ -4,6 +4,7 @@ Option Explicit
 ' By Erica Warren -- erica.warren@macmillan.com
 ' Tags all paragraphs with non-macmillan styles as TX or TX1
 ' And applies Space Before/After/Around styles for TX, FMTX, BMTX
+' Though it doesn't detect space needed between the bottom of a table and the following 'graph
 
 Sub TagText()
     ' Make sure we're always working with the right document
@@ -44,12 +45,13 @@ Sub TagText()
     
     lngParaCount = thisDoc.Paragraphs.Count
     
+    Dim myStyle As Style ' For error handlers
     On Error GoTo ErrorHandler1     ' adds this style if it is not in the
     For a = 1 To lngParaCount
         
         If a Mod 100 = 0 Then
             ' Increment progress bar
-            sglPercentComplete = (((a / lngParaCount) * 0.31) + 0.14)
+            sglPercentComplete = (((a / lngParaCount) * 0.55) + 0.14)
             strStatus = "* Tagging non-Macmillan paragraphs with Text - Standard (tx): " & a & " of " & lngParaCount _
                 & vbNewLine & strStatus
             Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
@@ -92,7 +94,6 @@ Sub TagText()
     Dim strExtractStyle(1 To 9) As String
     Dim blnPrevStyle As Boolean
     Dim blnNextStyle As Boolean
-    Dim strNewStyle As String
     Dim strName As String
     Dim strCode As String
     Dim lngOpenParens As Long
@@ -121,7 +122,7 @@ Sub TagText()
     
     For b = LBound(strSearchStyle()) To UBound(strSearchStyle())
         
-        sglPercentComplete = (((b / lngParaCount) * 0.45) + 0.45)
+        sglPercentComplete = (((b / lngParaCount) * 0.26) + 0.69)
         strStatus = "* Fixing space around " & strSearchStyle(b) & "..." & vbNewLine & strStatus
         Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
         
@@ -247,12 +248,13 @@ ContinueNextB:
     
     Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
     
+    Unload objTagProgress
+    
     Exit Sub
     
 ErrorHandler1:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
-        Dim myStyle As Style
-        Set myStyle = CurrentDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
+        Set myStyle = thisDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
         With myStyle
             .QuickStyle = True
             .Font.Name = "Times New Roman"
@@ -298,9 +300,8 @@ ErrorContinue:
 ErrorNewStyle:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
         ' So create style and apply formatting
-        Dim myStyle As Style
         
-        Set myStyle = ActiveDocument.Styles.Add(Name:=strNewStyle, Type:=wdStyleTypeParagraph)
+        Set myStyle = thisDoc.Styles.Add(Name:=strNewStyle, Type:=wdStyleTypeParagraph)
         With myStyle
             .BaseStyle = strThisStyle
         
