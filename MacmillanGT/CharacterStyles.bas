@@ -25,8 +25,10 @@ Sub MacmillanCharStyles()
     'Remember time when macro starts
     'StartTime = Timer
     
-    ''-----------------Check if doc is saved/protected---------------
-    If CheckSave = True Then
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
         Exit Sub
     End If
     
@@ -35,11 +37,6 @@ Sub MacmillanCharStyles()
     Dim a As Long
     
     stStories = StoryArray
-     
-    '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -82,22 +79,6 @@ Sub MacmillanCharStyles()
     ' Calls ProgressBar.Increment mathod and waits for it to complete
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
-    Application.ScreenUpdating = False
-    
-    '--------save the current cursor location in a bookmark---------------------------
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    '-----------Turn off track changes--------
-    Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
-    
-    '-----------Delete field codes ----------
-    Dim s As Long
-    
-    For s = 1 To UBound(stStories())
-      Call DeleteFields(StoryTypes:=(stStories(s)))
-    Next s
     
     '===================== Replace Local Styles Start ========================
 
@@ -197,17 +178,7 @@ Sub MacmillanCharStyles()
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
-    'Go back to original insertion point and delete bookmark
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
-    Application.DisplayStatusBar = currentStatusBar
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
-    
+    Call Cleanup
     Unload oProgressChar
     
     MsgBox "Macmillan character styles have been applied throughout your manuscript."
@@ -899,21 +870,4 @@ ErrorHandler:
         End Select
     End If
 
-End Sub
-
-Private Sub DeleteFields(StoryTypes As Variant)
-    Dim strContents As String
-    
-    ' This has some kind of problem with some type of fields in endnotes? Investiagte
-    With ActiveDocument.StoryRanges(StoryTypes)
-        While .Fields.Count > 0
-            strContents = .Fields.Item(1).result
-            .Fields(1).Select
-            
-            With Selection
-                .Fields.Item(1).Delete
-                .InsertAfter strContents
-            End With
-        Wend
-    End With
 End Sub

@@ -11,7 +11,15 @@ Sub TagText()
     Dim thisDoc As Document
     Set thisDoc = ActiveDocument
     
-    ' Start progress bar
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
+        Exit Sub
+    End If
+    
+    
+    ' ======== Start progress bar ========
     Dim sglPercentComplete As Single
     Dim strStatus As String
     Dim strTitle As String
@@ -38,6 +46,7 @@ Sub TagText()
     Dim strTX As String
     Dim strTX1 As String
     Dim strNewStyle As String
+    Dim strParaStatus As String
     
     ' Making these variables so we don't get any input errors with the style names t/o
     strTX = "Text - Standard (tx)"
@@ -52,9 +61,9 @@ Sub TagText()
         If a Mod 100 = 0 Then
             ' Increment progress bar
             sglPercentComplete = (((a / lngParaCount) * 0.55) + 0.14)
-            strStatus = "* Tagging non-Macmillan paragraphs with Text - Standard (tx): " & a & " of " & lngParaCount _
+            strParaStatus = "* Tagging non-Macmillan paragraphs with Text - Standard (tx): " & a & " of " & lngParaCount _
                 & vbNewLine & strStatus
-            Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
+            Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, Percent:=sglPercentComplete)
         End If
         
         strCurrentStyle = thisDoc.Paragraphs(a).Style
@@ -248,7 +257,13 @@ ContinueNextB:
     
     Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
     
+    Call Cleanup
+    
     Unload objTagProgress
+    
+    Dim strMessage As String
+    strMessage = "The Text Tagging Macro is complete!"
+    MsgBox strMessage, vbOKOnly, "All done!"
     
     Exit Sub
     
@@ -287,6 +302,7 @@ ErrorHandler1:
     Else
         Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
         On Error GoTo 0
+        Cleanup
         Exit Sub
     End If
     
@@ -295,6 +311,8 @@ ErrorContinue:
         GoTo ContinueNextB
     Else
         Debug.Print "ErrorContinue: " & Err.Number & " " & Err.Description
+        On Error GoTo 0
+        Cleanup
         Exit Sub
     End If
 ErrorNewStyle:
@@ -341,6 +359,8 @@ ErrorNewStyle:
         Resume
     Else
         Debug.Print "ErrorNewStyle: " & Err.Number & " " & Err.Description
+        On Error GoTo 0
+        Cleanup
         Exit Sub
     End If
 

@@ -131,26 +131,24 @@ Sub MacmillanManuscriptCleanup()
     'Remember time when macro starts
     '  StartTime = Timer
 
-    '-----------run preliminary error checks------------
-    Dim exitOnError As Boolean
-    
-    exitOnError = zz_errorChecks()      ''Doc is unsaved, protected, or uses backtick character?
-        If exitOnError <> False Then
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
         Exit Sub
     End If
     
-    Application.ScreenUpdating = False
-    
+    ' Change to just check for backtick characters
+    If zz_errorChecks = True Then
+        Call Cleanup
+        Exit Sub
+    End If
+        
     '------------check for endnotes and footnotes--------------------------
     Dim stStories() As Variant
     Dim a As Long
     
     stStories = StoryArray
-    
-    '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -194,14 +192,6 @@ Sub MacmillanManuscriptCleanup()
     ' This sub calls ProgressBar.Increment and waits for it to finish before returning here
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
     
-    '--------save the current cursor location in a bookmark---------------------------
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    '-----------Turn off track changes--------
-    Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
-    
     
     '-----------Find/Replace with Wildcards = False--------------------------------
     Call zz_clearFind                          'Clear find object
@@ -243,7 +233,7 @@ Sub MacmillanManuscriptCleanup()
     Call zz_clearFind
     
     '---------------Remove tags from "span preserve characters"-------------------------
-    sglPercentComplete = 0.8
+    sglPercentComplete = 0.86
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
@@ -254,20 +244,6 @@ Sub MacmillanManuscriptCleanup()
     
     Call zz_clearFind
     
-    '-------------Go back to original insertion point and delete bookmark-----------------
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    '--------------Remove other bookmarks------------------------------------------------
-    sglPercentComplete = 0.95
-    strStatus = "* Removing bookmarks..." & vbCr & strStatus
-    
-    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
-
-    Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
-    Call zz_clearFind
     
     '-----------------Restore original settings--------------------------------------
     sglPercentComplete = 1#
@@ -275,11 +251,7 @@ Sub MacmillanManuscriptCleanup()
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
 
-    ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
-    Application.DisplayStatusBar = currentStatusBar
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
-    
+    Call Cleanup
     Unload oProgressCleanup
     
     MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
@@ -293,15 +265,7 @@ Sub MacmillanManuscriptCleanup()
   
 End Sub
 
-Private Sub RemoveBookmarks()
-    
-    Dim bkm As Bookmark
-    
-    For Each bkm In ActiveDocument.Bookmarks
-        bkm.Delete
-    Next bkm
-    
-End Sub
+
 
 Private Sub RmNonWildcardItems(StoryType As WdStoryType)                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
@@ -584,17 +548,9 @@ End Sub
 Function zz_errorChecks()
 
     zz_errorChecks = False
-    
-    ''-----------------Check if doc is saved/protected---------------
-    If CheckSave = True Then
-        zz_errorChecks = True
-        Exit Function
-    End If
-
 
     '-----test if backtick style tag already exists
     Set activeRng = ActiveDocument.Range
-    Application.ScreenUpdating = False
 
     Dim existingTagArray(3) As String   ' number of items in array should be declared here
     Dim b As Long

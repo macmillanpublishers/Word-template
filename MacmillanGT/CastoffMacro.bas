@@ -15,8 +15,10 @@ Sub UniversalCastoff()
 ' 3. Requires CastoffForm userform module and TextBoxEventHandler class module. Input validation is done in CastoffForm.
 
 
-    '---------- Check if doc is saved ---------------------------------
-    If CheckSave = True Then
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
         Exit Sub
     End If
     
@@ -29,7 +31,7 @@ Sub UniversalCastoff()
 End Sub
 
 Public Sub CastoffStart(FormInputs As CastoffForm)
-        
+                
     ' Get estimated page count
     Dim lngCastoffResult() As Long
     
@@ -156,7 +158,8 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     
     '-------------Report castoff info to user----------------------------------------------------------------
     Call CreateTextFile(strText:=strReportText, suffix:="Castoff")
-
+    
+    Call Cleanup
     Unload FormInputs
             
 End Sub

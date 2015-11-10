@@ -5,8 +5,10 @@ Dim activeRng As Range
 
 Sub EndnoteDeEmbed()
 
-    '------- Check if document is saved ---------
-    If CheckSave = True Then
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
         Exit Sub
     End If
     
@@ -57,16 +59,6 @@ Sub EndnoteDeEmbed()
             Exit Sub
         End If
     End If
-
-    '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
-    
-    '-----------Turn off track changes--------
-    Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -79,10 +71,10 @@ Sub EndnoteDeEmbed()
     sglPercentComplete = 0.04
     strStatus = "* Getting started..."
     
-        Dim objProgressNotes As ProgressBar
-        Set objProgressNotes = New ProgressBar  ' Triggers Initialize event, which uses Show method for PC
-        
-        objProgressNotes.Title = strTitle
+    Dim objProgressNotes As ProgressBar
+    Set objProgressNotes = New ProgressBar  ' Triggers Initialize event, which uses Show method for PC
+    
+    objProgressNotes.Title = strTitle
     
     ' Calls ProgressBar.Increment mathod and waits for it to complete
     Call UpdateBarAndWait(Bar:=objProgressNotes, Status:=strStatus, Percent:=sglPercentComplete)
@@ -101,7 +93,6 @@ Sub EndnoteDeEmbed()
     If iReply = vbYes Then palgraveTag = True
     
     ' Begin working on Endnotes
-    Application.ScreenUpdating = False
     
     Dim intNotesCount As Integer
     Dim intCurrentNote As Integer
@@ -234,17 +225,9 @@ Sub EndnoteDeEmbed()
     
     Call UpdateBarAndWait(Bar:=objProgressNotes, Status:=strStatus, Percent:=sglPercentComplete)
     
-    Call RemoveAllBookmarks
+    Call Cleanup
+    Unload objProgressNotes
 
-Cleanup:
-    ' ---- Close progress bar -----
-      Unload objProgressNotes
-    
-    ' Does rest of cleanup
-    ActiveDocument.TrackRevisions = currentTracking
-    Application.DisplayStatusBar = currentStatusBar
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
 
 End Sub
 
@@ -290,34 +273,5 @@ Dim sectionRng As Range
     
 End Function
 
-Sub RemoveAllBookmarks()
-
-'three options from http://wordribbon.tips.net/T009004_Removing_All_Bookmarks.html
-    'Version 1
-    Dim objBookmark As Bookmark
-    For Each objBookmark In ActiveDocument.Bookmarks
-        objBookmark.Delete
-    Next
-    
-    'Version 2
-    'Dim stBookmark As Bookmark
-    'ActiveDocument.Bookmarks.ShowHidden = True
-    'If ActiveDocument.Bookmarks.Count >= 1 Then
-    '   For Each stBookmark In ActiveDocument.Bookmarks
-    '      stBookmark.Delete
-    '   Next stBookmark
-    'End If
-    
-    'Version 3
-    'Dim objBookmark As Bookmark
-    '
-    'For Each objBookmark In ActiveDocument.Bookmarks
-    '    If Left(objBookmark.Name, 1) <> "_" Then objBookmark.Delete
-    'Next
-    
-    
-    'http://wordribbon.tips.net/T009004_Removing_All_Bookmarks.html
-
-End Sub
 
 
