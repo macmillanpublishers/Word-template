@@ -883,3 +883,218 @@ ErrHandler:
     Debug.Print Err.Number & ": " & Err.Description
     Bar.Done = True
 End Sub
+
+
+Function StartupSettings(Optional AcceptAll As Boolean = False) As Boolean
+    ' records/adjusts/checks settings and stuff before running the rest of the macro
+    ' returns TRUE if some check is bad and we can't run the macro
+    
+    Dim mainDoc As Document
+    Set mainDoc = ActiveDocument
+    
+    ' Section of registry/preferences file to store settings
+    Dim strSection As String
+    strSection = "MACMILLAN_MACROS"
+    
+    ' ========== check if file has been saved, if not prompt user; if canceled, quit function ==========
+    Dim iReply As Integer
+    
+    Dim docSaved As Boolean
+    docSaved = mainDoc.Saved
+    
+    If docSaved = False Then
+        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
+                vbOKCancel, "Error 1")
+        If iReply = vbOK Then
+            StartupSettings = False
+            mainDoc.Save
+        Else
+            StartupSettings = True
+            Exit Function
+        End If
+    End If
+    
+    
+    ' ========== check if file has doc protection on, prompt user and quit function if it does ==========
+    If mainDoc.ProtectionType <> wdNoProtection Then
+        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
+            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
+            "TIP: If you don't know the protection password, try pasting contents of this file into " & _
+            "a new file, and run the macro on that.", , "Error 2"
+        StartupSettings = True
+        Exit Function
+    Else
+        StartupSettings = False
+    End If
+    
+    
+    ' ========== Turn off screen updating ==========
+    Application.ScreenUpdating = False
+    
+    
+    ' ========== STATUS BAR: store current setting and display ==========
+    System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
+    Application.DisplayStatusBar = True
+    
+    
+    ' ========== Remove bookmarks ==========
+    Dim bkm As Bookmark
+    
+    For Each bkm In mainDoc.Bookmarks
+        bkm.Delete
+    Next bkm
+    
+    
+    ' ========== Save current cursor location in a bookmark ==========
+    ' Store current story, so we can return to it before selecting bookmark in Cleanup
+    System.ProfileString(strSection, "Current_Story") = Selection.StoryType
+    ' next line required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
+    Selection.Collapse Direction:=wdCollapseStart
+    mainDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+    
+    
+    ' ========== TRACK CHANGES: store current setting, turn off ==========
+    ' ==========   OPTIONAL: Check if changes present and offer to accept all ==========
+    System.ProfileString(strSection, "Current_Tracking") = mainDoc.TrackRevisions
+    mainDoc.TrackRevisions = False
+    
+    If AcceptAll = True Then
+        If FixTrackChanges = False Then
+            StartupSettings = True
+        End If
+    End If
+    
+    
+    ' ========== Delete field codes ==========
+    Dim strContents As String
+    
+    ' This has some kind of problem with some type of fields in endnotes? Investiagte
+    ' Ideally would check all stories, but then we'd have to add the step of getting
+    ' all of the active stories.
+    ' With ActiveDocument.StoryRanges(StoryTypes)
+    With mainDoc
+        While .Fields.Count > 0
+            strContents = .Fields.Item(1).result
+            .Fields(1).Select
+            
+            With Selection
+                .Fields.Item(1).Delete
+                .InsertAfter strContents
+            End With
+        Wend
+    End With
+    
+    
+    ' ========== Remove content controls ==========
+    ' Doesn't work at all for a Mac
+    #If Not Mac Then
+        ClearContentControls
+    #End If
+    
+    
+End Function
+
+
+Private Function FixTrackChanges() As Boolean
+    Dim N As Long
+    Dim oComments As Comments
+    Set oComments = ActiveDocument.Comments
+    
+    Application.ScreenUpdating = False
+    
+    FixTrackChanges = True
+    
+    Application.DisplayAlerts = False
+    
+    'See if there are tracked changes or comments in document
+    On Error Resume Next
+    Selection.HomeKey Unit:=wdStory   'start search at beginning of doc
+    WordBasic.NextChangeOrComment       'search for a tracked change or comment. error if none are found.
+    
+    'If there are changes, ask user if they want macro to accept changes or cancel
+    If Err = 0 Then
+        If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
+            & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
+            & vbCr & vbCr & "Click CANCEL to stop the Bookmaker Requirements Check and deal with the tracked changes and comments on your own.", _
+            273, "Are those tracked changes I see?") = vbCancel Then           '273 = vbOkCancel(1) + vbCritical(16) + vbDefaultButton2(256)
+                FixTrackChanges = False
+                Exit Function
+        Else 'User clicked OK, so accept all tracked changes and delete all comments
+            ActiveDocument.AcceptAllRevisions
+            For N = oComments.Count To 1 Step -1
+                oComments(N).Delete
+            Next N
+            Set oComments = Nothing
+        End If
+    End If
+    
+    On Error GoTo 0
+    Application.DisplayAlerts = True
+    
+End Function
+
+
+Private Sub ClearContentControls()
+    'This is it's own sub because doesn't exist in Mac Word, breaks whole sub if included
+    Dim cc As ContentControl
+    
+    For Each cc In ActiveDocument.ContentControls
+        cc.Delete
+    Next
+
+End Sub
+
+
+Sub Cleanup()
+    ' resets everything from StartupSettings sub.
+    Dim cleanupDoc As Document
+    Set cleanupDoc = ActiveDocument
+    
+    ' Section of registry/preferences file to get settings from
+    Dim strSection As String
+    strSection = "MACMILLAN_MACROS"
+    
+    ' restore Status Bar to original setting
+    ' If key doesn't exist, set to True as default
+    Dim currentStatus As String
+    currentStatus = System.ProfileString(strSection, "Current_Status_Bar")
+    
+    If currentStatus <> vbNullString Then
+        Application.StatusBar = currentStatus
+    Else
+        Application.StatusBar = True
+    End If
+    
+    ' reset original Track Changes setting
+    ' If key doesn't exist, set to false as default
+    Dim currentTracking As String
+    currentTracking = System.ProfileString(strSection, "Current_Tracking")
+    
+    If currentTracking <> vbNullString Then
+        cleanupDoc.TrackRevisions = currentTracking
+    Else
+        cleanupDoc.TrackRevisions = False
+    End If
+    
+    ' return to original cursor position
+    ' If key doesn't exist, search in main doc
+    Dim currentStory As WdStoryType
+    currentStory = System.ProfileString(strSection, "Current_Story")
+    
+    If cleanupDoc.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        If currentStory <> vbNullString Then
+            cleanupDoc.StoryRanges(currentStory).Select
+        Else
+            cleanupDoc.StoryRanges(wdMainTextStory).Select
+        End If
+        
+        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+        cleanupDoc.Bookmarks("OriginalInsertionPoint").Delete
+    End If
+    
+    ' Turn Screen Updating on and refresh screen
+    Application.ScreenUpdating = True
+    Application.ScreenRefresh
+    
+End Sub
