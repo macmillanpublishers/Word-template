@@ -302,7 +302,7 @@ ErrorHandler1:
     Else
         Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
         On Error GoTo 0
-        Cleanup
+        Call Cleanup
         Exit Sub
     End If
     
@@ -312,7 +312,7 @@ ErrorContinue:
     Else
         Debug.Print "ErrorContinue: " & Err.Number & " " & Err.Description
         On Error GoTo 0
-        Cleanup
+        Call Cleanup
         Exit Sub
     End If
 ErrorNewStyle:
@@ -360,7 +360,7 @@ ErrorNewStyle:
     Else
         Debug.Print "ErrorNewStyle: " & Err.Number & " " & Err.Description
         On Error GoTo 0
-        Cleanup
+        Call Cleanup
         Exit Sub
     End If
 

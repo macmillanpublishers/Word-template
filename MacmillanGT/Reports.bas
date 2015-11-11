@@ -36,17 +36,13 @@ Private Sub MakeReport(torDOTcom As Boolean)
     'StartTime = Timer                               '|
     '=================================================
     
-    ''-----------------Check if doc is saved/protected---------------
-    If CheckSave = True Then
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    ' If torDOTcom = true, offer to accept all track changes
+    If StartupSettings(AcceptAll:=torDOTcom) = True Then
+        Call Cleanup
         Exit Sub
     End If
-    
-    Application.ScreenUpdating = False
-    
-    '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
     
     '------------ check for endnotes and footnotes -------------------------
     Dim arrStories() As Variant
@@ -110,32 +106,6 @@ Private Sub MakeReport(torDOTcom As Boolean)
     oProgressBkmkr.Title = strTitle
     Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
-    '--------save the current cursor location in a bookmark---------------------------
-    Dim currentStory As WdStoryType
-    currentStory = Selection.StoryType
-    Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    '-------Delete content controls on PC------------------------
-    'Has to be a separate sub because these objects don't exist in Word 2011 Mac and it won't compile
-    If Not TheOS Like "*Mac*" Then
-        Call DeleteContentControlPC
-    End If
-    
-    '-------Deal with Track Changes and Comments----------------
-    ' Save state of track changes and turn off
-    Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
-    
-    ' If torDOTcom, ask if want to accept all changes and delete comments
-    If torDOTcom = True Then
-        If FixTrackChanges = False Then
-            Application.ScreenUpdating = True
-            Unload oProgressBkmkr
-            Exit Sub
-        End If
-    End If
     
     '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
     '-------because it should just be applied to the isbn numerals and hyphens-------------------
@@ -282,21 +252,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     
     Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
-    'return cursor to original position and delete bookmark
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        ActiveDocument.StoryRanges(currentStory).Select
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    ' If just style report, turn track changes back on
-    If torDOTcom = False Then
-        ActiveDocument.TrackRevisions = currentTracking
-    End If
-    
-    Application.ScreenUpdating = True
-    Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
-    Application.ScreenRefresh
+    Call Cleanup
     
     Unload oProgressBkmkr
     
@@ -957,15 +913,6 @@ ErrHandler2:
 
 End Function
 
-Private Sub DeleteContentControlPC()
-    Dim cc As ContentControl
-    
-    Application.ScreenUpdating = False
-    
-    For Each cc In ActiveDocument.ContentControls
-        cc.Delete
-    Next
-End Sub
 
 Private Function FixTrackChanges() As Boolean
     Dim N As Long

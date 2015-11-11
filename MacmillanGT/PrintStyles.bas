@@ -94,14 +94,14 @@ Private Sub PrintStylesMac()
     ' Needs to have the BoundMS template attached before copying so the styles match
     ' the new document later, or won't copy any styles
     Dim currentTemplate As String
-    Dim currentDoc As Document
-    Set currentDoc = ActiveDocument
+    Dim CurrentDoc As Document
+    Set CurrentDoc = ActiveDocument
     ' Record current template
-    currentTemplate = currentDoc.AttachedTemplate
+    currentTemplate = CurrentDoc.AttachedTemplate
     
     ' Attach BoundMS template to original doc, then copy contents
     Call AttachTemplateMacro.zz_AttachBoundMSTemplate
-    currentDoc.StoryRanges(wdMainTextStory).Copy
+    CurrentDoc.StoryRanges(wdMainTextStory).Copy
     
     Dim tempDoc As Document
     ' Create a new document
@@ -249,7 +249,7 @@ Cleanup:
         tempDoc.Close wdDoNotSaveChanges
     
     ' Return original document to original template
-    currentDoc.Activate
+    CurrentDoc.Activate
     Call AttachTemplateMacro.AttachMe(TemplateName:=currentTemplate)
     
     ' Reset settings to original
@@ -292,18 +292,15 @@ Private Sub PrintStylesPC()
     ' Doesn't work on tables -- breaks the whole macro
     
 
-    ' ====== Check if doc is saved/protected ================
-    If CheckSave = True Then
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
         Exit Sub
     End If
     
-    Application.ScreenUpdating = False
     
     ' ===== Progress Bar ========================
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
-    
     Dim sglPercentComplete As Single
     Dim strStatus As String
     Dim strTitle As String
@@ -349,14 +346,14 @@ Private Sub PrintStylesPC()
     ' Needs to have the BoundMS template attached before copying so the styles match
     ' the new document later, or it won't copy any styles
     Dim currentTemplate As String
-    Dim currentDoc As Document
-    Set currentDoc = ActiveDocument
+    Dim CurrentDoc As Document
+    Set CurrentDoc = ActiveDocument
     ' Record current template
-    currentTemplate = currentDoc.AttachedTemplate
+    currentTemplate = CurrentDoc.AttachedTemplate
     
     ' Attach BoundMS template to original doc, then copy contents
     Call AttachTemplateMacro.zz_AttachBoundMSTemplate
-    currentDoc.StoryRanges(wdMainTextStory).Copy
+    CurrentDoc.StoryRanges(wdMainTextStory).Copy
     
     Dim tempDoc As Document
     ' Create a new document
@@ -433,7 +430,7 @@ Private Sub PrintStylesPC()
         Set objTemplate = Templates(strPath)
     Else
         MsgBox "I can't find the Macmillan template, sorry."
-        GoTo Cleanup
+        GoTo FinishUp
     End If
     
     ' Access the building block through the type and category
@@ -487,7 +484,7 @@ Private Sub PrintStylesPC()
 
     Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
     
-Cleanup:
+FinishUp:
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
             .Font.Size = currentSize
@@ -498,7 +495,7 @@ Cleanup:
         tempDoc.Close wdDoNotSaveChanges
     
     ' Return original document to original template
-    currentDoc.Activate
+    CurrentDoc.Activate
     Call AttachTemplateMacro.AttachMe(TemplateName:=currentTemplate)
     
     ' Reset settings to original
@@ -506,11 +503,9 @@ Cleanup:
         .DisplayAlerts = lngOpt
         .Options.PasteFormatBetweenStyledDocuments = lngPasteStyled
         .Options.PasteFormatBetweenDocuments = lngPasteFormat
-        .DisplayStatusBar = currentStatusBar
-        .ScreenUpdating = True
-        .ScreenRefresh
     End With
-
+    
+    Call Cleanup
     Unload objProgressPrint
 
 End Sub

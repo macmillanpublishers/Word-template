@@ -27,29 +27,25 @@ Sub LibraryOfCongressTags()
     '''                 is not eventually followed by <ch#> or <tp> tag
     ''''''''''''''''''''''''''''''
     
-    '-----------run preliminary error checks------------
-    Dim exitOnError As Boolean
-    Dim skipChapterTags As Boolean
-    exitOnError = zz_errorChecksB()
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
+        Exit Sub
+    End If
     
-    If exitOnError <> False Then
+    
+    '-----------run preliminary error checks------------
+    Dim skipChapterTags As Boolean
+    
+    If zz_errorChecksB <> False Then
         Call zz_clearFindB
+        Call Cleanup
         Exit Sub
     End If
     
     skipChapterTags = volumestylecheck()
     
-    Application.ScreenUpdating = False
-    
-        '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
-    
-    ' -------------- turn off track changes -----------------
-    Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -90,15 +86,6 @@ Sub LibraryOfCongressTags()
     oProgressCIP.Title = strTitle
     Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
-    '--------save the current cursor location in a bookmark---------------------------
-    Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    '----------remove content controls from PC---
-    ' can't remove from Mac, breaks whole sub
-    If Not TheOS Like "*Mac*" Then
-        Call ClearContentControls
-    End If
     
     '=========================the rest of the macro========================
     
@@ -167,7 +154,7 @@ Sub LibraryOfCongressTags()
             "copyright page, table of contents, or chapter title pages. Please add the correct styles and try again."
         MsgBox strMessage, vbCritical, "No Styles Found"
         
-        GoTo Cleanup
+        GoTo Finish
         
         Exit Sub
         
@@ -197,20 +184,8 @@ Sub LibraryOfCongressTags()
     
     Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
    
-Cleanup:
-    'return cursor to original position and delete bookmark
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    ' return settings to original
-    ActiveDocument.TrackRevisions = currentTracking
-    Application.ScreenUpdating = True
-    Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
-    Application.ScreenRefresh
-    
-    ' Get rid of the progress bar
+Finish:
+    Call Cleanup
     Unload oProgressCIP
     
     'If skipChapterTags = True Then
@@ -1267,15 +1242,7 @@ ErrHandler:
 
 End Function
 
-Private Sub ClearContentControls()
-    'This is it's own sub because doesn't exist in Mac Word, breaks whole sub if included
-    Dim cc As ContentControl
-    
-    For Each cc In ActiveDocument.ContentControls
-        cc.Delete
-    Next
 
-End Sub
 
 Private Sub zz_clearFindB()
 
@@ -1306,15 +1273,8 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
     Set mainDoc = ActiveDocument
     Dim iReply As Integer
     
-    ''-----------------Check if doc is saved/protected---------------
-    If CheckSave = True Then
-        zz_errorChecksB = True
-        Exit Function
-    End If
-    
     '-----test if backtick style tag already exists
-    Set activeRng = ActiveDocument.Range
-    Application.ScreenUpdating = False
+    Set activeRng = mainDoc.Range
     
     Dim existingTagArray(7) As String                                   ' number of items in array should be declared here
     Dim b As Long
@@ -1338,9 +1298,7 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
     End With
     If activeRng.Find.Execute Then foundBad = True: Exit For
     Next
-    
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
+
     If foundBad = True Then                'If activeRng.Find.Execute Then
         MsgBox "Something went wrong! The LOC tags Macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & "'" _
         & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support, I am sure they will be happy to help.", , "Error Code: 1"
@@ -1393,9 +1351,7 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
         foundLOC = True
         foundLOCitem = "(chapter heading tag, e.g. <ch1>, <ch2>, ... )"
     End If
-    
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
+
     If foundLOC = True Then
         MsgBox "Your document: '" & mainDoc & "' already contains at least one Library of Congress tag:" & vbNewLine & vbNewLine & foundLOCitem & vbNewLine & vbNewLine & _
         "This macro may have already been run on this document. To run this macro, you MUST find and remove all existing LOC tags first.", , "Alert"
@@ -1406,8 +1362,6 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
 End Function
 
 Private Function zz_TagReport()
-
-    Application.ScreenUpdating = False
     
     Set activeRng = ActiveDocument.Range
     
