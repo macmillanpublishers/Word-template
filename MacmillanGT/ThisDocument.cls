@@ -14,6 +14,45 @@ Sub AutoExec()
 '=======================================
 ' By Erica Warren - erica.warren@macmillan.com
 '
+' ********** PART ONE ************
+' Create custom toolbar on a Mac. Don't want to do it manually because saving on Mac
+' removes the custom PC Ribbon
+' See http://www.fontstuff.com/ebooks/free/fsexceladdins.pdf
+    #If Mac Then
+        ' Test if toolbar already exists
+        If Application.CommandBars.FindControl(ID:="Macmillan Tools") Is Not Nothing Then
+            ' Create new toolbar
+            ' On Error Resume Next
+            Dim NewToolbar As CommandBar
+            Set NewToolbar = Application.CommandBars.Add("Macmillan Tools")
+            With NewToolbar
+                .Height = 252 'pixels, I assume
+                .Width = 171
+                .Visible = True
+            End With
+            
+            ' Add items to toolbar
+            Dim NewButton As CommandBarButton
+            Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
+            With NewButton
+                '.FaceId = 33
+                .Caption = "Add Manuscript Styles"
+                '.TooltipText = "Add Manuscript Styles"
+                .OnAction = "AttachTemplateMacro.zz_AttachStyleTemplate"
+            End With
+            
+            Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
+            With NewButton
+                '.FaceId = 634
+                .Caption = "Remove Color Guides"
+                .OnAction = "AttachTemplateMacro.zz_AttachBoundMSTemplate"
+            End With
+        
+        End If
+    #End If
+' ********* PART TWO ***************************
+
+
 '===== USE ===============================
 ' Sets variable names (file names and directories) for Installer sub in FileInstaller module.
 '
@@ -100,6 +139,7 @@ Sub AutoExec()
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
 End Sub
+
 
 
 
