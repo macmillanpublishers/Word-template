@@ -14,42 +14,126 @@ Sub AutoExec()
 '=======================================
 ' By Erica Warren - erica.warren@macmillan.com
 '
+'
 ' ********** PART ONE ************
-' Create custom toolbar on a Mac. Don't want to do it manually because saving on Mac
+'
+' ====== USE ======
+' Creates custom toolbar on a Mac. Don't want to do it manually because saving on Mac
 ' removes the custom PC Ribbon
 ' See http://www.fontstuff.com/ebooks/free/fsexceladdins.pdf
-    #If Mac Then
-        ' Test if toolbar already exists
-        If Application.CommandBars.FindControl(ID:="Macmillan Tools") Is Not Nothing Then
-            ' Create new toolbar
-            ' On Error Resume Next
-            Dim NewToolbar As CommandBar
-            Set NewToolbar = Application.CommandBars.Add("Macmillan Tools")
-            With NewToolbar
-                .Height = 252 'pixels, I assume
-                .Width = 171
-                .Visible = True
-            End With
-            
-            ' Add items to toolbar
-            Dim NewButton As CommandBarButton
-            Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
-            With NewButton
-                '.FaceId = 33
-                .Caption = "Add Manuscript Styles"
-                '.TooltipText = "Add Manuscript Styles"
-                .OnAction = "AttachTemplateMacro.zz_AttachStyleTemplate"
-            End With
-            
-            Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
-            With NewButton
-                '.FaceId = 634
-                .Caption = "Remove Color Guides"
-                .OnAction = "AttachTemplateMacro.zz_AttachBoundMSTemplate"
-            End With
+' And http://word.mvps.org/faqs/macrosvba/SetCustomButtonImage.htm
+'
+' ====== DEPENDENCIES =======
+' Must run InsertPictures sub in Utilities template - but with MacmillanGT.dotm as ActiveDoc -
+' before deploying this macro to machines.
+
+'    #If Mac Then
+         
+        ' ======== Test if toolbar already exists, and delete it ========
+        ' We'll re-create it each session, to be sure to capture updates
+        Dim bar As CommandBar
+        Dim h As Long
+        h = 0
         
-        End If
-    #End If
+        For Each bar In CommandBars
+            h = h + 1
+            Debug.Print h & ": " & bar.Name
+            If bar.Name = "Macmillan Tools" Then
+                bar.Delete
+                Exit For
+            End If
+        Next
+            
+        Stop
+        
+        ' ======== Add custom toolbar ========
+        Dim NewToolbar As CommandBar
+        Set NewToolbar = Application.CommandBars.Add(Name:="Macmillan Tools", Temporary:=True)
+        With NewToolbar
+            .Height = 252 'pixels, I assume
+            .Width = 171
+            .Visible = True
+            .Name = "Macmillan Tools"
+        End With
+        
+        ' ======== Add items to toolbar ========
+        Dim NewButton As CommandBarButton
+        Dim shpButtonPic As Shape
+        
+        ' -------- 1. Add Manuscript Styles --------
+        
+        ' Get image
+        Set shpButtonPic = ThisDocument.Shapes.Item("addfile")
+        shpButtonPic.Select
+        Selection.CopyAsPicture
+        
+        ' Create button
+        Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
+        With NewButton
+            .PasteFace
+            .Caption = "Add Manuscript Styles"
+            .TooltipText = "Adds the Macmillan Styles to the current document"
+            .Style = msoButtonIconAndCaption
+            .OnAction = "AttachTemplateMacro.zz_AttachStyleTemplate"
+        End With
+        
+        ' -------- 2. Remove Color Guides --------
+        
+        ' Get image
+        Set shpButtonPic = ThisDocument.Shapes.Item("removefile")
+        shpButtonPic.Select
+        Selection.CopyAsPicture
+        
+        ' Create button
+        Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
+        With NewButton
+            .PasteFace
+            .Caption = "Remove Color Guides"
+            .TooltipText = "Removes color bars and highlighting, but doesn't remove the styles!"
+            .Style = msoButtonIconAndCaption
+            .OnAction = "AttachTemplateMacro.zz_AttachBoundMSTemplate"
+        End With
+        
+        ' -------- 3. Add Cover Copy Styles --------
+        
+        ' Get image
+        Set shpButtonPic = ThisDocument.Shapes.Item("book")
+        shpButtonPic.Select
+        Selection.CopyAsPicture
+        
+        ' Create button
+        Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
+        With NewButton
+            .PasteFace
+            .Caption = "Add Cover Copy Styles"
+            .TooltipText = "Adds styles for use in cover/jacket copy"
+            .Style = msoButtonIconAndCaption
+            .OnAction = "AttachTemplateMacro.zz_AttachCoverTemplate"
+        End With
+        
+        ' -------- 3. Add Cover Copy Styles --------
+        
+        ' Get image
+        Set shpButtonPic = ThisDocument.Shapes.Item("book")
+        shpButtonPic.Select
+        Selection.CopyAsPicture
+        
+        ' Create button
+        Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
+        With NewButton
+            .PasteFace
+            .Caption = "Add Cover Copy Styles"
+            .TooltipText = "Adds styles for use in cover/jacket copy"
+            .Style = msoButtonIconAndCaption
+            .OnAction = "AttachTemplateMacro.zz_AttachCoverTemplate"
+        End With
+'    #End If
+    
+    
+' For testing part 1
+Stop
+
+
 ' ********* PART TWO ***************************
 
 
@@ -139,7 +223,4 @@ Sub AutoExec()
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
 End Sub
-
-
-
 
