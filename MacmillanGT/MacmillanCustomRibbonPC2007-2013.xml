@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!-- Custom Ribbon XML added using Custom UI Editor for Microsoft Office -->
 <!-- Available here: http://openxmldeveloper.org/blog/b/openxmldeveloper/archive/2009/08/07/7293.aspx -->
-<!-- RibbonControl is a VBA module in same template as this ribbon.xml code -->
+<!-- RibbonControl is a VBA module in same template as this customUI.xml code -->
+<!-- NOTE! Add images for BOTH PC (transparent) and Mac (gray background) here-->
 
 <customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="RibbonControl.Onload">
 	<ribbon>

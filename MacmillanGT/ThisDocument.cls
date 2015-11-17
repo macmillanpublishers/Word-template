@@ -10,6 +10,7 @@ Attribute VB_Exposed = True
 Option Explicit
 Option Base 1
 
+
 Sub AutoExec()
 '=======================================
 ' By Erica Warren - erica.warren@macmillan.com
@@ -29,39 +30,39 @@ Sub AutoExec()
 ' When you create the custom ribbon on PC, must include Mac button images as well,
 ' which should have the same file name but ending in "_mac" and be PNG files
 
-'    #If Mac Then
+    #If Mac Then
         Dim strPath As String
         Dim strFileName As String
         Dim strZipPath As String
         Dim strUnzipPath As String
-        
+
         ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
         strPath = ThisDocument.Path
         'strPath = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:MacmillanGT.dotm"
         ''Debug.Print strPath
-        
+
         strFileName = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
         ''Debug.Print strFileName
-        
+
         strZipPath = "Macintosh HD:private:tmp:" & strFileName & ".zip"
         ''Debug.Print strZipPath
-        
+
         FileCopy strPath, strZipPath
-        
+
         strUnzipPath = "/tmp/" & strFileName
         ''Debug.Print strUnzipPath
-        
+
         strZipPath = strUnzipPath & ".zip"
         ''Debug.Print strZipPath
-        
+
         ShellAndWaitMac ("unzip -u " & strZipPath & " -d " & strUnzipPath)
-        
+
         ' ===== Then we build a toolbar from the values in the customUI.xml file ===== '
         ' To edit the shell commands read up on xmllint and xpath:
         ' http://blog.powered-up-games.com/wordpress/archives/70'
         ' https://docs.oracle.com/javase/tutorial/jaxp/xslt/xpath.html
         ' http://www.thegeekstuff.com/2014/12/linux-parse-xml/
-        
+
         Dim strXmlPath As String
         Dim strCmdStart As String
         Dim strCmdEnd As String
@@ -73,7 +74,7 @@ Sub AutoExec()
         Dim a As Long
         Dim b As Long
         Dim c As Long
-        Dim bar As CommandBar
+        Dim Bar As CommandBar
         Dim h As Long
         Dim NewToolbar As CommandBar
         Dim strImagePath As String
@@ -81,85 +82,85 @@ Sub AutoExec()
         Dim blnBeginGroup As Boolean
         Dim strCaption As String
         Dim strAction As String
-                
+
         strXmlPath = strUnzipPath & "/customUI/"
         ' path to button images
         strImagePath = strXmlPath & "images/"
-        
+
         If IsItThere("Macintosh HD:private" & Replace(strXmlPath, "/", ":")) = True Then
             strCmdStart = "sed -e \" & Chr(34) & "s/xmlns/ignore/\" & Chr(34) & " " & strXmlPath & "customUI.xml | xmllint --xpath \" & Chr(34)
             strCmdEnd = "\" & Chr(34) & " -"
-            
+
             ' Get count of custom tabs in XML
             strXpath = "count(//tab)"
             lngTabCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
             'Debug.Print "There are " & lngTabCount & " tab(s)"
-            
+
             ' Get name of toolbar from XML
             If lngTabCount > 0 Then
                 For a = 1 To lngTabCount
                     strXpath = "string(//tab[" & a & "]/@label)"
                     strTabName = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
                     'Debug.Print "Tab " & a & " is named " & strTabName
-            
+
                     ' Test if toolbar already exists, and delete it
                     ' We'll re-create it each session, to be sure to capture updates
                     h = 0
-                    For Each bar In CommandBars
+                    For Each Bar In CommandBars
                         h = h + 1
                         'Debug.Print h & ": " & bar.Name
-                        If bar.Name = strTabName Then
-                            bar.Delete
+                        If Bar.Name = strTabName Then
+                            Bar.Delete
                             Exit For
                         End If
                     Next
-                    
+
                     'Stop        ' For testing delete loop above
-                    
+
                     ' Create custom toolbar
                     Set NewToolbar = Application.CommandBars.Add(Name:=strTabName, Temporary:=True)
-                    
+
                     ' Count number of groups in tab
                     strXpath = "count(//tab[" & a & "]/group)"
                     lngGroupCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
                     'Debug.Print "There are " & lngGroupCount & " group(s) in tab " & a
-                    
+
                     If lngGroupCount > 0 Then
                         For b = 1 To lngGroupCount
                             ' Count number of tabs in group
                             strXpath = "count(//tab[" & a & "]/group[" & b & "]/button)"
                             lngButtonCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
                             'Debug.Print "There are " & lngButtonCount & " buttons in group " & b & " on tab " & a
-                            
+
                             If lngButtonCount > 0 Then
 
                                 ' Add new buttons
                                 For c = 1 To lngButtonCount
-                                
+
                                     ' Start of Xpath for all button attributes - need to add attribute name and close parens to use
                                     strXpath = "string(//tab[" & a & "]/group[" & b & "]/button[" & c & "]/@"
-                            
+
                                     ' If first button in group, set BeginGroup to True
                                     If c = 1 Then blnBeginGroup = True Else blnBeginGroup = False
-                                
+
                                     ' Get image name
                                     strImageName = ShellAndWaitMac(strCmdStart & strXpath & "image)" & strCmdEnd)
                                     'Debug.Print "This button's image file is called " & strImageName
                                     strImageName = "Macintosh HD:private" & Replace(strImagePath & strImageName & "_mac.png", "/", ":")
                                     'Debug.Print "This button's image is " & strImageName
-                                    
+
                                     ' Add button image, copy to clipboard, delete
-                                    Set shpButtonPic = ThisDocument.Shapes.AddPicture(fileName:=strImageName)
+                                    Set shpButtonPic = ThisDocument.Shapes.AddPicture(FileName:=strImageName)
                                     shpButtonPic.Select
                                     Selection.CopyAsPicture
                                     Selection.Delete
-                                    
+
                                     ' Get button caption and macro name
                                     strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
                                     'Debug.Print "This button's caption is " & strCaption
                                     strAction = ShellAndWaitMac(strCmdStart & strXpath & "onAction)" & strCmdEnd)
                                     'Debug.Print "This button's macro is " & strAction
-                                    
+
                                     ' Create button
                                     Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
                                     With NewButton
@@ -176,20 +177,20 @@ Sub AutoExec()
                 Next a
             End If
             ' Don't need to delete the unzipped folder because the -u option in unzip overwrites any files
-            
+
             ' Set Toolbar dimension
             With NewToolbar
                 .Height = 252 'pixels, I assume
                 .Width = 171
                 .Visible = True
             End With
-        
+
         Else
             'There is no customUI dir in template
             'Do some error handling/message to user
-        End If         
+        End If
 
-'    #End If
+    #End If
     
     
 ' For testing part 1
@@ -285,4 +286,6 @@ Sub AutoExec()
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
 End Sub
+
+
 
