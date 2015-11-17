@@ -82,6 +82,7 @@ Sub AutoExec()
         Dim blnBeginGroup As Boolean
         Dim strCaption As String
         Dim strAction As String
+        Dim shpButtonPic As Shape
 
         strXmlPath = strUnzipPath & "/customUI/"
         ' path to button images
