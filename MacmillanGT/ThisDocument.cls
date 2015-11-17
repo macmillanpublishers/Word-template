@@ -32,7 +32,7 @@ Sub AutoExec()
 
     #If Mac Then
         Dim strPath As String
-        Dim strFileName As String
+        Dim strFile As String
         Dim strZipPath As String
         Dim strUnzipPath As String
 
@@ -41,15 +41,15 @@ Sub AutoExec()
         'strPath = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:MacmillanGT.dotm"
         ''Debug.Print strPath
 
-        strFileName = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
+        strFile = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
         ''Debug.Print strFileName
 
-        strZipPath = "Macintosh HD:private:tmp:" & strFileName & ".zip"
+        strZipPath = "Macintosh HD:private:tmp:" & strFile & ".zip"
         ''Debug.Print strZipPath
 
         FileCopy strPath, strZipPath
 
-        strUnzipPath = "/tmp/" & strFileName
+        strUnzipPath = "/tmp/" & strFile
         ''Debug.Print strUnzipPath
 
         strZipPath = strUnzipPath & ".zip"
@@ -83,6 +83,8 @@ Sub AutoExec()
         Dim strCaption As String
         Dim strAction As String
         Dim shpButtonPic As Shape
+        Dim NewButton As CommandBarButton
+        Dim strButtonID As String
 
         strXmlPath = strUnzipPath & "/customUI/"
         ' path to button images
@@ -161,14 +163,19 @@ Sub AutoExec()
                                     'Debug.Print "This button's caption is " & strCaption
                                     strAction = ShellAndWaitMac(strCmdStart & strXpath & "onAction)" & strCmdEnd)
                                     'Debug.Print "This button's macro is " & strAction
+                                    strButtonID = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
+                                    'Debug.Print strButtonID
+                                    
 
                                     ' Create button
                                     Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
                                     With NewButton
+                                        
                                         .PasteFace
                                         .Caption = strCaption
                                         .Style = msoButtonIconAndCaption
-                                        .OnAction = strAction
+                                        '.OnAction = "=" & strAction & "(buttonID:=" & strButtonID & ")"
+                                        '.OnAction = "VersionCheck.CheckMacmillan"
                                         .BeginGroup = blnBeginGroup
                                     End With
                                 Next c
@@ -185,6 +192,8 @@ Sub AutoExec()
                 .Width = 171
                 .Visible = True
             End With
+            
+            
 
         Else
             'There is no customUI dir in template
