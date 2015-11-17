@@ -8,27 +8,27 @@
 		<tabs>
 			<tab id="CustomTab1" label="Macmillan Tools" insertAfterMso="TabHome">
 				<group id="CustGrp1" label="Macmillan Styles" >
-					<button id="BtnAttachTemplate" label="Add Manuscript Styles" image="_0012_add-manuscript-styles---addfile" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnRemoveColor" label="Remove Color Guides" image="_0011_remove-color-guides---removefile" size="large" onAction="RibbonControl.LaunchMacros" />	
-					<button id="BtnCoverCopy" label="Add Cover Copy Styles" image="_0003_add-cover-copy-styles---book" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnPrintStyles" label="Print Styles in Margin" image="_0006_print-styles---print" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnViewStyles" size="normal" image="_0001_view-styles---eye" onAction="RibbonControl.LaunchMacros" label="View Styles"/>
+					<button id="BtnAttachTemplate" label="Add Manuscript Styles" image="addfile" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnRemoveColor" label="Remove Color Guides" image="removefile" size="large" onAction="RibbonControl.LaunchMacros" />	
+					<button id="BtnCoverCopy" label="Add Cover Copy Styles" image="book" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnPrintStyles" label="Print Styles in Margin" image="print" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnViewStyles" size="normal" image="eye" onAction="RibbonControl.LaunchMacros" label="View Styles"/>
 				</group>
 				<group id="CustGrp2" label="Manuscript Tools" >
-					<button id="BtnCastoff" label="Castoff" image="_0013_castoff---calculator" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnEndnotes" label="Unlink Endnotes" image="_0007_de-embed-endnotes---unlink" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnCleanup" label="Manuscript Cleanup" image="_0005_manuscript-cleanup---wineglass" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCastoff" label="Castoff" image="calculator" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnEndnotes" label="Unlink Endnotes" image="unlink" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCleanup" label="Manuscript Cleanup" image="wineglass" size="large" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp3" label="Style Tools" >
-					<button id="BtnCharStyles" label="Tag Character Styles" image="_0002_character-styles---tag" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnStyleReport" label="Style Report" image="_0004_style-report---file" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnBkmkrCheck" label="Bookmaker Check" image="_0008_bookmaker-requirements---checkfile" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnLocTags" label="CIP Application" image="_0010_CIP-application-tags---index" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnCharStyles" label="Tag Character Styles" image="tag" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnStyleReport" label="Style Report" image="file" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnBkmkrCheck" label="Bookmaker Check" image="checkfile" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnLocTags" label="CIP Application" image="index" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp4" label="Help" >
-					<button id="BtnGtVersion" label="Macmillan Tools Version" image="_0009_-check-macros_styles-version---info" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnStyleVersion" label="Macmillan Styles Version" image="_0009_-check-macros_styles-version---info" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="BtnTriceratops" image="_0000_insert-ASCII-triceratops---pizza" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnGtVersion" label="Macmillan Tools Version" image="info" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnStyleVersion" label="Macmillan Styles Version" image="info" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="BtnTriceratops" image="pizza" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
 			</tab>
 		</tabs>

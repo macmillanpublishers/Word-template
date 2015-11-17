@@ -24,114 +24,176 @@ Sub AutoExec()
 ' And http://word.mvps.org/faqs/macrosvba/SetCustomButtonImage.htm
 '
 ' ====== DEPENDENCIES =======
-' Must run InsertPictures sub in Utilities template - but with MacmillanGT.dotm as ActiveDoc -
-' before deploying this macro to machines.
+' Obviously, custom ribbon XML code must have been added to the template on PC
+' CANNOT OPEN AND SAVE TEMPLATE ON MAC 2011! This removes the customUI directory
+' When you create the custom ribbon on PC, must include Mac button images as well,
+' which should have the same file name but ending in "_mac" and be PNG files
 
 '    #If Mac Then
-         
-        ' ======== Test if toolbar already exists, and delete it ========
-        ' We'll re-create it each session, to be sure to capture updates
+        Dim strPath As String
+        Dim strFileName As String
+        Dim strZipPath As String
+        Dim strUnzipPath As String
+        
+        ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
+        strPath = ThisDocument.Path
+        'strPath = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:MacmillanGT.dotm"
+        ''Debug.Print strPath
+        
+        strFileName = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
+        ''Debug.Print strFileName
+        
+        strZipPath = "Macintosh HD:private:tmp:" & strFileName & ".zip"
+        ''Debug.Print strZipPath
+        
+        FileCopy strPath, strZipPath
+        
+        strUnzipPath = "/tmp/" & strFileName
+        ''Debug.Print strUnzipPath
+        
+        strZipPath = strUnzipPath & ".zip"
+        ''Debug.Print strZipPath
+        
+        ShellAndWaitMac ("unzip -u " & strZipPath & " -d " & strUnzipPath)
+        
+        ' ===== Then we build a toolbar from the values in the customUI.xml file ===== '
+        ' To edit the shell commands read up on xmllint and xpath:
+        ' http://blog.powered-up-games.com/wordpress/archives/70'
+        ' https://docs.oracle.com/javase/tutorial/jaxp/xslt/xpath.html
+        ' http://www.thegeekstuff.com/2014/12/linux-parse-xml/
+        
+        Dim strXmlPath As String
+        Dim strCmdStart As String
+        Dim strCmdEnd As String
+        Dim strXpath As String
+        Dim lngTabCount As Long
+        Dim strTabName As String
+        Dim lngGroupCount As Long
+        Dim lngButtonCount As Long
+        Dim a As Long
+        Dim b As Long
+        Dim c As Long
         Dim bar As CommandBar
         Dim h As Long
-        h = 0
-        
-        For Each bar In CommandBars
-            h = h + 1
-            Debug.Print h & ": " & bar.Name
-            If bar.Name = "Macmillan Tools" Then
-                bar.Delete
-                Exit For
-            End If
-        Next
-            
-        Stop
-        
-        ' ======== Add custom toolbar ========
         Dim NewToolbar As CommandBar
-        Set NewToolbar = Application.CommandBars.Add(Name:="Macmillan Tools", Temporary:=True)
-        With NewToolbar
-            .Height = 252 'pixels, I assume
-            .Width = 171
-            .Visible = True
-            .Name = "Macmillan Tools"
-        End With
+        Dim strImagePath As String
+        Dim strImageName As String
+        Dim blnBeginGroup As Boolean
+        Dim strCaption As String
+        Dim strAction As String
+                
+        strXmlPath = strUnzipPath & "/customUI/"
+        ' path to button images
+        strImagePath = strXmlPath & "images/"
         
-        ' ======== Add items to toolbar ========
-        Dim NewButton As CommandBarButton
-        Dim shpButtonPic As Shape
+        If IsItThere("Macintosh HD:private" & Replace(strXmlPath, "/", ":")) = True Then
+            strCmdStart = "sed -e \" & Chr(34) & "s/xmlns/ignore/\" & Chr(34) & " " & strXmlPath & "customUI.xml | xmllint --xpath \" & Chr(34)
+            strCmdEnd = "\" & Chr(34) & " -"
+            
+            ' Get count of custom tabs in XML
+            strXpath = "count(//tab)"
+            lngTabCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
+            'Debug.Print "There are " & lngTabCount & " tab(s)"
+            
+            ' Get name of toolbar from XML
+            If lngTabCount > 0 Then
+                For a = 1 To lngTabCount
+                    strXpath = "string(//tab[" & a & "]/@label)"
+                    strTabName = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
+                    'Debug.Print "Tab " & a & " is named " & strTabName
+            
+                    ' Test if toolbar already exists, and delete it
+                    ' We'll re-create it each session, to be sure to capture updates
+                    h = 0
+                    For Each bar In CommandBars
+                        h = h + 1
+                        'Debug.Print h & ": " & bar.Name
+                        If bar.Name = strTabName Then
+                            bar.Delete
+                            Exit For
+                        End If
+                    Next
+                    
+                    'Stop        ' For testing delete loop above
+                    
+                    ' Create custom toolbar
+                    Set NewToolbar = Application.CommandBars.Add(Name:=strTabName, Temporary:=True)
+                    
+                    ' Count number of groups in tab
+                    strXpath = "count(//tab[" & a & "]/group)"
+                    lngGroupCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
+                    'Debug.Print "There are " & lngGroupCount & " group(s) in tab " & a
+                    
+                    If lngGroupCount > 0 Then
+                        For b = 1 To lngGroupCount
+                            ' Count number of tabs in group
+                            strXpath = "count(//tab[" & a & "]/group[" & b & "]/button)"
+                            lngButtonCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
+                            'Debug.Print "There are " & lngButtonCount & " buttons in group " & b & " on tab " & a
+                            
+                            If lngButtonCount > 0 Then
+
+                                ' Add new buttons
+                                For c = 1 To lngButtonCount
+                                
+                                    ' Start of Xpath for all button attributes - need to add attribute name and close parens to use
+                                    strXpath = "string(//tab[" & a & "]/group[" & b & "]/button[" & c & "]/@"
+                            
+                                    ' If first button in group, set BeginGroup to True
+                                    If c = 1 Then blnBeginGroup = True Else blnBeginGroup = False
+                                
+                                    ' Get image name
+                                    strImageName = ShellAndWaitMac(strCmdStart & strXpath & "image)" & strCmdEnd)
+                                    'Debug.Print "This button's image file is called " & strImageName
+                                    strImageName = "Macintosh HD:private" & Replace(strImagePath & strImageName & "_mac.png", "/", ":")
+                                    'Debug.Print "This button's image is " & strImageName
+                                    
+                                    ' Add button image, copy to clipboard, delete
+                                    Set shpButtonPic = ThisDocument.Shapes.AddPicture(fileName:=strImageName)
+                                    shpButtonPic.Select
+                                    Selection.CopyAsPicture
+                                    Selection.Delete
+                                    
+                                    ' Get button caption and macro name
+                                    strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
+                                    'Debug.Print "This button's caption is " & strCaption
+                                    strAction = ShellAndWaitMac(strCmdStart & strXpath & "onAction)" & strCmdEnd)
+                                    'Debug.Print "This button's macro is " & strAction
+                                    
+                                    ' Create button
+                                    Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
+                                    With NewButton
+                                        .PasteFace
+                                        .Caption = strCaption
+                                        .Style = msoButtonIconAndCaption
+                                        .OnAction = strAction
+                                        .BeginGroup = blnBeginGroup
+                                    End With
+                                Next c
+                            End If
+                        Next b
+                    End If
+                Next a
+            End If
+            ' Don't need to delete the unzipped folder because the -u option in unzip overwrites any files
+            
+            ' Set Toolbar dimension
+            With NewToolbar
+                .Height = 252 'pixels, I assume
+                .Width = 171
+                .Visible = True
+            End With
         
-        ' -------- 1. Add Manuscript Styles --------
-        
-        ' Get image
-        Set shpButtonPic = ThisDocument.Shapes.Item("addfile")
-        shpButtonPic.Select
-        Selection.CopyAsPicture
-        
-        ' Create button
-        Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
-        With NewButton
-            .PasteFace
-            .Caption = "Add Manuscript Styles"
-            .TooltipText = "Adds the Macmillan Styles to the current document"
-            .Style = msoButtonIconAndCaption
-            .OnAction = "AttachTemplateMacro.zz_AttachStyleTemplate"
-        End With
-        
-        ' -------- 2. Remove Color Guides --------
-        
-        ' Get image
-        Set shpButtonPic = ThisDocument.Shapes.Item("removefile")
-        shpButtonPic.Select
-        Selection.CopyAsPicture
-        
-        ' Create button
-        Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
-        With NewButton
-            .PasteFace
-            .Caption = "Remove Color Guides"
-            .TooltipText = "Removes color bars and highlighting, but doesn't remove the styles!"
-            .Style = msoButtonIconAndCaption
-            .OnAction = "AttachTemplateMacro.zz_AttachBoundMSTemplate"
-        End With
-        
-        ' -------- 3. Add Cover Copy Styles --------
-        
-        ' Get image
-        Set shpButtonPic = ThisDocument.Shapes.Item("book")
-        shpButtonPic.Select
-        Selection.CopyAsPicture
-        
-        ' Create button
-        Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
-        With NewButton
-            .PasteFace
-            .Caption = "Add Cover Copy Styles"
-            .TooltipText = "Adds styles for use in cover/jacket copy"
-            .Style = msoButtonIconAndCaption
-            .OnAction = "AttachTemplateMacro.zz_AttachCoverTemplate"
-        End With
-        
-        ' -------- 3. Add Cover Copy Styles --------
-        
-        ' Get image
-        Set shpButtonPic = ThisDocument.Shapes.Item("book")
-        shpButtonPic.Select
-        Selection.CopyAsPicture
-        
-        ' Create button
-        Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
-        With NewButton
-            .PasteFace
-            .Caption = "Add Cover Copy Styles"
-            .TooltipText = "Adds styles for use in cover/jacket copy"
-            .Style = msoButtonIconAndCaption
-            .OnAction = "AttachTemplateMacro.zz_AttachCoverTemplate"
-        End With
+        Else
+            'There is no customUI dir in template
+            'Do some error handling/message to user
+        End If         
+
 '    #End If
     
     
 ' For testing part 1
-Stop
+' Stop
 
 
 ' ********* PART TWO ***************************
