@@ -129,7 +129,7 @@ Sub AutoExec()
                     ' We'll re-create it each session, to be sure to capture updates
                     h = 0
                     For Each Bar In CommandBars
-                        h = h + 1
+                        'h = h + 1
                         'Debug.Print h & ": " & bar.Name
                         If Bar.Name = strTabName Then
                             Bar.Delete
@@ -212,7 +212,7 @@ Sub AutoExec()
             
             ' Delete the unzipped directory
             ' Possibly use "rm -rf strUnzipPath" to force w/ no prompts?
-            ShellAndWaitMac ("rm -r " & strUnzipPath)
+            ShellAndWaitMac ("rm -rf " & strUnzipPath)
             Debug.Print "unzipped folder removed"
         Else
             'There is no customUI dir in template
@@ -343,6 +343,7 @@ Sub AutoExec()
     Application.ScreenRefresh
     
 End Sub
+
 
 
 
