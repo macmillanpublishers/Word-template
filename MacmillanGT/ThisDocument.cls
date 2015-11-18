@@ -33,6 +33,7 @@ Sub AutoExec()
 ' that are 16 x 16 pixels
     
     Dim Bar As CommandBar
+    Application.ScreenUpdating = False
     
     #If Mac Then
         '------------------Time Start-----------------
@@ -75,7 +76,7 @@ Sub AutoExec()
         ' Unzip the copy we just made, delete the zip file
         ' -u means
         ShellAndWaitMac ("unzip -u " & strZipPath & " -d " & strUnzipPath & ";rm " & strZipPath)
-        
+        Debug.Print "template copied and unzipped"
 
         ' ===== Then we build a toolbar from the values in the customUI.xml file ===== '
         ' To edit the shell commands read up on xmllint and xpath:
@@ -135,7 +136,7 @@ Sub AutoExec()
                             Exit For
                         End If
                     Next
-
+                    Debug.Print "old toolbar removed"
                     'Stop        ' For testing delete loop above
 
                     ' Create custom toolbar
@@ -197,7 +198,9 @@ Sub AutoExec()
                     End If
                 Next a
             End If
-
+            
+            Debug.Print "buttons added"
+            
             ' Set Toolbar dimension AFTER creation
             With NewToolbar
                 .Height = 252 'pixels, I assume
@@ -205,10 +208,12 @@ Sub AutoExec()
                 .Visible = True
             End With
             
+            Debug.Print "toolbar resized"
+            
             ' Delete the unzipped directory
             ' Possibly use "rm -rf strUnzipPath" to force w/ no prompts?
             ShellAndWaitMac ("rm -r " & strUnzipPath)
-            
+            Debug.Print "unzipped folder removed"
         Else
             'There is no customUI dir in template
             Dim strMessage As String
@@ -333,6 +338,9 @@ Sub AutoExec()
     
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    
+    Application.ScreenUpdating = True
+    Application.ScreenRefresh
     
 End Sub
 
