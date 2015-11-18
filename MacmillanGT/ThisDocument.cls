@@ -32,18 +32,17 @@ Sub AutoExec()
 ' which should have the same file name but ending in "_mac" and be PNG files
 ' that are 16 x 16 pixels
     
-    '------------------Time Start-----------------
-    Dim StartTime As Double
-    Dim SecondsElapsed As Double
-    
-    'Remember time when macro starts
-    StartTime = Timer
-    '---------------------------------------------
-    
-    
     Dim Bar As CommandBar
     
     #If Mac Then
+        '------------------Time Start-----------------
+        Dim StartTime As Double
+        Dim SecondsElapsed As Double
+        
+        'Remember time when macro starts
+        StartTime = Timer
+        '---------------------------------------------
+    
         Dim strPath As String
         Dim strFile As String
         Dim strZipPath As String
@@ -208,7 +207,7 @@ Sub AutoExec()
             
             ' Delete the unzipped directory
             ' Possibly use "rm -rf strUnzipPath" to force w/ no prompts?
-            ShellAndWaitMac ("rm -r strUnzipPath")
+            ShellAndWaitMac ("rm -r " & strUnzipPath)
             
         Else
             'There is no customUI dir in template
@@ -219,22 +218,26 @@ Sub AutoExec()
             MsgBox strMessage, vbCritical, "Toolbar Error"
             
         End If
-    #Else
-    ' Delete "custom toolbar" (NOT custom ribbon) that gets added to Add-Ins tab for some reason on PC
-    For Each Bar In CommandBars
-        If Bar.Name = "Macmillan Tools" Then
-            Bar.Delete
-            Exit For
-        End If
-    Next
+        
+        '----------------------Timer End-------------------------------------------
+        'Determine how many seconds code took to run
+        SecondsElapsed = Round(Timer - StartTime, 2)
+        
+        'Notify user in seconds
+        Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+        '---------------------------------------------------------------------------
+        
+    #Else ' Windows
+        ' Delete "custom toolbar" (NOT custom ribbon) that gets added to Add-Ins tab for some reason on PC
+        For Each Bar In CommandBars
+            If Bar.Name = "Macmillan Tools" Then
+                Bar.Delete
+                Exit For
+            End If
+        Next
     #End If
     
-    '----------------------Timer End-------------------------------------------
-    'Determine how many seconds code took to run
-    SecondsElapsed = Round(Timer - StartTime, 2)
-    
-    'Notify user in seconds
-    Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+
     
 ' For testing part 1
 ' Stop
