@@ -26,10 +26,23 @@ Sub AutoExec()
 '
 ' ====== DEPENDENCIES =======
 ' Obviously, custom ribbon XML code must have been added to the template on PC
+' See XML code in this repo for format. Macro name must be stored as ID attribute.
 ' CANNOT OPEN AND SAVE TEMPLATE ON MAC 2011! This removes the customUI directory
 ' When you create the custom ribbon on PC, must include Mac button images as well,
 ' which should have the same file name but ending in "_mac" and be PNG files
-
+' that are 16 x 16 pixels
+    
+    '------------------Time Start-----------------
+    Dim StartTime As Double
+    Dim SecondsElapsed As Double
+    
+    'Remember time when macro starts
+    StartTime = Timer
+    '---------------------------------------------
+    
+    
+    Dim Bar As CommandBar
+    
     #If Mac Then
         Dim strPath As String
         Dim strFile As String
@@ -40,22 +53,30 @@ Sub AutoExec()
         strPath = ThisDocument.Path
         'strPath = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:MacmillanGT.dotm"
         ''Debug.Print strPath
-
+        
+        ' Get just the file name w/o path or extension
         strFile = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
         ''Debug.Print strFileName
-
+        
+        ' location we're going to copy the template to as a zip file
         strZipPath = "Macintosh HD:private:tmp:" & strFile & ".zip"
         ''Debug.Print strZipPath
-
+        
+        ' Copy this template to tmp as a zip file
         FileCopy strPath, strZipPath
-
+        
+        ' bash path of unzipped stuff
         strUnzipPath = "/tmp/" & strFile
         ''Debug.Print strUnzipPath
-
+        
+        ' bash path of zip folder
         strZipPath = strUnzipPath & ".zip"
         ''Debug.Print strZipPath
-
-        ShellAndWaitMac ("unzip -u " & strZipPath & " -d " & strUnzipPath)
+        
+        ' Unzip the copy we just made, delete the zip file
+        ' -u means
+        ShellAndWaitMac ("unzip -u " & strZipPath & " -d " & strUnzipPath & ";rm " & strZipPath)
+        
 
         ' ===== Then we build a toolbar from the values in the customUI.xml file ===== '
         ' To edit the shell commands read up on xmllint and xpath:
@@ -74,7 +95,6 @@ Sub AutoExec()
         Dim a As Long
         Dim b As Long
         Dim c As Long
-        Dim Bar As CommandBar
         Dim h As Long
         Dim NewToolbar As CommandBar
         Dim strImagePath As String
@@ -84,7 +104,6 @@ Sub AutoExec()
         Dim strAction As String
         Dim shpButtonPic As Shape
         Dim NewButton As CommandBarButton
-        Dim strButtonID As String
 
         strXmlPath = strUnzipPath & "/customUI/"
         ' path to button images
@@ -151,31 +170,26 @@ Sub AutoExec()
                                     'Debug.Print "This button's image file is called " & strImageName
                                     strImageName = "Macintosh HD:private" & Replace(strImagePath & strImageName & "_mac.png", "/", ":")
                                     'Debug.Print "This button's image is " & strImageName
-
+                                    
+                                    ' Get button caption and macro name
+                                    strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
+                                    'Debug.Print "This button's caption is " & strCaption
+                                    strAction = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
+                                    'Debug.Print "This button's macro is " & strAction
+                                    
                                     ' Add button image, copy to clipboard, delete
                                     Set shpButtonPic = ThisDocument.Shapes.AddPicture(FileName:=strImageName)
                                     shpButtonPic.Select
                                     Selection.CopyAsPicture
                                     Selection.Delete
-
-                                    ' Get button caption and macro name
-                                    strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
-                                    'Debug.Print "This button's caption is " & strCaption
-                                    strAction = ShellAndWaitMac(strCmdStart & strXpath & "onAction)" & strCmdEnd)
-                                    'Debug.Print "This button's macro is " & strAction
-                                    strButtonID = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
-                                    'Debug.Print strButtonID
                                     
-
                                     ' Create button
                                     Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
                                     With NewButton
-                                        
                                         .PasteFace
                                         .Caption = strCaption
                                         .Style = msoButtonIconAndCaption
-                                        '.OnAction = "=" & strAction & "(buttonID:=" & strButtonID & ")"
-                                        '.OnAction = "VersionCheck.CheckMacmillan"
+                                        .OnAction = strAction
                                         .BeginGroup = blnBeginGroup
                                     End With
                                 Next c
@@ -184,24 +198,43 @@ Sub AutoExec()
                     End If
                 Next a
             End If
-            ' Don't need to delete the unzipped folder because the -u option in unzip overwrites any files
 
-            ' Set Toolbar dimension
+            ' Set Toolbar dimension AFTER creation
             With NewToolbar
                 .Height = 252 'pixels, I assume
                 .Width = 171
                 .Visible = True
             End With
             
+            ' Delete the unzipped directory
+            ' Possibly use "rm -rf strUnzipPath" to force w/ no prompts?
+            ShellAndWaitMac ("rm -r strUnzipPath")
             
-
         Else
             'There is no customUI dir in template
-            'Do some error handling/message to user
+            Dim strMessage As String
+            strMessage = "The Macmillan Tools template cannot create the macro toolbar. Please contact " & _
+                "workflows@macmillan.com for assistance."
+                
+            MsgBox strMessage, vbCritical, "Toolbar Error"
+            
         End If
-
+    #Else
+    ' Delete "custom toolbar" (NOT custom ribbon) that gets added to Add-Ins tab for some reason on PC
+    For Each Bar In CommandBars
+        If Bar.Name = "Macmillan Tools" Then
+            Bar.Delete
+            Exit For
+        End If
+    Next
     #End If
     
+    '----------------------Timer End-------------------------------------------
+    'Determine how many seconds code took to run
+    SecondsElapsed = Round(Timer - StartTime, 2)
+    
+    'Notify user in seconds
+    Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
     
 ' For testing part 1
 ' Stop
