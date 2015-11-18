@@ -235,6 +235,9 @@ Sub AutoExec()
                 Exit For
             End If
         Next
+        
+        ' Need to save template or user is prompted to save when closing Word
+        ThisDocument.Save
     #End If
     
 
