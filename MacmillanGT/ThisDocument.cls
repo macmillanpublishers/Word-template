@@ -172,23 +172,14 @@ Sub AutoExec()
                                     ' Get button caption and macro name
                                     strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
                                     strAction = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
-
-                                    ' **********************
-                                    ' PROBLEMS!
-                                    ' shpButtonPic.Select is causing Word to crash when launched from Startup AutoExec
-                                    ' though it runs fine if you open the template and run manually
-                                    ' **********************
                                     
-                                    ' Add button image, copy to clipboard, delete
-'                                    Set shpButtonPic = ThisDocument.Shapes.AddPicture(FileName:=strImageName)
-'                                    shpButtonPic.Select
-'                                    Selection.CopyAsPicture
-'                                    Selection.Delete
+                                    ' Copy button image to clipboard w/ AppleScript
+                                    MacScript ("set the clipboard to (read file " & Chr(34) & strImageName & Chr(34) & " as <<class PNGf>>)")
 
                                     ' Create button
                                     Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
                                     With NewButton
-                                        '.PasteFace
+                                        .PasteFace
                                         .Caption = strCaption
                                         .Style = msoButtonIconAndCaption
                                         .OnAction = strAction
