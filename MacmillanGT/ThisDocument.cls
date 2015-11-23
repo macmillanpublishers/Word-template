@@ -16,236 +16,6 @@ Sub AutoExec()
 ' By Erica Warren - erica.warren@macmillan.com
 '
 '
-' ********** PART ONE ************
-'
-' ====== USE ======
-' Creates custom toolbar on a Mac. Don't want to do it manually because saving on Mac
-' removes the custom PC Ribbon
-' See http://www.fontstuff.com/ebooks/free/fsexceladdins.pdf
-' And http://word.mvps.org/faqs/macrosvba/SetCustomButtonImage.htm
-'
-' ====== DEPENDENCIES =======
-' Obviously, custom ribbon XML code must have been added to the template on PC
-' See XML code in this repo for format. Macro name MUST be stored as button ID attribute.
-' CANNOT OPEN AND SAVE TEMPLATE ON MAC 2011! This removes the customUI directory.
-' When you create the custom ribbon on PC, must include Mac button images as well,
-' which should have the same file name but ending in "_mac" and be PNG files
-' that are 16 x 16 pixels, background RGB 191, 191, 191.
-    
-    ' ======= For testing / debugging ==============
-    ' 'MsgBox "I am MacmillanGT and I am running!"
-    ' ==============================================
-    
-    On Error GoTo ErrHandler
-    Dim Bar As CommandBar
-    Application.ScreenUpdating = False
-
-    #If Mac Then
-        ' Code below is all Mac specific (paths and shell code) but could probably expand
-        ' to PC if we ever want to support Word versions earlier than 2007 (no ribbon).
-        ' Would have to figure out how to send shell commands on PC
-        
-        '------------------Time Start-----------------
-        ' ***** Comment out before going live ********
-        
-        Dim StartTime As Double
-        Dim SecondsElapsed As Double
-
-        'Remember time when macro starts
-        StartTime = Timer
-        '---------------------------------------------
-
-        Dim strPath As String
-        Dim strFile As String
-        Dim strZipPath As String
-        Dim strUnzipPath As String
-
-        ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
-        strPath = ThisDocument.Path
-        'strPath = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:MacmillanGT.dotm"
-
-        ' Get just the file name w/o path or extension
-        strFile = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
-
-        ' location we're going to copy the template to as a zip file
-        strZipPath = "Macintosh HD:private:tmp:" & strFile & ".zip"
-
-        ' Copy this template to tmp as a zip file
-        FileCopy strPath, strZipPath
-
-        ' bash path of unzipped stuff
-        strUnzipPath = "/tmp/" & strFile
-
-        ' bash path of zip folder
-        strZipPath = strUnzipPath & ".zip"
-
-        ' Unzip the copy we just made, delete the zip file
-        ' -u means update, i.e. overwrite any files that currently exist
-        ShellAndWaitMac ("unzip -u " & strZipPath & " -d " & strUnzipPath & ";rm " & strZipPath)
-
-        ' ===== Then we build a toolbar from the values in the customUI.xml file ===== '
-        ' To edit the shell commands read up on xmllint and xpath:
-        ' http://blog.powered-up-games.com/wordpress/archives/70'
-        ' https://docs.oracle.com/javase/tutorial/jaxp/xslt/xpath.html
-        ' http://www.thegeekstuff.com/2014/12/linux-parse-xml/
-
-        Dim strXmlPath As String
-        Dim strCmdStart As String
-        Dim strCmdEnd As String
-        Dim strXpath As String
-        Dim lngTabCount As Long
-        Dim strTabName As String
-        Dim lngGroupCount As Long
-        Dim lngButtonCount As Long
-        Dim a As Long
-        Dim b As Long
-        Dim c As Long
-        Dim h As Long
-        Dim NewToolbar As CommandBar
-        Dim strImagePath As String
-        Dim strImageName As String
-        Dim blnBeginGroup As Boolean
-        Dim strCaption As String
-        Dim strAction As String
-        Dim shpButtonPic As Shape
-        Dim NewButton As CommandBarButton
-
-        strXmlPath = strUnzipPath & "/customUI/"
-        ' path to button images
-        strImagePath = strXmlPath & "images/"
-
-        If IsItThere("Macintosh HD:private" & Replace(strXmlPath, "/", ":")) = True Then
-            ' first part "sed -e "s/xmlns/ignore/" customUI.xml" removes namespace, which messes up xmllint
-            ' that is then piped to xmllint which gets the attribute value based on the Xpath
-            strCmdStart = "sed -e \" & Chr(34) & "s/xmlns/ignore/\" & Chr(34) & " " & strXmlPath & "customUI.xml | xmllint --xpath \" & Chr(34)
-            strCmdEnd = "\" & Chr(34) & " -"
-
-            ' Get count of custom tabs in XML
-            strXpath = "count(//tab)"
-            lngTabCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
-
-            ' Get name of toolbar from XML
-            If lngTabCount > 0 Then
-                For a = 1 To lngTabCount
-                    strXpath = "string(//tab[" & a & "]/@label)"
-                    strTabName = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
-
-                    ' Test if toolbar already exists, and delete it
-                    ' We'll re-create it each session, to be sure to capture updates
-                    For Each Bar In CommandBars
-                        If Bar.Name = strTabName Then
-                            Bar.Delete
-                            Exit For
-                        End If
-                    Next
-
-                    'Stop        ' For testing delete loop above
-
-                    ' Create custom toolbar
-                    Set NewToolbar = Application.CommandBars.Add(Name:=strTabName, Temporary:=True)
-
-                    ' Count number of groups in tab
-                    strXpath = "count(//tab[" & a & "]/group)"
-                    lngGroupCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
-
-                    If lngGroupCount > 0 Then
-                        For b = 1 To lngGroupCount
-                            ' Count number of tabs in group
-                            strXpath = "count(//tab[" & a & "]/group[" & b & "]/button)"
-                            lngButtonCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
-
-                            If lngButtonCount > 0 Then
-
-                                ' Add new buttons
-                                For c = 1 To lngButtonCount
-
-                                    ' Start of Xpath for all button attributes - need to add attribute name AND close parens to use
-                                    strXpath = "string(//tab[" & a & "]/group[" & b & "]/button[" & c & "]/@"
-
-                                    ' If first button in group, set BeginGroup to True
-                                    If c = 1 Then blnBeginGroup = True Else blnBeginGroup = False
-
-                                    ' Get image name
-                                    strImageName = ShellAndWaitMac(strCmdStart & strXpath & "image)" & strCmdEnd)
-                                    strImageName = "Macintosh HD:private" & Replace(strImagePath & strImageName & "_mac.png", "/", ":")
-
-                                    ' Get button caption and macro name
-                                    strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
-                                    strAction = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
-                                    
-                                    ' Copy button image to clipboard w/ AppleScript
-                                    Dim strCommand As String
-                                    ' 199 is << and 200 is >> (but as a single character)
-                                    strCommand = "set buttonPic to read file " & Chr(34) & strImageName & Chr(34) & " as " & Chr(199) & "class PNGf" _
-                                        & Chr(200) & Chr(13) & "set the clipboard to buttonPic"
-                                    'Debug.Print strCommand
-                                    MacScript (strCommand)
-
-                                    ' Create button
-                                    Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
-                                    With NewButton
-                                        .PasteFace
-                                        .Caption = strCaption
-                                        .Style = msoButtonIconAndCaption
-                                        .OnAction = strAction
-                                        .BeginGroup = blnBeginGroup
-                                    End With
-                                Next c
-                            End If
-                        Next b
-                    End If
-                Next a
-            End If
-
-            ' Set Toolbar dimension AFTER creation
-            With NewToolbar
-                .Height = 252 'pixels, I assume
-                .Width = 171
-                .Visible = True
-            End With
-
-            ' Delete the unzipped directory
-            ShellAndWaitMac ("rm -rf " & strUnzipPath)
-        Else
-            'There is no customUI dir in template
-            Dim strMessage As String
-            strMessage = "The Macmillan Tools template cannot create the macro toolbar. Please contact " & _
-                "workflows@macmillan.com for assistance."
-
-            MsgBox strMessage, vbCritical, "Toolbar Error"
-
-        End If
-
-        '----------------------Timer End-------------------------------------------
-        'Determine how many seconds code took to run
-        SecondsElapsed = Round(Timer - StartTime, 2)
-
-        'Notify user in seconds
-        MsgBox "This code ran successfully in " & SecondsElapsed & " seconds"
-        '---------------------------------------------------------------------------
-
-    #Else ' Windows
-        ' Delete "custom toolbar" (NOT custom ribbon) that gets added to Add-Ins tab for some reason on PC
-        For Each Bar In CommandBars
-            If Bar.Name = "Macmillan Tools" Then
-                Bar.Delete
-                Exit For
-            End If
-        Next
-
-        ' Need to save template or user is prompted to save when closing Word
-        ThisDocument.Save
-    #End If
-    
-
-    
-' For testing part 1
-' Stop
-
-
-' ********* PART TWO ***************************
-
-
 '===== USE ===============================
 ' Sets variable names (file names and directories) for Installer sub in FileInstaller module.
 '
@@ -256,6 +26,10 @@ Sub AutoExec()
 ' and be saved in the STARTUP directory.
 '
 ' Requires FileInstaller and SharedMacros modules be installed in the same template.
+
+    ' ======= For testing / debugging ==============
+    ' 'MsgBox "I am MacmillanGT and I am running!"
+    ' ==============================================
     
     Dim blnStaging As Boolean
     Dim blnInstaller As Boolean
@@ -336,6 +110,7 @@ Sub AutoExec()
 ErrHandler:
     MsgBox Err.Number & ": " & Err.Description
 End Sub
+
 
 
 
