@@ -174,7 +174,12 @@ Sub AutoExec()
                                     strAction = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
                                     
                                     ' Copy button image to clipboard w/ AppleScript
-                                    MacScript ("set the clipboard to (read file " & Chr(34) & strImageName & Chr(34) & " as <<class PNGf>>)")
+                                    Dim strCommand As String
+                                    ' 199 is << and 200 is >> (but as a single character)
+                                    strCommand = "set buttonPic to read file " & Chr(34) & strImageName & Chr(34) & " as " & Chr(199) & "class PNGf" _
+                                        & Chr(200) & Chr(13) & "set the clipboard to buttonPic"
+                                    'Debug.Print strCommand
+                                    MacScript (strCommand)
 
                                     ' Create button
                                     Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
