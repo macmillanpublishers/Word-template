@@ -234,18 +234,17 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         logString = Now & " -- Final directory clear of " & FileName & " file."
         LogInformation LogFile, logString
         
+        ' move template to final directory
+        Name strTmpPath As strFinalPath
+        
         'Mac won't load macros from a template downloaded from the internet to Startup.
-        'Need to open and save as to final location for macros to work.
+        'Need to send these commands for it to work.
+        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar
         #If Mac Then
-            If InStr(1, FileName, ".dotm") > 0 And InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then      'File is a template being saved in startup dir
-                Documents.Open FileName:=strTmpPath, ReadOnly:=True ', Visible:=False doesn't work on Mac
-                Documents(strTmpPath).SaveAs (strFinalPath)
-                Documents(strFinalPath).Close
-            Else
-                Name strTmpPath As strFinalPath
-            End If
-        #Else
-            Name strTmpPath As strFinalPath
+            ShellAndWaitMac ("xattr -d com.apple.quarantine /Applications/Microsoft\ Office\ 2011/Office/Startup/Word/" & FileName)
+            ShellAndWaitMac ("xattr -wx com.apple.FinderInfo " & Chr(34) & "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00" & _
+                " 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00" & Chr(34) & " /Applications/Microsoft\ Office\ " & Chr(34) & _
+                "2011/Office/Startup/Word/" & FileName)
         #End If
     
     Else

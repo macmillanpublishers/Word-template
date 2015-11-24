@@ -101,15 +101,13 @@ Sub AutoExec()
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
-    
     On Error GoTo 0
     Exit Sub
     
 ErrHandler:
     MsgBox Err.Number & ": " & Err.Description
 End Sub
+
 
 
 

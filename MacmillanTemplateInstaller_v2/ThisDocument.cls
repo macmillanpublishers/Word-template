@@ -47,7 +47,7 @@ Private Sub Document_Open()
     blnInstaller = True
     
     'Plain English name of what you're installing/updating, should be singular
-    strTemplateName = "Macmillan Tools and Style Template"
+    strTemplateName = "Macmillan Tools"
     
     'Update array lengths and template file names here
     ReDim strFileName(1 To 5)               'Declare number of files here
@@ -97,4 +97,5 @@ Private Sub Document_Open()
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
 End Sub
+
 

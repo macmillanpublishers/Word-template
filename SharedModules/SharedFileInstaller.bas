@@ -128,28 +128,32 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     
     ' ---------------- Check if new array is allocated -----------------------------------
     If IsArrayEmpty(strInstallFile()) = True Then       ' No files need to be installed
-        If Installer = True Then
+        If Installer = True Then  ' Though this option (no files to install on installer) shouldn't actually occur
             #If Mac Then    ' because application.quit generates error on Mac
                 ActiveDocument.Close (wdDoNotSaveChanges)
             #Else
                 Application.Quit (wdDoNotSaveChanges)
             #End If
-        Else
-            ' Is Macmillan Tools toolbar present? If not, create it
-            Dim Bar As CommandBar
-            Dim blnToolbar As Boolean
-            For Each Bar In CommandBars
-                If Bar.Name = "Macmillan Tools" Then
-                    blnToolbar = True
-                    Exit For
-                Else
-                    blnToolbar = False
+        Else  ' It's an updater but no updates are needed
+            #If Mac Then
+                ' Is Macmillan Tools toolbar present? If not, create it
+                If TemplateName = "Macmillan Tools" Then
+                    Dim Bar As CommandBar
+                    Dim blnToolbar As Boolean
+                    For Each Bar In CommandBars
+                        If Bar.Name = TemplateName Then
+                            blnToolbar = True
+                            Exit For
+                        Else
+                            blnToolbar = False
+                        End If
+                    Next
+                    
+                    If blnToolbar = False Then
+                        Call CreateMacToolbar
+                    End If
                 End If
-            Next
-            
-            If blnToolbar = False Then
-                Call CreateMacToolbar
-            End If
+            #End If
             Exit Sub
         End If
     Else ' There are values in the array and we need to install them
@@ -194,6 +198,13 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
             End If
         End If
     Next d
+    
+    '------------------ If Mac, update the Macmillan Tools toolbar -----------
+    #If Mac Then
+        If TemplateName = "Macmillan Tools" Then
+            Call CreateMacToolbar
+        End If
+    #End If
     
     '------Display installation complete message   ---------------------------
     Dim strComplete As String
@@ -469,7 +480,7 @@ Private Sub CreateMacToolbar()
                     'Stop        ' For testing delete loop above
 
                     ' Create custom toolbar
-                    Set NewToolbar = Application.CommandBars.Add(Name:=strTabName, Temporary:=True)
+                    Set NewToolbar = Application.CommandBars.Add(Name:=strTabName, Temporary:=False)
 
                     ' Count number of groups in tab
                     strXpath = "count(//tab[" & a & "]/group)"
@@ -503,12 +514,13 @@ Private Sub CreateMacToolbar()
                                     ' Copy button image to clipboard w/ AppleScript
                                     Dim strCommand As String
                                     ' 199 is << and 200 is >> (but as a single character)
-                                    strCommand = "set buttonPic to read file " & Chr(34) & strImageName & Chr(34) & " as " & Chr(199) & "class PNGf" _
-                                        & Chr(200) & Chr(13) & "set the clipboard to buttonPic"
+                                    strCommand = "set buttonPic to read file " & Chr(34) & strImageName & Chr(34) & " as " & Chr(199) & _
+                                        "class PNGf" & Chr(200) & Chr(13) & "set the clipboard to buttonPic"
                                     'Debug.Print strCommand
                                     MacScript (strCommand)
 
                                     ' Create button
+                                    ' This includes an icon and caption for each button
                                     Set NewButton = NewToolbar.Controls.Add(Type:=msoControlButton)
                                     With NewButton
                                         .PasteFace
@@ -564,5 +576,8 @@ Private Sub CreateMacToolbar()
 '        ' Need to save template or user is prompted to save when closing Word
 '        ThisDocument.Save
     #End If
+    
+    Application.ScreenUpdating = True
+
 End Sub
 
