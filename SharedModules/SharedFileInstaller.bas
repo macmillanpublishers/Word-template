@@ -375,7 +375,6 @@ Private Sub CreateMacToolbar()
 ' that are 16 x 16 pixels, background RGB 191, 191, 191.
     
     
-    On Error GoTo ErrHandler
     Dim Bar As CommandBar
     Application.ScreenUpdating = False
 

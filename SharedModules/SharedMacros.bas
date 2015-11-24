@@ -241,10 +241,12 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         'Need to send these commands for it to work.
         ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar
         #If Mac Then
-            ShellAndWaitMac ("xattr -d com.apple.quarantine /Applications/Microsoft\ Office\ 2011/Office/Startup/Word/" & FileName)
-            ShellAndWaitMac ("xattr -wx com.apple.FinderInfo " & Chr(34) & "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00" & _
-                " 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00" & Chr(34) & " /Applications/Microsoft\ Office\ " & Chr(34) & _
-                "2011/Office/Startup/Word/" & FileName)
+            If InStr(1, FileName, ".dotm") Then
+                ShellAndWaitMac ("xattr -d com.apple.quarantine /Applications/Microsoft\ Office\ 2011/Office/Startup/Word/" & FileName)
+                ShellAndWaitMac ("xattr -wx com.apple.FinderInfo " & Chr(34) & "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00" & _
+                    " 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00" & Chr(34) & " /Applications/Microsoft\ Office\ " & Chr(34) & _
+                    "2011/Office/Startup/Word/" & FileName)
+            End If
         #End If
     
     Else
