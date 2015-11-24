@@ -137,11 +137,11 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         Else  ' It's an updater but no updates are needed
             #If Mac Then
                 ' Is Macmillan Tools toolbar present? If not, create it
-                If TemplateName = "Macmillan Tools" Then
+                If ThisDocument.Name = "MacmillanGT.dotm" Then
                     Dim Bar As CommandBar
                     Dim blnToolbar As Boolean
                     For Each Bar In CommandBars
-                        If Bar.Name = TemplateName Then
+                        If Bar.Name = "Macmillan Tools" Then
                             blnToolbar = True
                             Exit For
                         Else
@@ -150,7 +150,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                     Next
                     
                     If blnToolbar = False Then
-                        Call CreateMacToolbar
+                        Call CreateMacToolbar(ThisDocument.Path)
                     End If
                 End If
             #End If
@@ -197,14 +197,14 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 Exit Sub
             End If
         End If
+        
+        ' If we just updated the main template, also update the toolbar
+        #If Mac Then
+            If strInstallFile(d) = "MacmillanGT.dotm" Then
+                CreateMacToolbar (strInstallDir(d) & Application.PathSeparator & strInstallFile(d))
+            End If
+        #End If
     Next d
-    
-    '------------------ If Mac, update the Macmillan Tools toolbar -----------
-    #If Mac Then
-        If TemplateName = "Macmillan Tools" Then
-            Call CreateMacToolbar
-        End If
-    #End If
     
     '------Display installation complete message   ---------------------------
     Dim strComplete As String
@@ -359,7 +359,7 @@ Private Function ImportVariable(strFile As String) As String
  
 End Function
 
-Private Sub CreateMacToolbar()
+Private Sub CreateMacToolbar(PathToTemplate As String)
 ' ====== USE ======
 ' Creates custom toolbar on a Mac. Don't want to do it manually because saving on Mac
 ' removes the custom PC Ribbon
@@ -392,16 +392,19 @@ Private Sub CreateMacToolbar()
 '        'Remember time when macro starts
 '        StartTime = Timer
         '---------------------------------------------
-
+        
         Dim strPath As String
         Dim strFile As String
         Dim strZipPath As String
         Dim strUnzipPath As String
 
         ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
-        strPath = ThisDocument.Path
+        ' Can't use ThisDocument.Path because this will be called after template is installed,
+        ' and template is installed via GtUpdater.dotm
+        'strPath = ThisDocument.Path
         'strPath = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:MacmillanGT.dotm"
-
+        strPath = PathToTemplate
+        
         ' Get just the file name w/o path or extension
         strFile = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
 
