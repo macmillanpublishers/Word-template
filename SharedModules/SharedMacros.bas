@@ -869,21 +869,7 @@ Sub CloseOpenDocs()
 End Sub
 
 
-Sub UpdateBarAndWait(Bar As ProgressBar, Status As String, Percent As Single)
-    ' Updates a progress bar and waits until it's done updating before running more code
-    ' Required because progress bar form is modeless and the rest of the code will continue to run
-    ' while it updates
-    On Error GoTo ErrHandler
-    Bar.Done = False
-    Bar.Increment Percent, Status
-    Do
-        DoEvents  ' Allows other macro execution to continue
-    Loop Until Bar.Done = True
-    Exit Sub
-ErrHandler:
-    Debug.Print Err.Number & ": " & Err.Description
-    Bar.Done = True
-End Sub
+
 
 
 Function StartupSettings(Optional AcceptAll As Boolean = False) As Boolean
@@ -1084,7 +1070,7 @@ Sub Cleanup()
     currentStory = System.ProfileString(strSection, "Current_Story")
     
     If cleanupDoc.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        If currentStory <> vbNullString Then
+        If currentStory = 0 Then
             cleanupDoc.StoryRanges(currentStory).Select
         Else
             cleanupDoc.StoryRanges(wdMainTextStory).Select

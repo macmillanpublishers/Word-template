@@ -190,7 +190,7 @@ Sub MacmillanManuscriptCleanup()
     oProgressCleanup.Title = strTitle
     
     ' This sub calls ProgressBar.Increment and waits for it to finish before returning here
-    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     
     '-----------Find/Replace with Wildcards = False--------------------------------
@@ -199,7 +199,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.2
     strStatus = "* Fixing quotes, unicode, section breaks..." & vbCr & strStatus
     
-    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim s As Long
     
@@ -213,7 +213,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.4
     strStatus = "* Preserving styled whitespace characters..." & vbCr & strStatus
     
-    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call PreserveStyledCharactersA(StoryType:=(stStories(s)))              ' EW added v. 3.2, tags styled page breaks, tabs
@@ -224,7 +224,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.6
     strStatus = "* Removing unstyled whitespace, fixing ellipses and dashes..." & vbCr & strStatus
     
-    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call RmWhiteSpaceB(StoryType:=(stStories(s)))    'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
@@ -236,7 +236,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.86
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
-    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call PreserveStyledCharactersB(StoryType:=(stStories(s)))    ' EW added v. 3.2, replaces character tags with actual character
@@ -249,7 +249,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 1#
     strStatus = "* Finishing up..." & vbCr & strStatus
     
-    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercent)
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
 
     Call Cleanup
     Unload oProgressCleanup
