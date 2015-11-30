@@ -475,7 +475,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                     For Each Bar In CommandBars
                         If Bar.Name = strTabName Then
                             Bar.Delete
-                            Exit For
+                            'Exit For
                         End If
                     Next
 
