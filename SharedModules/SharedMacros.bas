@@ -238,16 +238,16 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         Name strTmpPath As strFinalPath
         
         'Mac won't load macros from a template downloaded from the internet to Startup.
-        'Need to send these commands for it to work.
-        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar
+        'Need to send these commands for it to work, see Confluence
+        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
         #If Mac Then
             If InStr(1, FileName, ".dotm") Then
-                Debug.Print "set template to POSIX path of file " & Chr(34) & strFinalPath & Chr(34) & Chr(13) & "do shell script " & Chr(34) & _
-                    "xattr -wx com.apple.FinderInfo \" & Chr(34) & "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00" & _
-                    " 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & Chr(34) & Chr(34) & " & quoted form of template"
-                MacScript ("set template to POSIX path of file " & Chr(34) & strFinalPath & Chr(34) & Chr(13) & "do shell script " & Chr(34) & _
-                    "xattr -wx com.apple.FinderInfo \" & Chr(34) & "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00" & _
-                    " 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & Chr(34) & Chr(34) & " & quoted form of template")
+            Dim strCommand As String
+            strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
+                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
+                Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
+                'Debug.Print strCommand
+                MacScript (strCommand)
             End If
         #End If
     
