@@ -197,7 +197,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         LogInformation LogFile, logString
     End If
 
-    'If final dir = Startup, disable template
+    'If final dir = Startup, disable template so we can delete it
     'Debug.Print strFinalPath
     If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
         On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
@@ -280,6 +280,13 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     'Cleanup: Get rid of temp file if downloaded correctly
     If IsItThere(strTmpPath) = True Then
         Kill strTmpPath
+    End If
+    
+    ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
+    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
+        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
+            AddIns(strFinalPath).Installed = False
+        On Error GoTo 0
     End If
     
     DownloadFromConfluence = True

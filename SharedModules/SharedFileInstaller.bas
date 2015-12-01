@@ -214,7 +214,6 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     ' Don't want to Close/Quit if it's an updater, because both MacmillanGT and GtUpdater need to run consecutively
     If Installer = True Then
         #If Mac Then
-            WordBasic.DisableAutoMacros 1       'Or else launches AutoExec on new templates.
             ActiveDocument.Close (wdDoNotSaveChanges)
         #Else
             Application.Quit (wdDoNotSaveChanges)
