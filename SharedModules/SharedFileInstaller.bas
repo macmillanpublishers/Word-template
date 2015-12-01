@@ -134,6 +134,8 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
             #Else
                 Application.Quit (wdDoNotSaveChanges)
             #End If
+        Else
+            Exit Sub
         End If
     Else ' There are values in the array and we need to install them
     

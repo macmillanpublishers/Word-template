@@ -18,8 +18,8 @@ Sub AutoExec()
 
     ' Check if toolbar is present if Mac, if not add it.
     ' If PC, remove "Add-Ins" tab that gets added for some reason.
+    Dim Bar As CommandBar
     #If Mac Then
-        Dim Bar As CommandBar
         Dim blnToolbar As Boolean
         For Each Bar In CommandBars
             If Bar.Name = "Macmillan Tools" Then
@@ -349,6 +349,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 
