@@ -204,7 +204,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         ' Delete any previous unzipped folders in tmp
         ' Unzip the copy we just made, delete the zip file
         ' -u means update, i.e. overwrite any files that currently exist
-        ShellAndWaitMac ("rm -r strUnzipPath; unzip -u " & strZipPath & " -d " & strUnzipPath & ";rm " & strZipPath)
+        ShellAndWaitMac ("rm -r " & strUnzipPath & ";unzip -u " & strZipPath & " -d " & strUnzipPath & ";rm " & strZipPath)
 
         ' ===== Then we build a toolbar from the values in the customUI.xml file ===== '
         ' To edit the shell commands read up on xmllint and xpath:
