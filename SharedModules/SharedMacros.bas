@@ -977,7 +977,7 @@ Function StartupSettings(Optional AcceptAll As Boolean = False) As Boolean
     
     ' ========== Remove content controls ==========
     ' Doesn't work at all for a Mac
-    #If Not Mac Then
+    #If Win32 Then
         ClearContentControls
     #End If
     
