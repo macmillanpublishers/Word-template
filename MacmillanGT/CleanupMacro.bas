@@ -131,26 +131,24 @@ Sub MacmillanManuscriptCleanup()
     'Remember time when macro starts
     '  StartTime = Timer
 
-    '-----------run preliminary error checks------------
-    Dim exitOnError As Boolean
-    
-    exitOnError = zz_errorChecks()      ''Doc is unsaved, protected, or uses backtick character?
-    If exitOnError <> False Then
-    Exit Sub
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
+        Exit Sub
     End If
     
-    Application.ScreenUpdating = False
-    
+    ' Change to just check for backtick characters
+    If zz_errorChecks = True Then
+        Call Cleanup
+        Exit Sub
+    End If
+        
     '------------check for endnotes and footnotes--------------------------
     Dim stStories() As Variant
     Dim a As Long
     
     stStories = StoryArray
-    
-    '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -186,32 +184,13 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.05
     strStatus = funArray(x)
 
-    'All Progress Bar statements for PC only because won't run modeless on Mac
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
+    Dim oProgressCleanup As ProgressBar
+    Set oProgressCleanup = New ProgressBar  ' Triggers Initialize event, which also triggers Show method on PC only
+
+    oProgressCleanup.Title = strTitle
     
-    If Not TheOS Like "*Mac*" Then
-        Dim oProgressCleanup As ProgressBar
-        Set oProgressCleanup = New ProgressBar
-    
-        oProgressCleanup.Title = strTitle
-        oProgressCleanup.Show
-    
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    '--------save the current cursor location in a bookmark---------------------------
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    '-----------Turn off track changes--------
-    Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
+    ' This sub calls ProgressBar.Increment and waits for it to finish before returning here
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     
     '-----------Find/Replace with Wildcards = False--------------------------------
@@ -220,14 +199,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.2
     strStatus = "* Fixing quotes, unicode, section breaks..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim s As Long
     
@@ -241,14 +213,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.4
     strStatus = "* Preserving styled whitespace characters..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call PreserveStyledCharactersA(StoryType:=(stStories(s)))              ' EW added v. 3.2, tags styled page breaks, tabs
@@ -259,14 +224,7 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.6
     strStatus = "* Removing unstyled whitespace, fixing ellipses and dashes..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call RmWhiteSpaceB(StoryType:=(stStories(s)))    'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
@@ -275,17 +233,10 @@ Sub MacmillanManuscriptCleanup()
     Call zz_clearFind
     
     '---------------Remove tags from "span preserve characters"-------------------------
-    sglPercentComplete = 0.8
+    sglPercentComplete = 0.86
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call PreserveStyledCharactersB(StoryType:=(stStories(s)))    ' EW added v. 3.2, replaces character tags with actual character
@@ -293,49 +244,15 @@ Sub MacmillanManuscriptCleanup()
     
     Call zz_clearFind
     
-    '-------------Go back to original insertion point and delete bookmark-----------------
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    '--------------Remove other bookmarks------------------------------------------------
-    sglPercentComplete = 0.95
-    strStatus = "* Removing bookmarks..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
-    Call zz_clearFind
     
     '-----------------Restore original settings--------------------------------------
     sglPercentComplete = 1#
     strStatus = "* Finishing up..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    ActiveDocument.TrackRevisions = currentTracking         'Return track changes to the original setting
-    Application.DisplayStatusBar = currentStatusBar
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
-    
-    If Not TheOS Like "*Mac*" Then
-        Unload oProgressCleanup
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
+
+    Call Cleanup
+    Unload oProgressCleanup
     
     MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
     
@@ -348,15 +265,7 @@ Sub MacmillanManuscriptCleanup()
   
 End Sub
 
-Private Sub RemoveBookmarks()
-    
-    Dim bkm As Bookmark
-    
-    For Each bkm In ActiveDocument.Bookmarks
-        bkm.Delete
-    Next bkm
-    
-End Sub
+
 
 Private Sub RmNonWildcardItems(StoryType As WdStoryType)                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
@@ -411,8 +320,8 @@ Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     
     On Error GoTo ErrHandler
     
-        Dim keyStyle As Word.Style
-        Set keyStyle = ActiveDocument.Styles(preserveCharStyle)
+    Dim keyStyle As Word.Style
+    Set keyStyle = ActiveDocument.Styles(preserveCharStyle)
     
     preserveCharFindArray(1) = "^t" 'tabs
     preserveCharFindArray(2) = "  "  ' two spaces
@@ -639,17 +548,9 @@ End Sub
 Function zz_errorChecks()
 
     zz_errorChecks = False
-    
-    ''-----------------Check if doc is saved/protected---------------
-    If CheckSave = True Then
-        zz_errorChecks = True
-        Exit Function
-    End If
-
 
     '-----test if backtick style tag already exists
     Set activeRng = ActiveDocument.Range
-    Application.ScreenUpdating = False
 
     Dim existingTagArray(3) As String   ' number of items in array should be declared here
     Dim b As Long

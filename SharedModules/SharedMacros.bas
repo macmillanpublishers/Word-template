@@ -3,14 +3,21 @@ Attribute VB_Name = "SharedMacros"
 ' All should be declared as Public for use from other modules
 
 Option Explicit
-Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 
-Public Sub Doze(ByVal lngPeriod As Long)
-    DoEvents
-    Sleep lngPeriod
-    ' Call it in desired location to sleep for 1 seconds like this:
-    ' Doze 1000
-End Sub
+' Doze sub only works on Windows, this declare only works on Win32
+' Need to adjust Declare for Win64 compatibility, see https://msdn.microsoft.com/en-us/library/office/ee691831%28v=office.14%29.aspx#odc_office2010_Compatibility32bit64bit_IntroducingVBA7CodeBase
+' But I don't think we need any more now that we're using the UpdateBarAndWait sub below,
+' So I'm just commenting out the whole thing for now
+'Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+'
+'Public Sub Doze(ByVal lngPeriod As Long)
+'    DoEvents
+'    Sleep lngPeriod
+'    ' Call it in desired location to sleep for 1 seconds like this:
+'    ' Doze 1000
+'End Sub
+
+
 Public Function IsItThere(Path)
 ' Check if file or directory exists on PC or Mac
     
@@ -40,7 +47,7 @@ ErrHandler:
     If Err.Number = 68 Then     ' "Device unavailable"
         IsItThere = False
     Else
-        'Debug.Print "IsItThere Error " & Err.Number & ": " & Err.Description
+        Debug.Print "IsItThere Error " & Err.Number & ": " & Err.Description
     End If
 End Function
 
@@ -190,7 +197,7 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         LogInformation LogFile, logString
     End If
 
-    'If final dir = Startup, disable template
+    'If final dir = Startup, disable template so we can delete it
     'Debug.Print strFinalPath
     If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
         On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
@@ -227,18 +234,21 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         logString = Now & " -- Final directory clear of " & FileName & " file."
         LogInformation LogFile, logString
         
+        ' move template to final directory
+        Name strTmpPath As strFinalPath
+        
         'Mac won't load macros from a template downloaded from the internet to Startup.
-        'Need to open and save as to final location for macros to work.
+        'Need to send these commands for it to work, see Confluence
+        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
         #If Mac Then
-            If InStr(1, FileName, ".dotm") > 0 And InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then      'File is a template being saved in startup dir
-                Documents.Open FileName:=strTmpPath, ReadOnly:=True ', Visible:=False doesn't work on Mac
-                Documents(strTmpPath).SaveAs (strFinalPath)
-                Documents(strFinalPath).Close
-            Else
-                Name strTmpPath As strFinalPath
+            If InStr(1, FileName, ".dotm") Then
+            Dim strCommand As String
+            strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
+                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
+                Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
+                'Debug.Print strCommand
+                MacScript (strCommand)
             End If
-        #Else
-            Name strTmpPath As strFinalPath
         #End If
     
     Else
@@ -270,6 +280,13 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     'Cleanup: Get rid of temp file if downloaded correctly
     If IsItThere(strTmpPath) = True Then
         Kill strTmpPath
+    End If
+    
+    ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
+    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
+        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
+            AddIns(strFinalPath).Installed = False
+        On Error GoTo 0
     End If
     
     DownloadFromConfluence = True
@@ -857,5 +874,223 @@ Sub CloseOpenDocs()
             Next doc
         End If
     End If
+    
+End Sub
+
+
+
+
+
+Function StartupSettings(Optional AcceptAll As Boolean = False) As Boolean
+    ' records/adjusts/checks settings and stuff before running the rest of the macro
+    ' returns TRUE if some check is bad and we can't run the macro
+    
+    Dim mainDoc As Document
+    Set mainDoc = ActiveDocument
+    
+    ' Section of registry/preferences file to store settings
+    Dim strSection As String
+    strSection = "MACMILLAN_MACROS"
+    
+    ' ========== check if file has been saved, if not prompt user; if canceled, quit function ==========
+    Dim iReply As Integer
+    
+    Dim docSaved As Boolean
+    docSaved = mainDoc.Saved
+    
+    If docSaved = False Then
+        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
+                vbOKCancel, "Error 1")
+        If iReply = vbOK Then
+            StartupSettings = False
+            mainDoc.Save
+        Else
+            StartupSettings = True
+            Exit Function
+        End If
+    End If
+    
+    
+    ' ========== check if file has doc protection on, prompt user and quit function if it does ==========
+    If mainDoc.ProtectionType <> wdNoProtection Then
+        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
+            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
+            "TIP: If you don't know the protection password, try pasting contents of this file into " & _
+            "a new file, and run the macro on that.", , "Error 2"
+        StartupSettings = True
+        Exit Function
+    Else
+        StartupSettings = False
+    End If
+    
+    
+    ' ========== Turn off screen updating ==========
+    Application.ScreenUpdating = False
+    
+    
+    ' ========== STATUS BAR: store current setting and display ==========
+    System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
+    Application.DisplayStatusBar = True
+    
+    
+    ' ========== Remove bookmarks ==========
+    Dim bkm As Bookmark
+    
+    For Each bkm In mainDoc.Bookmarks
+        bkm.Delete
+    Next bkm
+    
+    
+    ' ========== Save current cursor location in a bookmark ==========
+    ' Store current story, so we can return to it before selecting bookmark in Cleanup
+    System.ProfileString(strSection, "Current_Story") = Selection.StoryType
+    ' next line required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
+    Selection.Collapse Direction:=wdCollapseStart
+    mainDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+    
+    
+    ' ========== TRACK CHANGES: store current setting, turn off ==========
+    ' ==========   OPTIONAL: Check if changes present and offer to accept all ==========
+    System.ProfileString(strSection, "Current_Tracking") = mainDoc.TrackRevisions
+    mainDoc.TrackRevisions = False
+    
+    If AcceptAll = True Then
+        If FixTrackChanges = False Then
+            StartupSettings = True
+        End If
+    End If
+    
+    
+    ' ========== Delete field codes ==========
+    Dim strContents As String
+    
+    ' This has some kind of problem with some type of fields in endnotes? Investiagte
+    ' Ideally would check all stories, but then we'd have to add the step of getting
+    ' all of the active stories.
+    ' With ActiveDocument.StoryRanges(StoryTypes)
+    With mainDoc
+        While .Fields.Count > 0
+            strContents = .Fields.Item(1).result
+            .Fields(1).Select
+            
+            With Selection
+                .Fields.Item(1).Delete
+                .InsertAfter strContents
+            End With
+        Wend
+    End With
+    
+    
+    ' ========== Remove content controls ==========
+    ' Doesn't work at all for a Mac
+    #If Win32 Then
+        ClearContentControls
+    #End If
+    
+    
+End Function
+
+
+Private Function FixTrackChanges() As Boolean
+    Dim N As Long
+    Dim oComments As Comments
+    Set oComments = ActiveDocument.Comments
+    
+    Application.ScreenUpdating = False
+    
+    FixTrackChanges = True
+    
+    Application.DisplayAlerts = False
+    
+    'See if there are tracked changes or comments in document
+    On Error Resume Next
+    Selection.HomeKey Unit:=wdStory   'start search at beginning of doc
+    WordBasic.NextChangeOrComment       'search for a tracked change or comment. error if none are found.
+    
+    'If there are changes, ask user if they want macro to accept changes or cancel
+    If Err = 0 Then
+        If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
+            & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
+            & vbCr & vbCr & "Click CANCEL to stop the Bookmaker Requirements Check and deal with the tracked changes and comments on your own.", _
+            273, "Are those tracked changes I see?") = vbCancel Then           '273 = vbOkCancel(1) + vbCritical(16) + vbDefaultButton2(256)
+                FixTrackChanges = False
+                Exit Function
+        Else 'User clicked OK, so accept all tracked changes and delete all comments
+            ActiveDocument.AcceptAllRevisions
+            For N = oComments.Count To 1 Step -1
+                oComments(N).Delete
+            Next N
+            Set oComments = Nothing
+        End If
+    End If
+    
+    On Error GoTo 0
+    Application.DisplayAlerts = True
+    
+End Function
+
+
+Private Sub ClearContentControls()
+    'This is it's own sub because doesn't exist in Mac Word, breaks whole sub if included
+    Dim cc As ContentControl
+    
+    For Each cc In ActiveDocument.ContentControls
+        cc.Delete
+    Next
+
+End Sub
+
+
+Sub Cleanup()
+    ' resets everything from StartupSettings sub.
+    Dim cleanupDoc As Document
+    Set cleanupDoc = ActiveDocument
+    
+    ' Section of registry/preferences file to get settings from
+    Dim strSection As String
+    strSection = "MACMILLAN_MACROS"
+    
+    ' restore Status Bar to original setting
+    ' If key doesn't exist, set to True as default
+    Dim currentStatus As String
+    currentStatus = System.ProfileString(strSection, "Current_Status_Bar")
+    
+    If currentStatus <> vbNullString Then
+        Application.StatusBar = currentStatus
+    Else
+        Application.StatusBar = True
+    End If
+    
+    ' reset original Track Changes setting
+    ' If key doesn't exist, set to false as default
+    Dim currentTracking As String
+    currentTracking = System.ProfileString(strSection, "Current_Tracking")
+    
+    If currentTracking <> vbNullString Then
+        cleanupDoc.TrackRevisions = currentTracking
+    Else
+        cleanupDoc.TrackRevisions = False
+    End If
+    
+    ' return to original cursor position
+    ' If key doesn't exist, search in main doc
+    Dim currentStory As WdStoryType
+    currentStory = System.ProfileString(strSection, "Current_Story")
+    
+    If cleanupDoc.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        If currentStory = 0 Then
+            cleanupDoc.StoryRanges(currentStory).Select
+        Else
+            cleanupDoc.StoryRanges(wdMainTextStory).Select
+        End If
+        
+        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+        cleanupDoc.Bookmarks("OriginalInsertionPoint").Delete
+    End If
+    
+    ' Turn Screen Updating on and refresh screen
+    Application.ScreenUpdating = True
+    Application.ScreenRefresh
     
 End Sub

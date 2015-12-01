@@ -16,7 +16,7 @@ Option Base 1
 Dim activeRng As Range
 
 Sub MacmillanCharStyles()
-
+    
     
     '------------------Time Start-----------------
     'Dim StartTime As Double
@@ -25,30 +25,21 @@ Sub MacmillanCharStyles()
     'Remember time when macro starts
     'StartTime = Timer
     
-    ''-----------------Check if doc is saved/protected---------------
-    If CheckSave = True Then
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
         Exit Sub
     End If
     
-    'don't need to check for template now that missing styles errors are trapped
-    'exitOnError = zz_templateCheck()   '' template is attached?
-        'If exitOnError = True Then
-            'Exit Sub
-        'End If
     '------------check for endnotes and footnotes--------------------------
     Dim stStories() As Variant
     Dim a As Long
     
     stStories = StoryArray
-     
-    '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
-    'Requires ProgressBar custom UserForm and Class
     Dim sglPercentComplete As Single
     Dim strStatus As String
     Dim strTitle As String
@@ -77,62 +68,27 @@ Sub MacmillanCharStyles()
     'Debug.Print x
     
     strTitle = "Macmillan Character Styles Macro"
-    sglPercentComplete = 0.05
+    sglPercentComplete = 0.09
     strStatus = funArray(x)
     
-    'All Progress Bar statements for PC only because won't run modeless on Mac
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
+    Dim oProgressChar As ProgressBar
+    Set oProgressChar = New ProgressBar ' Triggers Initialize event, which calls Show method for PC
+
+    oProgressChar.Title = strTitle
     
-    If Not TheOS Like "*Mac*" Then
-        Dim oProgressChar As ProgressBar
-        Set oProgressChar = New ProgressBar
+    ' Calls ProgressBar.Increment mathod and waits for it to complete
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
-        oProgressChar.Title = strTitle
-        oProgressChar.Show
-    
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Application.ScreenUpdating = False
-    
-    '--------save the current cursor location in a bookmark---------------------------
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    '-----------Turn off track changes--------
-    Dim currentTracking As Boolean
-    currentTracking = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
-    
-    '-----------Delete field codes ----------
-    Dim s As Long
-    
-    For s = 1 To UBound(stStories())
-      Call DeleteFields(StoryTypes:=(stStories(s)))
-    Next s
     
     '===================== Replace Local Styles Start ========================
 
     '-----------------------Tag space break styles----------------------------
     Call zz_clearFind                          'Clear find object
     
-    sglPercentComplete = 0.15
+    sglPercentComplete = 0.18
     strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call PreserveWhiteSpaceinBrkStylesA(StoryType:=(stStories(s)))     'Part A tags styled blank paragraphs so they don't get deleted
@@ -140,22 +96,16 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '----------------------------Fix hyperlinks---------------------------------------
-    sglPercentComplete = 0.25
+    sglPercentComplete = 0.28
     strStatus = "* Applying styles to hyperlinks..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     'Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
-    'Also if you AutoFormat a second time if undoes all of the formatting already applied to hyperlinks
+    'Also if you AutoFormat a second time it undoes all of the formatting already applied to hyperlinks
     For s = 1 To UBound(stStories())
-        Call StyleHyperlinksA(StoryType:=(stStories(s)))                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+        'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+        Call StyleHyperlinksA(StoryType:=(stStories(s)))
     Next s
     
     Call AutoFormatHyperlinks
@@ -168,17 +118,10 @@ Sub MacmillanCharStyles()
 
     
     '--------------------------Remove unstyled space breaks---------------------------
-    sglPercentComplete = 0.4
+    sglPercentComplete = 0.39
     strStatus = "* Removing unstyled breaks..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call RemoveBreaks(StoryType:=(stStories(s)))  ''new sub v. 3.7, removed manual page breaks and multiple paragraph returns
@@ -186,17 +129,10 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '--------------------------Tag existing character styles------------------------
-    sglPercentComplete = 0.55
+    sglPercentComplete = 0.52
     strStatus = "* Tagging character styles..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50     'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call TagExistingCharStyles(StoryType:=(stStories(s)))            'tag existing styled items
@@ -204,17 +140,10 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
     
     '-------------------------Tag direct formatting----------------------------------
-    sglPercentComplete = 0.7
+    sglPercentComplete = 0.65
     strStatus = "* Tagging direct formatting..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call LocalStyleTag(StoryType:=(stStories(s)))                 'tag local styling, reset local styling, remove text highlights
@@ -222,17 +151,10 @@ Sub MacmillanCharStyles()
     Call zz_clearFind
 
     '----------------------------Apply Macmillan character styles to tagged text--------
-    sglPercentComplete = 0.85
+    sglPercentComplete = 0.81
     strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call LocalStyleReplace(StoryType:=(stStories(s)))            'reapply local styling through char styles
@@ -243,14 +165,7 @@ Sub MacmillanCharStyles()
     sglPercentComplete = 0.95
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call PreserveWhiteSpaceinBrkStylesB(StoryType:=(stStories(s)))     'Part B removes the tags and reapplies the styles
@@ -261,29 +176,10 @@ Sub MacmillanCharStyles()
     sglPercentComplete = 1
     strStatus = "* Finishing up..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressChar.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
-    'Go back to original insertion point and delete bookmark
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    ActiveDocument.TrackRevisions = currentTracking         ' return track changes to original setting
-    Application.DisplayStatusBar = currentStatusBar
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
-    
-    If Not TheOS Like "*Mac*" Then
-        Unload oProgressChar
-    End If
+    Call Cleanup
+    Unload oProgressChar
     
     MsgBox "Macmillan character styles have been applied throughout your manuscript."
     
@@ -422,11 +318,10 @@ Private Sub AutoFormatHyperlinks()
     Dim oNote As Range
     Dim oRng As Range
     
-    Set oDoc = ActiveDocument
     'oDoc.Save      ' Already saved active doc?
     Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False)
     
-    If ActiveDocument.Footnotes.Count >= 1 Then
+    If oDoc.Footnotes.Count >= 1 Then
         Dim oFN As Footnote
         For Each oFN In oDoc.Footnotes
             Set oNote = oFN.Range
@@ -441,7 +336,7 @@ Private Sub AutoFormatHyperlinks()
         Set oFN = Nothing
     End If
     
-    If ActiveDocument.Endnotes.Count >= 1 Then
+    If oDoc.Endnotes.Count >= 1 Then
         Dim oEN As Endnote
         For Each oEN In oDoc.Endnotes
             Set oNote = oEN.Range
@@ -457,7 +352,6 @@ Private Sub AutoFormatHyperlinks()
     End If
     
     oTemp.Close SaveChanges:=wdDoNotSaveChanges
-    Set oDoc = Nothing
     Set oTemp = Nothing
     Set oRng = Nothing
     Set oNote = Nothing
@@ -498,7 +392,7 @@ Private Sub StyleHyperlinksB(StoryType As WdStoryType)
 End Sub
 
 Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
-    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    Set activeRng = WhiteSpaceDocA.StoryRanges(StoryType)
     
     Dim tagArray(13) As String                                   ' number of items in array should be declared here
     Dim StylePreserveArray(13) As String              ' number of items in array should be declared here
@@ -603,7 +497,7 @@ Private Sub RemoveBreaks(StoryType As WdStoryType)
         End With
     Next
     
-    ''' the bit below to remove the last paragraph if it's blank
+    ''' the bit below to remove the first or last paragraph if it's blank
     Dim myRange As Range
     Set myRange = ActiveDocument.Paragraphs(1).Range
         If myRange.Text = Chr(13) Then myRange.Delete
@@ -977,20 +871,3 @@ ErrorHandler:
     End If
 
 End Sub
-
-Sub DeleteFields(StoryTypes As Variant)
-    Dim strContents As String
-    
-    With ActiveDocument.StoryRanges(StoryTypes)
-        While .Fields.Count > 0
-            strContents = .Fields.Item(1).result
-            .Fields(1).Select
-            
-            With Selection
-                .Fields.Item(1).Delete
-                .InsertAfter strContents
-            End With
-        Wend
-    End With
-End Sub
-

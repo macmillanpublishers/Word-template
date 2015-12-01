@@ -127,8 +127,8 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     'Debug.Print strInstallFile(1) & vbNewLine & strInstallDir(1)
     
     ' ---------------- Check if new array is allocated -----------------------------------
-    If IsArrayEmpty(strInstallFile()) = True Then
-        If Installer = True Then
+    If IsArrayEmpty(strInstallFile()) = True Then       ' No files need to be installed
+        If Installer = True Then  ' Though this option (no files to install on installer) shouldn't actually occur
             #If Mac Then    ' because application.quit generates error on Mac
                 ActiveDocument.Close (wdDoNotSaveChanges)
             #Else
@@ -178,6 +178,20 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 Exit Sub
             End If
         End If
+        
+        ' If we just updated the main template, delete the old toolbar
+        ' Will be added again by MacmillanGT AutoExec when it's launched, to capture updates
+        #If Mac Then
+            Dim Bar As CommandBar
+            If strInstallFile(d) = "MacmillanGT.dotm" Then
+                For Each Bar In CommandBars
+                    If Bar.Name = "Macmillan Tools" Then
+                        Bar.Delete
+                        'Exit For  ' Actually don't exit, in case there are multiple toolbars
+                    End If
+                    Next
+            End If
+        #End If
     Next d
     
     '------Display installation complete message   ---------------------------
@@ -332,5 +346,6 @@ Private Function ImportVariable(strFile As String) As String
     Close #1
  
 End Function
+
 
 

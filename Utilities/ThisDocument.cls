@@ -233,7 +233,7 @@ Sub ImportAllModules()
     Dim strModuleFileName As String         ' file name with extension, no path
     Dim a As Long
     Dim b As Long
-    Dim counter As Long
+    Dim Counter As Long
     Dim VBComp As VBIDE.VBComponent     ' object for module we're importing
     Dim strFullModulePath As String     ' full path to module with extension
     Dim strModuleName As String         ' Just the module name w/ no extension
@@ -276,8 +276,8 @@ Sub ImportAllModules()
                         ' with the Dir function this returns just the files in this directory
                         strModuleFileName = Dir(strDirInRepo(a) & "*." & strModuleExt(b))
                         ' so loop through each file of that extension in that directory
-                        Do While strModuleFileName <> "" And counter < 100
-                            counter = counter + 1               ' to prevent infinite loops
+                        Do While strModuleFileName <> "" And Counter < 100
+                            Counter = Counter + 1               ' to prevent infinite loops
                             'Debug.Print strModuleFileName
                             
                             strModuleName = Left(strModuleFileName, InStrRev(strModuleFileName, ".") - 1)
@@ -348,4 +348,37 @@ Sub DeleteAllVBACode(objTemplate As Document)
             VBProj.VBComponents.Remove VBComp
         End If
     Next VBComp
+End Sub
+
+
+Sub InsertShapes()
+    ' Inserts pictures for use in creating Mac toolbar in MacmillanGT.dotm
+    ' But this way we can name them
+    
+    Dim strPath As String
+    Dim strFileName As String
+    Dim shpToolbar As Shape
+    Dim lngStart As Long
+    Dim lngNumChar As Long
+    Dim strShapeName As String
+    Dim shpNewPicture As Shape
+    
+    strPath = "C:\Users\erica.warren\Dropbox (Macmillan Publishers)\Icons\16px gray\"
+    strFileName = Dir$(strPath & "*.*")
+    
+    Do While strFileName <> ""
+        ' Get shape name
+        lngStart = InStr(strFileName, "---") + 3
+        lngNumChar = InStr(strFileName, ".") - lngStart
+        strShapeName = Mid(strFileName, lngStart, lngNumChar)
+        
+        Debug.Print strShapeName
+        
+        ' Insert picture
+        Set shpNewPicture = ActiveDocument.Shapes.AddPicture(FileName:=strPath & strFileName)
+        shpNewPicture.Name = strShapeName
+        
+        strFileName = Dir$
+    Loop
+    
 End Sub
