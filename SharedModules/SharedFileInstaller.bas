@@ -182,6 +182,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         ' If we just updated the main template, delete the old toolbar
         ' Will be added again by MacmillanGT AutoExec when it's launched, to capture updates
         #If Mac Then
+            Dim Bar As CommandBar
             If strInstallFile(d) = "MacmillanGT.dotm" Then
                 For Each Bar In CommandBars
                     If Bar.Name = "Macmillan Tools" Then
