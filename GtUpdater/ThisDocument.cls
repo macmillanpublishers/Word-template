@@ -30,6 +30,7 @@ Sub AutoExec()
     ' MsgBox "I am GtUpdater and I am running!"
     ' ==============================================
     
+
     Dim blnStaging As Boolean
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
@@ -46,7 +47,7 @@ Sub AutoExec()
     'DEFINE ALL YOUR VARIABLES HERE
     
     'Make sure to switch to FALSE before going live!
-    blnStaging = False
+    blnStaging = True
     
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -78,7 +79,7 @@ Sub AutoExec()
 '=============================================================================================
     
     #If Mac Then
-        strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
+        strFileDir(1) = strMacStyleDir      'Final directory you're installing file in on a Mac
         'strFileDir(2) = strMacStyleDir
         'strFileDir(3) = strMacStyleDir
         'strFileDir(4) = strMacStyleDir
@@ -97,8 +98,53 @@ Sub AutoExec()
         Exit Sub
     End If
     
+    ' ====== PART 1: REMOVE LEGACY TOOLS TEMPLATE =======
+    ' The main template, MacmillanGT.dotm, used to be saved in Startup but since non-admin users
+    ' don't have write access to that folder on Mac, we've moved it and will load from this sub. But need to
+    ' delete the old one first
+    Dim strOldGT As String
+    
+    #If Mac Then
+        strOldGT = strMacStartupDir & Application.PathSeparator & strFileName(1)
+    #Else
+        strOldGT = strPcStartupDir & Application.PathSeparator & strFileName(1)
+    #End If
+    
+    On Error GoTo ErrHandler
+    If IsItThere(strOldGT) = True Then
+        Kill strOldGT
+    End If
+    
+    ' ====== PART 2: CHECK FOR UPDATES ===============
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    
+    ' ====== PART 3: LOAD MAIN TEMPLATE ==============
+    Dim strNewGT As String
+    strNewGT = strFileDir(1) & Application.PathSeparator & strFileName(1)
+    
+    If IsItThere(strNewGT) = True Then
+        AddIns(strNewGT).Installed = True
+    Else
+        Dim strMessage As String
+        strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Tools template. Please send an email to " & _
+            "workflows@macmillan.com and let them know that something is broken!"
+        MsgBox strMessage, vbOKOnly, "We're So Sorry"
+    End If
+    
+    On Error GoTo 0
+    Exit Sub
+    
+ErrHandler:
+    If Err.Number = 75 Then      ' Change to whatever the actual error is when try to kill file
+        ' Can we tell if this is a Macmillan install, and prompt them to use Self Service?"
+        ' Could we launch Self Service from AppleScript or something?
+        strMessage = "Uh oh, looks like you need to re-install the Macmillan template from Self Service or use an account with administrator priviledges."
+        MsgBox strMessage, vbOKOnly, "New template needed"
+    Else
+        Debug.Print Err.Number & "; " & Err.Description
+    End If
+    
     
 End Sub
 
