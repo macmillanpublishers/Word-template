@@ -187,7 +187,6 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 For Each Bar In CommandBars
                     If Bar.Name = "Macmillan Tools" Then
                         Bar.Delete
-                        MsgBox "Deleting Mac Tools toolbar"
                         'Exit For  ' Actually don't exit, in case there are multiple toolbars
                     End If
                     Next
@@ -212,14 +211,11 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     
     ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer
     ' (but don't quit Word). Otherwise, quit for user on PC.
-    ' Don't want to Close/Quit if it's an updater, because both MacmillanGT and GtUpdater need to run consecutively
-    If Installer = True Then
-        #If Mac Then
-            ActiveDocument.Close (wdDoNotSaveChanges)
-        #Else
-            Application.Quit (wdDoNotSaveChanges)
-        #End If
-    End If
+    #If Mac Then
+        ActiveDocument.Close (wdDoNotSaveChanges)
+    #Else
+        Application.Quit (wdDoNotSaveChanges)
+    #End If
     
 End Sub
 
