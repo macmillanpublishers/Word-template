@@ -187,6 +187,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 For Each Bar In CommandBars
                     If Bar.Name = "Macmillan Tools" Then
                         Bar.Delete
+                        MsgBox "Deleting Mac Tools toolbar"
                         'Exit For  ' Actually don't exit, in case there are multiple toolbars
                     End If
                     Next
