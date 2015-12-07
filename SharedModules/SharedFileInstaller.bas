@@ -284,6 +284,7 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     
     '------------------------- Try to get current version's number from Confluence ------------
     Dim strVersion As String
+    Dim strMacUser As String
     Dim strStyleDir As String
     Dim strFullVersionPath As String
     
