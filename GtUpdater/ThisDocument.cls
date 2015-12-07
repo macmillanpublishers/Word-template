@@ -85,7 +85,7 @@ Sub AutoExec()
         'strFileDir(4) = strMacStyleDir
         'strFileDir(5) = strMacStartupDir
     #Else
-        strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
+        strFileDir(1) = strPcStyleDir      'Final directory you're installing file in on a PC
         'strFileDir(2) = strPcStyleDir
         'strFileDir(3) = strPcStyleDir
         'strFileDir(4) = strPcStyleDir
@@ -112,6 +112,7 @@ Sub AutoExec()
     
     On Error GoTo ErrHandler
     If IsItThere(strOldGT) = True Then
+        AddIns(strOldGT).Installed = False
         Kill strOldGT
     End If
     
@@ -122,8 +123,12 @@ Sub AutoExec()
     ' ====== PART 3: LOAD MAIN TEMPLATE ==============
     Dim strNewGT As String
     strNewGT = strFileDir(1) & Application.PathSeparator & strFileName(1)
+    'Debug.Print strNewGT
     
     If IsItThere(strNewGT) = True Then
+        ' Have to add Template before loading if not in Startup
+        ' Could do Install:=True with Add method, but it somehow broke everything
+        AddIns.Add (strNewGT)
         AddIns(strNewGT).Installed = True
     Else
         Dim strMessage As String
@@ -147,6 +152,9 @@ ErrHandler:
     
     
 End Sub
+
+
+
 
 
 
