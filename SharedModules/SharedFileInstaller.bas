@@ -212,7 +212,8 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer
     ' (but don't quit Word). Otherwise, quit for user on PC.
     #If Mac Then
-        ActiveDocument.Close (wdDoNotSaveChanges)
+        End
+        'ActiveDocument.Close (wdDoNotSaveChanges)
     #Else
         Application.Quit (wdDoNotSaveChanges)
     #End If
