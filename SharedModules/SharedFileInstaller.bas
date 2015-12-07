@@ -307,7 +307,7 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(StagingURL, Directory, Log, strVersion) = False Then
+    If DownloadFromConfluence(StagingURL, strStyleDir, Log, strVersion) = False Then
         NeedUpdate = False
         Exit Function
     End If
