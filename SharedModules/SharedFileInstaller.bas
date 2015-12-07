@@ -284,18 +284,31 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     
     '------------------------- Try to get current version's number from Confluence ------------
     Dim strVersion As String
+    Dim strStyleDir As String
     Dim strFullVersionPath As String
     
     'Debug.Print FileName
     'Debug.Print InStrRev(FileName, ".do")
     strVersion = Left(FileName, InStrRev(FileName, ".do") - 1)
     strVersion = strVersion & ".txt"
-    strFullVersionPath = Directory & Application.PathSeparator & strVersion
+    
+    ' Always download version file to Style Directory - on Mac can't write to Startup w/o admin priv
+    ' In future, find some way to use this w/o hard-coding the style dir location
+    #If Mac Then
+        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
+                "return (name of current user)" & Chr(13) & "end tell")
+        strStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+    #Else
+        strStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
+    #End If
+    
+    strFullVersionPath = strStyleDir & Application.PathSeparator & strVersion
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
     If DownloadFromConfluence(StagingURL, Directory, Log, strVersion) = False Then
         NeedUpdate = False
+        Exit Function
     End If
         
     '-------------------- Get version number of current template ---------------------
