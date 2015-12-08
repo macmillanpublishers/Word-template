@@ -29,7 +29,7 @@ Sub AutoExec()
                 blnToolbar = False
             End If
         Next
-
+        
         If blnToolbar = False Then
             Application.StatusBar = "Updating Macmillan Tools toolbar"
             Call CreateMacToolbar(ThisDocument.Path)
@@ -62,35 +62,35 @@ Sub AutoExec()
     ' ======= For testing / debugging ==============
     ' 'MsgBox "I am MacmillanGT and I am running!"
     ' ==============================================
-
+    
     Dim blnStaging As Boolean
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
     Dim strFileDir() As String
-
+    
     Dim strPcStyleDir As String
     Dim strPcStartupDir As String
     Dim strMacStyleDir As String
     Dim strMacStartupDir As String
     Dim strMacUser As String
-
+    
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
-
+    
     'Make sure to switch to FALSE before going live!
     blnStaging = False
-
+    
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
-
+    
     'Plain English name of what you're installing/updating, should be singular
     strTemplateName = "Macmillan Styles Template"
-
+    
     'Update array lengths and template file names here
     ReDim strFileName(1 To 4)               'Declare number of files here
     ReDim strFileDir(1 To 4)                'And here
-
+    
     'File names you're installing/updating
     'strFileName(1) = "MacmillanGT.dotm"
     strFileName(1) = "GtUpdater.dotm"
@@ -295,7 +295,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                                     ' Get button caption and macro name
                                     strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
                                     strAction = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
-
+                                    
                                     ' Copy button image to clipboard w/ AppleScript
                                     Dim strCommand As String
                                     ' 199 is << and 200 is >> (but as a single character)
@@ -351,3 +351,12 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
+
+
+
+
+
+
+
+

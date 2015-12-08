@@ -213,7 +213,6 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     ' (but don't quit Word). Otherwise, quit for user on PC.
     #If Mac Then
         End
-        'ActiveDocument.Close (wdDoNotSaveChanges)
     #Else
         Application.Quit (wdDoNotSaveChanges)
     #End If
