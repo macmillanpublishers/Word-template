@@ -1064,6 +1064,9 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
     'Check that only heading styles follow page breaks
     errorList = errorList & CheckAfterPB
     
+    ' Check that all CTNP have some text
+    If arrStyleCount(6) > 0 Then errorList = errorList & CheckNonprintingText
+    
     'Add bad styles to error message
         errorList = errorList & badStyles
     
@@ -2302,4 +2305,72 @@ ErrHandler:
         
 End Function
 
+Private Function CheckNonprintingText()
+    ' Verify that all "Chapter Title Nonprinting (ctnp)" paragraphs have some body text
+    Dim iCount As Long
+    Dim strBodyText As String
+    Dim strErrors As String
+    Dim pageNum As Long
+
+    
+    'Move selection back to start of document
+    Selection.HomeKey Unit:=wdStory
+
+    On Error GoTo ErrHandler
+    
+    intCount = 0
+    With Selection.Find
+        .ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles("Chapter Title Nonprinting (ctnp)")
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        
+        Do While .Execute(Forward:=True) = True And intCount < 1000   ' < 1000 to precent infinite loop
+            intCount = intCount + 1
+            strBodyText = Selection.Text
+
+            pageNum ' = ???
+            
+'            'Record current selection because we need to return to it later
+'            ActiveDocument.Bookmarks.Add Name:="CTNP", Range:=Selection.Range
+'
+'            Selection.Collapse Direction:=wdCollapseEnd
+'            Selection.EndOf Unit:=wdLine, Extend:=wdExtend
+            
+            If strBodyText = vbNewLine Then
+                strErrors = strErrors & _
+                    "Error message" & _
+                    vbNewLine & vbNewLine
+            End If
+
+            
+'            'Now we need to return the selection to where it was above, or else we can't loop through selection.find
+'            If ActiveDocument.Bookmarks.Exists("ISBN") = True Then
+'                Selection.GoTo what:=wdGoToBookmark, Name:="ISBN"
+'                ActiveDocument.Bookmarks("ISBN").Delete
+'            End If
+            
+        Loop
+    
+    End With
+    
+    CheckNonprintingText = strErrors
+    
+    Exit Function
+    
+ErrHandler:
+        'Debug.Print Err.Number & ": " & Err.Description
+    If Err.Number = 5941 Or Err.Number = 5834 Then      ' style doesn't exist in document
+        Exit Function
+    End If
+    
+End Function
 
