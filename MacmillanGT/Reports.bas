@@ -2222,7 +2222,7 @@ Private Function BookTypeCheck()
     ' Validates the book types listed following the ISBN on the copyright page.
     Dim intCount As Integer
     Dim strErrors As String
-    Dim strBookTypes(1 To 6) As String
+    Dim strBookTypes(1 To 7) As String
     Dim a As Long
     Dim blnMissing As Boolean
     Dim strISBN As String
@@ -2233,6 +2233,7 @@ Private Function BookTypeCheck()
     strBookTypes(4) = "ebook"
     strBookTypes(5) = "print on demand"
     strBookTypes(6) = "print-on-demand"
+    strBookTypes(7) = "mass market paperback"
     
     'Move selection back to start of document
     Selection.HomeKey Unit:=wdStory
