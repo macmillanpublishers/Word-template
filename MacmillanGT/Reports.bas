@@ -120,7 +120,7 @@ Sub BookmakerReqs()
     Call ISBNcleanup
     
     '-------Count number of occurences of each required style----
-    sglPercentComplete = 0.05
+    sglPercentComplete = 0.03
     strStatus = "* Counting required styles..." & vbCr & strStatus
     
     If Not TheOS Like "*Mac*" Then
@@ -140,8 +140,25 @@ Sub BookmakerReqs()
         Exit Sub
     End If
     
+    ' ------- Clear character formatting from Chapter Numbers ---------
+    sglPercentComplete = 0.07
+    strStatus = "* Cleaning up Chapter Numbers..." & vbCr & strStatus
+    
+    If Not TheOS Like "*Mac*" Then
+        oProgressBkmkr.Increment sglPercentComplete, strStatus
+        Doze 50 'Wait 50 milliseconds for progress bar to update
+    Else
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    End If
+    
+    If styleCount(4) > 0 Then
+        Call ChapNumCleanUp
+    End If
+    
+    
     '------------Convert unapproved headings to correct heading-------
-    sglPercentComplete = 0.08
+    sglPercentComplete = 0.09
     strStatus = "* Correcting heading styles..." & vbCr & strStatus
     
     If Not TheOS Like "*Mac*" Then
@@ -170,6 +187,8 @@ Sub BookmakerReqs()
     If styleCount(13) > 0 And styleCount(12) = 0 Then
         Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
     End If
+    
+
     
     '--------Get title/author/isbn/imprint text from document-----------
     sglPercentComplete = 0.11
@@ -2374,4 +2393,47 @@ ErrHandler:
     End If
     
 End Function
+
+Private Sub ChapNumCleanUp()
+    ' Removes character styles from Chapter Number paragraphs
+    Dim iCount As Long
+    Dim strText As String
+    Dim intCount As Long
+
+    'Move selection back to start of document
+    Selection.HomeKey Unit:=wdStory
+
+    On Error GoTo ErrHandler
+    
+    intCount = 0
+    With Selection.Find
+        .ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles("Chap Number (cn)")
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        
+        Do While .Execute(Forward:=True) = True And intCount < 1000   ' < 1000 to precent infinite loop
+            intCount = intCount + 1
+            Selection.ClearCharacterAllFormatting
+        Loop
+    
+    End With
+    
+    
+    Exit Sub
+    
+ErrHandler:
+        'Debug.Print Err.Number & ": " & Err.Description
+    If Err.Number = 5941 Or Err.Number = 5834 Then      ' style doesn't exist in document
+        Exit Sub
+    End If
+End Sub
 
