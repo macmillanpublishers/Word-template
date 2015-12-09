@@ -1499,10 +1499,10 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
         For a = LBound(Stories()) To UBound(Stories())
             If N <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
                 paraStyle = ActiveDocument.StoryRanges(Stories(a)).Paragraphs(N).Style
-                Debug.Print paraStyle
+                'Debug.Print paraStyle
                 
                 If Right(paraStyle, 1) = ")" Then
-                    Debug.Print "Current paragraph is: " & paraStyle
+                    'Debug.Print "Current paragraph is: " & paraStyle
                     On Error GoTo ErrHandler
                     
                     intBadCount = -1        ' -1 because the array is base 0
@@ -2311,6 +2311,7 @@ Private Function CheckNonprintingText()
     Dim strBodyText As String
     Dim strErrors As String
     Dim pageNum As Long
+    Dim intCount As Long
 
     
     'Move selection back to start of document
@@ -2326,7 +2327,7 @@ Private Function CheckNonprintingText()
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = ActiveDocument.Styles("Chapter Title Nonprinting (ctnp)")
+        .Style = ActiveDocument.Styles("Chap Title Nonprinting (ctnp)")
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
@@ -2337,7 +2338,7 @@ Private Function CheckNonprintingText()
             intCount = intCount + 1
             strBodyText = Selection.Text
 
-            pageNum ' = ???
+            pageNum = Selection.Information(wdActiveEndPageNumber)
             
 '            'Record current selection because we need to return to it later
 '            ActiveDocument.Bookmarks.Add Name:="CTNP", Range:=Selection.Range
@@ -2345,9 +2346,9 @@ Private Function CheckNonprintingText()
 '            Selection.Collapse Direction:=wdCollapseEnd
 '            Selection.EndOf Unit:=wdLine, Extend:=wdExtend
             
-            If strBodyText = vbNewLine Then
+            If strBodyText = Chr(13) Then
                 strErrors = strErrors & _
-                    "Error message" & _
+                    "** ERROR: Chap Title Nonprinting paragraph on page " & pageNum & " requires body text." & _
                     vbNewLine & vbNewLine
             End If
 
