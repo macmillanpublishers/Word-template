@@ -941,7 +941,7 @@ NextLoop:
     Exit Function
     
 ErrHandler:
-    Debug.Print Err.Number & " : " & Err.Description
+    'Debug.Print Err.Number & " : " & Err.Description
     If Err.Number = 5834 Or Err.Number = 5941 Then
         Resume NextLoop
     End If
@@ -1536,7 +1536,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                         End If
                     Next M
                     
-                    Debug.Print intBadCount
+                    'Debug.Print intBadCount
                     If intBadCount = UBound(arrTorStyles()) Then
                         Set activeParaRange = ActiveDocument.StoryRanges(a).Paragraphs(N).Range
                         pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
@@ -2422,7 +2422,14 @@ Private Sub ChapNumCleanUp()
         
         Do While .Execute(Forward:=True) = True And intCount < 1000   ' < 1000 to precent infinite loop
             intCount = intCount + 1
-            Selection.ClearCharacterAllFormatting
+            #If Mac Then
+                ' Mac 2011 doesn't support ClearCharacterFormattingAll method
+                ' And ClearFormatting removes paragraph formatting as well
+                Selection.ClearFormatting
+                Selection.Style = "Chap Number (cn)"
+            #Else
+                Selection.ClearCharacterFormattingAll
+            #End If
         Loop
     
     End With
