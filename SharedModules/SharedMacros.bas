@@ -1097,3 +1097,37 @@ Sub Cleanup()
     Application.ScreenRefresh
     
 End Sub
+
+Function IsReadOnly(Path As String) As Boolean
+    ' Tests if the file or directory is read-only
+    
+    #If Mac Then
+        Dim strScript As String
+        Dim blnWritable As Boolean
+        
+        strScript = _
+            "set p to POSIX path of " & Chr(34) & Path & Chr(34) & Chr(13) & _
+            "try" & Chr(13) & _
+            vbTab & "do shell script " & Chr(34) & "test -w \" & Chr(34) & "$(dirname " & Chr(34) & _
+                " & quoted form of p & " & Chr(34) & ")\" & Chr(34) & Chr(34) & Chr(13) & _
+            vbTab & "return true" & Chr(13) & _
+            "on error" & Chr(13) & _
+            vbTab & "return false" & Chr(13) & _
+            "end try"
+            
+        blnWritable = MacScript(strScript)
+        
+        If blnWritable = True Then
+            IsReadOnly = False
+        Else
+            IsReadOnly = True
+        End If
+    #Else
+        If (GetAttr(Path) And vbReadOnly) <> 0 Then
+            IsReadOnly = True
+        Else
+            IsReadOnly = False
+    #End If
+    
+End Function
+
