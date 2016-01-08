@@ -2428,7 +2428,7 @@ Private Sub ChapNumCleanUp()
                 Selection.ClearFormatting
                 Selection.Style = "Chap Number (cn)"
             #Else
-                Selection.ClearCharacterFormattingAll
+                Selection.ClearCharacterAllFormatting
             #End If
         Loop
     

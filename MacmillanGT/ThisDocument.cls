@@ -12,9 +12,17 @@ Option Base 1
 
 
 Sub AutoExec()
-'=======================================
-' By Erica Warren - erica.warren@macmillan.com
-' ==== PART 1 =======
+
+
+    ' ======= For testing / debugging ==============
+    MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
+    ' ==============================================
+
+
+
+    '=======================================
+    ' By Erica Warren - erica.warren@macmillan.com
+    ' ==== PART 1 =======
 
     ' Check if toolbar is present if Mac, if not add it.
     ' If PC, remove "Add-Ins" tab that gets added for some reason.
@@ -29,7 +37,7 @@ Sub AutoExec()
                 blnToolbar = False
             End If
         Next
-        
+
         If blnToolbar = False Then
             Application.StatusBar = "Updating Macmillan Tools toolbar"
             Call CreateMacToolbar(ThisDocument.Path)
@@ -59,45 +67,47 @@ Sub AutoExec()
 '
 ' Requires FileInstaller and SharedMacros modules be installed in the same template.
 
-    ' ======= For testing / debugging ==============
-    ' 'MsgBox "I am MacmillanGT and I am running!"
-    ' ==============================================
-    
+
+
     Dim blnStaging As Boolean
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
     Dim strFileDir() As String
-    
+
     Dim strPcStyleDir As String
     Dim strPcStartupDir As String
     Dim strMacStyleDir As String
     Dim strMacStartupDir As String
     Dim strMacUser As String
-    
+
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
-    
+
     'Make sure to switch to FALSE before going live!
-    blnStaging = False
-    
+    blnStaging = True
+
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
-    
+
     'Plain English name of what you're installing/updating, should be singular
     strTemplateName = "Macmillan Styles Template"
-    
+
     'Update array lengths and template file names here
-    ReDim strFileName(1 To 4)               'Declare number of files here
-    ReDim strFileDir(1 To 4)                'And here
-    
+    ReDim strFileName(1 To 3)               'Declare number of files here
+    ReDim strFileDir(1 To 3)                'And here
+
     'File names you're installing/updating
-    'strFileName(1) = "MacmillanGT.dotm"
-    strFileName(1) = "GtUpdater.dotm"
-    strFileName(2) = "macmillan.dotm"
-    strFileName(3) = "macmillan_NoColor.dotm"
-    strFileName(4) = "MacmillanCoverCopy.dotm"
+    ' NOTE: Since this AutoExec macro launches as soon as template is loaded, and template is loaded
+    ' from GtUpdater.dotm in Startup, we can't check GtUpdater from AutoExec because it's still running
+    ' and we can't remove it to update to the new version.
     
+    'strFileName(1) = "MacmillanGT.dotm"
+    'strFileName(1) = "GtUpdater.dotm"
+    strFileName(1) = "macmillan.dotm"
+    strFileName(2) = "macmillan_NoColor.dotm"
+    strFileName(3) = "MacmillanCoverCopy.dotm"
+
     ' Enter the home directories for your templates here, for Mac *AND* PC
     #If Mac Then
         strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
@@ -109,37 +119,133 @@ Sub AutoExec()
         strPcStartupDir = Application.StartupPath
     #End If
 '=============================================================================================
-    
+
     #If Mac Then
         'strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
-        strFileDir(1) = strMacStartupDir
+        'strFileDir(1) = strMacStartupDir
+        strFileDir(1) = strMacStyleDir
         strFileDir(2) = strMacStyleDir
         strFileDir(3) = strMacStyleDir
-        strFileDir(4) = strMacStyleDir
     #Else
         'strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
-        strFileDir(1) = strPcStartupDir
+        'strFileDir(1) = strPcStartupDir
+        strFileDir(1) = strPcStyleDir
         strFileDir(2) = strPcStyleDir
         strFileDir(3) = strPcStyleDir
-        strFileDir(4) = strPcStyleDir
     #End If
-        
+
     'Check that same number of file names and directories
     If UBound(strFileName()) <> UBound(strFileDir()) Then
         'MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
         Exit Sub
     End If
-    
+
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
+    Application.OnTime When:=Now + TimeValue("00:00:01"), Name:="ThisDocument.CheckGtUpdater"
+    
     On Error GoTo 0
     Exit Sub
-    
+
 ErrHandler:
     MsgBox Err.Number & ": " & Err.Description
 End Sub
 
+
+Sub CheckGtUpdater()
+    ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
+    ' GtUpdater.dotm can't be running code when this launches.
+
+    '===== DEPENDENCIES ========================
+    ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
+    ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
+    ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
+    ' and be saved in the STARTUP directory.
+    '
+    ' Requires FileInstaller and SharedMacros modules be installed in the same template.
+
+    ' ======= For testing / debugging ==============
+    MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
+    ' ==============================================
+
+    Dim blnStaging As Boolean
+    Dim blnInstaller As Boolean
+    Dim strTemplateName As String
+    Dim strFileName() As String
+    Dim strFileDir() As String
+
+    Dim strPcStyleDir As String
+    Dim strPcStartupDir As String
+    Dim strMacStyleDir As String
+    Dim strMacStartupDir As String
+    Dim strMacUser As String
+
+'==========================================================================================
+    'DEFINE ALL YOUR VARIABLES HERE
+
+    'Make sure to switch to FALSE before going live!
+    blnStaging = True
+
+    'True = standalone installer file, False = daily update checker already installed
+    blnInstaller = False
+
+    'Plain English name of what you're installing/updating, should be singular
+    strTemplateName = "Macmillan Updater"
+
+    'Update array lengths and template file names here
+    ReDim strFileName(1 To 1)               'Declare number of files here
+    ReDim strFileDir(1 To 1)                'And here
+
+    'File names you're installing/updating
+    'strFileName(1) = "MacmillanGT.dotm"
+    strFileName(1) = "GtUpdater.dotm"
+    'strFileName(1) = "macmillan.dotm"
+    'strFileName(2) = "macmillan_NoColor.dotm"
+    'strFileName(3) = "MacmillanCoverCopy.dotm"
+
+    ' Enter the home directories for your templates here, for Mac *AND* PC
+    #If Mac Then
+        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
+                "return (name of current user)" & Chr(13) & "end tell")
+        strMacStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+        strMacStartupDir = Application.StartupPath
+    #Else
+        strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
+        strPcStartupDir = Application.StartupPath
+    #End If
+'=============================================================================================
+
+    #If Mac Then
+        'strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
+        strFileDir(1) = strMacStartupDir
+        'strFileDir(1) = strMacStyleDir
+        'strFileDir(2) = strMacStyleDir
+        'strFileDir(3) = strMacStyleDir
+    #Else
+        'strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
+        strFileDir(1) = strPcStartupDir
+        'strFileDir(1) = strPcStyleDir
+        'strFileDir(2) = strPcStyleDir
+        'strFileDir(3) = strPcStyleDir
+    #End If
+
+    'Check that same number of file names and directories
+    If UBound(strFileName()) <> UBound(strFileDir()) Then
+        'MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
+        Exit Sub
+    End If
+
+    'Installer = True if this is for a standalone installation file; False is for a daily update checker
+    Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+
+    On Error GoTo 0
+    Exit Sub
+
+ErrHandler:
+    MsgBox Err.Number & ": " & Err.Description
+    
+End Sub
 
 Private Sub CreateMacToolbar(PathToTemplate As String)
 ' ====== USE ======
@@ -155,8 +261,8 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 ' When you create the custom ribbon on PC, must include Mac button images as well,
 ' which should have the same file name but ending in "_mac" and be PNG files
 ' that are 16 x 16 pixels, background RGB 191, 191, 191.
-    
-    
+
+
     Dim Bar As CommandBar
     Application.ScreenUpdating = False
 
@@ -164,7 +270,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         ' Code below is all Mac specific (paths and shell code) but could probably expand
         ' to PC if we ever want to support Word versions earlier than 2007 (no ribbon).
         ' Would have to figure out how to send shell commands on PC tho
-        
+
         '------------------Time Start-----------------
         ' ***** Comment out before going live ********
         
@@ -174,7 +280,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 '        'Remember time when macro starts
 '        StartTime = Timer
         '---------------------------------------------
-        
+
         Dim strPath As String
         Dim strFile As String
         Dim strZipPath As String
@@ -186,7 +292,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         'strPath = ThisDocument.Path
         'strPath = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:MacmillanGT.dotm"
         strPath = PathToTemplate
-        
+
         ' Get just the file name w/o path or extension
         strFile = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
 
@@ -295,7 +401,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                                     ' Get button caption and macro name
                                     strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
                                     strAction = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
-                                    
+
                                     ' Copy button image to clipboard w/ AppleScript
                                     Dim strCommand As String
                                     ' 199 is << and 200 is >> (but as a single character)
@@ -351,12 +457,4 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
-
-
-
-
-
-
-
-
 
