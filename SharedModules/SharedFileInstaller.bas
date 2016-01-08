@@ -166,16 +166,28 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     Dim d As Long
     
     For d = LBound(strInstallFile()) To UBound(strInstallFile())
-        'If False, error in download; user was notified in DownloadFromConfluence function
-        If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
-            If Installer = True Then
-                #If Mac Then    ' because application.quit generates error on Mac
-                    ActiveDocument.Close (wdDoNotSaveChanges)
-                #Else
-                    Application.Quit (wdDoNotSaveChanges)
-                #End If
-            Else
+    
+        If IsReadOnly(strInstallDir(d)) = True Then
+            ' Can't replace with new file if destination is read-only; Startup on Mac w/o admin is read-only
+            Dim strReadOnlyError As String
+            
+            strReadOnlyError = "Sorry, you don't have permission to install the file " & strInstallFile(d) & vbNewLine & vbNewLine & _
+                "If you are in-house at Macmillan on a Mac, try re-installing the Macmillan Style Template & Macros from the Digital Workflow category in Self Service."
+                
+                MsgBox strReadOnlyError, vbOKOnly, "Update Failed"
                 Exit Sub
+        Else
+            'If False, error in download; user was notified in DownloadFromConfluence function
+            If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
+                If Installer = True Then
+                    #If Mac Then    ' because application.quit generates error on Mac
+                        ActiveDocument.Close (wdDoNotSaveChanges)
+                    #Else
+                        Application.Quit (wdDoNotSaveChanges)
+                    #End If
+                Else
+                    Exit Sub
+                End If
             End If
         End If
         
