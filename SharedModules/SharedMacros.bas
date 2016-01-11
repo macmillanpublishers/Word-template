@@ -1127,6 +1127,7 @@ Function IsReadOnly(Path As String) As Boolean
             IsReadOnly = True
         Else
             IsReadOnly = False
+        End If
     #End If
     
 End Function
