@@ -137,7 +137,8 @@ Private Sub Document_Open()
     On Error Resume Next        'Error = add-in not available
         AddIns(strGtFile).Installed = True
     On Error GoTo 0
-
+    
+    ThisDocument.Close
     Exit Sub
     
 ErrHandler:
