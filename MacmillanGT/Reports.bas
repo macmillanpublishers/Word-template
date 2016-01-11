@@ -772,11 +772,12 @@ CheckGoodStyles:
     'Change Normal (Web) back (if you want to)
     ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
     
-    'Sort good styles
-    If K <> 0 Then
-    ReDim Preserve stylesGood(1 To styleGoodCount)
-    WordBasic.SortArray stylesGood()
-    End If
+    ' DON'T sort styles alphabetically, per request from PE
+'    'Sort good styles
+'    If K <> 0 Then
+'    ReDim Preserve stylesGood(1 To styleGoodCount)
+'    WordBasic.SortArray stylesGood()
+'    End If
     
     'Create single string for good styles
     Dim strGoodStyles As String
