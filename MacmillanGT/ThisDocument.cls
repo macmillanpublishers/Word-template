@@ -238,6 +238,23 @@ Sub CheckGtUpdater()
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
 
+    ' ====== PART 3: LOAD MAIN TEMPLATE ==============
+    Dim strNewGT As String
+    strNewGT = strFileDir(1) & Application.PathSeparator & strFileName(1)
+    'Debug.Print strNewGT
+
+    If IsItThere(strNewGT) = True Then
+        ' Have to add Template before loading if not in Startup
+        ' Could do Install:=True with Add method, but it somehow broke everything
+        AddIns.Add (strNewGT)
+        AddIns(strNewGT).Installed = True
+    Else
+        Dim strMessage As String
+            strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Updater template. Please send an email to " & _
+            "workflows@macmillan.com and let them know that something is broken!"
+        MsgBox strMessage, vbOKOnly, "We're So Sorry"
+    End If
+
     On Error GoTo 0
     Exit Sub
 
@@ -456,5 +473,6 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 

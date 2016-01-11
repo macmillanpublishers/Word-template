@@ -221,14 +221,6 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
             "You must QUIT and RESTART Word for the changes to take effect."
     MsgBox strComplete, vbOKOnly, "Installation Successful"
     
-    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer
-    ' (but don't quit Word). Otherwise, quit for user on PC.
-    #If Mac Then
-        End
-    #Else
-        Application.Quit (wdDoNotSaveChanges)
-    #End If
-    
 End Sub
 
 Private Function IsTemplateThere(Directory As String, FileName As String, Log As String)
