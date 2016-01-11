@@ -130,17 +130,15 @@ Private Sub Document_Open()
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
-    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer
-    ' (but don't quit Word). Otherwise, quit for user on PC.
-    '#If Mac Then
-        On Error GoTo 0
-        Application.Quit (wdDoNotSaveChanges)
-    '#Else
-        'Application.Quit (wdDoNotSaveChanges)
-    '#End If
+    ' Load GtUpdater add-in (which will then load MacGT add-in)
+    Dim strGtFile As String
+    strGtFile = strFileDir(1) & Application.PathSeparator & strFileName(1)
     
-    'On Error GoTo 0
-    'Exit Sub
+    On Error Resume Next        'Error = add-in not available
+        AddIns(strGtFile).Installed = True
+    On Error GoTo 0
+
+    Exit Sub
     
 ErrHandler:
     If Err.Number = 75 Then     ' Change to whatever the actual error is when try to kill file

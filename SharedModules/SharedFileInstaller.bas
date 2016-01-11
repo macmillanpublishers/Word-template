@@ -217,8 +217,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         strInstallType = "updated"
     End If
     
-    strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
-            "You must QUIT and RESTART Word for the changes to take effect."
+    strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer."
     MsgBox strComplete, vbOKOnly, "Installation Successful"
     
 End Sub
