@@ -200,13 +200,10 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         LogInformation LogFile, logString
     End If
 
-    'If final dir = Startup, disable template so we can delete it
-    'Debug.Print strFinalPath
-    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
-        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
-            AddIns(strFinalPath).Installed = False
-        On Error GoTo 0
-    End If
+    ' Can't delete template if loaded as add-in
+    On Error Resume Next        'Error = add-in not available, don't need to uninstall
+        AddIns(strFinalPath).Installed = False
+    On Error GoTo 0
     
     'If file exists already, log it and delete it
     If IsItThere(strFinalPath) = True Then
@@ -855,8 +852,8 @@ Sub CloseOpenDocs()
     Dim doc As Document
     
     strInstallerName = ThisDocument.Name
-        'Debug.Print "Installer Name: " & strInstallerName
-        'Debug.Print "Open docs: " & Documents.Count
+        'MsgBox "Installer Name: " & strInstallerName
+        'MsgBox "Open docs: " & Documents.Count
 
     If Documents.Count > 1 Then
         strSaveWarning = "All other Word documents must be closed to run the macro." & vbNewLine & vbNewLine & _

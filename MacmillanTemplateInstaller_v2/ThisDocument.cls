@@ -24,6 +24,10 @@ Option Explicit
 Option Base 1
 
 Private Sub Document_Open()
+    ' ==================================================
+    ' For debugging; comment out of production code
+    MsgBox "I am Doc_Open for Installer and I am running"
+    ' ==================================================
 
     Dim blnStaging As Boolean
     Dim blnInstaller As Boolean
