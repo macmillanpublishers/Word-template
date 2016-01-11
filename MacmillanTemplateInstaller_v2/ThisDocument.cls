@@ -115,6 +115,18 @@ Private Sub Document_Open()
     End If
 
     ' ====== PART 2: CHECK FOR UPDATES ===============
+    ' Unload all add-ins first
+    Dim strTemplate As String
+    Dim a As Long
+    
+    For a = LBound(strFileName()) To UBound(strFileName())
+        strTemplate = strFileDir(a) & Application.PathSeparator & strFileName(a)
+        On Error Resume Next        'Error = add-in not available, don't need to uninstall
+            AddIns(strTemplate).Installed = False
+        On Error GoTo 0
+    Next a
+    
+    ' Run Installer macro
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
