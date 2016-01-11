@@ -119,6 +119,7 @@ Private Sub Document_Open()
     
 ErrHandler:
     If Err.Number = 75 Then     ' Change to whatever the actual error is when try to kill file
+        Dim strMessage As String
         ' Can we tell if this is a Macmillan install, and prompt them to use Self Service?"
         ' Could we launch Self Service from AppleScript or something?
         strMessage = "Uh oh, looks like you need to re-install the Macmillan template from Self Service or use an account with administrator priviledges."
