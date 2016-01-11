@@ -40,7 +40,7 @@ Sub AutoExec()
     Dim strPcStartupDir As String
     Dim strMacStyleDir As String
     Dim strMacStartupDir As String
-    Dim strMacUser As String
+    Dim strMacDocs As String
 
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
@@ -67,9 +67,8 @@ Sub AutoExec()
 
     ' Enter the home directories for your templates here, for Mac *AND* PC
     #If Mac Then
-        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-                "return (name of current user)" & Chr(13) & "end tell")
-        strMacStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
         strMacStartupDir = Application.StartupPath
     #Else
         strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
@@ -152,6 +151,7 @@ ErrHandler:
 
 
 End Sub
+
 
 
 

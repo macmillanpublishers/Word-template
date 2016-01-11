@@ -35,13 +35,13 @@ Private Sub Document_Open()
     Dim strPcStartupDir As String
     Dim strMacStyleDir As String
     Dim strMacStartupDir As String
-    Dim strMacUser As String
+    Dim strMacDocs As String
     
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
     
     'Make sure to switch to FALSE before going live!
-    blnStaging = False
+    blnStaging = True
     
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = True
@@ -62,9 +62,8 @@ Private Sub Document_Open()
     
     ' Enter the home directories for your templates here, for Mac *AND* PC
     #If Mac Then
-        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-                "return (name of current user)" & Chr(13) & "end tell")
-        strMacStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
         strMacStartupDir = Application.StartupPath
     #Else
         strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
@@ -78,13 +77,13 @@ Private Sub Document_Open()
         strFileDir(2) = strMacStyleDir
         strFileDir(3) = strMacStyleDir
         strFileDir(4) = strMacStyleDir
-        strFileDir(5) = strMacStartupDir
+        strFileDir(5) = strMacStyleDir
     #Else
         strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
         strFileDir(2) = strPcStyleDir
         strFileDir(3) = strPcStyleDir
         strFileDir(4) = strPcStyleDir
-        strFileDir(5) = strPcStartupDir
+        strFileDir(5) = strPcStyleDir
     #End If
         
     'Check that same number of file names and directories
@@ -92,9 +91,42 @@ Private Sub Document_Open()
         MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
         Exit Sub
     End If
-    
+
+    ' ====== PART 1: REMOVE LEGACY TOOLS TEMPLATE =======
+    ' The main template, MacmillanGT.dotm, used to be saved in Startup but since non-admin users
+    ' don't have write access to that folder on Mac, we've moved it and will load from this sub. But need to
+    ' delete the old one first
+    Dim strOldGT As String
+
+    #If Mac Then
+        strOldGT = strMacStartupDir & Application.PathSeparator & strFileName(5)
+    #Else
+        strOldGT = strPcStartupDir & Application.PathSeparator & strFileName(5)
+    #End If
+
+    On Error GoTo ErrHandler
+    If IsItThere(strOldGT) = True Then
+        AddIns(strOldGT).Installed = False
+        Kill strOldGT
+    End If
+
+    ' ====== PART 2: CHECK FOR UPDATES ===============
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
+    On Error GoTo 0
+    Exit Sub
+    
+ErrHandler:
+    If Err.Number = 75 Then     ' Change to whatever the actual error is when try to kill file
+        ' Can we tell if this is a Macmillan install, and prompt them to use Self Service?"
+        ' Could we launch Self Service from AppleScript or something?
+        strMessage = "Uh oh, looks like you need to re-install the Macmillan template from Self Service or use an account with administrator priviledges."
+        MsgBox strMessage, vbOKOnly, "New template needed"
+    Else
+        Debug.Print Err.Number & ": " & Err.Description
+    End If
+    
 End Sub
+
 
