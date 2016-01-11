@@ -1254,7 +1254,7 @@ End Function
 
 Function CheckAfterPB() As String
     Dim arrSecStartStyles() As String
-    ReDim arrSecStartStyles(1 To 43)
+    ReDim arrSecStartStyles(1 To 44)
     Dim kString As String
     Dim kCount As Integer
     Dim pageNumK As Integer
@@ -1307,6 +1307,7 @@ Function CheckAfterPB() As String
     arrSecStartStyles(41) = "span italic characters (ital)"
     arrSecStartStyles(42) = "Design Note (dn)"
     arrSecStartStyles(43) = "Front Sales Quote Head (fsqh)"
+    arrSecStartStyles(44) = "Section Break (sbr)"
     
     kCount = 0
     kString = ""
