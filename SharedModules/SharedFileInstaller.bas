@@ -166,16 +166,28 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     Dim d As Long
     
     For d = LBound(strInstallFile()) To UBound(strInstallFile())
-        'If False, error in download; user was notified in DownloadFromConfluence function
-        If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
-            If Installer = True Then
-                #If Mac Then    ' because application.quit generates error on Mac
-                    ActiveDocument.Close (wdDoNotSaveChanges)
-                #Else
-                    Application.Quit (wdDoNotSaveChanges)
-                #End If
-            Else
+    
+        If IsReadOnly(strInstallDir(d)) = True Then
+            ' Can't replace with new file if destination is read-only; Startup on Mac w/o admin is read-only
+            Dim strReadOnlyError As String
+            
+            strReadOnlyError = "Sorry, you don't have permission to install the file " & strInstallFile(d) & vbNewLine & vbNewLine & _
+                "If you are in-house at Macmillan on a Mac, try re-installing the Macmillan Style Template & Macros from the Digital Workflow category in Self Service."
+                
+                MsgBox strReadOnlyError, vbOKOnly, "Update Failed"
                 Exit Sub
+        Else
+            'If False, error in download; user was notified in DownloadFromConfluence function
+            If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
+                If Installer = True Then
+                    #If Mac Then    ' because application.quit generates error on Mac
+                        ActiveDocument.Close (wdDoNotSaveChanges)
+                    #Else
+                        Application.Quit (wdDoNotSaveChanges)
+                    #End If
+                Else
+                    Exit Sub
+                End If
             End If
         End If
         
@@ -205,20 +217,8 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         strInstallType = "updated"
     End If
     
-    strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
-            "You must QUIT and RESTART Word for the changes to take effect."
+    strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer."
     MsgBox strComplete, vbOKOnly, "Installation Successful"
-    
-    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer
-    ' (but don't quit Word). Otherwise, quit for user on PC.
-    ' Don't want to Close/Quit if it's an updater, because both MacmillanGT and GtUpdater need to run consecutively
-    If Installer = True Then
-        #If Mac Then
-            ActiveDocument.Close (wdDoNotSaveChanges)
-        #Else
-            Application.Quit (wdDoNotSaveChanges)
-        #End If
-    End If
     
 End Sub
 
@@ -284,18 +284,32 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     
     '------------------------- Try to get current version's number from Confluence ------------
     Dim strVersion As String
+    Dim strMacUser As String
+    Dim strStyleDir As String
     Dim strFullVersionPath As String
     
     'Debug.Print FileName
     'Debug.Print InStrRev(FileName, ".do")
     strVersion = Left(FileName, InStrRev(FileName, ".do") - 1)
     strVersion = strVersion & ".txt"
-    strFullVersionPath = Directory & Application.PathSeparator & strVersion
+    
+    ' Always download version file to Style Directory - on Mac can't write to Startup w/o admin priv
+    ' In future, find some way to use this w/o hard-coding the style dir location
+    #If Mac Then
+        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
+                "return (name of current user)" & Chr(13) & "end tell")
+        strStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+    #Else
+        strStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
+    #End If
+    
+    strFullVersionPath = strStyleDir & Application.PathSeparator & strVersion
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(StagingURL, Directory, Log, strVersion) = False Then
+    If DownloadFromConfluence(StagingURL, strStyleDir, Log, strVersion) = False Then
         NeedUpdate = False
+        Exit Function
     End If
         
     '-------------------- Get version number of current template ---------------------

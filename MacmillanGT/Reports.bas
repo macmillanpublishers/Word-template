@@ -112,7 +112,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     Call ISBNcleanup
     
     '-------Count number of occurences of each required style----
-    sglPercentComplete = 0.05
+    sglPercentComplete = 0.03
     strStatus = "* Counting required styles..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
@@ -126,8 +126,25 @@ Private Sub MakeReport(torDOTcom As Boolean)
         Exit Sub
     End If
     
+    ' ------- Clear character formatting from Chapter Numbers ---------
+    sglPercentComplete = 0.07
+    strStatus = "* Cleaning up Chapter Numbers..." & vbCr & strStatus
+    
+    If Not TheOS Like "*Mac*" Then
+        oProgressBkmkr.Increment sglPercentComplete, strStatus
+        Doze 50 'Wait 50 milliseconds for progress bar to update
+    Else
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    End If
+    
+    If styleCount(4) > 0 Then
+        Call ChapNumCleanUp
+    End If
+    
+    
     '------------Convert unapproved headings to correct heading-------
-    sglPercentComplete = 0.08
+    sglPercentComplete = 0.09
     strStatus = "* Correcting heading styles..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
@@ -150,6 +167,8 @@ Private Sub MakeReport(torDOTcom As Boolean)
     If styleCount(13) > 0 And styleCount(12) = 0 Then
         Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
     End If
+    
+
     
     '--------Get title/author/isbn/imprint text from document-----------
     sglPercentComplete = 0.11
@@ -373,11 +392,12 @@ CheckGoodStyles:
     'Change Normal (Web) back (if you want to)
     ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
     
-    'Sort good styles
-    If K <> 0 Then
-    ReDim Preserve stylesGood(1 To styleGoodCount)
-    WordBasic.SortArray stylesGood()
-    End If
+    ' DON'T sort styles alphabetically, per request from PE
+'    'Sort good styles
+'    If K <> 0 Then
+'    ReDim Preserve stylesGood(1 To styleGoodCount)
+'    WordBasic.SortArray stylesGood()
+'    End If
     
     'Create single string for good styles
     Dim strGoodStyles As String
@@ -535,7 +555,7 @@ NextLoop:
     Exit Function
     
 ErrHandler:
-    Debug.Print Err.Number & " : " & Err.Description
+    'Debug.Print Err.Number & " : " & Err.Description
     If Err.Number = 5834 Or Err.Number = 5941 Then
         Resume NextLoop
     End If
@@ -677,6 +697,9 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
     'Check that only heading styles follow page breaks
     errorList = errorList & CheckAfterPB
     
+    ' Check that all CTNP have some text
+    If arrStyleCount(6) > 0 Then errorList = errorList & CheckNonprintingText
+    
     'Add bad styles to error message
     errorList = errorList & badStyles
     
@@ -785,7 +808,7 @@ End Function
 
 Function CheckAfterPB() As String
     Dim arrSecStartStyles() As String
-    ReDim arrSecStartStyles(1 To 43)
+    ReDim arrSecStartStyles(1 To 44)
     Dim kString As String
     Dim kCount As Integer
     Dim pageNumK As Integer
@@ -839,6 +862,7 @@ Function CheckAfterPB() As String
     arrSecStartStyles(41) = "span italic characters (ital)"
     arrSecStartStyles(42) = "Design Note (dn)"
     arrSecStartStyles(43) = "Front Sales Quote Head (fsqh)"
+    arrSecStartStyles(44) = "Section Break (sbr)"
     
     kCount = 0
     kString = ""
@@ -1029,10 +1053,10 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
         For a = LBound(Stories()) To UBound(Stories())
             If N <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
                 paraStyle = ActiveDocument.StoryRanges(Stories(a)).Paragraphs(N).Style
-                Debug.Print paraStyle
+                'Debug.Print paraStyle
                 
                 If Right(paraStyle, 1) = ")" Then
-                    Debug.Print "Current paragraph is: " & paraStyle
+                    'Debug.Print "Current paragraph is: " & paraStyle
                     On Error GoTo ErrHandler
                     
                     intBadCount = -1        ' -1 because the array is base 0
@@ -1047,7 +1071,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                         End If
                     Next M
                     
-                    Debug.Print intBadCount
+                    'Debug.Print intBadCount
                     If intBadCount = UBound(arrTorStyles()) Then
                         Set activeParaRange = ActiveDocument.StoryRanges(a).Paragraphs(N).Range
                         pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
@@ -1698,7 +1722,7 @@ Private Function BookTypeCheck()
     ' Validates the book types listed following the ISBN on the copyright page.
     Dim intCount As Integer
     Dim strErrors As String
-    Dim strBookTypes(1 To 6) As String
+    Dim strBookTypes(1 To 7) As String
     Dim a As Long
     Dim blnMissing As Boolean
     Dim strISBN As String
@@ -1709,6 +1733,7 @@ Private Function BookTypeCheck()
     strBookTypes(4) = "ebook"
     strBookTypes(5) = "print on demand"
     strBookTypes(6) = "print-on-demand"
+    strBookTypes(7) = "mass market paperback"
     
     'Move selection back to start of document
     Selection.HomeKey Unit:=wdStory
@@ -1777,4 +1802,123 @@ ErrHandler:
         
 End Function
 
+Private Function CheckNonprintingText()
+    ' Verify that all "Chapter Title Nonprinting (ctnp)" paragraphs have some body text
+    Dim iCount As Long
+    Dim strBodyText As String
+    Dim strErrors As String
+    Dim pageNum As Long
+    Dim intCount As Long
+
+    
+    'Move selection back to start of document
+    Selection.HomeKey Unit:=wdStory
+
+    On Error GoTo ErrHandler
+    
+    intCount = 0
+    With Selection.Find
+        .ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles("Chap Title Nonprinting (ctnp)")
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        
+        Do While .Execute(Forward:=True) = True And intCount < 1000   ' < 1000 to precent infinite loop
+            intCount = intCount + 1
+            strBodyText = Selection.Text
+
+            pageNum = Selection.Information(wdActiveEndPageNumber)
+            
+'            'Record current selection because we need to return to it later
+'            ActiveDocument.Bookmarks.Add Name:="CTNP", Range:=Selection.Range
+'
+'            Selection.Collapse Direction:=wdCollapseEnd
+'            Selection.EndOf Unit:=wdLine, Extend:=wdExtend
+            
+            If strBodyText = Chr(13) Then
+                strErrors = strErrors & _
+                    "** ERROR: Chap Title Nonprinting paragraph on page " & pageNum & " requires body text." & _
+                    vbNewLine & vbNewLine
+            End If
+
+            
+'            'Now we need to return the selection to where it was above, or else we can't loop through selection.find
+'            If ActiveDocument.Bookmarks.Exists("ISBN") = True Then
+'                Selection.GoTo what:=wdGoToBookmark, Name:="ISBN"
+'                ActiveDocument.Bookmarks("ISBN").Delete
+'            End If
+            
+        Loop
+    
+    End With
+    
+    CheckNonprintingText = strErrors
+    
+    Exit Function
+    
+ErrHandler:
+        'Debug.Print Err.Number & ": " & Err.Description
+    If Err.Number = 5941 Or Err.Number = 5834 Then      ' style doesn't exist in document
+        Exit Function
+    End If
+    
+End Function
+
+Private Sub ChapNumCleanUp()
+    ' Removes character styles from Chapter Number paragraphs
+    Dim iCount As Long
+    Dim strText As String
+    Dim intCount As Long
+
+    'Move selection back to start of document
+    Selection.HomeKey Unit:=wdStory
+
+    On Error GoTo ErrHandler
+    
+    intCount = 0
+    With Selection.Find
+        .ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Style = ActiveDocument.Styles("Chap Number (cn)")
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        
+        Do While .Execute(Forward:=True) = True And intCount < 1000   ' < 1000 to precent infinite loop
+            intCount = intCount + 1
+            #If Mac Then
+                ' Mac 2011 doesn't support ClearCharacterFormattingAll method
+                ' And ClearFormatting removes paragraph formatting as well
+                Selection.ClearFormatting
+                Selection.Style = "Chap Number (cn)"
+            #Else
+                Selection.ClearCharacterAllFormatting
+            #End If
+        Loop
+    
+    End With
+    
+    
+    Exit Sub
+    
+ErrHandler:
+        'Debug.Print Err.Number & ": " & Err.Description
+    If Err.Number = 5941 Or Err.Number = 5834 Then      ' style doesn't exist in document
+        Exit Sub
+    End If
+End Sub
 

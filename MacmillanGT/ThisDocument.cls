@@ -12,9 +12,17 @@ Option Base 1
 
 
 Sub AutoExec()
-'=======================================
-' By Erica Warren - erica.warren@macmillan.com
-' ==== PART 1 =======
+
+    ' ======= For testing / debugging ==============
+    ' MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
+    ' ==============================================
+
+
+
+    '=======================================
+    ' By Erica Warren - erica.warren@macmillan.com
+    ' ==== PART 1 =======
+
 
     ' Check if toolbar is present if Mac, if not add it.
     ' If PC, remove "Add-Ins" tab that gets added for some reason.
@@ -29,8 +37,9 @@ Sub AutoExec()
                 blnToolbar = False
             End If
         Next
-        
+
         If blnToolbar = False Then
+            Application.StatusBar = "Updating Macmillan Tools toolbar"
             Call CreateMacToolbar(ThisDocument.Path)
         End If
     #Else
@@ -53,90 +62,203 @@ Sub AutoExec()
 '===== DEPENDENCIES ========================
 ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
 ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
-' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
-' and be saved in the STARTUP directory.
+' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file.
 '
 ' Requires FileInstaller and SharedMacros modules be installed in the same template.
 
-    ' ======= For testing / debugging ==============
-    ' 'MsgBox "I am MacmillanGT and I am running!"
-    ' ==============================================
-    
     Dim blnStaging As Boolean
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
     Dim strFileDir() As String
-    
+
     Dim strPcStyleDir As String
     Dim strPcStartupDir As String
     Dim strMacStyleDir As String
     Dim strMacStartupDir As String
-    Dim strMacUser As String
-    
+    Dim strMacDocs As String
+
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
-    
+
     'Make sure to switch to FALSE before going live!
     blnStaging = False
-    
+
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
-    
+
     'Plain English name of what you're installing/updating, should be singular
     strTemplateName = "Macmillan Styles Template"
-    
+
     'Update array lengths and template file names here
-    ReDim strFileName(1 To 4)               'Declare number of files here
-    ReDim strFileDir(1 To 4)                'And here
-    
+    ReDim strFileName(1 To 3)               'Declare number of files here
+    ReDim strFileDir(1 To 3)                'And here
+
     'File names you're installing/updating
-    'strFileName(1) = "MacmillanGT.dotm"
-    strFileName(1) = "GtUpdater.dotm"
-    strFileName(2) = "macmillan.dotm"
-    strFileName(3) = "macmillan_NoColor.dotm"
-    strFileName(4) = "MacmillanCoverCopy.dotm"
+    ' NOTE: Since this AutoExec macro launches as soon as template is loaded, and template is loaded
+    ' from GtUpdater.dotm in Startup, we can't check GtUpdater from AutoExec because it's still running
+    ' and we can't remove it to update to the new version.
     
+    'strFileName(1) = "MacmillanGT.dotm"
+    'strFileName(1) = "GtUpdater.dotm"
+    strFileName(1) = "macmillan.dotm"
+    strFileName(2) = "macmillan_NoColor.dotm"
+    strFileName(3) = "MacmillanCoverCopy.dotm"
+
     ' Enter the home directories for your templates here, for Mac *AND* PC
     #If Mac Then
-        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-                "return (name of current user)" & Chr(13) & "end tell")
-        strMacStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
         strMacStartupDir = Application.StartupPath
     #Else
         strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
         strPcStartupDir = Application.StartupPath
     #End If
 '=============================================================================================
-    
+
     #If Mac Then
         'strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
-        strFileDir(1) = strMacStartupDir
+        'strFileDir(1) = strMacStartupDir
+        strFileDir(1) = strMacStyleDir
         strFileDir(2) = strMacStyleDir
         strFileDir(3) = strMacStyleDir
-        strFileDir(4) = strMacStyleDir
     #Else
         'strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
-        strFileDir(1) = strPcStartupDir
+        'strFileDir(1) = strPcStartupDir
+        strFileDir(1) = strPcStyleDir
         strFileDir(2) = strPcStyleDir
         strFileDir(3) = strPcStyleDir
-        strFileDir(4) = strPcStyleDir
     #End If
-        
+
     'Check that same number of file names and directories
     If UBound(strFileName()) <> UBound(strFileDir()) Then
         'MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
         Exit Sub
     End If
-    
+
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
+    Application.OnTime When:=Now + TimeValue("00:00:01"), Name:="ThisDocument.CheckGtUpdater"
+    
     On Error GoTo 0
     Exit Sub
-    
+
 ErrHandler:
     MsgBox Err.Number & ": " & Err.Description
+End Sub
+
+
+Sub CheckGtUpdater()
+    ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
+    ' GtUpdater.dotm can't be running code when this launches.
+
+    '===== DEPENDENCIES ========================
+    ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
+    ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
+    ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
+    ' and be saved in the STARTUP directory.
+    '
+    ' Requires FileInstaller and SharedMacros modules be installed in the same template.
+
+    ' ======= For testing / debugging ==============
+    ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
+    ' ==============================================
+
+    Dim blnStaging As Boolean
+    Dim blnInstaller As Boolean
+    Dim strTemplateName As String
+    Dim strFileName() As String
+    Dim strFileDir() As String
+
+    Dim strPcStyleDir As String
+    Dim strPcStartupDir As String
+    Dim strMacStyleDir As String
+    Dim strMacStartupDir As String
+    Dim strMacDocs As String
+
+'==========================================================================================
+    'DEFINE ALL YOUR VARIABLES HERE
+
+    'Make sure to switch to FALSE before going live!
+    blnStaging = False
+
+    'True = standalone installer file, False = daily update checker already installed
+    blnInstaller = False
+
+    'Plain English name of what you're installing/updating, should be singular
+    strTemplateName = "Macmillan Updater"
+
+    'Update array lengths and template file names here
+    ReDim strFileName(1 To 1)               'Declare number of files here
+    ReDim strFileDir(1 To 1)                'And here
+
+    'File names you're installing/updating
+    'strFileName(1) = "MacmillanGT.dotm"
+    strFileName(1) = "GtUpdater.dotm"
+    'strFileName(1) = "macmillan.dotm"
+    'strFileName(2) = "macmillan_NoColor.dotm"
+    'strFileName(3) = "MacmillanCoverCopy.dotm"
+
+    ' Enter the home directories for your templates here, for Mac *AND* PC
+    #If Mac Then
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
+        strMacStartupDir = Application.StartupPath
+    #Else
+        strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
+        strPcStartupDir = Application.StartupPath
+    #End If
+'=============================================================================================
+
+    #If Mac Then
+        'strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
+        strFileDir(1) = strMacStartupDir
+        'strFileDir(1) = strMacStyleDir
+        'strFileDir(2) = strMacStyleDir
+        'strFileDir(3) = strMacStyleDir
+    #Else
+        'strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
+        strFileDir(1) = strPcStartupDir
+        'strFileDir(1) = strPcStyleDir
+        'strFileDir(2) = strPcStyleDir
+        'strFileDir(3) = strPcStyleDir
+    #End If
+
+    'Check that same number of file names and directories
+    If UBound(strFileName()) <> UBound(strFileDir()) Then
+        'MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
+        Exit Sub
+    End If
+
+    'Installer = True if this is for a standalone installation file; False is for a daily update checker
+    Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+
+    ' ====== PART 3: LOAD MAIN TEMPLATE ==============
+    Dim strNewGT As String
+    strNewGT = strFileDir(1) & Application.PathSeparator & strFileName(1)
+    'Debug.Print strNewGT
+
+    If IsItThere(strNewGT) = True Then
+        ' Have to add Template before loading if not in Startup
+        ' Could do Install:=True with Add method, but it somehow broke everything
+        AddIns.Add (strNewGT)
+        AddIns(strNewGT).Installed = True
+    Else
+        Dim strMessage As String
+            strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Updater template. Please send an email to " & _
+            "workflows@macmillan.com and let them know that something is broken!"
+        MsgBox strMessage, vbOKOnly, "We're So Sorry"
+    End If
+
+    On Error GoTo 0
+    Exit Sub
+
+ErrHandler:
+    MsgBox Err.Number & ": " & Err.Description
+    
+    On Error GoTo 0
+    
 End Sub
 
 
@@ -350,6 +472,10 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
+
+
+
 
 
 

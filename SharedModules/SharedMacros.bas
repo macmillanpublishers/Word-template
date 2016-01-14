@@ -4,12 +4,15 @@ Attribute VB_Name = "SharedMacros"
 
 Option Explicit
 
-' Doze sub only works on Windows, this declare only works on Win32
-' Need to adjust Declare for Win64 compatibility, see https://msdn.microsoft.com/en-us/library/office/ee691831%28v=office.14%29.aspx#odc_office2010_Compatibility32bit64bit_IntroducingVBA7CodeBase
-' But I don't think we need any more now that we're using the UpdateBarAndWait sub below,
-' So I'm just commenting out the whole thing for now
-'Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
-'
+' Doze sub only works on Windows
+' Will remove in later version and use ProgBarHelper.UpdateBarAndWait instead
+
+#If Win64 Then
+    Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
+#Else
+    Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+#End If
+
 'Public Sub Doze(ByVal lngPeriod As Long)
 '    DoEvents
 '    Sleep lngPeriod
@@ -197,13 +200,10 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
         LogInformation LogFile, logString
     End If
 
-    'If final dir = Startup, disable template so we can delete it
-    'Debug.Print strFinalPath
-    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
-        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
-            AddIns(strFinalPath).Installed = False
-        On Error GoTo 0
-    End If
+    ' Can't delete template if loaded as add-in
+    On Error Resume Next        'Error = add-in not available, don't need to uninstall
+        AddIns(strFinalPath).Installed = False
+    On Error GoTo 0
     
     'If file exists already, log it and delete it
     If IsItThere(strFinalPath) = True Then
@@ -852,8 +852,10 @@ Sub CloseOpenDocs()
     Dim doc As Document
     
     strInstallerName = ThisDocument.Name
-        'Debug.Print "Installer Name: " & strInstallerName
-        'Debug.Print "Open docs: " & Documents.Count
+
+        'MsgBox "Installer Name: " & strInstallerName
+        'MsgBox "Open docs: " & Documents.Count
+
 
     If Documents.Count > 1 Then
         strSaveWarning = "All other Word documents must be closed to run the macro." & vbNewLine & vbNewLine & _
@@ -1042,6 +1044,8 @@ Private Sub ClearContentControls()
 End Sub
 
 
+
+
 Sub Cleanup()
     ' resets everything from StartupSettings sub.
     Dim cleanupDoc As Document
@@ -1094,3 +1098,37 @@ Sub Cleanup()
     Application.ScreenRefresh
     
 End Sub
+
+Function IsReadOnly(Path As String) As Boolean
+    ' Tests if the file or directory is read-only
+    
+    #If Mac Then
+        Dim strScript As String
+        Dim blnWritable As Boolean
+        
+        strScript = _
+            "set p to POSIX path of " & Chr(34) & Path & Chr(34) & Chr(13) & _
+            "try" & Chr(13) & _
+            vbTab & "do shell script " & Chr(34) & "test -w \" & Chr(34) & "$(dirname " & Chr(34) & _
+                " & quoted form of p & " & Chr(34) & ")\" & Chr(34) & Chr(34) & Chr(13) & _
+            vbTab & "return true" & Chr(13) & _
+            "on error" & Chr(13) & _
+            vbTab & "return false" & Chr(13) & _
+            "end try"
+            
+        blnWritable = MacScript(strScript)
+        
+        If blnWritable = True Then
+            IsReadOnly = False
+        Else
+            IsReadOnly = True
+        End If
+    #Else
+        If (GetAttr(Path) And vbReadOnly) <> 0 Then
+            IsReadOnly = True
+        Else
+            IsReadOnly = False
+        End If
+    #End If
+    
+End Function

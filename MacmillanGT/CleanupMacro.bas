@@ -244,6 +244,47 @@ Sub MacmillanManuscriptCleanup()
     
     Call zz_clearFind
     
+    '---------------Convert all underlines to standard-------------------------
+    sglPercentComplete = 0.87
+    strStatus = "* Standardizing underline format..." & vbCr & strStatus
+    
+    If Not TheOS Like "*Mac*" Then
+        oProgressCleanup.Increment sglPercentComplete, strStatus
+        Doze 50 'Wait 50 milliseconds for progress bar to update
+    Else
+        'Mac will just use status bar
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    End If
+    
+    For s = 1 To UBound(stStories())
+        Call FixUnderlines(StoryType:=(stStories(s)))
+    Next s
+    
+    Call zz_clearFind
+    
+    '-------------Go back to original insertion point and delete bookmark-----------------
+    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
+        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
+        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
+    End If
+    
+    '--------------Remove other bookmarks------------------------------------------------
+    sglPercentComplete = 0.95
+    strStatus = "* Removing bookmarks..." & vbCr & strStatus
+    
+    If Not TheOS Like "*Mac*" Then
+        oProgressCleanup.Increment sglPercentComplete, strStatus
+        Doze 50 'Wait 50 milliseconds for progress bar to update
+    Else
+        'Mac will just use status bar
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    End If
+    
+    Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
+    Call zz_clearFind
+
     
     '-----------------Restore original settings--------------------------------------
     sglPercentComplete = 1#
@@ -543,6 +584,49 @@ ErrHandler:
     If Err.Number = 5834 Or Err.Number = 5941 Then
         Exit Sub
     End If
+End Sub
+
+Private Sub FixUnderlines(StoryType As WdStoryType)
+    ' Turns out there are like 17 different types of underlines, and we don't want to lose them but
+    ' we really just want them to be a simple, single underline.
+    
+    ' There has got to be a better way to loop through an enumeration but
+    ' I've failed to find it so far
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    
+    Dim strUnderlines(1 To 16) As WdUnderline
+    Dim a As Long
+    
+    strUnderlines(1) = wdUnderlineDash
+    strUnderlines(2) = wdUnderlineDashHeavy
+    strUnderlines(3) = wdUnderlineDashLong
+    strUnderlines(4) = wdUnderlineDashLongHeavy
+    strUnderlines(5) = wdUnderlineDotDash
+    strUnderlines(6) = wdUnderlineDotDashHeavy
+    strUnderlines(7) = wdUnderlineDotDotDash
+    strUnderlines(8) = wdUnderlineDotDotDashHeavy
+    strUnderlines(9) = wdUnderlineDotted
+    strUnderlines(10) = wdUnderlineDottedHeavy
+    strUnderlines(11) = wdUnderlineDouble
+    strUnderlines(12) = wdUnderlineThick
+    strUnderlines(13) = wdUnderlineWavy
+    strUnderlines(14) = wdUnderlineWavyDouble
+    strUnderlines(15) = wdUnderlineWavyHeavy
+    strUnderlines(16) = wdUnderlineWords
+
+    For a = LBound(strUnderlines()) To UBound(strUnderlines())
+            With ActiveDocument.Range.Find
+                .ClearFormatting
+                .Replacement.ClearFormatting
+                .Text = ""
+                .Replacement.Text = ""
+                .Wrap = wdFindStop
+                .Format = True
+                .Font.Underline = strUnderlines(a)
+                .Replacement.Font.Underline = wdUnderlineSingle
+                .Execute Replace:=wdReplaceAll
+            End With
+    Next a
 End Sub
 
 Function zz_errorChecks()
