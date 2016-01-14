@@ -15,7 +15,7 @@ Sub AutoExec()
 
 
     ' ======= For testing / debugging ==============
-    MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
+    ' MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
     ' ==============================================
 
 
@@ -85,7 +85,7 @@ Sub AutoExec()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    blnStaging = True
+    blnStaging = False
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -165,7 +165,7 @@ Sub CheckGtUpdater()
     ' Requires FileInstaller and SharedMacros modules be installed in the same template.
 
     ' ======= For testing / debugging ==============
-    MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
+    ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
     ' ==============================================
 
     Dim blnStaging As Boolean
@@ -184,7 +184,7 @@ Sub CheckGtUpdater()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    blnStaging = True
+    blnStaging = False
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -473,6 +473,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 

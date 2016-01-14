@@ -26,7 +26,7 @@ Option Base 1
 Private Sub Document_Open()
     ' ==================================================
     ' For debugging; comment out of production code
-    MsgBox "I am Doc_Open for Installer and I am running"
+    ' MsgBox "I am Doc_Open for Installer and I am running"
     ' ==================================================
 
     Dim blnStaging As Boolean
@@ -45,7 +45,7 @@ Private Sub Document_Open()
     'DEFINE ALL YOUR VARIABLES HERE
     
     'Make sure to switch to FALSE before going live!
-    blnStaging = True
+    blnStaging = False
     
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = True

@@ -27,7 +27,7 @@ Option Base 1
 Sub AutoExec()
 
     ' ======= For testing / debugging ==============
-    MsgBox "I am NEW GtUpdater and I am running!"
+    ' MsgBox "I am NEW GtUpdater and I am running!"
     ' ==============================================
 
     Dim blnStaging As Boolean
@@ -46,7 +46,7 @@ Sub AutoExec()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    blnStaging = True
+    blnStaging = False
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -151,6 +151,7 @@ ErrHandler:
 
 
 End Sub
+
 
 
 
