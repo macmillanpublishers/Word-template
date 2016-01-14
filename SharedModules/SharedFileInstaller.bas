@@ -127,8 +127,8 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     'Debug.Print strInstallFile(1) & vbNewLine & strInstallDir(1)
     
     ' ---------------- Check if new array is allocated -----------------------------------
-    If IsArrayEmpty(strInstallFile()) = True Then
-        If Installer = True Then
+    If IsArrayEmpty(strInstallFile()) = True Then       ' No files need to be installed
+        If Installer = True Then  ' Though this option (no files to install on installer) shouldn't actually occur
             #If Mac Then    ' because application.quit generates error on Mac
                 ActiveDocument.Close (wdDoNotSaveChanges)
             #Else
@@ -166,18 +166,44 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
     Dim d As Long
     
     For d = LBound(strInstallFile()) To UBound(strInstallFile())
-        'If False, error in download; user was notified in DownloadFromConfluence function
-        If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
-            If Installer = True Then
-                #If Mac Then    ' because application.quit generates error on Mac
-                    ActiveDocument.Close (wdDoNotSaveChanges)
-                #Else
-                    Application.Quit (wdDoNotSaveChanges)
-                #End If
-            Else
+    
+        If IsReadOnly(strInstallDir(d)) = True Then
+            ' Can't replace with new file if destination is read-only; Startup on Mac w/o admin is read-only
+            Dim strReadOnlyError As String
+            
+            strReadOnlyError = "Sorry, you don't have permission to install the file " & strInstallFile(d) & vbNewLine & vbNewLine & _
+                "If you are in-house at Macmillan on a Mac, try re-installing the Macmillan Style Template & Macros from the Digital Workflow category in Self Service."
+                
+                MsgBox strReadOnlyError, vbOKOnly, "Update Failed"
                 Exit Sub
+        Else
+            'If False, error in download; user was notified in DownloadFromConfluence function
+            If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
+                If Installer = True Then
+                    #If Mac Then    ' because application.quit generates error on Mac
+                        ActiveDocument.Close (wdDoNotSaveChanges)
+                    #Else
+                        Application.Quit (wdDoNotSaveChanges)
+                    #End If
+                Else
+                    Exit Sub
+                End If
             End If
         End If
+        
+        ' If we just updated the main template, delete the old toolbar
+        ' Will be added again by MacmillanGT AutoExec when it's launched, to capture updates
+        #If Mac Then
+            Dim Bar As CommandBar
+            If strInstallFile(d) = "MacmillanGT.dotm" Then
+                For Each Bar In CommandBars
+                    If Bar.Name = "Macmillan Tools" Then
+                        Bar.Delete
+                        'Exit For  ' Actually don't exit, in case there are multiple toolbars
+                    End If
+                    Next
+            End If
+        #End If
     Next d
     
     '------Display installation complete message   ---------------------------
@@ -191,20 +217,8 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
         strInstallType = "updated"
     End If
     
-    strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer." & vbNewLine & vbNewLine & _
-            "You must QUIT and RESTART Word for the changes to take effect."
+    strComplete = "The " & TemplateName & " has been " & strInstallType & " on your computer."
     MsgBox strComplete, vbOKOnly, "Installation Successful"
-    
-    ' Mac 2011 Word can't do Application.Quit, so then just prompt user to restart and close Installer
-    ' (but don't quit Word). Otherwise, quit for user on PC.
-    ' Don't want to Close/Quit if it's an updater, because both MacmillanGT and GtUpdater need to run consecutively
-    If Installer = True Then
-        #If Mac Then
-            ActiveDocument.Close (wdDoNotSaveChanges)
-        #Else
-            Application.Quit (wdDoNotSaveChanges)
-        #End If
-    End If
     
 End Sub
 
@@ -270,18 +284,32 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     
     '------------------------- Try to get current version's number from Confluence ------------
     Dim strVersion As String
+    Dim strMacUser As String
+    Dim strStyleDir As String
     Dim strFullVersionPath As String
     
     'Debug.Print FileName
     'Debug.Print InStrRev(FileName, ".do")
     strVersion = Left(FileName, InStrRev(FileName, ".do") - 1)
     strVersion = strVersion & ".txt"
-    strFullVersionPath = Directory & Application.PathSeparator & strVersion
+    
+    ' Always download version file to Style Directory - on Mac can't write to Startup w/o admin priv
+    ' In future, find some way to use this w/o hard-coding the style dir location
+    #If Mac Then
+        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
+                "return (name of current user)" & Chr(13) & "end tell")
+        strStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+    #Else
+        strStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
+    #End If
+    
+    strFullVersionPath = strStyleDir & Application.PathSeparator & strVersion
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(StagingURL, Directory, Log, strVersion) = False Then
+    If DownloadFromConfluence(StagingURL, strStyleDir, Log, strVersion) = False Then
         NeedUpdate = False
+        Exit Function
     End If
         
     '-------------------- Get version number of current template ---------------------
@@ -323,40 +351,7 @@ Private Sub OpenDocPC(FilePath As String)
         Documents.Open FileName:=FilePath, ReadOnly:=True, Visible:=False      'Win Word DOES allow Visible as an argument :)
 End Sub
 
-Private Sub CloseOpenDocs()
 
-    '-------------Check for/close open documents---------------------------------------------
-    Dim strInstallerName As String
-    Dim strSaveWarning As String
-    Dim objDocument As Document
-    Dim b As Long
-    Dim doc As Document
-    
-    strInstallerName = ThisDocument.Name
-        'Debug.Print "Installer Name: " & strInstallerName
-        'Debug.Print "Open docs: " & Documents.Count
-
-    If Documents.Count > 1 Then
-        strSaveWarning = "All other Word documents must be closed to run the installer." & vbNewLine & vbNewLine & _
-            "Click OK and I will save and close your documents." & vbNewLine & _
-            "Click Cancel to exit without installing and close the documents yourself."
-        If MsgBox(strSaveWarning, vbOKCancel, "Close documents?") = vbCancel Then
-            ActiveDocument.Close
-            Exit Sub
-        Else
-            For Each doc In Documents
-                On Error Resume Next        'To skip error if user is prompted to save new doc and clicks Cancel
-                    Debug.Print doc.Name
-                    If doc.Name <> strInstallerName Then       'But don't close THIS document
-                        doc.Save   'separate step to trigger Save As prompt for previously unsaved docs
-                        doc.Close
-                    End If
-                On Error GoTo 0
-            Next doc
-        End If
-    End If
-    
-End Sub
 
 Private Function ImportVariable(strFile As String) As String
  
@@ -366,54 +361,5 @@ Private Function ImportVariable(strFile As String) As String
  
 End Function
 
-Private Function IsArrayEmpty(Arr As Variant) As Boolean
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-' By Chip Pearson, http://www.cpearson.com/excel/vbaarrays.htm
-'
-' IsArrayEmpty
-' This function tests whether the array is empty (unallocated). Returns TRUE or FALSE.
-'
-' The VBA IsArray function indicates whether a variable is an array, but it does not
-' distinguish between allocated and unallocated arrays. It will return TRUE for both
-' allocated and unallocated arrays. This function tests whether the array has actually
-' been allocated.
-'
-' This function is really the reverse of IsArrayAllocated.
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-    Dim LB As Long
-    Dim UB As Long
-    
-    Err.Clear
-    On Error Resume Next
-    If IsArray(Arr) = False Then
-        ' we weren't passed an array, return True
-        IsArrayEmpty = True
-    End If
-    
-    ' Attempt to get the UBound of the array. If the array is
-    ' unallocated, an error will occur.
-    UB = UBound(Arr, 1)
-    If (Err.Number <> 0) Then
-        IsArrayEmpty = True
-    Else
-        ''''''''''''''''''''''''''''''''''''''''''
-        ' On rare occassion, under circumstances I
-        ' cannot reliably replictate, Err.Number
-        ' will be 0 for an unallocated, empty array.
-        ' On these occassions, LBound is 0 and
-        ' UBoung is -1.
-        ' To accomodate the weird behavior, test to
-        ' see if LB > UB. If so, the array is not
-        ' allocated.
-        ''''''''''''''''''''''''''''''''''''''''''
-        Err.Clear
-        LB = LBound(Arr)
-        If LB > UB Then
-            IsArrayEmpty = True
-        Else
-            IsArrayEmpty = False
-        End If
-    End If
 
-End Function
