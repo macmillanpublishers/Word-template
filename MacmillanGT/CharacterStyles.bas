@@ -90,6 +90,8 @@ Sub MacmillanCharStyles()
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
+    Dim s As Long
+    
     For s = 1 To UBound(stStories())
         Call PreserveWhiteSpaceinBrkStylesA(StoryType:=(stStories(s)))     'Part A tags styled blank paragraphs so they don't get deleted
     Next s
@@ -319,6 +321,7 @@ Private Sub AutoFormatHyperlinks()
     Dim oRng As Range
     
     'oDoc.Save      ' Already saved active doc?
+    Set oDoc = ActiveDocument
     Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False)
     
     If oDoc.Footnotes.Count >= 1 Then
@@ -392,7 +395,7 @@ Private Sub StyleHyperlinksB(StoryType As WdStoryType)
 End Sub
 
 Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
-    Set activeRng = WhiteSpaceDocA.StoryRanges(StoryType)
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     Dim tagArray(13) As String                                   ' number of items in array should be declared here
     Dim StylePreserveArray(13) As String              ' number of items in array should be declared here

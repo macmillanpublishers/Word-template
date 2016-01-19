@@ -248,41 +248,12 @@ Sub MacmillanManuscriptCleanup()
     sglPercentComplete = 0.87
     strStatus = "* Standardizing underline format..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     For s = 1 To UBound(stStories())
         Call FixUnderlines(StoryType:=(stStories(s)))
     Next s
     
-    Call zz_clearFind
-    
-    '-------------Go back to original insertion point and delete bookmark-----------------
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    '--------------Remove other bookmarks------------------------------------------------
-    sglPercentComplete = 0.95
-    strStatus = "* Removing bookmarks..." & vbCr & strStatus
-    
-    If Not TheOS Like "*Mac*" Then
-        oProgressCleanup.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    Call RemoveBookmarks                    'this is in both Cleanup macro and ApplyCharStyles macro
     Call zz_clearFind
 
     

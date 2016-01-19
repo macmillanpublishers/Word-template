@@ -130,13 +130,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     sglPercentComplete = 0.07
     strStatus = "* Cleaning up Chapter Numbers..." & vbCr & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressBkmkr.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     If styleCount(4) > 0 Then
         Call ChapNumCleanUp
@@ -1083,7 +1077,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                 End If
             End If
         Next a
-    
+        End If
 ErrResume:
     
     Next N

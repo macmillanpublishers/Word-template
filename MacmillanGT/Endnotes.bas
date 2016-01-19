@@ -42,7 +42,7 @@ Sub EndnoteDeEmbed()
         Exit Sub
     End If
 
-    If EndnotesExist = False Then
+    If SharedMacros.EndnotesExist = False Then
         MsgBox "Sorry, no linked endnotes found in document. Click OK to exit the Endnotes macro."
         Exit Sub
     End If
