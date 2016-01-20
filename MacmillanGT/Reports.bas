@@ -470,6 +470,22 @@ Sub MacmillanStyleReport()
         Unload oProgressStyleRpt
         Exit Sub
     End If
+    
+        ' ------- Clear character formatting from Chapter Numbers ---------
+    sglPercentComplete = 0.07
+    strStatus = "* Cleaning up Chapter Numbers..." & vbCr & strStatus
+    
+    If Not TheOS Like "*Mac*" Then
+        oProgressStyleRpt.Increment sglPercentComplete, strStatus
+        Doze 50 'Wait 50 milliseconds for progress bar to update
+    Else
+        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
+        DoEvents
+    End If
+    
+    If styleCount(4) > 0 Then
+        Call ChapNumCleanUp
+    End If
                 
     '------------Convert unapproved headings to correct heading-------
     sglPercentComplete = 0.09
