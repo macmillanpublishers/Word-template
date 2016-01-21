@@ -319,7 +319,7 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
 ' File name should not contain periods other than before file type
 
     Dim strLogFile As String
-    Dim strUser As String
+    Dim strMacDocs As String
     Dim strStyle As String
     Dim strLogFolder As String
     Dim strLogPath As String
@@ -330,9 +330,8 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
     
     'Create directory names based on OS
     #If Mac Then
-        strUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-            "return (name of current user)" & Chr(13) & "end tell")
-        strStyle = "Macintosh HD:Users:" & strUser & ":Documents:MacmillanStyleTemplate"
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strStyle = strMacDocs & "MacmillanStyleTemplate"
         strLogFolder = strStyle & Application.PathSeparator & "log"
         strLogPath = strLogFolder & Application.PathSeparator & strLogFile
     #Else
