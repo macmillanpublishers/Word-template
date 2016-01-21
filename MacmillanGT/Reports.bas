@@ -280,7 +280,6 @@ Private Sub MakeReport(torDOTcom As Boolean)
 
 End Sub
 
-
 Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As Variant
     'Creates a list of Macmillan styles in use
     'And a separate list of non-Macmillan styles in use
