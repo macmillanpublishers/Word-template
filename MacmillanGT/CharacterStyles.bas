@@ -195,10 +195,12 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
-    Call Cleanup
-    Unload oProgressChar
-    
-    MsgBox "Macmillan character styles have been applied throughout your manuscript."
+    ' If this is the whole macro, close out; otherwise calling macro will close it all down
+    If TotalPercent = 1 Then
+        Call Cleanup
+        Unload oProgressChar
+        MsgBox "Macmillan character styles have been applied throughout your manuscript."
+    End If
     
     
     '----------------------Timer End-------------------------------------------
