@@ -18,7 +18,7 @@ Sub TagText()
     strMessage = "Would you like to tag space around extracts/lists/etc.?" & vbNewLine & vbNewLine & _
         "If you're not sure, you probably don't need to do this."
         
-    If MsgBox(strMessage, vbYesNo, "Tag Space Around Extracts?") = vbNo Then
+    If MsgBox(strMessage, vbYesNo + vbQuestion + vbDefaultButton2, "Tag Space Around Extracts?") = vbNo Then
         blnTagSpaceAround = False
     Else
         blnTagSpaceAround = True
@@ -312,7 +312,7 @@ ErrorHandler1:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
         Set myStyle = thisDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
         With myStyle
-            .QuickStyle = True
+            '.QuickStyle = True ' not available for Mac
             .Font.Name = "Times New Roman"
             .Font.Size = 12
             With .ParagraphFormat
