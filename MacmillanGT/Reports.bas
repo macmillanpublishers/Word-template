@@ -978,7 +978,7 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
     'arrStyleCount(4) = "Chap Number (cn)"
     'arrStyleCount(5) = "Chap Title (ct)"
     'arrStyleCount(6) = "Chap Title Nonprinting (ctnp)"
-    'arrStyleCount(7) = "Titlepage Imprint Line (imp)"
+    'arrStyleCount(7) = "Titlepage Logo (logo)"
     'arrStyleCount(8) = "Part Title (pt)"
     'arrStyleCount(9) = "Part Number (pn)"
     'arrStyleCount(10) = "FM Head (fmh)"
@@ -1060,8 +1060,8 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
         & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
     
     'If Imprint line = 0
-    If arrStyleCount(7) = 0 Then errorList = errorList & "** ERROR: No styled Imprint Line detected." _
-        & vbNewLine & vbNewLine
+    If arrStyleCount(7) = 0 Then errorList = errorList & "** WARNING: No styled Titlepage Logo (logo) line detected. " _
+        & "If you would like a logo included on your titlepage, please add this style." & vbNewLine & vbNewLine
     
     'If Imprint Lline > 1
     If arrStyleCount(7) > 1 Then errorList = errorList & "** ERROR: Too many Imprint Line paragraphs" _
@@ -1602,7 +1602,7 @@ Private Function CountReqdStyles() As Variant
     arrStyleName(4) = "Chap Number (cn)"
     arrStyleName(5) = "Chap Title (ct)"
     arrStyleName(6) = "Chap Title Nonprinting (ctnp)"
-    arrStyleName(7) = "Titlepage Imprint Line (imp)"
+    arrStyleName(7) = "Titlepage Logo (logo)"
     arrStyleName(8) = "Part Title (pt)"
     arrStyleName(9) = "Part Number (pn)"
     arrStyleName(10) = "FM Head (fmh)"
@@ -1628,7 +1628,7 @@ Private Function CountReqdStyles() As Variant
             .MatchWildcards = False
             .MatchSoundsLike = False
             .MatchAllWordForms = False
-        Do While .Execute(Forward:=True) = True And intStyleCount(a) < 100   ' < 100 to precent infinite loop, especially if content controls in title or author blocks
+        Do While .Execute(Forward:=True) = True And intStyleCount(a) < 100   ' < 100 to prevent infinite loop, especially if content controls in title or author blocks
             intStyleCount(a) = intStyleCount(a) + 1
         Loop
         End With
@@ -1703,8 +1703,8 @@ ErrHandler:
 End Sub
 
 Private Function GetMetadata() As String
-    Dim styleNameB(4) As String         ' must declare number of items in array here
-    Dim bString(4) As String            ' and here
+    Dim styleNameB(3) As String         ' must declare number of items in array here
+    Dim bString(3) As String            ' and here
     Dim b As Integer
     Dim strTitleData As String
     
@@ -1713,7 +1713,6 @@ Private Function GetMetadata() As String
     styleNameB(1) = "Titlepage Book Title (tit)"
     styleNameB(2) = "Titlepage Author Name (au)"
     styleNameB(3) = "span ISBN (isbn)"
-    styleNameB(4) = "Titlepage Imprint Line (imp)"
     
     For b = 1 To UBound(styleNameB())
         bString(b) = GetText(styleNameB(b))
@@ -1721,9 +1720,10 @@ Private Function GetMetadata() As String
             bString(b) = "** " & styleNameB(b) & " **" & vbNewLine & _
                         bString(b) & vbNewLine
         End If
+        
+        strTitleData = strTitleData & bString(b)
+        
     Next b
-    
-    strTitleData = bString(1) & bString(2) & bString(3) & bString(4)
                 
     'Debug.Print strTitleData
     
