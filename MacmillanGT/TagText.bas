@@ -172,7 +172,7 @@ Sub TagText()
         
         For b = LBound(strSearchStyle()) To UBound(strSearchStyle())
             
-            sglPercentComplete = (((b / lngParaCount) * sglTotalPercent) + sglStartingPercent)
+            sglPercentComplete = (((b / UBound(strSearchStyle())) * sglTotalPercent) + sglStartingPercent)
             strStatus = "* Fixing space around " & strSearchStyle(b) & "..." & vbNewLine & strStatus
             Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
             
