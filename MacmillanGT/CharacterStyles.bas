@@ -17,6 +17,20 @@ Dim activeRng As Range
 
 Sub MacmillanCharStyles()
     
+    Dim CharacterProgress As ProgressBar
+    Set CharacterProgress = New ProgressBar
+    
+    CharacterProgress.Title = "Macmillan Character Styles Macro"
+    
+    Call ActualCharStyles(oProgressChar:=CharacterProgress, StartPercent:=0, TotalPercent:=1)
+
+End Sub
+
+Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, TotalPercent As Single)
+    ' Have to pass the ProgressBar so this can be run from within another macro
+    ' StartPercent is the percentage the progress bar is at when this sub starts
+    ' TotalPercent is the total percent of the progress bar that this sub will cover
+    
     
     '------------------Time Start-----------------
     'Dim StartTime As Double
@@ -67,14 +81,15 @@ Sub MacmillanCharStyles()
     
     'Debug.Print x
     
-    strTitle = "Macmillan Character Styles Macro"
+'    strTitle = "Macmillan Character Styles Macro"
     sglPercentComplete = 0.09
     strStatus = funArray(x)
     
-    Dim oProgressChar As ProgressBar
-    Set oProgressChar = New ProgressBar ' Triggers Initialize event, which calls Show method for PC
+    ' This is now passed from calling sub
+'    Dim oProgressChar As ProgressBar
+'    Set oProgressChar = New ProgressBar ' Triggers Initialize event, which calls Show method for PC
 
-    oProgressChar.Title = strTitle
+'    oProgressChar.Title = strTitle
     
     ' Calls ProgressBar.Increment mathod and waits for it to complete
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -180,10 +195,12 @@ Sub MacmillanCharStyles()
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
-    Call Cleanup
-    Unload oProgressChar
-    
-    MsgBox "Macmillan character styles have been applied throughout your manuscript."
+    ' If this is the whole macro, close out; otherwise calling macro will close it all down
+    If TotalPercent = 1 Then
+        Call Cleanup
+        Unload oProgressChar
+        MsgBox "Macmillan character styles have been applied throughout your manuscript."
+    End If
     
     
     '----------------------Timer End-------------------------------------------
