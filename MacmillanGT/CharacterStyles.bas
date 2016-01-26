@@ -82,7 +82,9 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     'Debug.Print x
     
 '    strTitle = "Macmillan Character Styles Macro"
-    sglPercentComplete = 0.09
+
+'   first number is percent of THIS macro completed
+    sglPercentComplete = (0.09 * TotalPercent) + StartPercent
     strStatus = funArray(x)
     
     ' This is now passed from calling sub
@@ -100,7 +102,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     '-----------------------Tag space break styles----------------------------
     Call zz_clearFind                          'Clear find object
     
-    sglPercentComplete = 0.18
+    sglPercentComplete = (0.18 * TotalPercent) + StartPercent
     strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -113,7 +115,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call zz_clearFind
     
     '----------------------------Fix hyperlinks---------------------------------------
-    sglPercentComplete = 0.28
+    sglPercentComplete = (0.28 * TotalPercent) + StartPercent
     strStatus = "* Applying styles to hyperlinks..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -135,7 +137,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
 
     
     '--------------------------Remove unstyled space breaks---------------------------
-    sglPercentComplete = 0.39
+    sglPercentComplete = (0.39 * TotalPercent) + StartPercent
     strStatus = "* Removing unstyled breaks..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -146,7 +148,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call zz_clearFind
     
     '--------------------------Tag existing character styles------------------------
-    sglPercentComplete = 0.52
+    sglPercentComplete = (0.52 * TotalPercent) + StartPercent
     strStatus = "* Tagging character styles..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -157,7 +159,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call zz_clearFind
     
     '-------------------------Tag direct formatting----------------------------------
-    sglPercentComplete = 0.65
+    sglPercentComplete = (0.65 * TotalPercent) + StartPercent
     strStatus = "* Tagging direct formatting..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -168,7 +170,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call zz_clearFind
 
     '----------------------------Apply Macmillan character styles to tagged text--------
-    sglPercentComplete = 0.81
+    sglPercentComplete = (0.81 * TotalPercent) + StartPercent
     strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -179,7 +181,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call zz_clearFind
     
     '---------------------------Remove tags from styled space breaks---------------------
-    sglPercentComplete = 0.95
+    sglPercentComplete = (0.95 * TotalPercent) + StartPercent
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
@@ -190,7 +192,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call zz_clearFind
     
     '---------------------------Return settings to original------------------------------
-    sglPercentComplete = 1
+    sglPercentComplete = TotalPercent + StartPercent
     strStatus = "* Finishing up..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
