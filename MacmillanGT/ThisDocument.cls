@@ -308,7 +308,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim strImagePath As String
         Dim strMacImagePath As String
         
-        'MsgBox ""
+        MsgBox "Please click OK and then WAIT a few seconds while we create the Macmillan Tools toolbar for you."
 
         ' Set up all our paths to files/directories
         strPath = PathToTemplate
@@ -479,10 +479,13 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 '        'Notify user in seconds
 '        MsgBox "This code ran successfully in " & SecondsElapsed & " seconds"
 '        '---------------------------------------------------------------------------
-
+        
+        MsgBox "The Macmillan Tools toolbar has been updated!"
+    
     #End If
 
 End Sub
+
 
 
 
