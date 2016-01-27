@@ -85,7 +85,7 @@ Sub AutoExec()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    blnStaging = False
+    blnStaging = True
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -184,7 +184,7 @@ Sub CheckGtUpdater()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    blnStaging = False
+    blnStaging = True
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -473,6 +473,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 

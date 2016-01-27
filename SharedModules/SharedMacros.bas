@@ -9,7 +9,7 @@ Option Explicit
 
 #If Win64 Then
     Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
-#Else
+#ElseIf Win32 Then
     Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 #End If
 
@@ -58,9 +58,9 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
 'FinalDir is directory w/o file name
 
     Dim logString As String
+    Dim strMacTmpDir As String
     Dim strTmpPath As String
     Dim strBashTmp As String
-    Dim strMacHD As String
     Dim strFinalPath As String
     Dim strErrMsg As String
     Dim myURL As String
@@ -79,8 +79,8 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     'Get temp dir based on OS, then download file.
     #If Mac Then
         'set tmp dir
-        strMacHD = "Macintosh HD"
-        strTmpPath = strMacHD & ":private:tmp" & Application.PathSeparator & FileName
+        strMacTmpDir = MacScript("path to temporary items")
+        strTmpPath = strMacTmpDir & Application.PathSeparator & FileName
         strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - Len(strMacHD)), ":", "/")
         'Debug.Print strBashTmp
         
