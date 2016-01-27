@@ -315,21 +315,32 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 
         ' Get just the file name w/o path or extension
         strFile = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
-
+        
+        Stop
+        
         ' location we're going to copy the template to as a zip file
         strMacTmp = MacScript("path to temporary items as string")
+        Debug.Print "strMacTmp: " & strMacTmp
         strMacUnzip = strMacTmp & strFile
+        Debug.Print "strMacUnzip: " & strMacUnzip
         strMacZip = strMacUnzip & ".zip"
+        Debug.Print "strMacZip: " & strMacZip
         strMacXML = strMacUnzip & ":customUI:"
+        Debug.Print "strMacXML: " & strMacXML
         strMacImagePath = strMacXML & "images:"
+        Debug.Print "strMacImagePath: " & strMacImagePath
         
         ' convert formats of above for command line
 
         strBashUnzip = Replace(Right(strMacUnzip, Len(strMacUnzip) - (InStr(strMacUnzip, ":") - 1)), ":", "/")
+        Debug.Print "strBashUnzip: " & strBashUnzip
         strBashZip = Replace(Right(strMacZip, Len(strMacZip) - (InStr(strMacZip, ":") - 1)), ":", "/")
+        Debug.Print "strBashZip: " & strBashZip
         strXmlPath = Replace(Right(strMacXML, Len(strMacXML) - (InStr(strMacXML, ":") - 1)), ":", "/")
+        Debug.Print "strXmlPath: " & strXmlPath
         ' path to button images
         strImagePath = Replace(Right(strMacImagePath, Len(strMacImagePath) - (InStr(strMacImagePath, ":") - 1)), ":", "/")
+        Debug.Print "strImagePath: " & strImagePath
         
         
         ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
@@ -461,7 +472,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
             End With
 
             ' Delete the unzipped directory
-            ShellAndWaitMac ("rm -rf " & strUnzipPath)
+            ShellAndWaitMac ("rm -rf " & strBashUnzip)
         Else
             'There is no customUI dir in template
             Dim strMessage As String
