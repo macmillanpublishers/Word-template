@@ -79,10 +79,12 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     'Get temp dir based on OS, then download file.
     #If Mac Then
         'set tmp dir
+        Stop
         strMacTmpDir = MacScript("path to temporary items")
         strTmpPath = strMacTmpDir & Application.PathSeparator & FileName
-        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - Len(strMacHD)), ":", "/")
-        'Debug.Print strBashTmp
+        Debug.Print strTmpPath
+        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr(strTmpPath, ":") - 1)), ":", "/")
+        Debug.Print strBashTmp
         
         'check for network
         If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then   'can't connect to internet
