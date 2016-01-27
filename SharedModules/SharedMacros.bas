@@ -80,8 +80,8 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     #If Mac Then
         'set tmp dir
         Stop
-        strMacTmpDir = MacScript("path to temporary items")
-        strTmpPath = strMacTmpDir & Application.PathSeparator & FileName
+        strMacTmpDir = MacScript("path to temporary items as string")
+        strTmpPath = strMacTmpDir & FileName
         Debug.Print strTmpPath
         strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr(strTmpPath, ":") - 1)), ":", "/")
         Debug.Print strBashTmp
@@ -663,8 +663,8 @@ Sub CreateTextFile(strText As String, suffix As String)
         Dim placeholdDocName As String
         placeholdDocName = "filenamePlacehold_Report.txt"
         reqReportDocAlt = reqReportDoc
-        strMacTmp = MacScript("path to temporary items")
-        reqReportDoc = strMacTmp & Application.PathSeparator & placeholdDocName
+        strMacTmp = MacScript("path to temporary items as string")
+        reqReportDoc = strMacTmp & placeholdDocName
     End If
     '''end ''''for 32 char Mc OS bug part 1
     
