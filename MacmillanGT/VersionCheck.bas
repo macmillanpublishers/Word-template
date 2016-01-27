@@ -13,19 +13,15 @@ Sub CheckMacmillanGT()
     Dim pcTemplatePath As String
     Dim macTemplatePath As String
     Dim TheOS As String
-    Dim macUser As String
     TheOS = System.OperatingSystem
-
-    'For files located in user directory on Mac. Gives error on PC w/o if-then
-    If TheOS Like "*Mac*" Then
-      macUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
-    End If
+    Dim strMacDocs As String
     
     ' ---------------------------------------------------------
     ' If re-creating to check another template, change all the variables here
     templateFile = "MacmillanGT.dotm"  'the template file you are checking
     pcDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\"  'the directory where templateFile is supposed to live, including training slash
-    macDir = "Macintosh HD:Users:" & macUser & ":Documents:MacmillanStyleTemplate:"
+    strMacDocs = MacScript("return (path to documents folder) as string")
+    macDir = strMacDocs & "MacmillanStyleTemplate:"
     
     'these variables stay the same even if checking a different template
     pcTemplatePath = pcDir & templateFile
@@ -53,20 +49,17 @@ Sub CheckMacmillan()
     Dim pcTemplatePath As String
     Dim macTemplatePath As String
     Dim TheOS As String
-    Dim macUser As String
+    Dim strMacDocs
     
     TheOS = System.OperatingSystem
     
-    'For files located in user directory on Mac. Gives error on PC w/o if-then
-    If TheOS Like "*Mac*" Then
-      macUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
-    End If
     
     ' ---------------------------------------------------------
     ' If re-creating to check another template, change all the variables here
     templateFile = "macmillan.dotm"  'the template file you are checking
     pcDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\"  'the directory where templateFile is supposed to live, including training slash
-    macDir = "Macintosh HD:Users:" & macUser & ":Documents:MacmillanStyleTemplate:"           'the directory where templateFile is supposed to live, including trailing colon
+    strMacDocs = MacScript("return (path to documents folder) as string")
+    macDir = strMacDocs & "MacmillanStyleTemplate:"
     ''---------------------------------------------------------
     
     'these variables stay the same even if checking a different template

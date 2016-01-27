@@ -306,6 +306,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim strMacXML As String
         Dim strXmlPath As String
         Dim strImagePath As String
+        Dim strMacImagePath As String
         
         'MsgBox ""
 
@@ -320,6 +321,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         strMacUnzip = strMacTmp & strFile
         strMacZip = strMacUnzip & ".zip"
         strMacXML = strMacUnzip & ":customUI:"
+        strMacImagePath = strMacXML & "images:"
         
         ' convert formats of above for command line
 
@@ -327,7 +329,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         strBashZip = Replace(Right(strMacZip, Len(strMacZip) - (InStr(strMacZip, ":") - 1)), ":", "/")
         strXmlPath = Replace(Right(strMacXML, Len(strMacXML) - (InStr(strMacXML, ":") - 1)), ":", "/")
         ' path to button images
-        strImagePath = strXmlPath & "images/"
+        strImagePath = Replace(Right(strMacImagePath, Len(strMacImagePath) - (InStr(strMacImagePath, ":") - 1)), ":", "/")
         
         
         ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
@@ -420,7 +422,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 
                                     ' Get image name
                                     strImageName = ShellAndWaitMac(strCmdStart & strXpath & "image)" & strCmdEnd)
-                                    strImageName = "Macintosh HD:private" & Replace(strImagePath & strImageName & "_mac.png", "/", ":")
+                                    strImageName = strMacImagePath & strImageName & "_mac.png"
 
                                     ' Get button caption and macro name
                                     strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)

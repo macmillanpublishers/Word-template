@@ -30,9 +30,9 @@ Sub AttachMe(TemplateName As String)
         
     'Set template path according to OS
     #If Mac Then
-        currentUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-            "return (name of current user)" & Chr(13) & "end tell")
-        myFile = "Macintosh HD:Users:" & currentUser & ":Documents:MacmillanStyleTemplate:" & TemplateName
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
+        myFile = strMacStyleDir & Application.PathSeparator & TemplateName
     #Else
         myFile = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & TemplateName
     #End If
