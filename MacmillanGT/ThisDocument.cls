@@ -178,7 +178,7 @@ Sub CheckGtUpdater()
     Dim strPcStartupDir As String
     Dim strMacStyleDir As String
     Dim strMacStartupDir As String
-    Dim strMacUser As String
+    Dim strMacDocs As String
 
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
@@ -205,9 +205,8 @@ Sub CheckGtUpdater()
 
     ' Enter the home directories for your templates here, for Mac *AND* PC
     #If Mac Then
-        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-                "return (name of current user)" & Chr(13) & "end tell")
-        strMacStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
         strMacStartupDir = Application.StartupPath
     #Else
         strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
@@ -299,35 +298,46 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 
         Dim strPath As String
         Dim strFile As String
-        Dim strZipPath As String
-        Dim strUnzipPath As String
+        Dim strMacZip As String
+        Dim strMacUnzip As String
+        Dim strMacTmp As String
+        Dim strBashUnzip As String
+        Dim strBashZip As String
+        Dim strMacXML As String
+        Dim strXmlPath As String
+        Dim strImagePath As String
+        
+        'MsgBox ""
 
-        ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
-        ' Can't use ThisDocument.Path because this will be called after template is installed,
-        ' and template is installed via GtUpdater.dotm
-        'strPath = ThisDocument.Path
-        'strPath = "Macintosh HD:Applications:Microsoft Office 2011:Office:Startup:Word:MacmillanGT.dotm"
+        ' Set up all our paths to files/directories
         strPath = PathToTemplate
 
         ' Get just the file name w/o path or extension
         strFile = Mid(strPath, InStrRev(strPath, ":") + 1, InStrRev(strPath, ".") - InStrRev(strPath, ":") - 1)
 
         ' location we're going to copy the template to as a zip file
-        strZipPath = "Macintosh HD:private:tmp:" & strFile & ".zip"
+        strMacTmp = MacScript("path to temporary items as string")
+        strMacUnzip = strMacTmp & strFile
+        strMacZip = strMacUnzip & ".zip"
+        strMacXML = strMacUnzip & ":customUI:"
+        
+        ' convert formats of above for command line
 
+        strBashUnzip = Replace(Right(strMacUnzip, Len(strMacUnzip) - (InStr(strMacUnzip, ":") - 1)), ":", "/")
+        strBashZip = Replace(Right(strMacZip, Len(strMacZip) - (InStr(strMacZip, ":") - 1)), ":", "/")
+        strXmlPath = Replace(Right(strMacXML, Len(strMacXML) - (InStr(strMacXML, ":") - 1)), ":", "/")
+        ' path to button images
+        strImagePath = strXmlPath & "images/"
+        
+        
+        ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
         ' Copy this template to tmp as a zip file
-        FileCopy strPath, strZipPath
-
-        ' bash path of unzipped stuff
-        strUnzipPath = "/tmp/" & strFile
-
-        ' bash path of zip folder
-        strZipPath = strUnzipPath & ".zip"
+        FileCopy strPath, strMacZip
 
         ' Delete any previous unzipped folders in tmp
         ' Unzip the copy we just made, delete the zip file
         ' -u means update, i.e. overwrite any files that currently exist
-        ShellAndWaitMac ("rm -r " & strUnzipPath & ";unzip -u " & strZipPath & " -d " & strUnzipPath & ";rm " & strZipPath)
+        ShellAndWaitMac ("rm -r " & strBashUnzip & ";unzip -u " & strBashZip & " -d " & strBashUnzip & ";rm " & strBashZip)
 
         ' ===== Then we build a toolbar from the values in the customUI.xml file ===== '
         ' To edit the shell commands read up on xmllint and xpath:
@@ -335,7 +345,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         ' https://docs.oracle.com/javase/tutorial/jaxp/xslt/xpath.html
         ' http://www.thegeekstuff.com/2014/12/linux-parse-xml/
 
-        Dim strXmlPath As String
+        
         Dim strCmdStart As String
         Dim strCmdEnd As String
         Dim strXpath As String
@@ -348,7 +358,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim c As Long
         Dim h As Long
         Dim NewToolbar As CommandBar
-        Dim strImagePath As String
+        
         Dim strImageName As String
         Dim blnBeginGroup As Boolean
         Dim strCaption As String
@@ -356,11 +366,9 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim shpButtonPic As Shape
         Dim NewButton As CommandBarButton
 
-        strXmlPath = strUnzipPath & "/customUI/"
-        ' path to button images
-        strImagePath = strXmlPath & "images/"
+        
 
-        If IsItThere("Macintosh HD:private" & Replace(strXmlPath, "/", ":")) = True Then
+        If IsItThere(strMacXML) = True Then
             ' first part "sed -e "s/xmlns/ignore/" customUI.xml" removes namespace, which messes up xmllint
             ' that is then piped to xmllint which gets the attribute value based on the Xpath
             strCmdStart = "sed -e \" & Chr(34) & "s/xmlns/ignore/\" & Chr(34) & " " & strXmlPath & "customUI.xml | xmllint --xpath \" & Chr(34)
@@ -473,6 +481,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 
