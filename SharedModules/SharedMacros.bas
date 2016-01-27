@@ -646,6 +646,7 @@ Sub CreateTextFile(strText As String, suffix As String)
     Dim reqReportDocAlt As String
     Dim fnum As Integer
     Dim TheOS As String
+    Dim strMacTmp As String
     TheOS = System.OperatingSystem
     
     'activeDocName below works for .doc and .docx
@@ -662,7 +663,8 @@ Sub CreateTextFile(strText As String, suffix As String)
         Dim placeholdDocName As String
         placeholdDocName = "filenamePlacehold_Report.txt"
         reqReportDocAlt = reqReportDoc
-        reqReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
+        strMacTmp = MacScript("path to temporary items")
+        reqReportDoc = strMacTmp & Application.PathSeparator & placeholdDocName
     End If
     '''end ''''for 32 char Mc OS bug part 1
     
