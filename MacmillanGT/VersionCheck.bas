@@ -7,33 +7,23 @@ Sub CheckMacmillanGT()
     'Creates a toolbar button that tells the user the current version of the installed template when pressed.
     '----------------------------------
     
-    Dim pcDir As String
-    Dim macDir As String
     Dim templateFile As String
-    Dim pcTemplatePath As String
-    Dim macTemplatePath As String
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
     Dim strMacDocs As String
-    
-    ' ---------------------------------------------------------
-    ' If re-creating to check another template, change all the variables here
-    templateFile = "MacmillanGT.dotm"  'the template file you are checking
-    pcDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\"  'the directory where templateFile is supposed to live, including training slash
-    strMacDocs = MacScript("return (path to documents folder) as string")
-    macDir = strMacDocs & "MacmillanStyleTemplate:"
-    
-    'these variables stay the same even if checking a different template
-    pcTemplatePath = pcDir & templateFile
-    macTemplatePath = macDir & templateFile
+    Dim strTemplatePath As String
 
     
-    'Pass arguments to VersionCheck sub based on OS
-    If Not TheOS Like "*Mac*" Then                  'I am Windows
-        Call VersionCheck(pcTemplatePath, templateFile)
-    Else                                                            ' I am Mac
-        Call VersionCheck(macTemplatePath, templateFile)
-    End If
+    templateFile = "MacmillanGT.dotm"  'the template file you are checking
+    
+    #If Mac Then
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strTemplatePath = strMacDocs & "MacmillanStyleTemplate:" & templateFile
+    #Else
+        strTemplatePath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & templateFile
+    #End If
+
+    
+    Call VersionCheck(strTemplatePath, templateFile)
+
 
 End Sub
 Sub CheckMacmillan()
@@ -43,36 +33,22 @@ Sub CheckMacmillan()
     'Creates a toolbar button that tells the user the current version of the installed template when pressed.
     '----------------------------------
     
-    Dim pcDir As String
-    Dim macDir As String
     Dim templateFile As String
-    Dim pcTemplatePath As String
-    Dim macTemplatePath As String
-    Dim TheOS As String
-    Dim strMacDocs
+    Dim strMacDocs As String
+    Dim strTemplatePath As String
+
     
-    TheOS = System.OperatingSystem
-    
-    
-    ' ---------------------------------------------------------
-    ' If re-creating to check another template, change all the variables here
     templateFile = "macmillan.dotm"  'the template file you are checking
-    pcDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\"  'the directory where templateFile is supposed to live, including training slash
-    strMacDocs = MacScript("return (path to documents folder) as string")
-    macDir = strMacDocs & "MacmillanStyleTemplate:"
-    ''---------------------------------------------------------
     
-    'these variables stay the same even if checking a different template
-    pcTemplatePath = pcDir & templateFile
-    macTemplatePath = macDir & templateFile
+    #If Mac Then
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strTemplatePath = strMacDocs & "MacmillanStyleTemplate:" & templateFile
+    #Else
+        strTemplatePath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & templateFile
+    #End If
+
     
-    
-    'Pass arguments to VersionCheck sub based on OS
-    If Not TheOS Like "*Mac*" Then                  'I am Windows
-        Call VersionCheck(pcTemplatePath, templateFile)
-    Else                                                            ' I am Mac
-        Call VersionCheck(macTemplatePath, templateFile)
-    End If
+    Call VersionCheck(strTemplatePath, templateFile)
 
 End Sub
 Private Sub VersionCheck(fullPath As String, FileName As String)
