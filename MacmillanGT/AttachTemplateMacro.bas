@@ -27,6 +27,8 @@ Sub AttachMe(TemplateName As String)
 
     Dim currentUser As String
     Dim myFile As String
+    Dim strMacDocs As String
+    Dim strMacStyleDir As String
         
     'Set template path according to OS
     #If Mac Then
