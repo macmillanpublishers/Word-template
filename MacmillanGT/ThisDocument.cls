@@ -15,7 +15,7 @@ Sub AutoExec()
 
 
     ' ======= For testing / debugging ==============
-    ' MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
+    MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
     ' ==============================================
 
 
