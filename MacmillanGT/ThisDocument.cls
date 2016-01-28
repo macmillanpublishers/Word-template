@@ -15,7 +15,7 @@ Sub AutoExec()
 
 
     ' ======= For testing / debugging ==============
-    MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
+    ' MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
     ' ==============================================
 
 
@@ -308,7 +308,9 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim strImagePath As String
         Dim strMacImagePath As String
         
-        MsgBox "Please click OK and then WAIT a few seconds while we create the Macmillan Tools toolbar for you."
+        MsgBox "Please click OK and then WAIT a few seconds while we create " & _
+            "the Macmillan Tools toolbar for you." & vbNewLine & vbNewLine & _
+            "A notice will pop up when it's complete!"
 
         ' Set up all our paths to files/directories
         strPath = PathToTemplate
