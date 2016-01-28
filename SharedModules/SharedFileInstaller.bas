@@ -284,7 +284,7 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     
     '------------------------- Try to get current version's number from Confluence ------------
     Dim strVersion As String
-    Dim strMacUser As String
+    Dim strMacDocs As String
     Dim strStyleDir As String
     Dim strFullVersionPath As String
     
@@ -296,9 +296,8 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     ' Always download version file to Style Directory - on Mac can't write to Startup w/o admin priv
     ' In future, find some way to use this w/o hard-coding the style dir location
     #If Mac Then
-        strMacUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & _
-                "return (name of current user)" & Chr(13) & "end tell")
-        strStyleDir = "Macintosh HD:Users:" & strMacUser & ":Documents:MacmillanStyleTemplate"
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strStyleDir = strMacDocs & "MacmillanStyleTemplate"
     #Else
         strStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
     #End If

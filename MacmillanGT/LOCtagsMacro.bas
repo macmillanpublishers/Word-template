@@ -3,7 +3,7 @@ Attribute VB_Name = "LOCtagsMacro"
 ' Produces a text file of the manuscript with tags added for CIP application
 
 ' ======= DEPENDENCIES =======================
-' 1. Requires ProgressBar userform
+' 1. Requires ProgressBar userform and SharedMacros module
 ' 2. Manuscript must be tagged with Macmillan styles.
       
 Option Explicit
@@ -27,24 +27,25 @@ Sub LibraryOfCongressTags()
     '''                 is not eventually followed by <ch#> or <tp> tag
     ''''''''''''''''''''''''''''''
     
-    '-----------run preliminary error checks------------
-    Dim exitOnError As Boolean
-    Dim skipChapterTags As Boolean
-    exitOnError = zz_errorChecksB()
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings = True Then
+        Call Cleanup
+        Exit Sub
+    End If
     
-    If exitOnError <> False Then
-    Call zz_clearFindB
-    Exit Sub
+    
+    '-----------run preliminary error checks------------
+    Dim skipChapterTags As Boolean
+    
+    If zz_errorChecksB <> False Then
+        Call zz_clearFindB
+        Call Cleanup
+        Exit Sub
     End If
     
     skipChapterTags = volumestylecheck()
     
-    Application.ScreenUpdating = False
-    
-        '------------record status of current status bar and then turn on-------
-    Dim currentStatusBar As Boolean
-    currentStatusBar = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -79,107 +80,56 @@ Sub LibraryOfCongressTags()
     strStatus = funArray(x)
     
     'All Progress Bar statements for PC only because won't run modeless on Mac
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
+    Dim oProgressCIP As ProgressBar
+    Set oProgressCIP = New ProgressBar  ' Triggers Initialize event, which uses Show method for PC
+
+    oProgressCIP.Title = strTitle
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
-    If Not TheOS Like "*Mac*" Then
-        Dim oProgressCIP As ProgressBar
-        Set oProgressCIP = New ProgressBar
-    
-        oProgressCIP.Title = strTitle
-        oProgressCIP.Show
-    
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        'Mac will just use status bar
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
-    
-    '--------save the current cursor location in a bookmark---------------------------
-    Selection.Collapse Direction:=wdCollapseStart               'required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
-    ActiveDocument.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    '----------remove content controls from PC---
-    ' can't remove from Mac, breaks whole sub
-    If Not TheOS Like "*Mac*" Then
-    Call ClearContentControls
-    End If
     
     '=========================the rest of the macro========================
     
     '-------------------------tagging Title page---------------------------
     sglPercentComplete = 0.2
-    strStatus = "* Adding tags for Title page..." & vbCr & strStatus
+    strStatus = "* Adding tags for Title page..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call tagTitlePage
     Call zz_clearFindB
     
     '-------------------------tagging Copyright page---------------------------
     sglPercentComplete = 0.3
-    strStatus = "* Adding tags for Copyright page..." & vbCr & strStatus
+    strStatus = "* Adding tags for Copyright page..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call tagCopyrightPage
     Call zz_clearFindB
         
     '-------------------------tagging Series page---------------------------
     sglPercentComplete = 0.4
-    strStatus = "* Adding tags for Series page..." & vbCr & strStatus
+    strStatus = "* Adding tags for Series page..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call tagSeriesPage
     Call zz_clearFindB
     
     '-------------------------tagging Table of Contents---------------------------
     sglPercentComplete = 0.5
-    strStatus = "* Adding tags for Table of Contents..." & vbCr & strStatus
+    strStatus = "* Adding tags for Table of Contents..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call tagTOC
     Call zz_clearFindB
     
     '-------------------------tagging Chapters---------------------------
     sglPercentComplete = 0.6
-    strStatus = "* Adding tags for chapters..." & vbCr & strStatus
+    strStatus = "* Adding tags for chapters..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     If skipChapterTags = False Then
         Call tagChapterHeads
@@ -192,38 +142,19 @@ Sub LibraryOfCongressTags()
     
     '-------------------------Checking tags--------------------------
     sglPercentComplete = 0.7
-    strStatus = "* Running tag check & generating report..." & vbCr & strStatus
+    strStatus = "* Running tag check & generating report..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     If zz_TagReport = False Then
-        If Not TheOS Like "*Mac*" Then
-            oProgressCIP.Hide
-        End If
+        oProgressCIP.Hide
         
         Dim strMessage As String
         strMessage = "CIP tags cannot be added because no paragraphs were tagged with Macmillan styles for the titlepage, " & _
             "copyright page, table of contents, or chapter title pages. Please add the correct styles and try again."
         MsgBox strMessage, vbCritical, "No Styles Found"
         
-        Application.ScreenUpdating = True
-        Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
-        Application.ScreenRefresh
-        
-        If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-            Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-            ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-        End If
-
-        If Not TheOS Like "*Mac*" Then
-            Unload oProgressCIP
-        End If
+        GoTo Finish
         
         Exit Sub
         
@@ -231,60 +162,31 @@ Sub LibraryOfCongressTags()
     
     '-------------------------Save as text doc---------------------------
     sglPercentComplete = 0.8
-    strStatus = "* Saving as text document..." & vbCr & strStatus
+    strStatus = "* Saving as text document..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call SaveAsTextFile
     
 
-    
     '-------------------------Delete tags from orig doc---------------------------
     sglPercentComplete = 0.9
-    strStatus = "* Cleaning up file..." & vbCr & strStatus
+    strStatus = "* Cleaning up file..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
     
     Call cleanFile
     Call zz_clearFindB
     
     '-------------------------cleanup---------------------------
     sglPercentComplete = 0.99
-    strStatus = "* Finishing up..." & vbCr & strStatus
+    strStatus = "* Finishing up..." & vbNewLine & strStatus
     
-    If Not TheOS Like "*Mac*" Then
-        oProgressCIP.Increment sglPercentComplete, strStatus
-        Doze 50 'Wait 50 milliseconds for progress bar to update
-    Else
-        Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
-        DoEvents
-    End If
+    Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
    
-    'return cursor to original position and delete bookmark
-    If ActiveDocument.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        ActiveDocument.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    Application.ScreenUpdating = True
-    Application.DisplayStatusBar = currentStatusBar     'return status bar to original settings
-    Application.ScreenRefresh
-    
-    If Not TheOS Like "*Mac*" Then
-        Unload oProgressCIP
-    End If
+Finish:
+    Call Cleanup
+    Unload oProgressCIP
     
     'If skipChapterTags = True Then
     '    MsgBox "Library of Congress tagging is complete except for Chapter tags." & vbNewLine & vbNewLine & "Chapter tags will need to be manually applied."
@@ -1340,15 +1242,7 @@ ErrHandler:
 
 End Function
 
-Private Sub ClearContentControls()
-    'This is it's own sub because doesn't exist in Mac Word, breaks whole sub if included
-    Dim cc As ContentControl
-    
-    For Each cc In ActiveDocument.ContentControls
-        cc.Delete
-    Next
 
-End Sub
 
 Private Sub zz_clearFindB()
 
@@ -1379,15 +1273,8 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
     Set mainDoc = ActiveDocument
     Dim iReply As Integer
     
-    ''-----------------Check if doc is saved/protected---------------
-    If CheckSave = True Then
-        zz_errorChecksB = True
-        Exit Function
-    End If
-    
     '-----test if backtick style tag already exists
-    Set activeRng = ActiveDocument.Range
-    Application.ScreenUpdating = False
+    Set activeRng = mainDoc.Range
     
     Dim existingTagArray(7) As String                                   ' number of items in array should be declared here
     Dim b As Long
@@ -1411,9 +1298,7 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
     End With
     If activeRng.Find.Execute Then foundBad = True: Exit For
     Next
-    
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
+
     If foundBad = True Then                'If activeRng.Find.Execute Then
         MsgBox "Something went wrong! The LOC tags Macro cannot be run on Document:" & vbNewLine & "'" & mainDoc & "'" _
         & vbNewLine & vbNewLine & "Please contact Digital Workflow group for support, I am sure they will be happy to help.", , "Error Code: 1"
@@ -1466,9 +1351,7 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
         foundLOC = True
         foundLOCitem = "(chapter heading tag, e.g. <ch1>, <ch2>, ... )"
     End If
-    
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
+
     If foundLOC = True Then
         MsgBox "Your document: '" & mainDoc & "' already contains at least one Library of Congress tag:" & vbNewLine & vbNewLine & foundLOCitem & vbNewLine & vbNewLine & _
         "This macro may have already been run on this document. To run this macro, you MUST find and remove all existing LOC tags first.", , "Alert"
@@ -1479,21 +1362,8 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
 End Function
 
 Private Function zz_TagReport()
-
-    Application.ScreenUpdating = False
     
-    Dim activeDoc As Document
-    Set activeDoc = ActiveDocument
     Set activeRng = ActiveDocument.Range
-    Dim activeDocName As String
-    Dim activeDocPath As String
-    Dim LOCreportDoc As String
-    Dim LOCreportDocAlt As String
-    Dim TheOS As String
-    TheOS = System.OperatingSystem
-    Dim fnum As Integer
-    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
-    activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
     
     'count occurences of all but Chapter Heads
     Dim MyDoc As String, txt As String, t As String
@@ -1551,8 +1421,6 @@ Private Function zz_TagReport()
         zz_TagReport = True
     End If
         
-    
-    
     'Prepare error message
     Dim errorList As String
     errorList = ""
@@ -1565,73 +1433,39 @@ Private Function zz_TagReport()
     If chTagCount = 0 Then errorList = errorList & "WARNING: No Chapter Heading tags were found." & vbNewLine
     If LOCtagCount(9) = 0 Then errorList = errorList & "WARNING: No 'End of Last Chapter' tag was found." & vbNewLine
     
-    'create text file
-    LOCreportDoc = activeDocPath & activeDocName & "_LOCtagReport.txt"
-    
-    ''''for 32 char Mc OS bug- could check if this is Mac OS too< PART 1
-    If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
-        LOCreportDoc = activeDocPath & "\" & activeDocName & "_LOCtagReport.txt"
-    Else
-        Dim placeholdDocName As String
-        placeholdDocName = "filenamePlacehold_LOCreport.txt"
-        LOCreportDocAlt = LOCreportDoc
-        LOCreportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
-    End If
-    '''end ''''for 32 char Mc OS bug part 1
-    
-    'set and open file for output
-    fnum = FreeFile()
-    Open LOCreportDoc For Output As fnum
+    'Create full message text
+    Dim strTagReportText As String
+
     If errorList = "" Then
-        Print #fnum, "Congratulations!" & vbCr
-        Print #fnum, "LOC Tags look good for " & activeDoc.Name & vbCr
-        Print #fnum, "See summary below:" & vbCr
-        Print #fnum, vbCr
+        strTagReportText = strTagReportText & "Congratulations!" & vbNewLine
+        strTagReportText = strTagReportText & "LOC Tags look good for " & ActiveDocument.Name & vbNewLine
+        strTagReportText = strTagReportText & "See summary below:" & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
     Else
-        Print #fnum, "BAD NEWS:" & vbCr
-        Print #fnum, vbCr
-        Print #fnum, "Problems were found with LOC tags in your document '" & activeDoc.Name & "':" & vbCr
-        Print #fnum, vbCr
-        Print #fnum, vbCr
-        Print #fnum, "------------------------- ERRORS -------------------------" & vbCr
-        Print #fnum, errorList
-        Print #fnum, vbCr
-        Print #fnum, vbCr
+        strTagReportText = strTagReportText & "BAD NEWS:" & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
+        strTagReportText = strTagReportText & "Problems were found with LOC tags in your document '" & ActiveDocument.Name & "':" & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
+        strTagReportText = strTagReportText & "------------------------- ERRORS -------------------------" & vbNewLine
+        strTagReportText = strTagReportText & errorList
+        strTagReportText = strTagReportText & vbNewLine
+        strTagReportText = strTagReportText & vbNewLine
     End If
-        Print #fnum, "------------------------- Tag Summary -------------------------" & vbCr
-        Print #fnum, LOCtagCount(1) & "  Title page open tag(s) found <tp>"
-        Print #fnum, LOCtagCount(2) & "  Title page close tag(s) found </tp>"
-        Print #fnum, LOCtagCount(3) & "  Copyright page open tag(s) found <cp>"
-        Print #fnum, LOCtagCount(4) & "  Copyright page close tag(s) found </cp>"
-        Print #fnum, LOCtagCount(5) & "  Series page open tag(s) found <sp>"
-        Print #fnum, LOCtagCount(6) & "  Series page close tag(s) found </sp>"
-        Print #fnum, LOCtagCount(7) & "  Table of Contents open tag(s) found <toc>"
-        Print #fnum, LOCtagCount(8) & "  Table of Contents close tag(s) found </toc>"
-        Print #fnum, chTagCount & "  Chapter beginning tag(s) found (<ch1>, <ch2>, etc)"
-        Print #fnum, LOCtagCount(9) & "  End of last chapter tag(s) found </ch>"
-    Close #fnum
-    
-    ''''for 32 char Mc OS bug-<PART 2
-    If LOCreportDocAlt <> "" Then
-    Name LOCreportDoc As LOCreportDocAlt
-    End If
-    ''''END for 32 char Mc OS bug-<PART 2
-    
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
-    
-    'open LOC tags Report for user once it is complete.
-    Dim Shex As Object
-    
-    If Not TheOS Like "*Mac*" Then
-       Set Shex = CreateObject("Shell.Application")
-       Shex.Open (LOCreportDoc)
-    Else
-        MacScript ("tell application ""TextEdit"" " & vbCr & _
-        "open " & """" & LOCreportDocAlt & """" & " as alias" & vbCr & _
-        "activate" & vbCr & _
-        "end tell" & vbCr)
-    End If
+        strTagReportText = strTagReportText & "------------------------- Tag Summary -------------------------" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(1) & "  Title page open tag(s) found <tp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(2) & "  Title page close tag(s) found </tp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(3) & "  Copyright page open tag(s) found <cp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(4) & "  Copyright page close tag(s) found </cp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(5) & "  Series page open tag(s) found <sp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(6) & "  Series page close tag(s) found </sp>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(7) & "  Table of Contents open tag(s) found <toc>" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(8) & "  Table of Contents close tag(s) found </toc>" & vbNewLine
+        strTagReportText = strTagReportText & chTagCount & "  Chapter beginning tag(s) found (<ch1>, <ch2>, etc)" & vbNewLine
+        strTagReportText = strTagReportText & LOCtagCount(9) & "  End of last chapter tag(s) found </ch>" & vbNewLine
+        
+    ' Print to text file
+    Call CreateTextFile(strText:=strTagReportText, suffix:="CIPtagReport")
 
 End Function
 

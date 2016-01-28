@@ -7,37 +7,23 @@ Sub CheckMacmillanGT()
     'Creates a toolbar button that tells the user the current version of the installed template when pressed.
     '----------------------------------
     
-    Dim pcDir As String
-    Dim macDir As String
     Dim templateFile As String
-    Dim pcTemplatePath As String
-    Dim macTemplatePath As String
-    Dim TheOS As String
-    Dim macUser As String
-    TheOS = System.OperatingSystem
+    Dim strMacDocs As String
+    Dim strTemplatePath As String
 
-    'For files located in user directory on Mac. Gives error on PC w/o if-then
-    If TheOS Like "*Mac*" Then
-      macUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
-    End If
     
-    ' ---------------------------------------------------------
-    ' If re-creating to check another template, change all the variables here
     templateFile = "MacmillanGT.dotm"  'the template file you are checking
-    pcDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\"  'the directory where templateFile is supposed to live, including training slash
-    macDir = "Macintosh HD:Users:" & macUser & ":Documents:MacmillanStyleTemplate:"
     
-    'these variables stay the same even if checking a different template
-    pcTemplatePath = pcDir & templateFile
-    macTemplatePath = macDir & templateFile
+    #If Mac Then
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strTemplatePath = strMacDocs & "MacmillanStyleTemplate:" & templateFile
+    #Else
+        strTemplatePath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & templateFile
+    #End If
 
     
-    'Pass arguments to VersionCheck sub based on OS
-    If Not TheOS Like "*Mac*" Then                  'I am Windows
-        Call VersionCheck(pcTemplatePath, templateFile)
-    Else                                                            ' I am Mac
-        Call VersionCheck(macTemplatePath, templateFile)
-    End If
+    Call VersionCheck(strTemplatePath, templateFile)
+
 
 End Sub
 Sub CheckMacmillan()
@@ -47,39 +33,22 @@ Sub CheckMacmillan()
     'Creates a toolbar button that tells the user the current version of the installed template when pressed.
     '----------------------------------
     
-    Dim pcDir As String
-    Dim macDir As String
     Dim templateFile As String
-    Dim pcTemplatePath As String
-    Dim macTemplatePath As String
-    Dim TheOS As String
-    Dim macUser As String
+    Dim strMacDocs As String
+    Dim strTemplatePath As String
+
     
-    TheOS = System.OperatingSystem
-    
-    'For files located in user directory on Mac. Gives error on PC w/o if-then
-    If TheOS Like "*Mac*" Then
-      macUser = MacScript("tell application " & Chr(34) & "System Events" & Chr(34) & Chr(13) & "return (name of current user)" & Chr(13) & "end tell")
-    End If
-    
-    ' ---------------------------------------------------------
-    ' If re-creating to check another template, change all the variables here
     templateFile = "macmillan.dotm"  'the template file you are checking
-    pcDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\"  'the directory where templateFile is supposed to live, including training slash
-    macDir = "Macintosh HD:Users:" & macUser & ":Documents:MacmillanStyleTemplate:"           'the directory where templateFile is supposed to live, including trailing colon
-    ''---------------------------------------------------------
     
-    'these variables stay the same even if checking a different template
-    pcTemplatePath = pcDir & templateFile
-    macTemplatePath = macDir & templateFile
+    #If Mac Then
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strTemplatePath = strMacDocs & "MacmillanStyleTemplate:" & templateFile
+    #Else
+        strTemplatePath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & templateFile
+    #End If
+
     
-    
-    'Pass arguments to VersionCheck sub based on OS
-    If Not TheOS Like "*Mac*" Then                  'I am Windows
-        Call VersionCheck(pcTemplatePath, templateFile)
-    Else                                                            ' I am Mac
-        Call VersionCheck(macTemplatePath, templateFile)
-    End If
+    Call VersionCheck(strTemplatePath, templateFile)
 
 End Sub
 Private Sub VersionCheck(fullPath As String, FileName As String)
