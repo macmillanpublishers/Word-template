@@ -9,7 +9,7 @@ Option Explicit
 
 #If Win64 Then
     Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
-#Else
+#ElseIf Win32 Then
     Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 #End If
 
@@ -58,9 +58,9 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
 'FinalDir is directory w/o file name
 
     Dim logString As String
+    Dim strMacTmpDir As String
     Dim strTmpPath As String
     Dim strBashTmp As String
-    Dim strMacHD As String
     Dim strFinalPath As String
     Dim strErrMsg As String
     Dim myURL As String
@@ -79,9 +79,10 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     'Get temp dir based on OS, then download file.
     #If Mac Then
         'set tmp dir
-        strMacHD = "Macintosh HD"
-        strTmpPath = strMacHD & ":private:tmp" & Application.PathSeparator & FileName
-        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - Len(strMacHD)), ":", "/")
+        strMacTmpDir = MacScript("path to temporary items as string")
+        strTmpPath = strMacTmpDir & FileName
+        'Debug.Print strTmpPath
+        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr(strTmpPath, ":") - 1)), ":", "/")
         'Debug.Print strBashTmp
         
         'check for network
@@ -644,6 +645,7 @@ Sub CreateTextFile(strText As String, suffix As String)
     Dim reqReportDocAlt As String
     Dim fnum As Integer
     Dim TheOS As String
+    Dim strMacTmp As String
     TheOS = System.OperatingSystem
     
     'activeDocName below works for .doc and .docx
@@ -660,7 +662,8 @@ Sub CreateTextFile(strText As String, suffix As String)
         Dim placeholdDocName As String
         placeholdDocName = "filenamePlacehold_Report.txt"
         reqReportDocAlt = reqReportDoc
-        reqReportDoc = "Macintosh HD:private:tmp:" & placeholdDocName
+        strMacTmp = MacScript("path to temporary items as string")
+        reqReportDoc = strMacTmp & placeholdDocName
     End If
     '''end ''''for 32 char Mc OS bug part 1
     

@@ -16,6 +16,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 ' By Erica Warren - erica.warren@macmillan.com
 
+
 ' ==== USE ==========================
 ' Displays a userform progress bar to use while another macro is running
 ' Is modelss on PC so the calling macro will continue to run while progress bar is displayed

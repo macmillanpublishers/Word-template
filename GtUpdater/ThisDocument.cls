@@ -53,7 +53,7 @@ Sub AutoExec()
 
     'Plain English name of what you're installing/updating, should be singular
 
-    strTemplateName = "Macmillan Tools"
+    strTemplateName = "Macmillan Tools Template"
 
     'Update array lengths and template file names here
     ReDim strFileName(1 To 1)               'Declare number of files here
@@ -152,12 +152,3 @@ ErrHandler:
 
 
 End Sub
-
-
-
-
-
-
-
-
-
