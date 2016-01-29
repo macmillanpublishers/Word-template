@@ -16,6 +16,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
 
+
 Option Explicit
 Public blnCancel As Boolean
 
@@ -43,28 +44,6 @@ End Property
 ' ============= Inputs that are just a text entry already have a property (value) ====
 ' ============= but option buttons don't have a property for which one was selected ==
 
-' This is for the way the book will be printed
-' Will be validated that user has selected one in cmdYes_Click event
-Public Property Get PrintType() As String
-' Get value for property from option buttons
-' Which may have been set by the user or the Property Let function
-    If optPrintOffset.value = True Then
-        PrintType = optPrintOffset.Caption
-    ElseIf optPrintPOD.value = True Then
-        PrintType = optPrintPOD.Caption
-    End If
-End Property
-
-Public Property Let PrintType(strPrintType As String)
-' When value is assigned to property, select the correct option button
-' This will be picked up from Property Get via the option buttons
-' NOTE: when assigning values, use option button caption, not literal
-    If strPrintType = Me.optPrintOffset.Caption Then
-        Me.optPrintOffset.value = True
-    ElseIf strPrintType = Me.optPrintPOD.Caption Then
-        Me.optPrintPOD.value = True
-    End If
-End Property
 
 ' This one is for the string of the trim size
 ' Will also be validated that user has selected one in cmdYes_Click event
@@ -149,9 +128,6 @@ Public Property Get PublisherCode() As String
     End If
 End Property
 
-Private Sub labHeading2_Click()
-
-End Sub
 
 Private Sub UserForm_Initialize()
     
@@ -204,7 +180,6 @@ Private Sub UserForm_Initialize()
     ' Make all required frame titles red
     Me.fraTitleInfo.ForeColor = lngHexRed
     Me.fraPublisher.ForeColor = lngHexRed
-    Me.fraPrintType.ForeColor = lngHexRed
     Me.fraTrimSize.ForeColor = lngHexRed
     Me.fraDesign.ForeColor = lngHexRed
     
@@ -228,8 +203,7 @@ Private Sub UserForm_Initialize()
     Me.fraComplex_std.Font.Bold = True
     Me.fraPickup_pickup.Font.Size = 10
     Me.fraPickup_pickup.Font.Bold = True
-    Me.fraPrintType.Font.Size = 10
-    Me.fraPrintType.Font.Bold = True
+
     
     ' Default to Pickup being off and disabled
     For Each ctrl In Controls
@@ -273,13 +247,11 @@ Private Sub cmdYesCastoff_Click()
     
     Dim blnTitleStatus As Boolean
     Dim blnPubStatus As Boolean
-    Dim blnPrintStatus As Boolean
     Dim blnTrimStatus As Boolean
     Dim blnDesignStatus As Boolean
     
     blnTitleStatus = False
     blnPubStatus = False
-    blnPrintStatus = False
     blnTrimStatus = False
     blnDesignStatus = False
     
@@ -294,11 +266,6 @@ Private Sub cmdYesCastoff_Click()
         blnPubStatus = True
     End If
     
-    ' Has something been selected for Print Type?
-    If Me.optPrintOffset Or Me.optPrintPOD Then
-        blnPrintStatus = True
-    End If
-    
     'Has something been selected for Trim Size?
     If Me.optTrim5x8 Or Me.optTrim6x9 Then
         blnTrimStatus = True
@@ -310,20 +277,19 @@ Private Sub cmdYesCastoff_Click()
     End If
     
     'OK if all required have been set, otherwise give a warning message.
-    If blnTrimStatus = True And blnDesignStatus = True And blnPubStatus = True And blnTitleStatus = True _
-        And blnPrintStatus = True Then
+    If blnTrimStatus = True And blnDesignStatus = True And blnPubStatus = True And blnTitleStatus = True Then
         blnCancel = False
     Else
         Me.Hide
         Beep
-        MsgBox "You must fill in Title Info, Publisher, Print Type, Trim Size, and Design to generate a castoff."
+        MsgBox "You must fill in Title Info, Publisher, Trim Size, and Design to generate a castoff."
         blnCancel = True
         Me.Show
         Exit Sub
     End If
     
     ' Check that scheduled page count is multiple of 16
-    If Me.optPrintOffset And Me.numTxtPageCount <> vbNullString Then
+    If Me.numTxtPageCount <> vbNullString Then
         If Me.numTxtPageCount Mod 16 > 0 Then
             Me.Hide
             Beep
@@ -413,9 +379,6 @@ Private Sub optPubSMP_Click()
     Me.fraPickup_pickup.ForeColor = lngHexBlack
     Me.fraDesign.ForeColor = lngHexRed
     
-    ' Default Print Type to Offset for SMP (user can choose POD though)
-    Me.PrintType = Me.optPrintOffset.Caption
-    
     ' Default for trim is NEITHER selected
     Me.optTrim5x8.value = False
     Me.optTrim6x9.value = False
@@ -445,9 +408,6 @@ Private Sub optPubTor_Click()
     Me.fraStandard_std.ForeColor = lngHexRed
     Me.fraPickup_pickup.ForeColor = lngHexBlack
     Me.fraDesign.ForeColor = lngHexRed
-    
-    ' Only print type for Tor.com is POD (for now)
-    Me.PrintType = Me.optPrintPOD.Caption
     
     ' Only trim size is 5 x 8, disable other
     Me.optTrim5x8.Enabled = True
@@ -483,8 +443,6 @@ Private Sub chkDesignPickup_Click()
         Me.fraStandard_std.ForeColor = lngHexBlack
         Me.fraPickup_pickup.ForeColor = lngHexRed
             
-        ' I guess you could do POD but we'll default to Offset
-        Me.PrintType = Me.optPrintOffset.Caption
         
         ' enable both trims
         Me.optTrim5x8.Enabled = True
