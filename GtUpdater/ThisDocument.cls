@@ -46,7 +46,7 @@ Sub AutoExec()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    blnStaging = True
+    blnStaging = False
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
