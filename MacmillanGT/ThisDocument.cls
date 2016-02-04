@@ -10,11 +10,6 @@ Attribute VB_Exposed = True
 Option Explicit
 Option Base 1
 
-Public Enum GitBranch
-    master = 1
-    releases = 2
-    develop = 3
-End Enum
 
 
 Sub AutoExec()
@@ -91,7 +86,7 @@ Sub AutoExec()
     'DEFINE ALL YOUR VARIABLES HERE
 
     ' Switch to "master" before going live!
-    downloadBranch = develop
+    downloadBranch = releases
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -505,6 +500,8 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
+
 
 
 
