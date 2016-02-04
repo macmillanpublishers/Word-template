@@ -169,7 +169,7 @@ Sub CheckGtUpdater()
     ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
     ' ==============================================
 
-    Dim downloadBranch As Boolean
+    Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
@@ -185,8 +185,7 @@ Sub CheckGtUpdater()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    downloadBranch = False
-
+    downloadBranch = releases
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
