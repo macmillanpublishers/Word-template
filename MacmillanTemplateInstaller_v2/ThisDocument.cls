@@ -29,7 +29,7 @@ Private Sub Document_Open()
     ' MsgBox "I am Doc_Open for Installer and I am running"
     ' ==================================================
 
-    Dim blnStaging As Boolean
+    Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
@@ -44,8 +44,8 @@ Private Sub Document_Open()
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
     
-    'Make sure to switch to FALSE before going live!
-    blnStaging = False
+    'Make sure to switch to MASTER before going live!
+    downloadBranch = master
     
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = True
@@ -128,7 +128,7 @@ Private Sub Document_Open()
     
     ' Run Installer macro
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
     ' Load GtUpdater add-in (which will then load MacGT add-in)
     Dim strGtFile As String

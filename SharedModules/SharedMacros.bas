@@ -4,6 +4,12 @@ Attribute VB_Name = "SharedMacros"
 
 Option Explicit
 
+Public Enum GitBranch
+    master = 1
+    releases = 2
+    develop = 3
+End Enum
+
 ' Doze sub only works on Windows
 ' Will remove in later version and use UPdateBarAndWait instead
 
@@ -54,7 +60,7 @@ ErrHandler:
     End If
 End Function
 
-Public Function DownloadFromConfluence(DownloadSource As GitBranch, FinalDir As String, LogFile As String, FileName As String) As Boolean
+Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String, LogFile As String, FileName As String) As Boolean
 'FinalDir is directory w/o file name
 
     Dim logString As String
@@ -68,14 +74,11 @@ Public Function DownloadFromConfluence(DownloadSource As GitBranch, FinalDir As 
     strFinalPath = FinalDir & Application.PathSeparator & FileName
     
     'Get URL to download from
-    If DownloadSource = develop Then
-        'attachments pulled from develop branch of Word-template github repo
+    If StagingURL = True Then
+        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
         myURL = "https://confluence.macmillan.com/download/attachments/35001370/" & FileName
-    ElseIf DownloadSource = releases Then
-        ' releases branch
-        myURL = "https://confluence.macmillan.com/download/attachments/40571207/" & FileName
-    ElseIf DownloadSource = master Then
-        'master branch
+    Else
+        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+production
         myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
     End If
     
