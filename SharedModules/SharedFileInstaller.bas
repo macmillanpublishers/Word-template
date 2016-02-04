@@ -14,7 +14,7 @@ Attribute VB_Name = "SharedFileInstaller"
 Option Explicit
 Option Base 1
 
-Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, ByRef FileName() As String, ByRef FinalDir() As String)
+Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As String, ByRef FileName() As String, ByRef FinalDir() As String)
 
 '"Installer" argument = True if this is for a standalone installtion file.
 '"Installer" argument = False is this is part of a daily check of the current file and only updates if out of date.
@@ -96,7 +96,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 installCheck(b) = False
             ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
                 'check version number
-                installCheck(b) = NeedUpdate(Staging, FinalDir(b), FileName(b), strFullLogPath(b))
+                installCheck(b) = NeedUpdate(DownloadFrom, FinalDir(b), FileName(b), strFullLogPath(b))
             Else ' blnTemplateExists = False, just download new template
                  installCheck(b) = True
             End If
@@ -178,7 +178,7 @@ Sub Installer(Staging As Boolean, Installer As Boolean, TemplateName As String, 
                 Exit Sub
         Else
             'If False, error in download; user was notified in DownloadFromConfluence function
-            If DownloadFromConfluence(Staging, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
+            If DownloadFromConfluence(DownloadFrom, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
                 If Installer = True Then
                     #If Mac Then    ' because application.quit generates error on Mac
                         ActiveDocument.Close (wdDoNotSaveChanges)
@@ -249,7 +249,7 @@ Private Function IsTemplateThere(Directory As String, FileName As String, Log As
     LogInformation Log, logString
 End Function
 
-Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName As String, Log As String) As Boolean
+Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileName As String, Log As String) As Boolean
 'Directory argument should be the final directory the template should go in.
 'File should be the template file name
 'Log argument should be full path to log file
@@ -306,7 +306,7 @@ Private Function NeedUpdate(StagingURL As Boolean, Directory As String, FileName
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(StagingURL, strStyleDir, Log, strVersion) = False Then
+    If DownloadFromConfluence(DownloadURL, strStyleDir, Log, strVersion) = False Then
         NeedUpdate = False
         Exit Function
     End If

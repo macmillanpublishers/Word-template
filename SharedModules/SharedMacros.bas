@@ -54,7 +54,7 @@ ErrHandler:
     End If
 End Function
 
-Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String, LogFile As String, FileName As String) As Boolean
+Public Function DownloadFromConfluence(DownloadSource As GitBranch, FinalDir As String, LogFile As String, FileName As String) As Boolean
 'FinalDir is directory w/o file name
 
     Dim logString As String
@@ -68,11 +68,14 @@ Public Function DownloadFromConfluence(StagingURL As Boolean, FinalDir As String
     strFinalPath = FinalDir & Application.PathSeparator & FileName
     
     'Get URL to download from
-    If StagingURL = True Then
-        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
+    If DownloadSource = develop Then
+        'attachments pulled from develop branch of Word-template github repo
         myURL = "https://confluence.macmillan.com/download/attachments/35001370/" & FileName
-    Else
-        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+production
+    ElseIf DownloadSource = releases Then
+        ' releases branch
+        myURL = "https://confluence.macmillan.com/download/attachments/40571207/" & FileName
+    ElseIf DownloadSource = master Then
+        'master branch
         myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
     End If
     

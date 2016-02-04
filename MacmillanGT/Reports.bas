@@ -1010,7 +1010,11 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     strFullPathToCsv = strLogDir & Application.PathSeparator & strCsvFileName
     
     ' download the list of good Tor styles from Confluence
-    If DownloadFromConfluence(StagingURL:=False, _
+    Dim downloadStyles As GitBranch
+    ' switch to develop for testing
+    downloadStyles = master
+    
+    If DownloadFromConfluence(DownloadSource:=downloadStyles, _
                                 FinalDir:=strLogDir, _
                                 LogFile:=strPathToLogFile, _
                                 FileName:=strCsvFileName) = False Then
