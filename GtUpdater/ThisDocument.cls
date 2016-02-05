@@ -45,8 +45,8 @@ Sub AutoExec()
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
 
-    'Make sure to switch to FALSE before going live!
-    downloadBranch = releases
+    'Make sure to switch to MASTER before going live!
+    downloadBranch = master
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -151,6 +151,7 @@ ErrHandler:
 
 
 End Sub
+
 
 
 

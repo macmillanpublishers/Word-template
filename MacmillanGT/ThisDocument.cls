@@ -86,7 +86,8 @@ Sub AutoExec()
     'DEFINE ALL YOUR VARIABLES HERE
 
     ' Switch to "master" before going live!
-    downloadBranch = releases
+    ' ALSO BELOW IN CHECKGTUPDATER!!
+    downloadBranch = master
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -185,7 +186,7 @@ Sub CheckGtUpdater()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    downloadBranch = releases
+    downloadBranch = master
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
