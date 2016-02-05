@@ -1010,7 +1010,11 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     strFullPathToCsv = strLogDir & Application.PathSeparator & strCsvFileName
     
     ' download the list of good Tor styles from Confluence
-    If DownloadFromConfluence(StagingURL:=False, _
+    Dim downloadStyles As GitBranch
+    ' switch to develop for testing
+    downloadStyles = master
+    
+    If DownloadFromConfluence(DownloadSource:=downloadStyles, _
                                 FinalDir:=strLogDir, _
                                 LogFile:=strPathToLogFile, _
                                 FileName:=strCsvFileName) = False Then
@@ -1042,6 +1046,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
             strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for approved Bookmaker styles..." & vbCr & StatusBar
     
             Call UpdateBarAndWait(Bar:=ProgressBar2, Status:=strStatus, Percent:=sglPercentComplete)
+        End If
         
         For a = LBound(Stories()) To UBound(Stories())
             If N <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
@@ -1076,7 +1081,6 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                 End If
             End If
         Next a
-        End If
 ErrResume:
     
     Next N
