@@ -11,6 +11,7 @@ Option Explicit
 Option Base 1
 
 
+
 Sub AutoExec()
 
 
@@ -69,7 +70,7 @@ Sub AutoExec()
 
 
 
-    Dim blnStaging As Boolean
+    Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
@@ -84,8 +85,9 @@ Sub AutoExec()
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
 
-    'Make sure to switch to FALSE before going live!
-    blnStaging = False
+    ' Switch to "master" before going live!
+    ' ALSO BELOW IN CHECKGTUPDATER!!
+    downloadBranch = master
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -140,7 +142,7 @@ Sub AutoExec()
     End If
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
     
     Application.OnTime When:=Now + TimeValue("00:00:01"), Name:="ThisDocument.CheckGtUpdater"
     
@@ -168,7 +170,7 @@ Sub CheckGtUpdater()
     ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
     ' ==============================================
 
-    Dim blnStaging As Boolean
+    Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
@@ -184,8 +186,7 @@ Sub CheckGtUpdater()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to FALSE before going live!
-    blnStaging = False
-
+    downloadBranch = master
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -236,7 +237,7 @@ Sub CheckGtUpdater()
     End If
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
 
     ' ====== PART 3: LOAD MAIN TEMPLATE ==============
     Dim strNewGT As String
@@ -499,6 +500,8 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
+
 
 
 

@@ -30,7 +30,7 @@ Sub AutoExec()
     ' MsgBox "I am NEW GtUpdater and I am running!"
     ' ==============================================
 
-    Dim blnStaging As Boolean
+    Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
@@ -45,8 +45,8 @@ Sub AutoExec()
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
 
-    'Make sure to switch to FALSE before going live!
-    blnStaging = False
+    'Make sure to switch to MASTER before going live!
+    downloadBranch = master
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -117,7 +117,7 @@ Sub AutoExec()
 
     ' ====== PART 2: CHECK FOR UPDATES ===============
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(Staging:=blnStaging, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
 
     ' ====== PART 3: LOAD MAIN TEMPLATE ==============
     Dim strNewGT As String
@@ -151,6 +151,7 @@ ErrHandler:
 
 
 End Sub
+
 
 
 
