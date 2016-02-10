@@ -9,8 +9,12 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
 Option Explicit
 
+' ====== ADD PATH TO LOCAL GIT REPO HERE ========================
+' DON'T include trailing slash
+Private Const strRepoPath = "C:\Users\erica.warren\Word-template"
+
 ' by Erica Warren - erica.warren@macmillan.com
-' with lots of stuff from here: http://www.cpearson.com/excel/vbe.aspx
+' Good advice from here: http://www.cpearson.com/excel/vbe.aspx
 
 ' ====== USE ==================================================
 ' For help with VBA development
@@ -26,8 +30,10 @@ Option Explicit
 ' Each template gets its own subdirectory in the repo, name matches exactly (w/o extension)
 ' Modules that are shared among all template must have name start with "Shared"
 
+' Not tested on Mac, because saving templates on Mac causes all kinds of nonsense
+
 ' ====== WARNING ==============================================
-' verbatim from http://www.cpearson.com/excel/vbe.aspx
+' advice from http://www.cpearson.com/excel/vbe.aspx
 ' Many VBA-based computer viruses propagate themselves by creating and/or modifying
 ' VBA code. Therefore, many virus scanners may automatically and without warning or
 ' confirmation delete modules that reference the VBProject object, causing a permanent
@@ -37,15 +43,7 @@ Option Explicit
 ' So be sure to export and commit often!
 
 Sub ExportAllModules()
-    ' Exports all VBA modules in all open template to local git repo
-    
-    ' ===== ADD PATH TO LOCAL GIT REPO HERE ========================
-    ' include trailing slash
-    
-    Dim strRepoPath As String
-    strRepoPath = "C:\Users\erica.warren\Word-template\"
-    
-    ' ==============================================================
+    ' Exports all VBA modules in all open templates to local git repo
     
     ' Cycle through each open document
     Dim oDoc As Document
@@ -57,7 +55,7 @@ Sub ExportAllModules()
     Dim strTemplateModules As String
     
     ' This is where all shared modules go
-    strSharedModules = strRepoPath & "SharedModules"
+    strSharedModules = strRepoPath & Application.PathSeparator & "SharedModules"
     
     For Each oDoc In Documents
         ' Separate the name and the extension of the document
@@ -72,7 +70,7 @@ Sub ExportAllModules()
             ' Make sure we're referencing the correct project
             Set oProject = oDoc.VBProject
         
-            strTemplateModules = strRepoPath & strDirName
+            strTemplateModules = strRepoPath & Application.PathSeparator & strDirName
             
             ' Cycle through each module
             For Each oModule In oProject.VBComponents
@@ -84,65 +82,14 @@ Sub ExportAllModules()
                 End If
             Next
             
-            ' Might as well save the template file too
-            oDoc.Save
-            
-'            ' ===============================================================================
-'            ' This whole bit below is to save the template too, but it's not working yet
-'            ' getting errors at Set oDocCopy = Application.Documents.Add(strOldPath, NewTemplate:=True)
-'            ' saying "can't execute in break mode", making me think it's trying to execute the
-'            ' AutoOpen macro in the copied file, but WordBasic.DisableAutoMacros should have
-'            ' solved that so I'm not sure what's going on.
-'s
-'            Dim strOldPath As String
-'            Dim strNewPath As String
-'            strOldPath = oDoc.Path & Application.PathSeparator & oDoc.Name
-'            Debug.Print "Original path is" & strOldPath
-'            strNewPath = strTemplateModules & Application.PathSeparator & oDoc.Name
-'            Debug.Print "New path is " & strNewPath
-'
-'            ' Save it where is it open from
-'            oDoc.Save
-'
-'            ' Now, if it's open from somewhere other than the repo, we also want to save
-'            ' a copy in the repo but keep this one open to work on
-'            ' This is most useful when working on a template in the STARTUP dir, which you may
-'            ' do because if you have a template in the STARTUP dir and then open a copy from a different location
-'            ' they both show up in the Project Viewer
-'            If strNewPath <> strOldPath Then
-'                ' If the original template is in the STARTUP dir, we need to diable it because
-'                ' we can't create a new doc with the same name as an open doc
-'                If InStr(1, LCase(strOldPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
-'                On Error Resume Next                            'Error = add-in not available, don't need to uninstall
-'                    AddIns(strOldPath).Installed = False
-'                On Error GoTo 0
-'                End If
-'
-'                ' Now we have to create a copy of the document to save; if we just SaveAs then the open doc
-'                ' becomes the one in the new saved location, but we still want it to be open from STARTUP
-'                Dim oDocCopy As Document
-'                ' Oh also if you create a copy and it has an AutoOpen macro (which MacmillanGT.dotm does)
-'                ' it will try to start that macro and cause an error, so here we disable that with = 1 here
-'                WordBasic.DisableAutoMacros (1)
-'                ' Need NewTemplate = True to carry all code into new doc
-'                Set oDocCopy = Application.Documents.Add(strOldPath, NewTemplate:=True)
-'                oDocCopy.SaveAs2 FileName:=strNewPath
-'                oDocCopy.Close
-'
-'                ' Now we need to enable the template again if it is in the STARTUP dir
-'                If InStr(1, LCase(strOldPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
-'                On Error Resume Next                            'Error = add-in not available, don't need to uninstall
-'                    AddIns(strOldPath).Installed = True
-'                On Error GoTo 0
-'                End If
-'
-'                ' Enable AutoOpen macros going forward here with = 0
-'                WordBasic.DisableAutoMacros (0)
-'
-'
-'            End If
-'            Debug.Print oDoc.Path
-            
+            ' And also save the template file in the repo if it's not open from there
+            ' CopyTemplateToRepo closes and re-opens the doc, so don't use it for THIS doc
+            If oDoc.Name <> ThisDocument.Name Then
+                CopyTemplateToRepo TemplateDoc:=oDoc
+            Else
+                'Debug.Print ThisDocument.Name
+                oDoc.Save
+            End If
             
         End If
     Next oDoc
@@ -153,13 +100,7 @@ Private Sub ExportVBComponent(VBComp As VBIDE.VBComponent, _
                 FolderName As String, _
                 Optional FileName As String, _
                 Optional OverwriteExisting As Boolean = True)
-    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    ' COPIED FROM http://www.cpearson.com/excel/vbe.aspx
-    ' This function exports the code module of a VBComponent to a text
-    ' file. If FileName is missing, the code will be exported to
-    ' a file with the same name as the VBComponent followed by the
-    ' appropriate extension.
-    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
     Dim Extension As String
     Dim FName As String
     Extension = GetFileExtension(VBComp:=VBComp)
@@ -217,14 +158,6 @@ Sub ImportAllModules()
     ' and reimports them from the local Word-template git repo
     ' SO BE SURE TO EXPORT EVERYTHING BEFORE YOU USE THIS!!
     
-    ' ===== ADD PATH TO LOCAL GIT REPO HERE ========================
-    ' includes trailing slash
-    
-    Dim strRepoPath As String
-    strRepoPath = "C:\Users\erica.warren\Word-template\"
-    
-    ' ==============================================================
-    
     Dim oDocument As Document
     Dim strExtension As String              ' extension of current document
     Dim strSubDirName As String             ' name of subdirectory of template in repo
@@ -243,7 +176,7 @@ Sub ImportAllModules()
     
     For Each oDocument In Documents
         ' We don't want to run this on this code here
-        If oDocument.Name <> "Utilities.dotm" Then
+        If oDocument.Name <> ThisDocument.Name Then
             strExtension = Right(oDocument.Name, Len(oDocument.Name) - (InStrRev(oDocument.Name, ".") - 1))
             strSubDirName = Left(oDocument.Name, InStrRev(oDocument.Name, ".") - 1)
             'Debug.Print "File name is " & oDocument.Name
@@ -254,8 +187,8 @@ Sub ImportAllModules()
             If strExtension = ".dotm" Or strExtension = ".docm" Then
                 ' an array of the directories we're going to be adding modules from
                 ' every template gets (1) all modules in its directory and (2) all shared modules
-                strDirInRepo(1) = strRepoPath & strSubDirName & Application.PathSeparator
-                strDirInRepo(2) = strRepoPath & "SharedModules" & Application.PathSeparator
+                strDirInRepo(1) = strRepoPath & Application.PathSeparator & strSubDirName & Application.PathSeparator
+                strDirInRepo(2) = strRepoPath & Application.PathSeparator & "SharedModules" & Application.PathSeparator
                       
                 ' an array of file extensions we're importing, since there are other files in the repo
                 strModuleExt(1) = "bas"
@@ -320,9 +253,12 @@ Sub ImportAllModules()
                 Next a
                 
             End If
+        
+            ' And then save the updated template in the repo
+            CopyTemplateToRepo TemplateDoc:=oDocument
+            
         End If
-    ' and then might as well save the document we just updated!
-    oDocument.Save
+
     Next oDocument
     
     
@@ -380,5 +316,50 @@ Sub InsertShapes()
         
         strFileName = Dir$
     Loop
+    
+End Sub
+
+
+Sub CopyTemplateToRepo(TemplateDoc As Document)
+' copies the current template file to the local git repo
+    
+    ' Don't copy if it's already open from the repo
+    If strRepoPath <> TemplateDoc.Path Then
+        
+        Dim strDir As String
+        Dim strCurrentTemplatePath As String
+        Dim strDestinationFilePath As String
+        
+        ' Get name of template w/o extension
+        strDir = Left(TemplateDoc.Name, InStrRev(TemplateDoc.Name, ".") - 1)
+        
+        ' Current file full path, to open after copy
+        strCurrentTemplatePath = TemplateDoc.FullName
+        'Debug.Print strCurrentTemplatePath
+        
+        ' location in repo
+        strDestinationFilePath = strRepoPath & Application.PathSeparator & strDir & _
+            Application.PathSeparator & TemplateDoc.Name
+        'Debug.Print strDestinationFilePath
+        
+        ' Template needs to be closed for FileCopy to work
+        TemplateDoc.Close SaveChanges:=wdSaveChanges
+        
+        ' Also not installed as an add-in
+        AddIns(strCurrentTemplatePath).Installed = False
+        
+        FileCopy Source:=strCurrentTemplatePath, Destination:=strDestinationFilePath
+        
+        ' Reinstall add-in
+        ' Should add check if it's a template, not a .docm
+        WordBasic.DisableAutoMacros
+        AddIns(strCurrentTemplatePath).Installed = True
+        
+        ' And then open the document again.
+        Documents.Open FileName:=strCurrentTemplatePath, _
+                        ReadOnly:=False, _
+                        Revert:=False
+        
+    End If
     
 End Sub
