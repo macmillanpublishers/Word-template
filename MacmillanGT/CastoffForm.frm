@@ -16,6 +16,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
 
+
 Option Explicit
 Public blnCancel As Boolean
 
@@ -29,15 +30,15 @@ Private m_oCollectionOfEventHandlers As Collection
 ' For custom properties
 Private cImprintString As String
 
-    
-' ============================================
-' FOR TESTING / DEBUGGING
-' If set to TRUE, downloads CSV files from https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
-' instead of production page
-Public Property Get Staging() As Boolean
-    Staging = False
-End Property
-' ============================================
+'
+'' ============================================
+'' FOR TESTING / DEBUGGING
+'' If set to TRUE, downloads CSV files from https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
+'' instead of production page
+'Public Property Get Staging() As Boolean
+'    Staging = False
+'End Property
+'' ============================================
 
 ' ============= Now we're creating some properties for the CastoffForm inputs ========
 ' ============= Inputs that are just a text entry already have a property (value) ====

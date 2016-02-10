@@ -60,7 +60,8 @@ ErrHandler:
     End If
 End Function
 
-Public Function DownloadFromConfluence(DownloadSource As GitBranch, FinalDir As String, LogFile As String, FileName As String) As Boolean
+Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String, _
+    Optional DownloadSource As GitBranch = master) As Boolean
 'FinalDir is directory w/o file name
 
     Dim logString As String

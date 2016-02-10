@@ -178,7 +178,8 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
                 Exit Sub
         Else
             'If False, error in download; user was notified in DownloadFromConfluence function
-            If DownloadFromConfluence(DownloadFrom, strInstallDir(d), strFullLogPath(d), strInstallFile(d)) = False Then
+            If DownloadFromConfluence(DownloadSource:=DownloadFrom, FinalDir:=strInstallDir(d), _
+                LogFile:=strFullLogPath(d), FileName:=strInstallFile(d)) = False Then
                 If Installer = True Then
                     #If Mac Then    ' because application.quit generates error on Mac
                         ActiveDocument.Close (wdDoNotSaveChanges)
@@ -306,9 +307,10 @@ Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileN
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(DownloadURL, strStyleDir, Log, strVersion) = False Then
-        NeedUpdate = False
-        Exit Function
+    If DownloadFromConfluence(DownloadSource:=DownloadURL, FinalDir:=strStyleDir, LogFile:=Log, _
+        FileName:=strVersion) = False Then
+            NeedUpdate = False
+            Exit Function
     End If
         
     '-------------------- Get version number of current template ---------------------

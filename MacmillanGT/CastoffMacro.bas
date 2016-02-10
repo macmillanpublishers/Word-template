@@ -80,7 +80,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         'Create name of castoff csv file to download
         strCastoffFile = "Castoff_" & FormInputs.PublisherCode & ".csv"
         
-        arrDesign = DownloadCSV(FileName:=strCastoffFile, Staging:=FormInputs.Staging)
+        arrDesign = DownloadCSV(FileName:=strCastoffFile)
         
         ' Check that returned array is allocated
         If IsArrayEmpty(arrDesign) = True Then
@@ -112,7 +112,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         strSpineSize = ""
         
         If FormInputs.PrintType = FormInputs.optPrintPOD.Caption Then
-            strSpineSize = SpineSize(FormInputs.Staging, lngCastoffResult(0))
+            strSpineSize = SpineSize(lngCastoffResult(0))
             'Debug.Print "spine size = " & strSpineSize
         End If
     End If
@@ -304,7 +304,7 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
 
 End Function
 
-Private Function SpineSize(StagingSite As Boolean, PageCount As Long)
+Private Function SpineSize(PageCount As Long)
     ' right now, for POD titles only
     
     Dim strSpine As String
@@ -320,7 +320,7 @@ Private Function SpineSize(StagingSite As Boolean, PageCount As Long)
         
         Dim arrSpine() As Variant
         
-        arrSpine = DownloadCSV(FileName:=strSpineFile, Staging:=StagingSite)
+        arrSpine = DownloadCSV(FileName:=strSpineFile)
         
         ' Check that returned array is allocated
         If IsArrayEmpty(arrSpine) = True Then
@@ -413,7 +413,7 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
         
         strFile = "Castoff_" & objCastForm.PublisherCode & ".csv"
         
-        arrCastoff = DownloadCSV(FileName:=strFile, Staging:=objCastForm.Staging)
+        arrCastoff = DownloadCSV(FileName:=strFile)
         
         Dim lngOverflow As Long
         lngOverflow = arrCastoff(5, objCastForm.TrimIndex)    ' 5 is index of overflow info in CSV
@@ -431,7 +431,7 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
 End Function
 
 
-Private Function DownloadCSV(FileName As String, Staging As Boolean) As Variant
+Private Function DownloadCSV(FileName As String, Optional DownloadFrom As GitBranch = master) As Variant
     '---------Download CSV with design specs from Confluence site-------
 
     'Create log file name
@@ -457,7 +457,7 @@ Private Function DownloadCSV(FileName As String, Staging As Boolean) As Variant
     CheckLog strStyleDir, strDir, strLogFile
     
     'Download CSV file from Confluence
-    If DownloadFromConfluence(Staging, strDir, strLogFile, FileName) = False Then
+    If DownloadFromConfluence(FinalDir:=strDir, LogFile:=strLogFile, FileName:=FileName, DownloadSource:=DownloadFrom) = False Then
         ' If download fails, check if we have an older version of the CSV to work with
         If IsItThere(strPath) = False Then
             strMessage = "Looks like we can't download the design info from the internet right now. " & _
