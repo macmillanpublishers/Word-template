@@ -129,6 +129,26 @@ Private Sub ExportVBComponent(VBComp As VBIDE.VBComponent, _
     
     VBComp.Export FileName:=FName
     
+    'Debug.Print FName
+    
+    If Extension = ".frm" Then
+        Dim strBinaryFile As String
+        
+        strBinaryFile = Left(FName, Len(FName) - 1) & "x"
+        'Debug.Print strBinaryFile
+        
+        Dim strShellCmd As String
+        strShellCmd = "cmd.exe /C C: & cd " & strRepoPath & " & git checkout " & strBinaryFile
+        strShellCmd = Replace(strShellCmd, "\", "\\")
+        
+        'Debug.Print strShellCmd
+        
+        Dim result As Variant
+        
+        result = Shell(strShellCmd, vbNormalFocus)
+        'Debug.Print result
+    End If
+    
     End Sub
     
 Private Function GetFileExtension(VBComp As VBIDE.VBComponent) As String
