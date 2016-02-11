@@ -145,7 +145,7 @@ Private Sub ExportVBComponent(VBComp As VBIDE.VBComponent, _
         
         Dim result As Variant
         
-        result = Shell(strShellCmd, vbNormalFocus)
+        result = Shell(strShellCmd, vbMinimizedNoFocus)
         'Debug.Print result
     End If
     
