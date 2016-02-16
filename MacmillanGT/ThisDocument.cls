@@ -58,30 +58,14 @@ Sub AutoExec()
 
 '===== PART 2 ============================
 '===== USE ===============================
-' Sets variable names (file names and directories) for Installer sub in FileInstaller module.
-'
-'===== DEPENDENCIES ========================
-' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
-' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
-' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file.
-'
-' Requires FileInstaller and SharedMacros modules be installed in the same template.
+' Calls SharedFileInstaller.Installer
+' Requires SharedFileInstaller and SharedMacros modules be installed in the same template.
 
 
     Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
-    Dim strFileName() As String
-    Dim strFileDir() As String
-
-    Dim strPcStyleDir As String
-    Dim strPcStartupDir As String
-    Dim strMacStyleDir As String
-    Dim strMacStartupDir As String
-    Dim strMacDocs As String
-
-'==========================================================================================
-    'DEFINE ALL YOUR VARIABLES HERE
+    Dim strTemplatePaths() As Variant
 
 
     ' Switch to "master" before going live!
@@ -95,54 +79,12 @@ Sub AutoExec()
     'Plain English name of what you're installing/updating, should be singular
     strTemplateName = "Macmillan Styles Template"
 
-    'Update array lengths and template file names here
-    ReDim strFileName(1 To 3)               'Declare number of files here
-    ReDim strFileDir(1 To 3)                'And here
-
-    'File names you're installing/updating
-    ' NOTE: Since this AutoExec macro launches as soon as template is loaded, and template is loaded
-    ' from GtUpdater.dotm in Startup, we can't check GtUpdater from AutoExec because it's still running
-    ' and we can't remove it to update to the new version.
-    
-    'strFileName(1) = "MacmillanGT.dotm"
-    'strFileName(1) = "GtUpdater.dotm"
-    strFileName(1) = "macmillan.dotm"
-    strFileName(2) = "macmillan_NoColor.dotm"
-    strFileName(3) = "MacmillanCoverCopy.dotm"
-
-    ' Enter the home directories for your templates here, for Mac *AND* PC
-    #If Mac Then
-        strMacDocs = MacScript("return (path to documents folder) as string")
-        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
-        strMacStartupDir = Application.StartupPath
-    #Else
-        strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
-        strPcStartupDir = Application.StartupPath
-    #End If
-'=============================================================================================
-
-    #If Mac Then
-        'strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
-        'strFileDir(1) = strMacStartupDir
-        strFileDir(1) = strMacStyleDir
-        strFileDir(2) = strMacStyleDir
-        strFileDir(3) = strMacStyleDir
-    #Else
-        'strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
-        'strFileDir(1) = strPcStartupDir
-        strFileDir(1) = strPcStyleDir
-        strFileDir(2) = strPcStyleDir
-        strFileDir(3) = strPcStyleDir
-    #End If
-
-    'Check that same number of file names and directories
-    If UBound(strFileName()) <> UBound(strFileDir()) Then
-        'MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
-        Exit Sub
-    End If
+    'Get array of paths to files to install
+    strTemplatePaths = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
+        TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
     
     Application.OnTime When:=Now + TimeValue("00:00:01"), Name:="ThisDocument.CheckGtUpdater"
     

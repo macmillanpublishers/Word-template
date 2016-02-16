@@ -14,16 +14,29 @@ Attribute VB_Name = "SharedFileInstaller"
 Option Explicit
 Option Base 1
 
-Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As String, ByRef FileName() As String, ByRef FinalDir() As String)
+Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As String, ByRef TemplatesToInstall() As String)
 
 '"Installer" argument = True if this is for a standalone installtion file.
 '"Installer" argument = False is this is part of a daily check of the current file and only updates if out of date.
     
-    '' --------------- Check that variables were passed correctly -------------------------
-    'Dim x As Long
-    'For x = LBound(FileName()) To UBound(FileName())
-    '    Debug.Print & " " & FileName(x) & " " & FinalDir(x) & vbNewLine
-    'Next x
+    ' Separate file name from directory path
+    Dim FileName() As String
+    Dim FinalDir() As String
+    Dim z As Long
+    Dim FileName() As String
+    Dim FinalDir() As String
+    
+    For z = LBound(TemplatesToInstall()) To UBound(TemplatesToInstall())
+        FileName(z) = Right(TemplatesToInstall(z), InStrRev(TemplatesToInstall(z), Application.PathSeparator) - 1)
+        FinalDir(z) = Left(TemplatesToInstall(z), InStrRev(TemplatesToInstall(z), Application.PathSeparator) - 1)
+        
+        Debug.Print "File Name #" & z & ": " & FileName(z)
+        Debug.Print "Directory #" & z & ": " & FinalDir(z)
+        
+    Next z
+    
+    
+    
     
     '' --------------- Set up variable names ----------------------------------------------
     '' Create style directory and logfile names
