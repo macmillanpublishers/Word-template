@@ -10,21 +10,71 @@ Public Enum GitBranch
     develop = 3
 End Enum
 
-' Doze sub only works on Windows
-' Will remove in later version and use ProgBarHelper.UpdateBarAndWait instead
+Public Enum TemplatesList
+    updaterTemplates = 1
+    toolsTemplates = 2
+    stylesTemplates = 3
+    installTemplates = 4
+    allTemplates = 5
+End Enum
 
-#If Win64 Then
-    Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
-#ElseIf Win32 Then
-    Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
-#End If
+Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional PathToRepo As String) As Variant
+    ' returns an array of paths to template files in their final installation locations
+    ' if you want to use "allTemplates" (i.e., for updating code in templates), must include PathToRepo
+    
+    Dim strStartupDir As String
+    Dim strStylesDir As String
+    Dim strMacDocs As String
+    Dim strStylesName As String
+    
+    strStylesName = "MacmillanStyleTemplate"
+    
+    strStartupDir = Application.StartupPath
+    
+    #If Mac Then
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strStyleDir = strMacDocs & strStylesName
+    #Else
+        strStyleDir = Environ("PROGRAMDATA") & Application.PathSeparator & "strStylesName"
+    #End If
+    
+    Dim strPathsToTemplates() As String
+    
+    ' get the updater file for these requests
+    If TemplatesYouWant = updaterTemplates Or installTemplates Or allTemplates Then
+        ReDim strPathsToTemplates(1 To (UBound(strPathsToTemplates()) + 1))
+        strPathsToTemplates(UBound(strPathsToTemplates())) = strStartupDir & Application.PathSeparator & "GtUpdater.dotm"
+    End If
+    
+    ' get the tools file for these requests
+    If TemplatesYouWant = toolsTemplates Or installTemplates Or allTemplates Then
+        ReDim strPathsToTemplates(1 To (UBound(strPathsToTemplates()) + 1))
+        strPathsToTemplates(UBound(strPathsToTemplates())) = strStyleDir & Application.PathSeparator & "MacmillanGT.dotm"
+    End If
+    
+    ' get the styles files for these requests
+    If TemplatesYouWant = stylesTemplates Or installTemplates Or allTemplates Then
+        ReDim strPathsToTemplates(1 To (UBound(strPathsToTemplates()) + 1))
+        strPathsToTemplates(UBound(strPathsToTemplates())) = strStyleDir & Application.PathSeparator & "macmillan.dotm"
+        
+        ReDim strPathsToTemplates(1 To (UBound(strPathsToTemplates()) + 1))
+        strPathsToTemplates(UBound(strPathsToTemplates())) = strStyleDir & Application.PathSeparator & "macmillan_NoColor.dotm"
 
-'Public Sub Doze(ByVal lngPeriod As Long)
-'    DoEvents
-'    Sleep lngPeriod
-'    ' Call it in desired location to sleep for 1 seconds like this:
-'    ' Doze 1000
-'End Sub
+        ReDim strPathsToTemplates(1 To (UBound(strPathsToTemplates()) + 1))
+        strPathsToTemplates(UBound(strPathsToTemplates())) = strStyleDir & Application.PathSeparator & "MacmillanCoverCopy.dotm"
+    End If
+    
+    ' also get the installer file
+    If TemplatesYouWant = allTemplates And PathToRepo <> vbNullString Then
+        ReDim strPathsToTemplates(1 To (UBound(strPathsToTemplates()) + 1))
+        strPathsToTemplates(UBound(strPathsToTemplates())) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller_v2.docm"
+        
+        ' Could also add paths to open _BETA and _DEVELOP installer files?
+    End If
+    
+    GetTemplatesList = strPathsToTemplates
+    
+End Function
 
 
 Public Function IsItThere(Path)
