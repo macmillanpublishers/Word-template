@@ -301,7 +301,7 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     Dim styleBadCount As Integer
     Dim styleBadOverflow As Boolean
     Dim activeParaCount As Integer
-    Dim J As Integer, K As Integer, L As Integer
+    Dim J As Integer, k As Integer, L As Integer
     Dim paraStyle As String
     '''''''''''''''''''''
     Dim activeParaRange As Range
@@ -340,17 +340,17 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
                 'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
                 If Right(paraStyle, 1) = ")" Then
 CheckGoodStyles:
-                    For K = 1 To styleGoodCount
+                    For k = 1 To styleGoodCount
                         'Debug.Print Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1)
                         ' "Left" function because now stylesGood includes page number, so won't match paraStyle
-                        If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
-                        K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                        If paraStyle = Left(stylesGood(k), InStrRev(stylesGood(k), " --") - 1) Then
+                        k = styleGoodCount                              'stylereport bug fix #1    v. 3.1
                             Exit For                                        'stylereport bug fix #1   v. 3.1
                         End If                                              'stylereport bug fix #1   v. 3.1
-                    Next K
+                    Next k
                     
-                    If K = styleGoodCount + 1 Then
-                        styleGoodCount = K
+                    If k = styleGoodCount + 1 Then
+                        styleGoodCount = k
                         ReDim Preserve stylesGood(1 To styleGoodCount)
                         stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
                     End If
@@ -398,9 +398,9 @@ CheckGoodStyles:
     If styleGoodCount = 0 Then
         strGoodStyles = ""
     Else
-        For K = LBound(stylesGood()) To UBound(stylesGood())
-            strGoodStyles = strGoodStyles & stylesGood(K) & vbCrLf
-        Next K
+        For k = LBound(stylesGood()) To UBound(stylesGood())
+            strGoodStyles = strGoodStyles & stylesGood(k) & vbCrLf
+        Next k
     End If
     
     'Debug.Print strGoodStyles
@@ -1596,7 +1596,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     ReDim stylesGood(stylesGoodLong)
     Dim styleGoodCount As Integer
     Dim activeParaCount As Integer
-    Dim J As Integer, K As Integer, L As Integer
+    Dim J As Integer, k As Integer, L As Integer
     Dim paraStyle As String
     '''''''''''''''''''''
     Dim activeParaRange As Range
@@ -1625,15 +1625,15 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
                 Set activeParaRange = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
         
-                For K = 1 To styleGoodCount
+                For k = 1 To styleGoodCount
                     ' "Left" function because now stylesGood includes page number, so won't match paraStyle
-                    If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
-                        K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                    If paraStyle = Left(stylesGood(k), InStrRev(stylesGood(k), " --") - 1) Then
+                        k = styleGoodCount                              'stylereport bug fix #1    v. 3.1
                         Exit For                                        'stylereport bug fix #1   v. 3.1
                     End If                                              'stylereport bug fix #1   v. 3.1
-                Next K
-                If K = styleGoodCount + 1 Then
-                    styleGoodCount = K
+                Next k
+                If k = styleGoodCount + 1 Then
+                    styleGoodCount = k
                     stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
                 End If
             End If
@@ -1641,16 +1641,16 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     Next J
     
     'Sort good styles
-    If K <> 0 Then
+    If k <> 0 Then
     ReDim Preserve stylesGood(1 To styleGoodCount)
     WordBasic.SortArray stylesGood()
     End If
     
     'Create single string for good styles
     Dim strGoodStyles As String
-    For K = LBound(stylesGood()) To UBound(stylesGood())
-        strGoodStyles = strGoodStyles & stylesGood(K) & vbNewLine
-    Next K
+    For k = LBound(stylesGood()) To UBound(stylesGood())
+        strGoodStyles = strGoodStyles & stylesGood(k) & vbNewLine
+    Next k
     
     'Debug.Print strGoodStyles
     
