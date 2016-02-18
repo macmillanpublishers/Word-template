@@ -65,7 +65,7 @@ Sub AutoExec()
     Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
-    Dim strTemplatePaths() As Variant
+    Dim strTemplatePaths() As String
 
 
     ' Switch to "master" before going live!
@@ -82,12 +82,18 @@ Sub AutoExec()
     'Get array of paths to files to install
     strTemplatePaths = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
 
+    Dim q As Long
+
+    For q = LBound(strTemplatePaths) To UBound(strTemplatePaths)
+        Debug.Print q & ": " & strTemplatePaths(q)
+    Next q
+
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
         TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
-    
+
     Application.OnTime When:=Now + TimeValue("00:00:01"), Name:="ThisDocument.CheckGtUpdater"
-    
+
     On Error GoTo 0
     Exit Sub
 
