@@ -67,10 +67,11 @@ Sub AutoExec()
     Dim strTemplatePaths() As String
 
     ' Switch to "master" before going live!
-    downloadBranch = master
+    downloadBranch = develop
 
     'True = standalone installer file, False = daily update checker already installed
-    blnInstaller = False
+    blnInstaller = True
+    'Makin' that true to test shit
 
     'Plain English name of what you're installing/updating, should be singular
     strTemplateName = "Macmillan Styles Template"
@@ -388,6 +389,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 
