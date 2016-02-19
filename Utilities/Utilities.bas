@@ -1,13 +1,6 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "ThisDocument"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = True
+Attribute VB_Name = "Utilities"
 Option Explicit
+Option Base 1
 
 ' ====== ADD PATH TO LOCAL GIT REPO HERE ========================
 ' DON'T include trailing slash
@@ -256,7 +249,7 @@ Sub ImportAllModules()
                                     ' of the temp module
                                     With VBComp.CodeModule
                                         .DeleteLines 1, .CountOfLines
-                                        strNewCode = tempVBComp.CodeModule.Lines(1, tempVBComp.CodeModule.CountOfLines)
+                                        strNewCode = tempVBComp.CodeModule.lines(1, tempVBComp.CodeModule.CountOfLines)
                                         .InsertLines 1, strNewCode
                                     End With
                                     On Error GoTo 0
@@ -383,3 +376,5 @@ Sub CopyTemplateToRepo(TemplateDoc As Document)
     End If
     
 End Sub
+
+
