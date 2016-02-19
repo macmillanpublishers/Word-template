@@ -20,17 +20,31 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
 '"Installer" argument = False is this is part of a daily check of the current file and only updates if out of date.
     
     ' Separate file name from directory path
-    Dim FileName(LBound(TemplatesToInstall()) To UBound(TemplatesToInstall())) As String
-    Dim FinalDir(LBound(TemplatesToInstall()) To UBound(TemplatesToInstall())) As String
+    Dim lngBreak As Long
+    Dim FileName() As String
+    Dim FinalDir() As String
     Dim z As Long
     
     For z = LBound(TemplatesToInstall()) To UBound(TemplatesToInstall())
         Debug.Print "Path: " & TemplatesToInstall(z)
-        FileName(z) = Right(TemplatesToInstall(z), InStrRev(TemplatesToInstall(z), Application.PathSeparator) - 1)
-        FinalDir(z) = Left(TemplatesToInstall(z), InStr(TemplatesToInstall(z), Application.PathSeparator) - 1)
         
-        Debug.Print "File Name #" & z & ": " & FileName(z)
-        Debug.Print "Directory #" & z & ": " & FinalDir(z)
+        lngBreak = InStrRev(TemplatesToInstall(z), Application.PathSeparator)
+        Debug.Print "Final sep at: " & lngBreak
+        
+        If lngBreak >= 1 Then
+            ReDim Preserve FileName(1 To z)
+            FileName(z) = Right(TemplatesToInstall(z), (Len(TemplatesToInstall(z)) - lngBreak))
+            
+            ReDim Preserve FinalDir(1 To z)
+            FinalDir(z) = Left(TemplatesToInstall(z), lngBreak - 1)
+            
+            Debug.Print "File Name #" & z & ": " & FileName(z)
+            Debug.Print "Directory #" & z & ": " & FinalDir(z)
+        Else
+            ' No path separator in full path specification
+            MsgBox "You need to specify the full path to your templates!"
+            Exit Sub
+        End If
         
     Next z
     
