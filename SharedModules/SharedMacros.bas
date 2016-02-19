@@ -80,11 +80,11 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
         ' Could also add paths to open _BETA and _DEVELOP installer files?
     End If
     
-    Dim h As Long
-    
-    For h = LBound(strPathsToTemplates) To (UBound(strPathsToTemplates))
-        Debug.Print h & ": " & strPathsToTemplates(h)
-    Next h
+    ' DEBUGGING: check tha list!
+'    Dim h As Long
+'    For h = LBound(strPathsToTemplates) To (UBound(strPathsToTemplates))
+'        Debug.Print h & ": " & strPathsToTemplates(h)
+'    Next h
     
     
     GetTemplatesList = strPathsToTemplates
