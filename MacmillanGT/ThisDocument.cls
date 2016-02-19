@@ -61,17 +61,13 @@ Sub AutoExec()
 ' Calls SharedFileInstaller.Installer
 ' Requires SharedFileInstaller and SharedMacros modules be installed in the same template.
 
-
     Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strTemplatePaths() As String
 
-
     ' Switch to "master" before going live!
-    ' ALSO BELOW IN CHECKGTUPDATER!!
     downloadBranch = master
-
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
@@ -79,20 +75,23 @@ Sub AutoExec()
     'Plain English name of what you're installing/updating, should be singular
     strTemplateName = "Macmillan Styles Template"
 
-    'Get array of paths to files to install
-    strTemplatePaths = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
+    'Get array of paths to STYLE TEMPLATE files to install
+    strTemplatePaths = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
 
-    Dim q As Long
-
-    For q = LBound(strTemplatePaths) To UBound(strTemplatePaths)
-        Debug.Print q & ": " & strTemplatePaths(q)
-    Next q
+'   ' DEBUG: check that paths are correct
+'    Dim q As Long
+'    For q = LBound(strTemplatePaths) To UBound(strTemplatePaths)
+'        Debug.Print q & ": " & strTemplatePaths(q)
+'    Next q
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
         TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
-
-    Application.OnTime When:=Now + TimeValue("00:00:01"), Name:="ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)"
+    
+    ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
+    ' finish running (because this AutoExec is called from GtUpdater in Startup
+    Application.OnTime When:=Now + TimeValue("00:00:01"), _
+        Name:="ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)"
 
     On Error GoTo 0
     Exit Sub
@@ -117,78 +116,24 @@ Sub CheckGtUpdater(Branch As String, InstallerOrNot As Boolean)
     ' ======= For testing / debugging ==============
     ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
     ' ==============================================
-
+    
+    ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
+    Dim strInstallMe() As String
     Dim strTemplateName As String
-    Dim strFileName() As String
-    Dim strFileDir() As String
 
-    Dim strPcStyleDir As String
-    Dim strPcStartupDir As String
-    Dim strMacStyleDir As String
-    Dim strMacStartupDir As String
-    Dim strMacDocs As String
-
-'==========================================================================================
-    'DEFINE ALL YOUR VARIABLES HERE
-
-    'Plain English name of what you're installing/updating, should be singular
-    strTemplateName = "Macmillan Updater"
-
-    'Update array lengths and template file names here
-    ReDim strFileName(1 To 1)               'Declare number of files here
-    ReDim strFileDir(1 To 1)                'And here
-
-    'File names you're installing/updating
-    'strFileName(1) = "MacmillanGT.dotm"
-    strFileName(1) = "GtUpdater.dotm"
-    'strFileName(1) = "macmillan.dotm"
-    'strFileName(2) = "macmillan_NoColor.dotm"
-    'strFileName(3) = "MacmillanCoverCopy.dotm"
-
-    ' Enter the home directories for your templates here, for Mac *AND* PC
-    #If Mac Then
-        strMacDocs = MacScript("return (path to documents folder) as string")
-        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
-        strMacStartupDir = Application.StartupPath
-    #Else
-        strPcStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
-        strPcStartupDir = Application.StartupPath
-    #End If
-'=============================================================================================
-
-    #If Mac Then
-        'strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
-        strFileDir(1) = strMacStartupDir
-        'strFileDir(1) = strMacStyleDir
-        'strFileDir(2) = strMacStyleDir
-        'strFileDir(3) = strMacStyleDir
-    #Else
-        'strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
-        strFileDir(1) = strPcStartupDir
-        'strFileDir(1) = strPcStyleDir
-        'strFileDir(2) = strPcStyleDir
-        'strFileDir(3) = strPcStyleDir
-    #End If
-
-    'Check that same number of file names and directories
-    If UBound(strFileName()) <> UBound(strFileDir()) Then
-        'MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
-        Exit Sub
-    End If
+    ' get array of files to install
+    strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(DownloadFrom:=Branch, Installer:=InstallerOrNot, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call SharedFileInstaller.Installer(DownloadFrom:=Branch, Installer:=InstallerOrNot, _
+        TemplateName:=strTemplateName, TemplatesToInstall:=strInstallMe())
 
-    ' ====== PART 3: LOAD MAIN TEMPLATE ==============
-    Dim strNewGT As String
-    strNewGT = strFileDir(1) & Application.PathSeparator & strFileName(1)
-    'Debug.Print strNewGT
-
-    If IsItThere(strNewGT) = True Then
+    ' ====== PART 2: LOAD TEMPLATE AGAIN ==============
+    If IsItThere(strInstallMe(1)) = True Then
         ' Have to add Template before loading if not in Startup
         ' Could do Install:=True with Add method, but it somehow broke everything
-        AddIns.Add (strNewGT)
-        AddIns(strNewGT).Installed = True
+        AddIns.Add (strInstallMe(1))
+        AddIns(strInstallMe(1)).Installed = True
     Else
         Dim strMessage As String
             strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Updater template. Please send an email to " & _

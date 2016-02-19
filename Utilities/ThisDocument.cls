@@ -18,15 +18,15 @@ Private Const strRepoPath = "C:\Users\erica.warren\Word-template"
 
 ' ====== USE ==================================================
 ' For help with VBA development
-' Exports all modules in open templates to the local Word-template git repo
+' Exports all modules in open templates to the local Word-template git repo (ABOVE!!)
 ' Shared modules go into "SharedMacros" directory, the rest are
 ' saved in the same directory as the template they live in
 
-' Also imports all modules saved in git repo to the open templates
+' Also imports all modules saved in git repo to the open templates.
 ' great for dealing with template file merge conflicts!
 
 ' ===== DEPENDENCIES ==========================================
-' Obviously clone the git repo and add its path below
+' Obviously clone the git repo and add its path ABOVE
 ' Each template gets its own subdirectory in the repo, name matches exactly (w/o extension)
 ' Modules that are shared among all template must have name start with "Shared"
 

@@ -26,10 +26,10 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
     Dim z As Long
     
     For z = LBound(TemplatesToInstall()) To UBound(TemplatesToInstall())
-        Debug.Print "Path: " & TemplatesToInstall(z)
+'        Debug.Print "Path: " & TemplatesToInstall(z)
         
         lngBreak = InStrRev(TemplatesToInstall(z), Application.PathSeparator)
-        Debug.Print "Final sep at: " & lngBreak
+'        Debug.Print "Final sep at: " & lngBreak
         
         If lngBreak >= 1 Then
             ReDim Preserve FileName(1 To z)
@@ -38,8 +38,8 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
             ReDim Preserve FinalDir(1 To z)
             FinalDir(z) = Left(TemplatesToInstall(z), lngBreak - 1)
             
-            Debug.Print "File Name #" & z & ": " & FileName(z)
-            Debug.Print "Directory #" & z & ": " & FinalDir(z)
+'            Debug.Print "File Name #" & z & ": " & FileName(z)
+'            Debug.Print "Directory #" & z & ": " & FinalDir(z)
         Else
             ' No path separator in full path specification
             MsgBox "You need to specify the full path to your templates!"
@@ -47,8 +47,6 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
         End If
         
     Next z
-    
-    
     
     
     '' --------------- Set up variable names ----------------------------------------------
