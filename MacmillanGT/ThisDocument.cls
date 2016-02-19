@@ -92,7 +92,7 @@ Sub AutoExec()
     Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
         TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
 
-    Application.OnTime When:=Now + TimeValue("00:00:01"), Name:="ThisDocument.CheckGtUpdater"
+    Application.OnTime When:=Now + TimeValue("00:00:01"), Name:="ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)"
 
     On Error GoTo 0
     Exit Sub
@@ -102,7 +102,7 @@ ErrHandler:
 End Sub
 
 
-Sub CheckGtUpdater()
+Sub CheckGtUpdater(Branch As String, InstallerOrNot As Boolean)
     ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
     ' GtUpdater.dotm can't be running code when this launches.
 
@@ -118,8 +118,6 @@ Sub CheckGtUpdater()
     ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
     ' ==============================================
 
-    Dim downloadBranch As GitBranch
-    Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
     Dim strFileDir() As String
@@ -132,12 +130,6 @@ Sub CheckGtUpdater()
 
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
-
-    'Make sure to switch to FALSE before going live!
-    downloadBranch = master
-
-    'True = standalone installer file, False = daily update checker already installed
-    blnInstaller = False
 
     'Plain English name of what you're installing/updating, should be singular
     strTemplateName = "Macmillan Updater"
@@ -185,7 +177,7 @@ Sub CheckGtUpdater()
     End If
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
+    Call SharedFileInstaller.Installer(DownloadFrom:=Branch, Installer:=InstallerOrNot, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
 
     ' ====== PART 3: LOAD MAIN TEMPLATE ==============
     Dim strNewGT As String
