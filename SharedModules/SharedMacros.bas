@@ -68,14 +68,14 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
 
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "MacmillanCoverCopy.dotm"
+        strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "macmillan_CoverCopy.dotm"
     End If
     
     ' also get the installer file
     If TemplatesYouWant = allTemplates And PathToRepo <> vbNullString Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller_v2.docm"
+        strPathsToTemplates(k) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller.docm"
         
         ' Could also add paths to open _BETA and _DEVELOP installer files?
     End If
@@ -1207,4 +1207,18 @@ Function IsReadOnly(Path As String) As Boolean
         End If
     #End If
     
+End Function
+
+Public Function ReadTextFile(Path As String) As String
+' load string from text file
+
+    Dim fnum As Long
+    Dim whole_file As String
+    
+    fnum = FreeFile
+    Open Path For Input As fnum
+    whole_file = Input$(LOF(fnum), #fnum)
+    Close fnum
+    
+    ReadTextFile = whole_file
 End Function
