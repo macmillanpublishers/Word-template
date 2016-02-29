@@ -177,8 +177,8 @@ Sub ImportAllModules()
     Dim strDirInRepo(1 To 2) As String      ' declare number of items in array
     Dim strModuleExt(1 To 3) As String     ' declare number of items in array
     Dim strModuleFileName As String         ' file name with extension, no path
-    Dim a As Long
-    Dim b As Long
+    Dim A As Long
+    Dim B As Long
     Dim Counter As Long
     Dim VBComp As VBIDE.VBComponent     ' object for module we're importing
     Dim strFullModulePath As String     ' full path to module with extension
@@ -216,18 +216,18 @@ Sub ImportAllModules()
                 Set currentVBProject = oDocument.VBProject
                 
                 ' loop through the two directories
-                For a = LBound(strDirInRepo()) To UBound(strDirInRepo())
+                For A = LBound(strDirInRepo()) To UBound(strDirInRepo())
                     ' for each directory, loop through all files of each extension
-                    For b = LBound(strModuleExt()) To UBound(strModuleExt())
+                    For B = LBound(strModuleExt()) To UBound(strModuleExt())
                         ' with the Dir function this returns just the files in this directory
-                        strModuleFileName = Dir(strDirInRepo(a) & "*." & strModuleExt(b))
+                        strModuleFileName = Dir(strDirInRepo(A) & "*." & strModuleExt(B))
                         ' so loop through each file of that extension in that directory
                         Do While strModuleFileName <> "" And Counter < 100
                             Counter = Counter + 1               ' to prevent infinite loops
                             'Debug.Print strModuleFileName
                             
                             strModuleName = Left(strModuleFileName, InStrRev(strModuleFileName, ".") - 1)
-                            strFullModulePath = strDirInRepo(a) & strModuleFileName
+                            strFullModulePath = strDirInRepo(A) & strModuleFileName
                             'Debug.Print "Full path to module is " & strFullModulePath
                             
                             ' Resume Next because Set VBComp = current project will cause an error if that
@@ -262,8 +262,8 @@ Sub ImportAllModules()
                         Loop
                         
                         'Debug.Print strModuleFileName
-                    Next b
-                Next a
+                    Next B
+                Next A
                 
             End If
         
@@ -333,48 +333,216 @@ Sub InsertShapes()
 End Sub
 
 
-Sub CopyTemplateToRepo(TemplateDoc As Document)
+Sub CopyTemplateToRepo(TemplateDoc As Document, Optional OpenAfter As Boolean = True)
 ' copies the current template file to the local git repo
     
     ' Don't copy if it's already open from the repo
+    ' Wait that won't work because no templates are in the root of the repo
+    
     If strRepoPath <> TemplateDoc.Path Then
         
-        Dim strDir As String
         Dim strCurrentTemplatePath As String
         Dim strDestinationFilePath As String
         
-        ' Get name of template w/o extension
-        strDir = Left(TemplateDoc.Name, InStrRev(TemplateDoc.Name, ".") - 1)
-        
-        ' Current file full path, to open after copy
+        ' Current file full path, to use for FileCopy later
         strCurrentTemplatePath = TemplateDoc.FullName
         'Debug.Print strCurrentTemplatePath
         
         ' location in repo
-        strDestinationFilePath = strRepoPath & Application.PathSeparator & strDir & _
-            Application.PathSeparator & TemplateDoc.Name
+        strDestinationFilePath = LocalPathToRepoPath(LocalPath:=strCurrentTemplatePath, VersionFile:=False)
         'Debug.Print strDestinationFilePath
         
-        ' Template needs to be closed for FileCopy to work
-        TemplateDoc.Close SaveChanges:=wdSaveChanges
-        
         ' Also not installed as an add-in
-        AddIns(strCurrentTemplatePath).Installed = False
+        If InStr(TemplateDoc.Name, "MacmillanGT") <> 0 Or InStr(TemplateDoc.Name, "GtUpdater") <> 0 Then
+            AddIns(strCurrentTemplatePath).Installed = False
+        End If
+
+        ' Template needs to be closed for FileCopy to work
+        ' ALSO: changing doc properties does NOT count as a "change", so Word sees the file as unchanged
+        ' and doesn't actually save, and also doesn't throw an error
+        ' so we set Saved = False before saving to get it working right.
+        TemplateDoc.Saved = False
+        TemplateDoc.Close SaveChanges:=wdSaveChanges
+        Set TemplateDoc = Nothing
         
-        FileCopy Source:=strCurrentTemplatePath, Destination:=strDestinationFilePath
+        ' copy copy copy copy
+        If strCurrentTemplatePath <> strDestinationFilePath Then
+            FileCopy Source:=strCurrentTemplatePath, Destination:=strDestinationFilePath
+        End If
+
+        ' Reinstall add-in if it's a global template
+        If InStr(strCurrentTemplatePath, "MacmillanGT") <> 0 Or InStr(strCurrentTemplatePath, "GtUpdater") <> 0 Then
+            WordBasic.DisableAutoMacros     ' Not sure this really works tho
+            AddIns(strCurrentTemplatePath).Installed = True
+        End If
         
-        ' Reinstall add-in
-        ' Should add check if it's a template, not a .docm
-        WordBasic.DisableAutoMacros
-        AddIns(strCurrentTemplatePath).Installed = True
-        
-        ' And then open the document again.
-        Documents.Open FileName:=strCurrentTemplatePath, _
+        ' And then open the document again if you wanna.
+        If OpenAfter = True Then
+            Documents.Open FileName:=strCurrentTemplatePath, _
                         ReadOnly:=False, _
                         Revert:=False
-        
+        End If
     End If
     
 End Sub
 
+Sub CheckChangeVersion()
+' Display userform with template names and version numbers,
+' allow user to enter updated version numbers
+' and update the template and version file
 
+' ####### DEPENDENCIES ######
+' VersionForm userform module and SharedMacros standard module
+    
+    
+    ' A is for looping through all templates
+    Dim A As Long
+    Dim lngLBound As Long
+    
+    ' ===== get array of templates paths ====================
+    Dim strFullPathToFinalTemplates() As String
+    strFullPathToFinalTemplates = GetTemplatesList(TemplatesYouWant:=allTemplates, PathToRepo:=strRepoPath)
+    
+    lngLBound = LBound(strFullPathToFinalTemplates)
+'    Debug.Print lngLBound
+    
+    ' ===== build full path to version text file / read current version number file ============
+    Dim strFullPathToTextFile() As String
+    Dim strCurrentVersion() As String     ' String because can have multiple dots
+    
+    For A = LBound(strFullPathToFinalTemplates) To UBound(strFullPathToFinalTemplates)
+        ReDim Preserve strFullPathToTextFile(lngLBound To A)
+        strFullPathToTextFile(A) = LocalPathToRepoPath(LocalPath:=strFullPathToFinalTemplates(A), VersionFile:=True)
+'        Debug.Print strFullPathToTextFile(A)
+        ReDim Preserve strCurrentVersion(lngLBound To A)
+        strCurrentVersion(A) = ReadTextFile(Path:=strFullPathToTextFile(A))
+'        Debug.Print strCurrentVersion(A)
+    Next A
+    
+    ' ===== get just template name ==========================
+    Dim strFileName() As String
+    
+    For A = LBound(strFullPathToFinalTemplates) To UBound(strFullPathToFinalTemplates)
+        ReDim Preserve strFileName(lngLBound To A)
+        strFileName(A) = Right(strFullPathToFinalTemplates(A), (InStr(StrReverse(strFullPathToFinalTemplates(A)), _
+            Application.PathSeparator)) - 1)
+'        Debug.Print strFileName(A)
+    Next A
+    
+    ' ======= create instance of userform, populate with template names/versions ====
+    Dim objVersionForm As VersionForm
+    Set objVersionForm = New VersionForm
+
+    For A = LBound(strCurrentVersion) To UBound(strCurrentVersion)
+        objVersionForm.PopulateFormData A, strFileName(A), strCurrentVersion(A)
+    Next A
+    
+    
+    ' ===== display the userform! ===========================
+    ' User enters new values, end if they click cancel
+    objVersionForm.Show
+    
+    If objVersionForm.CancelMe = True Then
+        Unload objVersionForm
+        Exit Sub
+    End If
+    
+    ' ===== check if new versions entered, if so load into array too ====
+    Dim strNewVersion() As String
+    Dim lngIndexToUpdate() As Long
+    Dim B As Long
+    
+    ' Subtract 1 here so we can add 1 when building array and start at same index
+    B = lngLBound - 1
+    
+    For A = LBound(strCurrentVersion) To UBound(strCurrentVersion)
+        ' get new version from userform
+        ReDim Preserve strNewVersion(lngLBound To A)
+        strNewVersion(A) = objVersionForm.NewVersion(FrameName:=strFileName(A))
+'        Debug.Print "New " & A & ": " & strNewVersion(A)
+        
+        ' only update if value is not null and not equal current version number
+        If strNewVersion(A) <> vbNullString And strNewVersion(A) <> strCurrentVersion(A) Then
+            B = B + 1
+            ReDim Preserve lngIndexToUpdate(lngLBound To B)
+            
+            ' an array of index numbers of the other arrays
+            lngIndexToUpdate(B) = A
+'            Debug.Print "Update: " & strFileName(lngIndexToUpdate(B))
+        End If
+
+    Next A
+    
+    
+    ' ===== if new versions, update files =====
+    ' Is anything in our new array?
+    
+    If B = lngLBound - 1 Then
+        Unload objVersionForm
+        Exit Sub
+    Else
+        Dim objTemplateDoc As Document
+        
+        For B = LBound(lngIndexToUpdate) To UBound(lngIndexToUpdate)
+            ' FUTURE:   make sure not on master
+            '           make sure working dir is clean?
+            '           eventually git stash first, then commit changes (incl templates), then unstash
+            
+            ' Overwrite text version file in repo with new version number
+            OverwriteTextFile TextFile:=strFullPathToTextFile(lngIndexToUpdate(B)), NewText:=strNewVersion(lngIndexToUpdate(B))
+            
+            ' Open local template file
+            Documents.Open FileName:=strFullPathToFinalTemplates(lngIndexToUpdate(B)), ReadOnly:=False, Visible:=False
+            Set objTemplateDoc = Nothing
+            Set objTemplateDoc = Documents(strFullPathToFinalTemplates(lngIndexToUpdate(B)))
+            
+            ' Change custom properties to new version number
+            objTemplateDoc.CustomDocumentProperties("Version").Value = strNewVersion(lngIndexToUpdate(B))
+            
+            ' Copy file to repo (it saves and closes the file too)
+            CopyTemplateToRepo TemplateDoc:=objTemplateDoc, OpenAfter:=False
+            
+            Set objTemplateDoc = Nothing
+        Next B
+    End If
+        
+    ' ===== maybe also add and commit changes? stash first then unstash at end? =====
+    
+    Unload objVersionForm
+    
+    
+End Sub
+
+
+Private Function LocalPathToRepoPath(LocalPath As String, Optional VersionFile As Boolean = False) As String
+' takes full path to local/installed template file and converts to a path to that file in git repo
+' or optionally the version file for that template
+' DEPENDENCIES: requires strRepoPath constant at top of this module
+'               files are saved in subdir that matches file name
+'               if multiple files in subdir, add to file name after underscore
+
+    Dim strFileWithExt As String
+    Dim strSeparator As String
+    Dim strSubDirectory As String
+    
+    ' Extract file name from full path
+    strFileWithExt = Right(LocalPath, (Len(LocalPath) - InStrRev(LocalPath, Application.PathSeparator)))
+    
+    ' Extract sub-directory name from file name--i.e., just text before optional underscore
+    strSeparator = "_"
+    If InStr(strFileWithExt, strSeparator) = 0 Then
+        strSeparator = "."
+    End If
+    
+    strSubDirectory = Left(strFileWithExt, InStrRev(strFileWithExt, strSeparator) - 1)
+    
+    ' Change extension if we're getting a version file
+    If VersionFile = True Then
+        strFileWithExt = Left(strFileWithExt, InStrRev(strFileWithExt, ".")) & "txt"
+    End If
+    
+    ' Build path to file in repo
+    LocalPathToRepoPath = strRepoPath & Application.PathSeparator & strSubDirectory & _
+        Application.PathSeparator & strFileWithExt
+    
+End Function

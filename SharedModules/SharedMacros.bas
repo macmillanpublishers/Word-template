@@ -75,7 +75,8 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     If TemplatesYouWant = allTemplates And PathToRepo <> vbNullString Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller.docm"
+        strPathsToTemplates(k) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller" _
+            & Application.PathSeparator & "MacmillanTemplateInstaller.docm"
         
         ' Could also add paths to open _BETA and _DEVELOP installer files?
     End If
@@ -387,6 +388,20 @@ Dim FileNum As Integer
     Open LogFile For Append As #FileNum ' creates the file if it doesn't exist
     Print #FileNum, LogMessage ' write information at the end of the text file
     Close #FileNum ' close the file
+End Sub
+
+Public Sub OverwriteTextFile(TextFile As String, NewText As String)
+' TextFile should be full path
+    
+    Dim FileNum As Integer
+    
+    If IsItThere(TextFile) = True Then
+        FileNum = FreeFile ' next file number
+        Open TextFile For Output Access Write As #FileNum
+        Print #FileNum, NewText ' overwrite information in the text of the file
+        Close #FileNum ' close the file
+    End If
+
 End Sub
 
 Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
@@ -924,7 +939,7 @@ Sub CloseOpenDocs()
     Dim strInstallerName As String
     Dim strSaveWarning As String
     Dim objDocument As Document
-    Dim b As Long
+    Dim B As Long
     Dim doc As Document
     
     strInstallerName = ThisDocument.Name
