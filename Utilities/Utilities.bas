@@ -78,7 +78,7 @@ Sub ExportAllModules()
             ' And also save the template file in the repo if it's not open from there
             ' CopyTemplateToRepo closes and re-opens the doc, so don't use it for THIS doc
             If oDoc.Name <> ThisDocument.Name Then
-                CopyTemplateToRepo TemplateDoc:=oDoc
+                CopyTemplateToRepo TemplateDoc:=oDoc, OpenAfter:=False
             Else
                 'Debug.Print ThisDocument.Name
                 oDoc.Save
@@ -268,7 +268,7 @@ Sub ImportAllModules()
             End If
         
             ' And then save the updated template in the repo
-            CopyTemplateToRepo TemplateDoc:=oDocument
+            CopyTemplateToRepo TemplateDoc:=oDocument, OpenAfter:=False
             
         End If
 
@@ -321,7 +321,7 @@ Sub InsertShapes()
         lngNumChar = InStr(strFileName, ".") - lngStart
         strShapeName = Mid(strFileName, lngStart, lngNumChar)
         
-        Debug.Print strShapeName
+'        Debug.Print strShapeName
         
         ' Insert picture
         Set shpNewPicture = ActiveDocument.Shapes.AddPicture(FileName:=strPath & strFileName)
@@ -415,8 +415,8 @@ Sub CheckChangeVersion()
         strFullPathToTextFile(A) = LocalPathToRepoPath(LocalPath:=strFullPathToFinalTemplates(A), VersionFile:=True)
 '        Debug.Print strFullPathToTextFile(A)
         ReDim Preserve strCurrentVersion(lngLBound To A)
-        strCurrentVersion(A) = ReadTextFile(Path:=strFullPathToTextFile(A))
-'        Debug.Print strCurrentVersion(A)
+        strCurrentVersion(A) = ReadTextFile(Path:=strFullPathToTextFile(A), FirstLineOnly:=False)
+        Debug.Print "Text file in repo : |" & strCurrentVersion(A) & "|"
     Next A
     
     ' ===== get just template name ==========================
@@ -459,7 +459,7 @@ Sub CheckChangeVersion()
         ' get new version from userform
         ReDim Preserve strNewVersion(lngLBound To A)
         strNewVersion(A) = objVersionForm.NewVersion(FrameName:=strFileName(A))
-'        Debug.Print "New " & A & ": " & strNewVersion(A)
+'        Debug.Print "New " & A & ": |" & strNewVersion(A) & "|"
         
         ' only update if value is not null and not equal current version number
         If strNewVersion(A) <> vbNullString And strNewVersion(A) <> strCurrentVersion(A) Then

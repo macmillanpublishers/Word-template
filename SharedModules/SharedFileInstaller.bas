@@ -84,20 +84,20 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
     Dim logString As String
     Dim strTypeOfInstall As String
 
-    Dim b As Long
+    Dim B As Long
     
-    For b = LBound(FileName()) To UBound(FileName())
+    For B = LBound(FileName()) To UBound(FileName())
         
         ' Check if log dir/file exists, create if it doesn't, check last mod date if it does
         ' We don't need the true/false info for Installer, but we DO need to run these two
         ' functions to create directories if they don't exist yet
         
         ' If last mod date less than 1 day ago, CheckLog = True
-        blnLogUpToDate(b) = CheckLog(strStyleDir(b), strLogDir(b), strFullLogPath(b))
+        blnLogUpToDate(B) = CheckLog(strStyleDir(B), strLogDir(B), strFullLogPath(B))
         'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
         
         ' Check if template exists, if not create any missing directories
-        blnTemplateExists(b) = IsTemplateThere(FinalDir(b), FileName(b), strFullLogPath(b))
+        blnTemplateExists(B) = IsTemplateThere(FinalDir(B), FileName(B), strFullLogPath(B))
         ' Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
         
         ' ===============================
@@ -116,19 +116,19 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
             ' blnTemplateExists(b) = True              '|
             ' ==========================================
                 
-            If blnLogUpToDate(b) = True And blnTemplateExists(b) = True Then ' already checked today, already exists
-                installCheck(b) = False
-            ElseIf blnLogUpToDate(b) = False And blnTemplateExists(b) = True Then 'Log is new or not checked today, already exists
+            If blnLogUpToDate(B) = True And blnTemplateExists(B) = True Then ' already checked today, already exists
+                installCheck(B) = False
+            ElseIf blnLogUpToDate(B) = False And blnTemplateExists(B) = True Then 'Log is new or not checked today, already exists
                 'check version number
-                installCheck(b) = NeedUpdate(DownloadFrom, FinalDir(b), FileName(b), strFullLogPath(b))
+                installCheck(B) = NeedUpdate(DownloadFrom, FinalDir(B), FileName(B), strFullLogPath(B))
             Else ' blnTemplateExists = False, just download new template
-                 installCheck(b) = True
+                 installCheck(B) = True
             End If
         Else
-            installCheck(b) = True
+            installCheck(B) = True
         End If
         
-    Next b
+    Next B
 
     ' ---------------- Create new array of template files we need to install -----------------
     Dim strInstallFile() As String
@@ -298,10 +298,11 @@ Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileN
         #End If
         
         strInstalledVersion = Documents(strFullTemplatePath).CustomDocumentProperties("Version")
-        Documents(strFullTemplatePath).Close
+        Documents(strFullTemplatePath).Close SaveChanges:=wdDoNotSaveChanges
         logString = Now & " -- installed version is " & strInstalledVersion
+'        Debug.Print "InstalledVersion : |" & strInstalledVersion; "|"
     Else
-        strInstalledVersion = 0     ' Template is not installed
+        strInstalledVersion = "0"     ' Template is not installed
         logString = Now & " -- No template installed, version number is 0."
     End If
     
@@ -341,7 +342,19 @@ Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileN
     If IsItThere(strFullVersionPath) = True Then
         NeedUpdate = True
         Dim strCurrentVersion As String
-        strCurrentVersion = ImportVariable(strFullVersionPath)
+        strCurrentVersion = ReadTextFile(Path:=strFullVersionPath, FirstLineOnly:=True)
+        
+        ' git converts all line endings to LF which messes up PC, and I don't want to deal
+        ' with it so we'll just remove everything
+        If InStr(strCurrentVersion, vbCrLf) > 0 Then
+            strCurrentVersion = Replace(strCurrentVersion, vbCrLf, "")
+        ElseIf InStr(strCurrentVersion, vbLf) > 0 Then
+            strCurrentVersion = Replace(strCurrentVersion, vbLf, "")
+        ElseIf InStr(strCurrentVersion, vbCr) > 0 Then
+            strCurrentVersion = Replace(strCurrentVersion, vbCr, "")
+        End If
+        
+'        Debug.Print "Text File: |" & strCurrentVersion & "|"
         logString = Now & " -- Current version is " & strCurrentVersion
     Else
         NeedUpdate = False
