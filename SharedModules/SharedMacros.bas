@@ -45,7 +45,7 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     ' get the updater file for these requests
     If TemplatesYouWant = updaterTemplates Or _
         TemplatesYouWant = installTemplates Or _
-        allTemplates Then
+        TemplatesYouWant = allTemplates Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
         strPathsToTemplates(k) = strStartupDir & Application.PathSeparator & "GtUpdater.dotm"
@@ -53,8 +53,8 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     
     ' get the tools file for these requests
     If TemplatesYouWant = toolsTemplates Or _
-        installTemplates Or _
-        allTemplates Then
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
         strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "MacmillanGT.dotm"
@@ -62,8 +62,8 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     
     ' get the styles files for these requests
     If TemplatesYouWant = stylesTemplates Or _
-        installTemplates Or _
-        allTemplates Then
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
         strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "macmillan.dotm"
