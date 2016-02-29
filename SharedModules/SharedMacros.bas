@@ -43,21 +43,27 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     k = 0
     
     ' get the updater file for these requests
-    If TemplatesYouWant = updaterTemplates Or installTemplates Or allTemplates Then
+    If TemplatesYouWant = updaterTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
         strPathsToTemplates(k) = strStartupDir & Application.PathSeparator & "GtUpdater.dotm"
     End If
     
     ' get the tools file for these requests
-    If TemplatesYouWant = toolsTemplates Or installTemplates Or allTemplates Then
+    If TemplatesYouWant = toolsTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
         strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "MacmillanGT.dotm"
     End If
     
     ' get the styles files for these requests
-    If TemplatesYouWant = stylesTemplates Or installTemplates Or allTemplates Then
+    If TemplatesYouWant = stylesTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
         strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "macmillan.dotm"
@@ -68,15 +74,14 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
 
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "macmillan_CoverCopy.dotm"
+        strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "MacmillanCoverCopy.dotm"
     End If
     
     ' also get the installer file
     If TemplatesYouWant = allTemplates And PathToRepo <> vbNullString Then
         k = k + 1
         ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller" _
-            & Application.PathSeparator & "MacmillanTemplateInstaller.docm"
+        strPathsToTemplates(k) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller_v2.docm"
         
         ' Could also add paths to open _BETA and _DEVELOP installer files?
     End If
@@ -388,20 +393,6 @@ Dim FileNum As Integer
     Open LogFile For Append As #FileNum ' creates the file if it doesn't exist
     Print #FileNum, LogMessage ' write information at the end of the text file
     Close #FileNum ' close the file
-End Sub
-
-Public Sub OverwriteTextFile(TextFile As String, NewText As String)
-' TextFile should be full path
-    
-    Dim FileNum As Integer
-    
-    If IsItThere(TextFile) = True Then
-        FileNum = FreeFile ' next file number
-        Open TextFile For Output Access Write As #FileNum
-        Print #FileNum, NewText ' overwrite information in the text of the file
-        Close #FileNum ' close the file
-    End If
-
 End Sub
 
 Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
@@ -939,7 +930,7 @@ Sub CloseOpenDocs()
     Dim strInstallerName As String
     Dim strSaveWarning As String
     Dim objDocument As Document
-    Dim B As Long
+    Dim b As Long
     Dim doc As Document
     
     strInstallerName = ThisDocument.Name
@@ -1222,18 +1213,4 @@ Function IsReadOnly(Path As String) As Boolean
         End If
     #End If
     
-End Function
-
-Public Function ReadTextFile(Path As String) As String
-' load string from text file
-
-    Dim fnum As Long
-    Dim whole_file As String
-    
-    fnum = FreeFile
-    Open Path For Input As fnum
-    whole_file = Input$(LOF(fnum), #fnum)
-    Close fnum
-    
-    ReadTextFile = whole_file
 End Function
