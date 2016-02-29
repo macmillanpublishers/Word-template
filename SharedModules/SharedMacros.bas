@@ -1230,16 +1230,22 @@ Function IsReadOnly(Path As String) As Boolean
     
 End Function
 
-Public Function ReadTextFile(Path As String) As String
+Public Function ReadTextFile(Path As String, Optional FirstLineOnly As Boolean = True) As String
 ' load string from text file
 
     Dim fnum As Long
-    Dim whole_file As String
+    Dim strTextWeWant As String
     
-    fnum = FreeFile
+    fnum = FreeFile()
     Open Path For Input As fnum
-    whole_file = Input$(LOF(fnum), #fnum)
+    
+    If FirstLineOnly = False Then
+        strTextWeWant = Input$(LOF(fnum), #fnum)
+    Else
+        Line Input #fnum, strTextWeWant
+    End If
+    
     Close fnum
     
-    ReadTextFile = whole_file
+    ReadTextFile = strTextWeWant
 End Function
