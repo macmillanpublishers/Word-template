@@ -70,7 +70,7 @@ Sub AutoExec()
     downloadBranch = develop
 
     'True = standalone installer file, False = daily update checker already installed
-    blnInstaller = True
+    blnInstaller = False
     'Makin' that true to test shit
 
     'Plain English name of what you're installing/updating, should be singular
@@ -260,7 +260,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim lngGroupCount As Long
         Dim lngButtonCount As Long
         Dim a As Long
-        Dim b As Long
+        Dim B As Long
         Dim c As Long
         Dim h As Long
         Dim NewToolbar As CommandBar
@@ -308,9 +308,9 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                     lngGroupCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
 
                     If lngGroupCount > 0 Then
-                        For b = 1 To lngGroupCount
+                        For B = 1 To lngGroupCount
                             ' Count number of tabs in group
-                            strXpath = "count(//tab[" & a & "]/group[" & b & "]/button)"
+                            strXpath = "count(//tab[" & a & "]/group[" & B & "]/button)"
                             lngButtonCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
 
                             If lngButtonCount > 0 Then
@@ -319,7 +319,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                                 For c = 1 To lngButtonCount
 
                                     ' Start of Xpath for all button attributes - need to add attribute name AND close parens to use
-                                    strXpath = "string(//tab[" & a & "]/group[" & b & "]/button[" & c & "]/@"
+                                    strXpath = "string(//tab[" & a & "]/group[" & B & "]/button[" & c & "]/@"
 
                                     ' If first button in group, set BeginGroup to True
                                     If c = 1 Then blnBeginGroup = True Else blnBeginGroup = False
@@ -352,7 +352,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                                     End With
                                 Next c
                             End If
-                        Next b
+                        Next B
                     End If
                 Next a
             End If
@@ -389,6 +389,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 
