@@ -108,13 +108,15 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         Next d
         
         ' ----- Get spine size if POD -------
-        Dim strSpineSize As String
-        strSpineSize = ""
-        
-        If FormInputs.PrintType = FormInputs.optPrintPOD.Caption Then
-            strSpineSize = SpineSize(lngCastoffResult(0))
-            'Debug.Print "spine size = " & strSpineSize
-        End If
+
+'        Dim strSpineSize As String
+'        strSpineSize = ""
+'
+'        If FormInputs.PrintType = FormInputs.optPrintPOD.Caption Then
+'            strSpineSize = SpineSize(FormInputs.Staging, lngCastoffResult(0))
+'            'Debug.Print "spine size = " & strSpineSize
+'        End If
+
     End If
     
     '-------------Create final message---------------------------------------------------
@@ -146,15 +148,12 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     "AUTHOR: " & FormInputs.txtAuthor & vbNewLine & _
     "PUBLISHER: " & FormInputs.Imprint & vbNewLine & _
     "EDITOR: " & FormInputs.txtEditor & vbNewLine & _
-    "PRINTING TYPE: " & FormInputs.PrintType & vbNewLine & _
     "TRIM SIZE: " & FormInputs.TrimSize & vbNewLine & _
     vbNewLine & _
     strPickupTitle & _
     "SCHEDULED PAGE COUNT: " & FormInputs.numTxtPageCount & vbNewLine & _
     "ESTIMATED PAGE COUNT: " & _
-    strCastoffs & _
-    vbNewLine & _
-    strSpineSize
+    strCastoffs
     
     '-------------Report castoff info to user----------------------------------------------------------------
     Call CreateTextFile(strText:=strReportText, suffix:="Castoff")
@@ -306,6 +305,7 @@ End Function
 
 Private Function SpineSize(PageCount As Long)
     ' right now, for POD titles only
+    ' which we're not even tracking anymore, but leaving code here just in case
     
     Dim strSpine As String
     
@@ -387,14 +387,14 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
     ' Figure out what the final sig/page count will be
     Dim result As Long
            
-    If objCastForm.PrintType = objCastForm.optPrintPOD.Caption Then
-        'POD only has to be even, not 16-page sig
-        If (RawEstPages Mod 2) = 0 Then      'page count is even
-            result = RawEstPages
-        Else                                    'page count is odd
-            result = RawEstPages + 1
-        End If
-    Else 'It's printing offset, already validated in castoff form code
+'    If objCastForm.PrintType = objCastForm.optPrintPOD.Caption Then
+'        'POD only has to be even, not 16-page sig
+'        If (RawEstPages Mod 2) = 0 Then      'page count is even
+'            result = RawEstPages
+'        Else                                    'page count is odd
+'            result = RawEstPages + 1
+'        End If
+'    Else 'It's printing offset, already validated in castoff form code
         
         ' Calculate next sig up and next sig down
         Dim lngRemainderPgs As Long
@@ -424,7 +424,7 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
         Else
             result = lngUpperSig
         End If
-    End If
+'    End If
 
     FinalSig = result
     
