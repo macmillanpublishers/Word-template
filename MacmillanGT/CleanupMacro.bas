@@ -608,7 +608,7 @@ Function zz_errorChecks()
     Set activeRng = ActiveDocument.Range
 
     Dim existingTagArray(3) As String   ' number of items in array should be declared here
-    Dim b As Long
+    Dim B As Long
     Dim foundBad As Boolean
     foundBad = False
 
@@ -616,10 +616,10 @@ Function zz_errorChecks()
     existingTagArray(2) = "`[A-Z]|"
     existingTagArray(3) = "|[A-Z]`"
 
-    For b = 1 To UBound(existingTagArray())
+    For B = 1 To UBound(existingTagArray())
         With activeRng.Find
             .ClearFormatting
-            .Text = existingTagArray(b)
+            .Text = existingTagArray(B)
             .Wrap = wdFindContinue
             .MatchWildcards = True
         End With
