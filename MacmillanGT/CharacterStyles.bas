@@ -924,7 +924,9 @@ ErrorHandler:
                 Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
-                    .SmallCaps = True
+                    .SmallCaps = False
+                    .AllCaps = True
+                    .Size = 9
                 End With
                 Resume
             
@@ -957,7 +959,9 @@ ErrorHandler:
                 Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
-                    .SmallCaps = True
+                    .SmallCaps = False
+                    .AllCaps = True
+                    .Size = 9
                     .Bold = True
                 End With
                 Resume
@@ -966,7 +970,9 @@ ErrorHandler:
                 Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
-                    .SmallCaps = True
+                    .SmallCaps = False
+                    .AllCaps = True
+                    .Size = 9
                     .Italic = True
                 End With
                 Resume
