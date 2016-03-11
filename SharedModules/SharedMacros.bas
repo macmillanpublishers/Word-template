@@ -209,30 +209,45 @@ Public Function DownloadFromConfluence(DownloadSource As GitBranch, FinalDir As 
         LogInformation LogFile, logString
     End If
 
-    ' Can't delete template if loaded as add-in
-    On Error Resume Next        'Error = add-in not available, don't need to uninstall
-        AddIns(strFinalPath).Installed = False
-    On Error GoTo 0
+
     
     'If file exists already, log it and delete it
     If IsItThere(strFinalPath) = True Then
+
         logString = Now & " -- Previous version file in final directory."
         LogInformation LogFile, logString
-        
-        On Error Resume Next
-            Kill strFinalPath
-            
-            If Err.Number = 70 Then         'File is open and can't be replaced
-                logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user."
-                LogInformation LogFile, logString
-                strErrMsg = "Please close all other Word documents and try again."
-                MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
-                DownloadFromConfluence = False
-                On Error GoTo 0
-                Exit Function
-            End If
+    
+        ' Can't delete template if loaded as add-in
+        On Error Resume Next        'Error = add-in not available, don't need to uninstall
+            AddIns(strFinalPath).Installed = False
         On Error GoTo 0
-        
+                
+        ' Test if dir is read only
+        If GetAttr(FinalDir) <> 0 Then ' Dir is read only
+            logString = Now & " -- old " & FileName & " file is read only, can't delete/replace. " _
+                & "Alerting user."
+            LogInformation LogFile, logString
+            strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
+                "@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FileName & ")"
+            DownloadFromConfluence = False
+            On Error GoTo 0
+            Exit Function
+        Else
+            On Error Resume Next
+                Kill strFinalPath
+                
+                If Err.Number = 70 Then         'File is open and can't be replaced
+                    logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user."
+                    LogInformation LogFile, logString
+                    strErrMsg = "Please close all other Word documents and try again."
+                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
+                    DownloadFromConfluence = False
+                    On Error GoTo 0
+                    Exit Function
+                End If
+            On Error GoTo 0
+        End If
     Else
         logString = Now & " -- No previous version file in final directory."
         LogInformation LogFile, logString
