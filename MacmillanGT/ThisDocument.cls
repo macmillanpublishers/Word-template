@@ -108,7 +108,7 @@ Sub AutoExec()
     'strFileName(1) = "GtUpdater.dotm"
     strFileName(1) = "macmillan.dotm"
     strFileName(2) = "macmillan_NoColor.dotm"
-    strFileName(3) = "MacmillanCoverCopy.dotm"
+    strFileName(3) = "macmillan_CoverCopy.dotm"
 
     ' Enter the home directories for your templates here, for Mac *AND* PC
     #If Mac Then
@@ -500,6 +500,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 
