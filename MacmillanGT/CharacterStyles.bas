@@ -116,6 +116,16 @@ Sub MacmillanCharStyles()
       Call DeleteFields(StoryTypes:=(stStories(s)))
     Next s
     
+    '-----------Delete hidden text ------------------------------------------------
+    ' Note, if you don't delete hidden text, this macro turns it into reg. text.
+    For s = 1 To UBound(stStories())
+        If HiddenTextSucks(StoryType:=(stStories(s))) = True Then
+            ' Notify user maybe?
+        End If
+    Next s
+    
+    Call zz_clearFind
+    
     '===================== Replace Local Styles Start ========================
 
     '-----------------------Tag space break styles----------------------------

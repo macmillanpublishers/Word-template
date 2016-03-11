@@ -213,6 +213,16 @@ Sub MacmillanManuscriptCleanup()
     currentTracking = ActiveDocument.TrackRevisions
     ActiveDocument.TrackRevisions = False
     
+    '-----------Delete hidden text ------------------------------------------------
+    Dim s As Long
+    
+    For s = 1 To UBound(stStories())
+        If HiddenTextSucks(StoryType:=(stStories(s))) = True Then
+            ' Notify user maybe?
+        End If
+    Next s
+    
+    Call zz_clearFind
     
     '-----------Find/Replace with Wildcards = False--------------------------------
     Call zz_clearFind                          'Clear find object
@@ -228,8 +238,6 @@ Sub MacmillanManuscriptCleanup()
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
         DoEvents
     End If
-    
-    Dim s As Long
     
     For s = 1 To UBound(stStories())
         Call RmNonWildcardItems(StoryType:=(stStories(s)))   'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break

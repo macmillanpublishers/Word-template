@@ -223,11 +223,8 @@ Public Function DownloadFromConfluence(DownloadSource As GitBranch, FinalDir As 
         On Error GoTo 0
                 
         ' Test if dir is read only
-        Dim lngReadOnly As Long
-        lngReadOnly = GetAttr(FinalDir) And vbReadOnly
-        Debug.Print lngReadOnly
-        If lngReadOnly <> 0 Then ' Dir is read only
-            logString = Now & " -- " & FinalDir & " is read only, can't delete/replace. " _
+        If GetAttr(FinalDir) <> 0 Then ' Dir is read only
+            logString = Now & " -- old " & FileName & " file is read only, can't delete/replace. " _
                 & "Alerting user."
             LogInformation LogFile, logString
             strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
@@ -1157,3 +1154,45 @@ Function IsReadOnly(Path As String) As Boolean
     
 End Function
 
+Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
+    Debug.Print StoryType
+    Dim activeRng As Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    ' No, really, it does. Why is that even an option?
+    ' Seriously, this just deletes all hidden text, based on the
+    ' assumption that if it's hidden, you don't want it.
+    ' returns a Boolean in case we want to notify user at some point
+    
+    HiddenTextSucks = False
+    
+    Dim aCounter As Long
+    aCounter = 0
+    
+    'Move selection to start of document
+    activeRng.Select
+    ' Selection.HomeKey Unit:=wdStory
+
+    With Selection.Find
+        .ClearFormatting
+        .Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Font.Hidden = True
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute ReplaceWith:="", Replace:=wdReplaceAll
+    End With
+    
+'    Do While Selection.Find.Execute = True And aCounter < 500
+'        'aCounter < 500 so we don't get an infinite loop
+'        aCounter = aCounter + 1
+'
+'        ' If we found some text, delete it
+'        Selection.Delete
+'        HiddenTextSucks = True
+'    Loop
+End Function
