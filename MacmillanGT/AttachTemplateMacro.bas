@@ -19,7 +19,7 @@ Sub zz_AttachBoundMSTemplate()
 End Sub
 
 Sub zz_AttachCoverTemplate()
-    Call AttachMe("MacmillanCoverCopy.dotm")
+    Call AttachMe("macmillan_CoverCopy.dotm")
 End Sub
 
 Sub AttachMe(TemplateName As String)
