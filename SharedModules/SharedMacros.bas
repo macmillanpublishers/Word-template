@@ -209,30 +209,45 @@ Public Function DownloadFromConfluence(DownloadSource As GitBranch, FinalDir As 
         LogInformation LogFile, logString
     End If
 
-    ' Can't delete template if loaded as add-in
-    On Error Resume Next        'Error = add-in not available, don't need to uninstall
-        AddIns(strFinalPath).Installed = False
-    On Error GoTo 0
+
     
     'If file exists already, log it and delete it
     If IsItThere(strFinalPath) = True Then
+
         logString = Now & " -- Previous version file in final directory."
         LogInformation LogFile, logString
-        
-        On Error Resume Next
-            Kill strFinalPath
-            
-            If Err.Number = 70 Then         'File is open and can't be replaced
-                logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user."
-                LogInformation LogFile, logString
-                strErrMsg = "Please close all other Word documents and try again."
-                MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
-                DownloadFromConfluence = False
-                On Error GoTo 0
-                Exit Function
-            End If
+    
+        ' Can't delete template if loaded as add-in
+        On Error Resume Next        'Error = add-in not available, don't need to uninstall
+            AddIns(strFinalPath).Installed = False
         On Error GoTo 0
-        
+                
+        ' Test if dir is read only
+        If IsReadOnly(FinalDir) = True Then ' Dir is read only
+            logString = Now & " -- old " & FileName & " file is read only, can't delete/replace. " _
+                & "Alerting user."
+            LogInformation LogFile, logString
+            strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
+                "@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FileName & ")"
+            DownloadFromConfluence = False
+            On Error GoTo 0
+            Exit Function
+        Else
+            On Error Resume Next
+                Kill strFinalPath
+                
+                If Err.Number = 70 Then         'File is open and can't be replaced
+                    logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user."
+                    LogInformation LogFile, logString
+                    strErrMsg = "Please close all other Word documents and try again."
+                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
+                    DownloadFromConfluence = False
+                    On Error GoTo 0
+                    Exit Function
+                End If
+            On Error GoTo 0
+        End If
     Else
         logString = Now & " -- No previous version file in final directory."
         LogInformation LogFile, logString
@@ -1139,3 +1154,45 @@ Function IsReadOnly(Path As String) As Boolean
     
 End Function
 
+Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
+    Debug.Print StoryType
+    Dim activeRng As Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    ' No, really, it does. Why is that even an option?
+    ' Seriously, this just deletes all hidden text, based on the
+    ' assumption that if it's hidden, you don't want it.
+    ' returns a Boolean in case we want to notify user at some point
+    
+    HiddenTextSucks = False
+    
+    Dim aCounter As Long
+    aCounter = 0
+    
+    'Move selection to start of document
+    activeRng.Select
+    ' Selection.HomeKey Unit:=wdStory
+
+    With Selection.Find
+        .ClearFormatting
+        .Text = ""
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Font.Hidden = True
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute ReplaceWith:="", Replace:=wdReplaceAll
+    End With
+    
+'    Do While Selection.Find.Execute = True And aCounter < 500
+'        'aCounter < 500 so we don't get an infinite loop
+'        aCounter = aCounter + 1
+'
+'        ' If we found some text, delete it
+'        Selection.Delete
+'        HiddenTextSucks = True
+'    Loop
+End Function

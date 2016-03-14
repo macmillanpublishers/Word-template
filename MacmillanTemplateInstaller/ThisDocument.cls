@@ -10,61 +10,60 @@ Attribute VB_Exposed = True
 '=======================================
 ' By Erica Warren - erica.warren@macmillan.com
 '
-'===== USE ===============================
-' Sets variable names (file names and directories) for Installer sub in FileInstaller module.
+'===== USE ==============================
+' Sets variable names (file names and directories) for Installer sub in FileInstaller module
 '
-'===== DEPENDENCIES ========================
+'===== DEPENDENCIES =====================
 ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
-' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
-' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
-' and be saved in the STARTUP directory.
+' If this is meant to be an installer, it should reside in the ThisDocument module in a .docm file.
+' If this is meant to be an updater, it should reside in whatever module calls the checking procedure.
 
-' This requires that the SharedMacros module be saved in the same template
+' Requires FileInstaller and SharedMacros modules be installed in the same template
 
 Option Explicit
 Option Base 1
 
-Sub AutoExec()
-
-    ' ======= For testing / debugging ==============
-    ' MsgBox "I am NEW GtUpdater and I am running!"
-    ' ==============================================
+Private Sub Document_Open()
+    ' ==================================================
+    ' For debugging; comment out of production code
+    ' MsgBox "I am Doc_Open for Installer and I am running"
+    ' ==================================================
 
     Dim downloadBranch As GitBranch
     Dim blnInstaller As Boolean
     Dim strTemplateName As String
     Dim strFileName() As String
     Dim strFileDir() As String
-
+    
     Dim strPcStyleDir As String
     Dim strPcStartupDir As String
     Dim strMacStyleDir As String
     Dim strMacStartupDir As String
     Dim strMacDocs As String
-
+    
 '==========================================================================================
     'DEFINE ALL YOUR VARIABLES HERE
-
+    
     'Make sure to switch to MASTER before going live!
     downloadBranch = master
-
+    
     'True = standalone installer file, False = daily update checker already installed
-    blnInstaller = False
-
+    blnInstaller = True
+    
     'Plain English name of what you're installing/updating, should be singular
-    strTemplateName = "Macmillan Tools Template"
-
+    strTemplateName = "Macmillan Tools and Style Template"
+    
     'Update array lengths and template file names here
-    ReDim strFileName(1 To 1)               'Declare number of files here
-    ReDim strFileDir(1 To 1)                'And here
-
+    ReDim strFileName(1 To 5)               'Declare number of files here
+    ReDim strFileDir(1 To 5)                'And here
+    
     'File names you're installing/updating
-    strFileName(1) = "MacmillanGT.dotm"
-    'strFileName(2) = "macmillan.dotm"
-    'strFileName(3) = "macmillan_NoColor.dotm"
-    'strFileName(4) = "MacmillanCoverCopy.dotm"
-    'strFileName(5) = "GtUpdater.dotm"
-
+    strFileName(1) = "GtUpdater.dotm"
+    strFileName(2) = "macmillan.dotm"
+    strFileName(3) = "macmillan_NoColor.dotm"
+    strFileName(4) = "macmillan_CoverCopy.dotm"
+    strFileName(5) = "MacmillanGT.dotm"
+    
     ' Enter the home directories for your templates here, for Mac *AND* PC
     #If Mac Then
         strMacDocs = MacScript("return (path to documents folder) as string")
@@ -76,26 +75,26 @@ Sub AutoExec()
     #End If
 '=============================================================================================
 
+    
     #If Mac Then
-        strFileDir(1) = strMacStyleDir      'Final directory you're installing file in on a Mac
-        'strFileDir(2) = strMacStyleDir
-        'strFileDir(3) = strMacStyleDir
-        'strFileDir(4) = strMacStyleDir
-        'strFileDir(5) = strMacStartupDir
+        strFileDir(1) = strMacStartupDir      'Final directory you're installing file in on a Mac
+        strFileDir(2) = strMacStyleDir
+        strFileDir(3) = strMacStyleDir
+        strFileDir(4) = strMacStyleDir
+        strFileDir(5) = strMacStyleDir
     #Else
-        strFileDir(1) = strPcStyleDir      'Final directory you're installing file in on a PC
-        'strFileDir(2) = strPcStyleDir
-        'strFileDir(3) = strPcStyleDir
-        'strFileDir(4) = strPcStyleDir
-        'strFileDir(5) = strPcStartupDir
+        strFileDir(1) = strPcStartupDir      'Final directory you're installing file in on a PC
+        strFileDir(2) = strPcStyleDir
+        strFileDir(3) = strPcStyleDir
+        strFileDir(4) = strPcStyleDir
+        strFileDir(5) = strPcStyleDir
     #End If
-
+        
     'Check that same number of file names and directories
     If UBound(strFileName()) <> UBound(strFileDir()) Then
         MsgBox "Number of files for download must match number of directories.", vbCritical, "OOPS!"
         Exit Sub
     End If
-
 
     ' ====== PART 1: REMOVE LEGACY TOOLS TEMPLATE =======
     ' The main template, MacmillanGT.dotm, used to be saved in Startup but since non-admin users
@@ -104,9 +103,9 @@ Sub AutoExec()
     Dim strOldGT As String
 
     #If Mac Then
-        strOldGT = strMacStartupDir & Application.PathSeparator & strFileName(1)
+        strOldGT = strMacStartupDir & Application.PathSeparator & strFileName(5)
     #Else
-        strOldGT = strPcStartupDir & Application.PathSeparator & strFileName(1)
+        strOldGT = strPcStartupDir & Application.PathSeparator & strFileName(5)
     #End If
 
     On Error GoTo ErrHandler
@@ -116,31 +115,35 @@ Sub AutoExec()
     End If
 
     ' ====== PART 2: CHECK FOR UPDATES ===============
+    ' Unload all add-ins first
+    Dim strTemplate As String
+    Dim a As Long
+    
+    For a = LBound(strFileName()) To UBound(strFileName())
+        strTemplate = strFileDir(a) & Application.PathSeparator & strFileName(a)
+        On Error Resume Next        'Error = add-in not available, don't need to uninstall
+            AddIns(strTemplate).Installed = False
+        On Error GoTo 0
+    Next a
+    
+    ' Run Installer macro
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, TemplateName:=strTemplateName, FileName:=strFileName(), FinalDir:=strFileDir())
-
-    ' ====== PART 3: LOAD MAIN TEMPLATE ==============
-    Dim strNewGT As String
-    strNewGT = strFileDir(1) & Application.PathSeparator & strFileName(1)
-    'Debug.Print strNewGT
-
-    If IsItThere(strNewGT) = True Then
-        ' Have to add Template before loading if not in Startup
-        ' Could do Install:=True with Add method, but it somehow broke everything
-        AddIns.Add (strNewGT)
-        AddIns(strNewGT).Installed = True
-    Else
-        Dim strMessage As String
-            strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Tools template. Please send an email to " & _
-            "workflows@macmillan.com and let them know that something is broken!"
-        MsgBox strMessage, vbOKOnly, "We're So Sorry"
-    End If
-
+    
+    ' Load GtUpdater add-in (which will then load MacGT add-in)
+    Dim strGtFile As String
+    strGtFile = strFileDir(1) & Application.PathSeparator & strFileName(1)
+    
+    On Error Resume Next        'Error = add-in not available
+        AddIns(strGtFile).Installed = True
     On Error GoTo 0
+    
+    ThisDocument.Close
     Exit Sub
-
+    
 ErrHandler:
     If Err.Number = 75 Then     ' Change to whatever the actual error is when try to kill file
+        Dim strMessage As String
         ' Can we tell if this is a Macmillan install, and prompt them to use Self Service?"
         ' Could we launch Self Service from AppleScript or something?
         strMessage = "Uh oh, looks like you need to re-install the Macmillan template from Self Service or use an account with administrator priviledges."
@@ -148,18 +151,7 @@ ErrHandler:
     Else
         Debug.Print Err.Number & ": " & Err.Description
     End If
-
-
+    
 End Sub
-
-
-
-
-
-
-
-
-
-
 
 

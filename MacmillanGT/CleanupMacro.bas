@@ -213,6 +213,16 @@ Sub MacmillanManuscriptCleanup()
     currentTracking = ActiveDocument.TrackRevisions
     ActiveDocument.TrackRevisions = False
     
+    '-----------Delete hidden text ------------------------------------------------
+    Dim s As Long
+    
+    For s = 1 To UBound(stStories())
+        If HiddenTextSucks(StoryType:=(stStories(s))) = True Then
+            ' Notify user maybe?
+        End If
+    Next s
+    
+    Call zz_clearFind
     
     '-----------Find/Replace with Wildcards = False--------------------------------
     Call zz_clearFind                          'Clear find object
@@ -228,8 +238,6 @@ Sub MacmillanManuscriptCleanup()
         Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
         DoEvents
     End If
-    
-    Dim s As Long
     
     For s = 1 To UBound(stStories())
         Call RmNonWildcardItems(StoryType:=(stStories(s)))   'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
@@ -421,8 +429,8 @@ Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     ' replaces correctly styled characters with placeholder so they don't get removed
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
-    Dim preserveCharFindArray(4) As String  ' declare number of items in array
-    Dim preserveCharReplaceArray(4) As String   'delcare number of items in array
+    Dim preserveCharFindArray(5) As String  ' declare number of items in array
+    Dim preserveCharReplaceArray(5) As String   'delcare number of items in array
     Dim preserveCharStyle As String
     Dim M As Long
     
@@ -437,11 +445,13 @@ Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     preserveCharFindArray(2) = "  "  ' two spaces
     preserveCharFindArray(3) = "   "    'three spaces
     preserveCharFindArray(4) = "^l"  ' soft return
+    preserveCharFindArray(5) = "- "  ' hyphen + space
     
     preserveCharReplaceArray(1) = "`E|"
     preserveCharReplaceArray(2) = "`G|"
     preserveCharReplaceArray(3) = "`J|"
     preserveCharReplaceArray(4) = "`K|"
+    preserveCharReplaceArray(5) = "`HS|"
     
     For M = 1 To UBound(preserveCharFindArray())
         With activeRng.Find
@@ -608,8 +618,8 @@ Private Sub PreserveStyledCharactersB(StoryType As WdStoryType)
     ' replaces placeholders with original characters
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
 
-    Dim preserveCharFindArray(4) As String  ' declare number of items in array
-    Dim preserveCharReplaceArray(4) As String   'declare number of items in array
+    Dim preserveCharFindArray(5) As String  ' declare number of items in array
+    Dim preserveCharReplaceArray(5) As String   'declare number of items in array
     Dim preserveCharStyle As String
     Dim N As Long
 
@@ -623,11 +633,13 @@ Private Sub PreserveStyledCharactersB(StoryType As WdStoryType)
     preserveCharFindArray(2) = "`G|"    ' two spaces
     preserveCharFindArray(3) = "`J|"   'three spaces
     preserveCharFindArray(4) = "`K|"   ' soft return
+    preserveCharFindArray(5) = "`HS|"
 
     preserveCharReplaceArray(1) = "^t"
     preserveCharReplaceArray(2) = "  "
     preserveCharReplaceArray(3) = "   "
     preserveCharReplaceArray(4) = "^l"
+    preserveCharReplaceArray(5) = "- "
 
     For N = 1 To UBound(preserveCharFindArray())
         With activeRng.Find
