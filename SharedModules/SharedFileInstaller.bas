@@ -316,6 +316,17 @@ Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileN
         NeedUpdate = True
         Dim strCurrentVersion As String
         strCurrentVersion = ImportVariable(strFullVersionPath)
+        
+        ' git converts all line endings to LF which messes up PC, and I don't want to deal
+        ' with it so we'll just remove everything
+        If InStr(strCurrentVersion, vbCrLf) > 0 Then
+            strCurrentVersion = Replace(strCurrentVersion, vbCrLf, "")
+        ElseIf InStr(strCurrentVersion, vbLf) > 0 Then
+            strCurrentVersion = Replace(strCurrentVersion, vbLf, "")
+        ElseIf InStr(strCurrentVersion, vbCr) > 0 Then
+            strCurrentVersion = Replace(strCurrentVersion, vbCr, "")
+        End If
+        
         logString = Now & " -- Current version is " & strCurrentVersion
     Else
         NeedUpdate = False

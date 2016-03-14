@@ -61,7 +61,7 @@ Private Sub Document_Open()
     strFileName(1) = "GtUpdater.dotm"
     strFileName(2) = "macmillan.dotm"
     strFileName(3) = "macmillan_NoColor.dotm"
-    strFileName(4) = "MacmillanCoverCopy.dotm"
+    strFileName(4) = "macmillan_CoverCopy.dotm"
     strFileName(5) = "MacmillanGT.dotm"
     
     ' Enter the home directories for your templates here, for Mac *AND* PC
