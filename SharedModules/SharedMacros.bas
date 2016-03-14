@@ -223,7 +223,7 @@ Public Function DownloadFromConfluence(DownloadSource As GitBranch, FinalDir As 
         On Error GoTo 0
                 
         ' Test if dir is read only
-        If GetAttr(FinalDir) <> 0 Then ' Dir is read only
+        If IsReadOnly = True Then ' Dir is read only
             logString = Now & " -- old " & FileName & " file is read only, can't delete/replace. " _
                 & "Alerting user."
             LogInformation LogFile, logString
