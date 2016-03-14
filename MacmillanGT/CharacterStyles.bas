@@ -97,6 +97,16 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
     
+    '-----------Delete hidden text ------------------------------------------------
+    ' Note, if you don't delete hidden text, this macro turns it into reg. text.
+    For s = 1 To UBound(stStories())
+        If HiddenTextSucks(StoryType:=(stStories(s))) = True Then
+            ' Notify user maybe?
+        End If
+    Next s
+    
+    Call zz_clearFind
+    
     '===================== Replace Local Styles Start ========================
 
     '-----------------------Tag space break styles----------------------------
@@ -830,7 +840,9 @@ ErrorHandler:
                 Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
-                    .SmallCaps = True
+                    .SmallCaps = False
+                    .AllCaps = True
+                    .Size = 9
                 End With
                 Resume
             
@@ -863,7 +875,9 @@ ErrorHandler:
                 Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
-                    .SmallCaps = True
+                    .SmallCaps = False
+                    .AllCaps = True
+                    .Size = 9
                     .Bold = True
                 End With
                 Resume
@@ -872,7 +886,9 @@ ErrorHandler:
                 Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
-                    .SmallCaps = True
+                    .SmallCaps = False
+                    .AllCaps = True
+                    .Size = 9
                     .Italic = True
                 End With
                 Resume

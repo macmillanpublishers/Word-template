@@ -342,6 +342,7 @@ Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileN
     If IsItThere(strFullVersionPath) = True Then
         NeedUpdate = True
         Dim strCurrentVersion As String
+
         strCurrentVersion = ReadTextFile(Path:=strFullVersionPath, FirstLineOnly:=True)
         
         ' git converts all line endings to LF which messes up PC, and I don't want to deal
@@ -355,6 +356,7 @@ Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileN
         End If
         
 '        Debug.Print "Text File: |" & strCurrentVersion & "|"
+
         logString = Now & " -- Current version is " & strCurrentVersion
     Else
         NeedUpdate = False

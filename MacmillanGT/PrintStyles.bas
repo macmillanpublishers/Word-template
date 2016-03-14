@@ -425,7 +425,7 @@ Private Sub PrintStylesPC()
     Dim a As Long
     
     ' This is the template where the building block is saved
-    strPath = Environ("APPDATA") & "\Microsoft\Word\STARTUP\MacmillanGT.dotm"
+    strPath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\MacmillanGT.dotm"
     If IsItThere(strPath) = True Then
         Set objTemplate = Templates(strPath)
     Else

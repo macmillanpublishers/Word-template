@@ -70,13 +70,15 @@ Private Sub Document_Open()
     For a = LBound(strAllTheTemplates()) To UBound(strAllTheTemplates())
         On Error Resume Next        'Error = add-in not available, don't need to uninstall
             AddIns(strAllTheTemplates(a)).Installed = False
+
         On Error GoTo 0
     Next a
     
     ' Run Installer macro
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, TemplateName:=strTemplateName, _
-        TemplatesToInstall:=strAllTheTemplates())
+
+    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
+        TemplateName:=strTemplateName, TemplatesToInstall:=strAllTheTemplates())
     
     ' Load GtUpdater add-in (which will then load MacGT add-in)
     
