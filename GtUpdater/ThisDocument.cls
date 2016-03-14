@@ -46,7 +46,7 @@ Sub AutoExec()
     'DEFINE ALL YOUR VARIABLES HERE
 
     'Make sure to switch to MASTER before going live!
-    downloadBranch = releases
+    downloadBranch = master
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
