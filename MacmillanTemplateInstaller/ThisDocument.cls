@@ -45,7 +45,7 @@ Private Sub Document_Open()
     'DEFINE ALL YOUR VARIABLES HERE
     
     'Make sure to switch to MASTER before going live!
-    downloadBranch = releases
+    downloadBranch = master
     
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = True
@@ -61,7 +61,7 @@ Private Sub Document_Open()
     strFileName(1) = "GtUpdater.dotm"
     strFileName(2) = "macmillan.dotm"
     strFileName(3) = "macmillan_NoColor.dotm"
-    strFileName(4) = "MacmillanCoverCopy.dotm"
+    strFileName(4) = "macmillan_CoverCopy.dotm"
     strFileName(5) = "MacmillanGT.dotm"
     
     ' Enter the home directories for your templates here, for Mac *AND* PC
