@@ -1,8 +1,6 @@
 # Custom Ribbon tab / Mac toolbar
 
-# Adding new styles
-## Naming conventions
-Each style name must end with a short style code in parentheses. Paragraph styles are first-letter caps, and character styles are all lowercase. Character styles all begin with the word "span".
+
 
 ## Formatting conventions
 ### macmillan.dotm
@@ -32,3 +30,21 @@ General git intro. Maybe repeat some stuff about why we export modules.
 ## Line endings
 
 ## Merge conflicts
+Git cannot merge changes to binary files, so if you have merged different branches you will get a merge conflict. Luckily you exported your code modules, which *can* merge two different branches, so just follow the steps below to update the template files.
+
+From the command line, after you get a merge conflict:
+
+```
+$ git checkout develop # or whatever branch you are merging changes into
+$ git merge feature # "feature" being whatever feature branch you are merging in; you may get a merge conflict here
+```
+Resolve any conflicts in the macro files (.bas, .cls, or .frm) and commit the changes.
+
+```
+git checkout --ours path/file.dotm (keeps the develop version of the file; if you want to keep the feature branch version, use --theirs)
+git add path/file.dotm
+```
+
+Open the template file and replace the modules that were updated in feature with the modules currently in the repo (that have been merged) – the ImportAllModules macro in the Utilities.dotm template is useful for this part.
+Save the template.
+Add the modified file and commit the changes.
