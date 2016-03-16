@@ -24,6 +24,7 @@ Installs the Macmillan template. See Installer docs for more info. Also requires
 ### ThisDocument.cls
 Contains a `Document_Open` procedure that runs (you guessed it) when the document is opened.
 
+Hold down Shift while opening the file to prevent the macro from running automatically.
 
 
 ## GtUpdater.dotm

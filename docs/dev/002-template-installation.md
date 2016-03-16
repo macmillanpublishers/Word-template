@@ -1,6 +1,42 @@
 # Overview
 End users can install the template themselves following the instructions [on this page](https://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template). This document just explains what the installer file does for troubleshooting or manual installation purposes (or just because you're curious).
 
+The installer macro downloads the template files that are attached to  [this Public Confluence page](https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production) and saves them in the correct locations on the user's computer. It is a sibling page to the Public space home page, so users won't see it in the page tree when viewing the home page.
+
+Note that the VBA code needs to reference the attachment URL, not the main page URL, i.e. the URL for the main attachments page is <https://confluence.macmillan.com/download/attachments/9044274>. Simply append the file name to the end of the URL to download that file.
+
+# Git Confluence connector
+## Production files
+The live production files (templates and version number files) are attached to the page listed above using the [Git for Confluence](https://marketplace.atlassian.com/plugins/nl.avisi.confluence.plugins.git-plugin/server/overview) add-on. This keeps the files synced with the `master` branch of the `Word-template` repo on GitHub. Any changes that are pushed to the `master` branch are automatically available for download.
+
+Admin docs for the add-in [are available here](http://addons.avisi.com/git-for-confluence/documentation/).
+
+## Beta testing and development files
+There are separate Confluence pages whose attachments are synced to the `releases` branch [(here)](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+pre-release) and the `develop` branch [(here)](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging). See Development Workflow for their uses.
+
+**Note:** The *downloadBranch* variable in the `AutoExec` procedure in the `ThisDocument` module of each template file (`MacmillanGT.dotm`, `GtUpdater.dotm`, and the installer file) needs to be set to the branch you want to download from. See Development Workflow for the process to manage this.
+
+
+## Scheduled jobs
+The Git for Confluence add-on checks the repo for updates every five minutes. A Confluence administrator can sync the files manually by going to **General configuration > Administration > Scheduled Jobs**. One of the jobs in the list is **Synchronize Git repositories**, and it lists the time of the last sync and the time of the next scheduled sync. To sync the files manually, click on the **Run** link.
+
+
+# Installer file
+Users download the installer file from [this Confluence page](https://confluence.macmillan.com/display/PBL/Install+the+Macmillan+Template), which links directly to the installer file on the `master` branch of the GitHub repo.
+
+The installer file launches the installation macro immediately at file open, though with default security settings most users will be prompted with a warning and need to click **Enable Content** before it will run.
+
+If you need to open the file without running the macro (to edit code, for example), hold down Shift while you open it.
+
+# Update checker
+The templates check once a day to see if a new version is available. They do this by downloading the version files attached to the appropriate Confluence page and comparing the number listed to the version number listed in the *Version* custom document property in each template. If the template version is less than the posted version, the user is prompted that an update is available. If they click OK, the macro then downloads the new version.
+
+
+
+
+
+
+
 # Installed file locations
 There are a number of template files that need to be saved in specific directories for the macros to work correctly.
 
@@ -56,23 +92,13 @@ Each template has a text file of the same name, which contains the current versi
 ## Log files
 A subdirectory named `log` is created by the installer macro in the `MacmillanStyleTemplate` directory. It contains logs of downloads for each template file.
 
- The Castoff macro also saves CSV files of design info here, and the Bookmaker check macro saves a CSV of current 
+ The Castoff macro also saves CSV files of design info here, and the Bookmaker check macro saves a CSV of current Bookmaker styles.
 
 
-# Installer file
-The download for users is linked directly to the installer file hosted on the Macmillan Publishers GitHub account in the master branch of the word-template repo. Any changes pushed to master are therefore immediately available to users for the installer file, but not for the template files. The template files by contrast are hosted as attachments on this page. There is also a staging page to use for testing.
-
-The installer file launches the installation macro immediately at file open, though with default security settings most users will be prompted with a warning and need to click a button to enable macros before it will run.
-
-If you need to open the file without running the macro (to edit code, for example), hold down Shift while you open it.
 
 
-# Update checker
 
 
-# Git Confluence connector
-What it is and how it works.
-Something about branches.
 
-## Scheduled jobs
+
 
