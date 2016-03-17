@@ -79,8 +79,6 @@ The MacmillanStyleTemplate directory is located in the user's Documents director
 * **macmillan_NoColor.dotm:** exactly the same styles as `macmillan.dotm` but with colored borders and shading removed.
 * **macmillan_CoverCopy.dotm:** styles for use in jacket / cover copy documents.
 
-Does [this link with no extension](code+organization) work? Does [this with an .md extension work for Confluence](code+organization.md)
-
 # Other files you may see
 These files may appear in the same directories as the template files, but do not need to be available for the template to work.
 
