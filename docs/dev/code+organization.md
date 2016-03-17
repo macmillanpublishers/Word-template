@@ -1,6 +1,22 @@
 # General organization
-VBA macros are run from code modules in Office template files, and our system requires multiple templates. Our general goal is to have the code for each macro in its own module, but as there are some exceptions and dependencies among modules and templates, we recommend that you use all of the templates together. 
+VBA macros are run from code modules in Office template files, and our system requires multiple templates. Our general goal is to have the code for each macro in its own module, but as there are some exceptions and dependencies among modules and templates, we recommend that you use all of the templates together.
 
+## File types
+### Documents and templates
+Word has four basic file types: documents and templates, and macro-enabled or not.
+* **DOCX** - Standard Word document. Any custom styles are only available in the document itself, and any macros are deleted when the file is saved.
+* **DOCM** - Macro-enabled *document*. Can contain macro code, which is only available to the user when the file is opened. Any custom styles are only available to the document itself.
+* **DOTX** - Standard template. Any custom styles are available to any other *document* when the document is attached to the template. Any macros are deleted when the file is saved.
+* **DOTM** - Macro-enabled *template*. Can contain both custom styles and macro code that are available to the user for other *documents*. When it saved in the Word Startup directory, it is considered a Global Template and the user can run its macros on any document.
+
+### Code modules
+There are a number of different types of code modules, indicated by their file extension whey they are imported.
+* **BAS** - Standard module. Used for regular subs and functions. Procedures, variables, and constants declared `Private` can only be called from within the module, while declaring something `Public` allows it to be called from other modules and projects.
+* **CLS** - Class module. Used for the constants, properties, and methods used to create, access, and manipulate a new object. Every document always contains a `ThisDocument` class module that represents the document object, and which can't be removed from the project.
+* **FRM** - Form code module. A special type of Class module; used for the constants, properties, and methods used to create, access, and manipulate the form object.
+* **FRX** - Form binary module. Each userform only appears in the Project Window as a single module, but when exported this binary file is created along with the code module. It contains information about how the form looks. Both files need to be present in the same directory to import the form module into a project.
+
+## Git repo
 We use Git for version control, [and the repository is hosted on Github](https://github.com/macmillanpublishers/Word-template). Git can't merge binary files, so we also export all code modules to the repo (but note that end-users only need the templates files). Binary template files are stored in subdirectories with the same name as the file, along with the code modules that live in that template (with the exception of modules shared by different templates--see below).
 
 There is also a plain text file with the same name as each template file in its subdirectory, which stores that template's version number.

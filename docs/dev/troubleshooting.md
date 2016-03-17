@@ -1,6 +1,10 @@
 # Security settings
 
 
+# Download errors
+Check [error messages](error+messages), and also check logs in `MacmillanStyleTemplates/logs`.
+
+
 # Mac won't load template in Startup
 On OS X, because we download the template files from the internet, they are stripped of their filetype codes. This prevents Word from recognizing that the file is a template and causes Word to silently fail to load the Add-In. Additionally, Apple's `quarantine` XML attribute is added to the file. 
 
