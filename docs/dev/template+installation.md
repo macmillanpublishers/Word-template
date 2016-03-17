@@ -14,7 +14,7 @@ Admin docs for the add-in [are available here](http://addons.avisi.com/git-for-c
 ## Beta testing and development files
 There are separate Confluence pages whose attachments are synced to the `releases` branch [(here)](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+pre-release) and the `develop` branch [(here)](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging). See Development Workflow for their uses.
 
-**Note:** The *downloadBranch* variable in the `AutoExec` procedure in the `ThisDocument` module of each template file (`MacmillanGT.dotm`, `GtUpdater.dotm`, and the installer file) needs to be set to the branch you want to download from. See Development Workflow for the process to manage this.
+**Note:** The *downloadBranch* variable in the `AutoExec` procedure in the `ThisDocument` module of each template file (`MacmillanGT.dotm`, `GtUpdater.dotm`, and the installer file) needs to be set to the branch you want to download from. See [Development Workflow](development+workflow) for the process to manage this.
 
 
 ## Scheduled jobs

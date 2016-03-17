@@ -1,18 +1,23 @@
 Most of the useful info about specific bits of code is available in comments it in code, but a few macros have outside dependencies as detailed below.
 
-# Castoff Macro
-The Macmillan Castoff Macro requires at least one CSV file of design info be uploaded as an attachment to Word Template downloads - production. 
+# Bookmaker Check macro
+The Bookmaker Check macro requires a CSV of the styles currently supported by Bookmaker. This file is attached to [the production downloads page](https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production), but as of right now not via the Git for Confluence connector.
 
-NOTE: If you create and/or edit any CSV from Excel for Mac, be sure to save the file as "Windows Comma Separated (csv)" or it won't display correctly when embedded on Confluence pages (though it will still work in the macro).
+
+# Castoff macro
+The Macmillan Castoff Macro requires at least one CSV file of design info to be uploaded as an attachment to [Word Template downloads - production](https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production). 
+
+NOTE: If you create and/or edit any CSV from Excel 2011 for Mac, be sure to save the file as "Windows Comma Separated (csv)" or it won't display correctly when embedded on Confluence pages (though it will still work in the macro).
 
 ## Design info CSV file
-Each publisher listed as an option on the castoff form should have its own design info CSV uploaded to Confluence. The file name must consist of "Castoff_" plus the short code for that publisher used in the macro code itself. It must have both a heading row and a heading column (see the example below for 
+Each publisher listed as an option on the castoff form should have its own design info CSV uploaded to Confluence. The file name must consist of "Castoff_" plus the short code for that publisher used in the macro code itself. It must have both a heading row and a heading column.
 
 Currently we are supporting the following publishers:
 
-Publisher	Design info file
-St. Martin's Press	Castoff_SMP.csv
-Tor.com	Castoff_torDOTcom.csv
+Publisher | Design info file
+----------|------------------
+St. Martin's Press | Castoff_SMP.csv
+Tor.com | Castoff_torDOTcom.csv
 
 NOTE: If no CSV is available for a publisher, the macro defaults to using the data for SMP.
 
