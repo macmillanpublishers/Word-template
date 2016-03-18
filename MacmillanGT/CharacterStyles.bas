@@ -68,17 +68,17 @@ Sub MacmillanCharStyles()
     funArray(9) = "* Jazzing up author bio..."
     funArray(10) = "* Filling in plot holes..."
     
-    Dim x As Integer
+    Dim X As Integer
     
     'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
     Randomize           'Sets seed for Rnd below to value of system timer
-    x = Int(UBound(funArray()) * Rnd()) + 1
+    X = Int(UBound(funArray()) * Rnd()) + 1
     
     'Debug.Print x
     
     strTitle = "Macmillan Character Styles Macro"
     sglPercentComplete = 0.05
-    strStatus = funArray(x)
+    strStatus = funArray(X)
     
     'All Progress Bar statements for PC only because won't run modeless on Mac
     Dim TheOS As String
@@ -163,7 +163,7 @@ Sub MacmillanCharStyles()
     End If
     
     'Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
-    'Also if you AutoFormat a second time if undoes all of the formatting already applied to hyperlinks
+    'Also if you AutoFormat a second time it undoes all of the formatting already applied to hyperlinks
     For s = 1 To UBound(stStories())
         Call StyleHyperlinksA(StoryType:=(stStories(s)))                    'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
     Next s
@@ -226,10 +226,18 @@ Sub MacmillanCharStyles()
         DoEvents
     End If
     
+    ' allBkmkrStyles is a jagged array (array of arrays) to hold in-use Bookmaker styles.
+    ' i.e., one array for each story. Must be Variant.
+    Dim allBkmkrStyles() As Variant
     For s = 1 To UBound(stStories())
-        Call LocalStyleTag(StoryType:=(stStories(s)))                 'tag local styling, reset local styling, remove text highlights
+    'tag local styling, reset local styling, remove text highlights
+        Call LocalStyleTag(StoryType:=(stStories(s)))
+        
+        ReDim Preserve allBkmkrStyles(1 To s)
+        allBkmkrStyles(s) = TagBkmkrCharStyles(StoryType:=stStories(s))
     Next s
     Call zz_clearFind
+
 
     '----------------------------Apply Macmillan character styles to tagged text--------
     sglPercentComplete = 0.85
@@ -245,7 +253,7 @@ Sub MacmillanCharStyles()
     End If
     
     For s = 1 To UBound(stStories())
-        Call LocalStyleReplace(StoryType:=(stStories(s)))            'reapply local styling through char styles
+        Call LocalStyleReplace(StoryType:=(stStories(s)), BkmkrStyles:=allBkmkrStyles(s))            'reapply local styling through char styles
     Next s
     Call zz_clearFind
     
@@ -378,7 +386,8 @@ Private Sub AutoFormatHyperlinks()
     '--------------------------------------------------
     ' converts all URLs to hyperlinks with built-in "Hyperlink" style
     ' because some show up as plain text
-    ' Note this also removes all blank paragraphs regardless of style, so needs to come after sub PreserveWhiteSpaceinBrkA
+    ' Note this also removes all blank paragraphs regardless of style,
+    ' so needs to come after sub PreserveWhiteSpaceinBrkA
     
     
     Dim f1 As Boolean, f2 As Boolean, f3 As Boolean
@@ -583,12 +592,13 @@ Private Sub RemoveBreaks(StoryType As WdStoryType)
     
     Dim wsFindArray(4) As String              'number of items in array should be declared here
     Dim wsReplaceArray(4) As String       'and here
-    Dim q As Long
+    Dim Q As Long
     
     wsFindArray(1) = "^m^13"              'manual page breaks
     wsFindArray(2) = "^13{2,}"          '2 or more paragraphs
     wsFindArray(3) = "(`[0-9]``)^13"    'remove para following a preserved break style                     v. 3.1 patch
-    wsFindArray(4) = "(^m`7`^13`7``)`7`^13`7``"  'remove blank para following page break even if styled.
+    wsFindArray(4) = "(^m`7`^13`7``)`7`^13`7``"  'remove blank para following page break
+                                                    ' even if styled.
     
     wsReplaceArray(1) = "^p"
     wsReplaceArray(2) = "^p"
@@ -596,12 +606,12 @@ Private Sub RemoveBreaks(StoryType As WdStoryType)
     wsReplaceArray(4) = "\1"
     
     
-    For q = 1 To UBound(wsFindArray())
+    For Q = 1 To UBound(wsFindArray())
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
-            .Text = wsFindArray(q)
-            .Replacement.Text = wsReplaceArray(q)
+            .Text = wsFindArray(Q)
+            .Replacement.Text = wsReplaceArray(Q)
             .Wrap = wdFindContinue
             .Format = False
             .MatchCase = False
@@ -665,8 +675,8 @@ End Sub
 Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
     
-    Dim tagCharStylesArray(13) As String                                   ' number of items in array should be declared here
-    Dim CharStylePreserveArray(13) As String              ' number of items in array should be declared here
+    Dim tagCharStylesArray(12) As String                                   ' number of items in array should be declared here
+    Dim CharStylePreserveArray(12) As String              ' number of items in array should be declared here
     Dim d As Long
     
     CharStylePreserveArray(1) = "span hyperlink (url)"
@@ -677,11 +687,11 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     CharStylePreserveArray(6) = "span carry query (cq)"
     CharStylePreserveArray(7) = "span key phrase (kp)"
     CharStylePreserveArray(8) = "span preserve characters (pre)"  'added v. 3.2
-    CharStylePreserveArray(9) = "bookmaker keep together (kt)"  'added v. 3.7
-    CharStylePreserveArray(10) = "span ISBN (isbn)"  'added v. 3.7
-    CharStylePreserveArray(11) = "span symbols ital (symi)"     'added v. 3.8
-    CharStylePreserveArray(12) = "span symbols bold (symb)"
-    CharStylePreserveArray(13) = "span run-in computer type (comp)"
+
+    CharStylePreserveArray(9) = "span ISBN (isbn)"  'added v. 3.7
+    CharStylePreserveArray(10) = "span symbols ital (symi)"     'added v. 3.8
+    CharStylePreserveArray(11) = "span symbols bold (symb)"
+    CharStylePreserveArray(12) = "span run-in computer type (comp)"
     
     
     tagCharStylesArray(1) = "`H|^&|H`"
@@ -692,11 +702,10 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     tagCharStylesArray(6) = "`V|^&|V`"
     tagCharStylesArray(7) = "`T|^&|T`"
     tagCharStylesArray(8) = "`F|^&|F`"
-    tagCharStylesArray(9) = "`K|^&|K`"
-    tagCharStylesArray(10) = "`Q|^&|Q`"
-    tagCharStylesArray(11) = "`E|^&|E`"
-    tagCharStylesArray(12) = "`G|^&|G`"
-    tagCharStylesArray(13) = "`J|^&|J`"
+    tagCharStylesArray(9) = "`Q|^&|Q`"
+    tagCharStylesArray(10) = "`E|^&|E`"
+    tagCharStylesArray(11) = "`G|^&|G`"
+    tagCharStylesArray(12) = "`J|^&|J`"
     
     On Error GoTo CharStyleError
     
@@ -799,18 +808,17 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
     
     Next
     
-    '-------------Reset everything
-    activeRng.Font.Reset
+
 
 End Sub
 
-Private Sub LocalStyleReplace(StoryType As WdStoryType)
+Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-    Dim tagFindArray(23) As String              ' number of items in array should be declared here
-    Dim tagReplaceArray(23) As String         'and here
+    Dim tagFindArray(22) As String              ' number of items in array should be declared here
+    Dim tagReplaceArray(22) As String         'and here
     Dim h As Long
     
     tagFindArray(1) = "`B|(*)|B`"
@@ -830,13 +838,12 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagFindArray(15) = "`C|(*)|C`"                 'v. 3.1 patch
     tagFindArray(16) = "`D|(*)|D`"                       'v. 3.1 patch
     tagFindArray(17) = "`F|(*)|F`"
-    tagFindArray(18) = "`K|(*)|K`"          'v. 3.7 added
-    tagFindArray(19) = "`Q|(*)|Q`"          'v. 3.7 added
-    tagFindArray(20) = "`E|(*)|E`"
-    tagFindArray(21) = "`G|(*)|G`"          'v. 3.8 added
-    tagFindArray(22) = "`J|(*)|J`"
-    tagFindArray(23) = "`a|(*)|a`"
-    
+    tagFindArray(18) = "`Q|(*)|Q`"          'v. 3.7 added
+    tagFindArray(19) = "`E|(*)|E`"
+    tagFindArray(20) = "`G|(*)|G`"          'v. 3.8 added
+    tagFindArray(21) = "`J|(*)|J`"
+    tagFindArray(22) = "`a|(*)|a`"
+
     tagReplaceArray(1) = "span boldface characters (bf)"
     tagReplaceArray(2) = "span italic characters (ital)"
     tagReplaceArray(3) = "span underscore characters (us)"
@@ -845,7 +852,6 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagReplaceArray(6) = "span subscript characters (sub)"
     tagReplaceArray(7) = "span superscript characters (sup)"
     tagReplaceArray(8) = "span symbols (sym)"
-    ' the last 9 items here are of course v. 3.1 patches
     tagReplaceArray(9) = "span accent characters (acc)"
     tagReplaceArray(10) = "span cross-reference (xref)"
     tagReplaceArray(11) = "span material to come (tk)"
@@ -855,16 +861,86 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagReplaceArray(15) = "span smcap bold (scbold)"
     tagReplaceArray(16) = "span smcap ital (scital)"
     tagReplaceArray(17) = "span preserve characters (pre)"
-    tagReplaceArray(18) = "bookmaker keep together (kt)"            'v. 3.7 added
-    tagReplaceArray(19) = "span ISBN (isbn)"                        'v. 3.7 added
-    tagReplaceArray(20) = "span symbols ital (symi)"                ' v. 3.8 added
-    tagReplaceArray(21) = "span symbols bold (symb)"                ' v. 3.8 added
-    tagReplaceArray(22) = "span run-in computer type (comp)"
-    tagReplaceArray(23) = "span strikethrough characters (str)"
-    
-    On Error GoTo ErrorHandler:
+    tagReplaceArray(18) = "span ISBN (isbn)"                        'v. 3.7 added
+    tagReplaceArray(19) = "span symbols ital (symi)"                ' v. 3.8 added
+    tagReplaceArray(20) = "span symbols bold (symb)"                ' v. 3.8 added
+    tagReplaceArray(21) = "span run-in computer type (comp)"
+    tagReplaceArray(22) = "span strikethrough characters (str)"
     
     For h = 1 To UBound(tagFindArray())
+    
+    ' ----------- bookmaker char styles ----------------------
+        ' If array is empty, no bookmaker char styles in use
+        If IsArrayEmpty(BkmkrStyles) = False Then
+        
+On Error GoTo BkmkrError
+
+            Dim Q As Long
+            Dim qCount As Long
+            Dim strAction As String
+            Dim strNewName As String
+            Dim strTag As String
+            
+
+            
+            ' deal with bookmaker styles
+            For Q = LBound(BkmkrStyles) To UBound(BkmkrStyles)
+                ' replace bookmaker-tagged text with styles
+                strTag = "bk" & Format(Q, "0000")
+                With activeRng.Find
+                    .ClearFormatting
+                    .Replacement.ClearFormatting
+                    .Text = "`" & strTag & "|(*)|" & strTag & "`"
+                    .Replacement.Text = "\1"
+                    .Wrap = wdFindContinue
+                    .Format = True
+                    .Replacement.Style = BkmkrStyles(Q)
+                    .MatchCase = False
+                    .MatchWholeWord = False
+                    .MatchWildcards = True
+                    .MatchSoundsLike = False
+                    .MatchAllWordForms = False
+                    .Execute Replace:=wdReplaceAll
+                End With
+
+                'Move selection to start of document
+                Selection.HomeKey Unit:=wdStory
+            
+
+                qCount = 0
+                With Selection.Find
+                    .ClearFormatting
+                    .Replacement.ClearFormatting
+                    .Text = tagFindArray(h)
+                    .Replacement.Text = "\1"
+                    .Wrap = wdFindStop
+                    .Forward = True
+                    .Style = BkmkrStyles(Q)
+                    .Replacement.Style = tagReplaceArray(h)
+                    .Format = True
+                    .MatchCase = False
+                    .MatchWholeWord = False
+                    .MatchWildcards = True
+                    .MatchSoundsLike = False
+                    .MatchAllWordForms = False
+
+                    Do While .Execute = True And qCount < 200
+                        qCount = qCount + 1
+                        ' pull just action to add to style name
+                        ' always starts w/ "bookmaker ", but we want to include the space
+                        strAction = Mid(BkmkrStyles(Q), 10, InStr(BkmkrStyles(Q), "(") - 11)
+                        strNewName = tagReplaceArray(h) & strAction
+                        
+                        Selection.Style = strNewName
+                    Loop
+                End With
+            Next Q
+            
+            
+        End If
+        
+On Error GoTo ErrorHandler
+    ' tag the rest of the character styles
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
@@ -992,6 +1068,24 @@ ErrorHandler:
         End Select
     End If
 
+BkmkrError:
+    Debug.Print "New name: " & strNewName
+    Debug.Print "Old name: " & tagReplaceArray(h)
+    
+    Dim myStyle2 As Style
+    
+    If Err.Number = 5834 Or Err.Number = 5941 Then
+
+        Set myStyle2 = ActiveDocument.Styles.Add(Name:=strNewName, _
+            Type:=wdStyleTypeCharacter)
+            
+On Error GoTo ErrorHandler
+        myStyle2.BaseStyle = tagReplaceArray(h)
+    
+        Resume
+
+    End If
+    
 End Sub
 
 Sub DeleteFields(StoryTypes As Variant)
@@ -1010,3 +1104,73 @@ Sub DeleteFields(StoryTypes As Variant)
     End With
 End Sub
 
+
+'Private Sub TagBkmkrCharStyles()
+Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
+'    Set activeRng = ActiveDocument.Range
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    
+' Will need to loop through stories as well
+' And be a function that returns an array
+
+    Dim objStyle As Style
+    Dim strBkmkrNames() As String
+    Dim Z As Long
+    
+    ' Loop through all styles to get array of bkmkr styles in use
+    For Each objStyle In ActiveDocument.Styles
+        ' If char style with "bookmaker" in name is in use...
+        If InStr(objStyle.NameLocal, "bookmaker") <> 0 And objStyle.Type = wdStyleTypeCharacter _
+            And objStyle.InUse = True Then
+                Debug.Print StoryType & ": " & objStyle.NameLocal
+                '... add it to an array
+                Z = Z + 1
+                ReDim Preserve strBkmkrNames(1 To Z)
+                strBkmkrNames(Z) = objStyle.NameLocal
+
+        End If
+    Next objStyle
+
+    If IsArrayEmpty(strBkmkrNames) = True Then
+        TagBkmkrCharStyles = strBkmkrNames
+        Exit Function
+    End If
+
+    ' Tag in-use bkmkr styles
+    ' Make sure if text also has formatting,
+    ' the tags do not have it...
+    Dim X As Long
+    Dim strTag As String
+    Dim strAction As String
+    Dim lngCount As Long
+
+    For X = LBound(strBkmkrNames) To UBound(strBkmkrNames)
+        strTag = "bk" & Format(X, "0000")
+        Debug.Print strTag
+        
+        With activeRng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Text = ""
+            .Replacement.Text = "`" & strTag & "|^&|" & strTag & "`"
+            .Wrap = wdFindContinue
+            .Format = True
+            .Style = strBkmkrNames(X)
+            .MatchCase = False
+            .MatchWholeWord = False
+            .MatchWildcards = True
+            .MatchSoundsLike = False
+            .MatchAllWordForms = False
+            .Execute Replace:=wdReplaceAll
+        End With
+
+    Next
+
+    '-------------Reset everything -- clears all direct formatting!
+    activeRng.Font.Reset
+    
+    ' return array of in-use bookmaker styles so we can tag later
+    TagBkmkrCharStyles = strBkmkrNames
+    
+
+End Function
