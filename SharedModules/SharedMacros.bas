@@ -289,12 +289,18 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
 
         logString = Now & " -- Previous version file in final directory."
         LogInformation LogFile, logString
-    
-        ' Can't delete template if loaded as add-in
-        On Error Resume Next        'Error = add-in not available, don't need to uninstall
-            AddIns(strFinalPath).Installed = False
-        On Error GoTo 0
-                
+        
+        ' get file extension
+        Dim strExt As String
+        strExt = Right(strFinalPath, InStrRev(StrReverse(strFinalPath), "."))
+        
+        ' can't delete template if it's installed as an add-in
+        If InStr(strExt, "dot") > 0 Then
+            On Error Resume Next        'Error = add-in not available, don't need to uninstall
+                AddIns(strFinalPath).Installed = False
+            On Error GoTo 0
+        End If
+  
         ' Test if dir is read only
         If IsReadOnly(FinalDir) = True Then ' Dir is read only
             logString = Now & " -- old " & FileName & " file is read only, can't delete/replace. " _
@@ -710,6 +716,7 @@ Function IsArrayEmpty(Arr As Variant) As Boolean
     If IsArray(Arr) = False Then
         ' we weren't passed an array, return True
         IsArrayEmpty = True
+        Exit Function
     End If
     
     ' Attempt to get the UBound of the array. If the array is

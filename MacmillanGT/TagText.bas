@@ -3,7 +3,8 @@ Option Explicit
 
 ' By Erica Warren -- erica.warren@macmillan.com
 ' Tags all paragraphs with non-macmillan styles as TX or TX1
-' And applies Space Before/After/Around styles for TX, FMTX, BMTX
+' COULD apply Space Before/After/Around styles for TX, FMTX, BMTX
+' but turned that off, might add to a designer-specific macro later
 ' Though it doesn't detect space needed between the bottom of a table and the following 'graph
 
 Sub TagText()
@@ -14,15 +15,18 @@ Sub TagText()
     ' Ask user if they want to tag space around extracts and such
     Dim blnTagSpaceAround As Boolean
     Dim strMessage As String
+    blnTagSpaceAround = False
     
-    strMessage = "Would you like to tag space around extracts/lists/etc.?" & vbNewLine & vbNewLine & _
-        "If you're not sure, you probably don't need to do this."
-        
-    If MsgBox(strMessage, vbYesNo + vbQuestion + vbDefaultButton2, "Tag Space Around Extracts?") = vbNo Then
-        blnTagSpaceAround = False
-    Else
-        blnTagSpaceAround = True
-    End If
+    ' use this stuff below if you want to tag space around extracts and such
+'
+'    strMessage = "Would you like to tag space around extracts/lists/etc.?" & vbNewLine & vbNewLine & _
+'        "If you're not sure, you probably don't need to do this."
+'
+'    If MsgBox(strMessage, vbYesNo + vbQuestion + vbDefaultButton2, "Tag Space Around Extracts?") = vbNo Then
+'        blnTagSpaceAround = False
+'    Else
+'        blnTagSpaceAround = True
+'    End If
     
     ' ======== Start progress bar ========
     Dim sglPercentComplete As Single
@@ -131,7 +135,7 @@ Sub TagText()
         On Error GoTo ErrorContinue ' Tests for error because style not present, continues with next style if so
         
         Dim strSearchStyle(1 To 6) As String
-        Dim b As Long
+        Dim B As Long
         Dim c As Long
         Dim lngCount As Long
         Dim lngParaIndex As Long
@@ -170,10 +174,10 @@ Sub TagText()
         sglStartingPercent = 0.74   ' Percentage Progress Bar starts at for this loop
         sglTotalPercent = 0.17  ' Total percentage this loop will take in progress bar
         
-        For b = LBound(strSearchStyle()) To UBound(strSearchStyle())
+        For B = LBound(strSearchStyle()) To UBound(strSearchStyle())
             
-            sglPercentComplete = (((b / UBound(strSearchStyle())) * sglTotalPercent) + sglStartingPercent)
-            strStatus = "* Fixing space around " & strSearchStyle(b) & "..." & vbNewLine & strStatus
+            sglPercentComplete = (((B / UBound(strSearchStyle())) * sglTotalPercent) + sglStartingPercent)
+            strStatus = "* Fixing space around " & strSearchStyle(B) & "..." & vbNewLine & strStatus
             Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
             
 
@@ -188,7 +192,7 @@ Sub TagText()
                 .Forward = True
                 .Wrap = wdFindStop
                 .Format = True
-                .Style = thisDoc.Styles(strSearchStyle(b))
+                .Style = thisDoc.Styles(strSearchStyle(B))
                 .MatchCase = False
                 .MatchWholeWord = False
                 .MatchWildcards = False
@@ -290,7 +294,7 @@ ContinueLoop:
                 Loop
             End With
 ContinueNextB:
-        Next b
+        Next B
     End If
     
     ' Cleanup stuff

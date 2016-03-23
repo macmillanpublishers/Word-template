@@ -1219,7 +1219,7 @@ End Sub
 Private Function GetMetadata() As String
     Dim styleNameB(3) As String         ' must declare number of items in array here
     Dim bString(3) As String            ' and here
-    Dim b As Integer
+    Dim B As Integer
     Dim strTitleData As String
     
     Application.ScreenUpdating = False
@@ -1228,16 +1228,16 @@ Private Function GetMetadata() As String
     styleNameB(2) = "Titlepage Author Name (au)"
     styleNameB(3) = "span ISBN (isbn)"
     
-    For b = 1 To UBound(styleNameB())
-        bString(b) = GetText(styleNameB(b))
-        If bString(b) <> vbNullString Then
-            bString(b) = "** " & styleNameB(b) & " **" & vbNewLine & _
-                        bString(b) & vbNewLine
+    For B = 1 To UBound(styleNameB())
+        bString(B) = GetText(styleNameB(B))
+        If bString(B) <> vbNullString Then
+            bString(B) = "** " & styleNameB(B) & " **" & vbNewLine & _
+                        bString(B) & vbNewLine
         End If
         
-        strTitleData = strTitleData & bString(b)
+        strTitleData = strTitleData & bString(B)
         
-    Next b
+    Next B
                 
     'Debug.Print strTitleData
     

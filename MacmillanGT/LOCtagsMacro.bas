@@ -1277,7 +1277,7 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
     Set activeRng = mainDoc.Range
     
     Dim existingTagArray(7) As String                                   ' number of items in array should be declared here
-    Dim b As Long
+    Dim B As Long
     Dim foundBad As Boolean
     foundBad = False
     
@@ -1289,10 +1289,10 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
     existingTagArray(6) = "[`|]SP[|`]"
     existingTagArray(7) = "``````"
     
-    For b = 1 To UBound(existingTagArray())
+    For B = 1 To UBound(existingTagArray())
     With activeRng.Find
       .ClearFormatting
-      .Text = existingTagArray(b)
+      .Text = existingTagArray(B)
       .Wrap = wdFindContinue
       .MatchWildcards = True
     End With
