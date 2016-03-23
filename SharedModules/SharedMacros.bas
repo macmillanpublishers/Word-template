@@ -1285,12 +1285,18 @@ Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                   
     
     HiddenTextSucks = False
     
+    ' If Hidden text isn't shown, it won't be deleted, which
+    ' defeats the purpose of doing this at all.
+    Dim blnCurrentHiddenView As Boolean
+    blnCurrentHiddenView = ActiveDocument.ActiveWindow.View.ShowAll
+    ActiveDocument.ActiveWindow.View.ShowAll = True
+
+    
     Dim aCounter As Long
     aCounter = 0
     
-    'Move selection to start of document
+    ' Select whole doc (story, actually)
     activeRng.Select
-    ' Selection.HomeKey Unit:=wdStory
 
     With Selection.Find
         .ClearFormatting
@@ -1310,12 +1316,12 @@ Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                   
     Do While Selection.Find.Execute = True And aCounter < 500
         'aCounter < 500 so we don't get an infinite loop
         aCounter = aCounter + 1
-'
-'        ' If we found some text, delete it
-'        Selection.Delete
         HiddenTextSucks = True
     Loop
-
+    
+    ' Now restore Hidden Text view settings
+    ActiveDocument.ActiveWindow.View.ShowAll = blnCurrentHiddenView
+    
 End Function
 
 
