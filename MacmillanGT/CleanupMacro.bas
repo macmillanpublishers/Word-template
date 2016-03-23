@@ -203,6 +203,13 @@ Sub MacmillanManuscriptCleanup()
     
     Call zz_clearFind
     
+    ' ---------- Clear formatting from paragraph marks ----------------------------
+    ' Per Westchester, can cause macro to break
+    
+    For s = 1 To UBound(stStories())
+        Call ClearPilcrowFormat(StoryType:=(stStories(s)))
+    Next s
+    
     '-----------Find/Replace with Wildcards = False--------------------------------
     Call zz_clearFind                          'Clear find object
     

@@ -111,6 +111,13 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     
     Call zz_clearFind
     
+    
+    ' -------------- Clear formatting from paragraph marks -------------------
+    ' can cause errors
+    
+    For s = 1 To UBound(stStories())
+        Call ClearPilcrowFormat(StoryType:=(stStories(s)))
+    Next s
     '===================== Replace Local Styles Start ========================
 
     '-----------------------Tag space break styles----------------------------
@@ -1080,6 +1087,7 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
     ' Loop through all styles to get array of bkmkr styles in use
     For Each objStyle In ActiveDocument.Styles
         ' If char style with "bookmaker" in name is in use...
+        Debug.Print objStyle.NameLocal & " InUse: " & objStyle.InUse
         If InStr(objStyle.NameLocal, "bookmaker") <> 0 And objStyle.Type = wdStyleTypeCharacter _
             And objStyle.InUse = True Then
                 Debug.Print StoryType & ": " & objStyle.NameLocal
@@ -1092,6 +1100,7 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
     Next objStyle
 
     If IsArrayEmpty(strBkmkrNames) = True Then
+        Debug.Print "No bookmaker character styles in use."
         TagBkmkrCharStyles = strBkmkrNames
         Exit Function
     End If

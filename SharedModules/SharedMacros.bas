@@ -1275,7 +1275,7 @@ End Function
 
 
 Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
-    Debug.Print StoryType
+'    Debug.Print StoryType
     Dim activeRng As Range
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     ' No, really, it does. Why is that even an option?
@@ -1317,3 +1317,38 @@ Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                   
     Loop
 
 End Function
+
+
+Sub ClearPilcrowFormat(StoryType As WdStoryType)
+' A pilcrow is the paragraph mark symbol. This clears all formatting and styles from
+' pilcrows as found via ^p
+    ' Change to story ranges?
+    Dim ActiveRange As Range
+    Set ActiveRange = ActiveDocument.StoryRanges(StoryType)
+
+    With ActiveRange.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = "^13"
+        .Replacement.Text = "^13"
+        .Forward = True
+        .Wrap = wdFindStop
+        .Format = True
+        .Replacement.Style = "Default Paragraph Font"
+        .Replacement.Font.Italic = False
+        .Replacement.Font.Bold = False
+        .Replacement.Font.Underline = wdUnderlineNone
+        .Replacement.Font.AllCaps = False
+        .Replacement.Font.SmallCaps = False
+        .Replacement.Font.StrikeThrough = False
+        .Replacement.Font.Subscript = False
+        .Replacement.Font.Superscript = False
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = True
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute Replace:=wdReplaceAll
+    End With
+
+End Sub
