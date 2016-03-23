@@ -219,6 +219,18 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Next s
     Call zz_clearFind
     
+    
+    ' -------------------------- Tag un-styled paragraphs as TX and TX1 -----------------
+    ' NOTE: must be done AFTER character styles, because if whole para has direct format
+    ' it will be removed when apply style (but style won't be removed)
+    ' This is total progress bar that will be covered in TagUnstyledText
+    Dim sglTotalForText As Single
+    sglTotalForText = TotalPercent - sglPercentComplete
+    
+    Call TagUnstyledText(objTagProgress:=oProgressChar, StartingPercent:=sglPercentComplete, _
+        TotalPercent:=sglTotalForText)
+    
+    
     '---------------------------Return settings to original------------------------------
     sglPercentComplete = TotalPercent + StartPercent
     strStatus = "* Finishing up..." & vbCr & strStatus
@@ -1143,3 +1155,111 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
     
 
 End Function
+
+Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Single, _
+    TotalPercent As Single)
+    ' Make sure we're always working with the right document
+    Dim thisDoc As Document
+    Set thisDoc = ActiveDocument
+    
+    ' Rename built-in style that has parens
+    thisDoc.Styles("Normal (Web)").NameLocal = "_"
+    
+    Dim lngParaCount As Long
+    Dim a As Long
+    Dim strCurrentStyle As String
+    Dim strTX As String
+    Dim strTX1 As String
+    Dim strNewStyle As String
+    Dim strParaStatus As String
+    Dim sglStartingPercent As Single
+    Dim sglTotalPercent As Single
+    
+    ' Making these variables so we don't get any input errors with the style names t/o
+    strTX = "Text - Standard (tx)"
+    strTX1 = "Text - Std No-Indent (tx1)"
+    
+    lngParaCount = thisDoc.Paragraphs.Count
+    
+    Dim myStyle As Style ' For error handlers
+    On Error GoTo ErrorHandler1     ' adds this style if it is not in the document
+
+    ' Loop through all paras, tag any w/o close parens as TX or TX1
+    For a = 1 To lngParaCount
+        
+        If a Mod 100 = 0 Then
+            ' Increment progress bar
+            sglPercentComplete = (((a / lngParaCount) * TotalPercent) + _
+                StartingPercent)
+            strParaStatus = "* Tagging non-Macmillan paragraphs with Text " _
+                & "- Standard (tx): " & a & " of " & lngParaCount & vbNewLine & strStatus
+            Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, _
+                Percent:=sglPercentComplete)
+        End If
+        
+        strCurrentStyle = thisDoc.Paragraphs(a).Style
+        'Debug.Print a & ": " & strCurrentStyle
+        
+        ' tag all non-Macmillan-style paragraphs with standard Macmillan styles
+        ' Macmillan styles all end in close parens
+        If Right(strCurrentStyle, 1) <> ")" Then
+            ' If flush left, make No-Indent
+            If thisDoc.Paragraphs(a).FirstLineIndent = 0 Then
+                strNewStyle = strTX1
+            Else
+                strNewStyle = strTX
+            End If
+            
+            ' Change the style of the paragraph in question
+            ' This is where it will error if no style present
+            thisDoc.Paragraphs(a).Style = strNewStyle
+            
+        End If
+    Next a
+    On Error GoTo 0
+    
+    ' Change Normal (Web) back
+    thisDoc.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
+
+Exit Sub
+    
+ErrorHandler1:
+    If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
+        Set myStyle = thisDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
+        With myStyle
+            '.QuickStyle = True ' not available for Mac
+            .Font.Name = "Times New Roman"
+            .Font.Size = 12
+            With .ParagraphFormat
+                .LineSpacingRule = wdLineSpaceDouble
+                .SpaceAfter = 0
+                .SpaceBefore = 0
+                
+                With .Borders
+                    Select Case strNewStyle
+                        Case strTX
+                            .OutsideLineStyle = wdLineStyleSingle
+                            .OutsideLineWidth = wdLineWidth600pt
+                        
+                        Case strTX1
+                            .OutsideLineStyle = wdLineStyleDouble
+                            .OutsideLineWidth = wdLineWidth225pt
+                            
+                    End Select
+                .OutsideColor = RGB(102, 204, 255)
+                
+                End With
+            End With
+        End With
+        
+        ' Now go back and try to assign that style again
+        Resume
+    
+    Else
+        Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
+        On Error GoTo 0
+        Call Cleanup
+        Exit Sub
+    End If
+    
+End Sub
