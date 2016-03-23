@@ -15,7 +15,7 @@ Sub TagText()
     ' Ask user if they want to tag space around extracts and such
     Dim blnTagSpaceAround As Boolean
     Dim strMessage As String
-    blnTagSpaceAround = False
+    blnTagSpaceAround = True
     
     ' use this stuff below if you want to tag space around extracts and such
 '
@@ -27,7 +27,7 @@ Sub TagText()
 '    Else
 '        blnTagSpaceAround = True
 '    End If
-    
+
     ' ======== Start progress bar ========
     Dim sglPercentComplete As Single
     Dim strStatus As String
@@ -52,87 +52,14 @@ Sub TagText()
         Unload objTagProgress
         Exit Sub
     End If
-    
 
-    ' ======== Run Character styles macro =========
-    ' If you tag paragraph styles before character styles, paragraphs w/ >50% direct formatting
-    ' could have formatting stripped w/ no notification
-    
-    Call ActualCharStyles(oProgressChar:=objTagProgress, StartPercent:=0.09, TotalPercent:=0.35)
-    
-    ' ======== Start the tagging ========
-    ' Rename built-in style that has parens
-    thisDoc.Styles("Normal (Web)").NameLocal = "_"
-    
-    Dim lngParaCount As Long
-    Dim a As Long
-    Dim strCurrentStyle As String
-    Dim strTX As String
-    Dim strTX1 As String
-    Dim strNewStyle As String
-    Dim strParaStatus As String
-    Dim sglStartingPercent As Single
-    Dim sglTotalPercent As Single
-    
-    ' Making these variables so we don't get any input errors with the style names t/o
-    strTX = "Text - Standard (tx)"
-    strTX1 = "Text - Std No-Indent (tx1)"
-    
-    lngParaCount = thisDoc.Paragraphs.Count
-    
-    Dim myStyle As Style ' For error handlers
-    On Error GoTo ErrorHandler1     ' adds this style if it is not in the document
-    
-    ' leave room in progress bar if we have to tag space around later
-    If blnTagSpaceAround = True Then
-        sglStartingPercent = 0.44   ' Percentage Progress Bar starts at for this loop
-        sglTotalPercent = 0.3  ' Total percentage this loop will take in progress bar
-    Else
-        sglStartingPercent = 0.44
-        sglTotalPercent = 0.47
-    End If
-    
-    For a = 1 To lngParaCount
-        
-        If a Mod 100 = 0 Then
-            ' Increment progress bar
-            sglPercentComplete = (((a / lngParaCount) * sglTotalPercent) + sglStartingPercent)
-            strParaStatus = "* Tagging non-Macmillan paragraphs with Text - Standard (tx): " & a & " of " & lngParaCount _
-                & vbNewLine & strStatus
-            Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, Percent:=sglPercentComplete)
-        End If
-        
-        strCurrentStyle = thisDoc.Paragraphs(a).Style
-        'Debug.Print a & ": " & strCurrentStyle
-        
-        ' tag all non-Macmillan-style paragraphs with standard Macmillan styles
-        ' Macmillan styles all end in close parens
-        If Right(strCurrentStyle, 1) <> ")" Then
-            ' If flush left, make No-Indent
-            If thisDoc.Paragraphs(a).FirstLineIndent = 0 Then
-                strNewStyle = strTX1
-            Else
-                strNewStyle = strTX
-            End If
-            
-            ' Change the style of the paragraph in question
-            ' This is where it will error if no style present
-            thisDoc.Paragraphs(a).Style = strNewStyle
-            
-        End If
-    Next a
-    On Error GoTo 0
-    
-    strStatus = "* Tagging non-Macmillan paragraphs with Text - Standard (tx)..." & vbNewLine & strStatus
-    
-    ' Change Normal (Web) back
-    thisDoc.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
     
     ' ======== Check paras above and below each for space before/after styles ========
     ' but only if user selected that option!
     If blnTagSpaceAround = True Then
-    
-        On Error GoTo ErrorContinue ' Tests for error because style not present, continues with next style if so
+    Dim myStyle As Style ' For error handlers
+On Error GoTo ErrorContinue ' Tests for error because style not present,
+    ' continues with next style if so
         
         Dim strSearchStyle(1 To 6) As String
         Dim B As Long
@@ -171,8 +98,11 @@ Sub TagText()
         strExtractStyle(8) = "Verse"
         strExtractStyle(9) = "Poem"
         
-        sglStartingPercent = 0.74   ' Percentage Progress Bar starts at for this loop
-        sglTotalPercent = 0.17  ' Total percentage this loop will take in progress bar
+        Dim sglStartingPercent As Single
+        Dim sglTotalPercent As Single
+    
+        sglStartingPercent = 0.09   ' Percentage Progress Bar starts at for this loop
+        sglTotalPercent = 0.9   ' Total percentage this loop will take in progress bar
         
         For B = LBound(strSearchStyle()) To UBound(strSearchStyle())
             
@@ -181,7 +111,6 @@ Sub TagText()
             Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
             
 
-            
             Selection.HomeKey Unit:=wdStory     ' Have to start search from the beginning of the doc
             'Debug.Print "Searching for " & strSearchStyle(b) & " paragraphs"
             lngCount = 0
@@ -312,45 +241,6 @@ ContinueNextB:
     
     Exit Sub
     
-ErrorHandler1:
-    If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
-        Set myStyle = thisDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
-        With myStyle
-            '.QuickStyle = True ' not available for Mac
-            .Font.Name = "Times New Roman"
-            .Font.Size = 12
-            With .ParagraphFormat
-                .LineSpacingRule = wdLineSpaceDouble
-                .SpaceAfter = 0
-                .SpaceBefore = 0
-                
-                With .Borders
-                    Select Case strNewStyle
-                        Case strTX
-                            .OutsideLineStyle = wdLineStyleSingle
-                            .OutsideLineWidth = wdLineWidth600pt
-                        
-                        Case strTX1
-                            .OutsideLineStyle = wdLineStyleDouble
-                            .OutsideLineWidth = wdLineWidth225pt
-                            
-                    End Select
-                .OutsideColor = RGB(102, 204, 255)
-                
-                End With
-            End With
-        End With
-        
-        ' Now go back and try to assign that style again
-        Resume
-    
-    Else
-        Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
-        On Error GoTo 0
-        Call Cleanup
-        Exit Sub
-    End If
-    
 ErrorContinue:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
         GoTo ContinueNextB
@@ -360,6 +250,9 @@ ErrorContinue:
         Call Cleanup
         Exit Sub
     End If
+    
+    Exit Sub
+    
 ErrorNewStyle:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
         ' So create style and apply formatting
