@@ -1161,10 +1161,10 @@ Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Si
     ' Make sure we're always working with the right document
     Dim thisDoc As Document
     Set thisDoc = ActiveDocument
-    
+
     ' Rename built-in style that has parens
     thisDoc.Styles("Normal (Web)").NameLocal = "_"
-    
+
     Dim lngParaCount As Long
     Dim a As Long
     Dim strCurrentStyle As String
@@ -1174,19 +1174,23 @@ Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Si
     Dim strParaStatus As String
     Dim sglStartingPercent As Single
     Dim sglTotalPercent As Single
-    
+    Dim strNextStyle As String
+    Dim strNextNextStyle As String
+    Dim strCOTX1 As String
+
     ' Making these variables so we don't get any input errors with the style names t/o
     strTX = "Text - Standard (tx)"
     strTX1 = "Text - Std No-Indent (tx1)"
-    
+    strCOTX1 = "Chap Opening Text No-Indent (cotx1)"
+
     lngParaCount = thisDoc.Paragraphs.Count
-    
+
     Dim myStyle As Style ' For error handlers
-    On Error GoTo ErrorHandler1     ' adds this style if it is not in the document
 
     ' Loop through all paras, tag any w/o close parens as TX or TX1
+    ' (or COTX1 if following chap opener)
     For a = 1 To lngParaCount
-        
+
         If a Mod 100 = 0 Then
             ' Increment progress bar
             sglPercentComplete = (((a / lngParaCount) * TotalPercent) + _
@@ -1196,33 +1200,66 @@ Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Si
             Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, _
                 Percent:=sglPercentComplete)
         End If
-        
+
         strCurrentStyle = thisDoc.Paragraphs(a).Style
         'Debug.Print a & ": " & strCurrentStyle
-        
+
+On Error GoTo ErrorHandler1     ' adds this style if it is not in the document
         ' tag all non-Macmillan-style paragraphs with standard Macmillan styles
         ' Macmillan styles all end in close parens
-        If Right(strCurrentStyle, 1) <> ")" Then
+        If Right(strCurrentStyle, 1) <> ")" Then    ' it's not a Macmillan style
             ' If flush left, make No-Indent
             If thisDoc.Paragraphs(a).FirstLineIndent = 0 Then
                 strNewStyle = strTX1
             Else
                 strNewStyle = strTX
             End If
-            
+
             ' Change the style of the paragraph in question
             ' This is where it will error if no style present
             thisDoc.Paragraphs(a).Style = strNewStyle
-            
+
+        Else ' it is already a Macmillan style
+On Error GoTo ErrorHandler2
+            ' is it a chap head?
+            If InStr(strCurrentStyle, "(cn)") > 0 Or _
+                InStr(strCurrentStyle, "(ct)") > 0 Or _
+                InStr(strCurrentStyle, "(ctnp)") > 0 Then
+
+                strNextStyle = thisDoc.Paragraphs(a + 1).Style
+
+                ' is the next para non-Macmillan (and thus should be COTX1)
+                If Right(strNextStyle, 1) <> ")" Then     ' it's not a Macmillan style
+                    ' so it should be COTX1
+                    ' Will error if this style not present in doc
+                    thisDoc.Paragraphs(a + 1).Style = strCOTX1
+                Else ' it IS a Macmillan style too
+                    ' it IT a chap opener? (can have CN followed by CT)
+                    If InStr(strNextStyle, "(cn)") > 0 Or _
+                        InStr(strNextStyle, "(ct)") > 0 Or _
+                        InStr(strNextStyle, "(ctnp)") > 0 Then
+
+                        strNextNextStyle = thisDoc.Paragraphs(a + 2).Style
+
+                        If Right(strNextNextStyle, 1) <> ")" Then ' it's not Macmillan
+                            ' so it should be COTX1
+                            thisDoc.Paragraphs(a + 2).Style = strCOTX1
+                        End If
+                    End If
+                End If
+            Else
+                ' It's a styled para but NOT a chap head, just move on
+            End If
         End If
     Next a
-    On Error GoTo 0
-    
+
+On Error GoTo 0
+
     ' Change Normal (Web) back
     thisDoc.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
 
-Exit Sub
-    
+    Exit Sub
+
 ErrorHandler1:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
         Set myStyle = thisDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
@@ -1234,32 +1271,63 @@ ErrorHandler1:
                 .LineSpacingRule = wdLineSpaceDouble
                 .SpaceAfter = 0
                 .SpaceBefore = 0
-                
+
                 With .Borders
                     Select Case strNewStyle
                         Case strTX
                             .OutsideLineStyle = wdLineStyleSingle
                             .OutsideLineWidth = wdLineWidth600pt
-                        
+
                         Case strTX1
                             .OutsideLineStyle = wdLineStyleDouble
                             .OutsideLineWidth = wdLineWidth225pt
-                            
+
                     End Select
                 .OutsideColor = RGB(102, 204, 255)
-                
+
                 End With
             End With
         End With
-        
+
         ' Now go back and try to assign that style again
         Resume
-    
+
     Else
         Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
         On Error GoTo 0
         Call Cleanup
         Exit Sub
     End If
+
+    Exit Sub
+
+ErrorHandler2:
+    If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
+        Set myStyle = thisDoc.Styles.Add(Name:=strCOTX1, Type:=wdStyleTypeParagraph)
+        With myStyle
+            '.QuickStyle = True ' not available for Mac
+            ' will error if no TX1 in doc
+On Error GoTo ErrorHandler1
+            .BaseStyle = strTX1
+            With .ParagraphFormat
+                .SpaceBefore = 144
+                With .Borders
+                    .OutsideLineStyle = wdLineStyleSingle
+                    .OutsideLineWidth = wdLineWidth600pt
+                    .OutsideColor = RGB(0, 255, 0)
+                End With
+            End With
+        End With
+On Error GoTo ErrorHandler2
+        ' Now go back and try to assign that style again
+        Resume
+    Else
+        Debug.Print "ErrorHandler2: " & Err.Number & " " & Err.Description
+        On Error GoTo 0
+        Call Cleanup
+        Exit Sub
+    End If
+    
+    Exit Sub
     
 End Sub
