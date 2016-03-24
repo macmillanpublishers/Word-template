@@ -220,17 +220,19 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call zz_clearFind
     
     
-    ' -------------------------- Tag un-styled paragraphs as TX and TX1 -----------------
+    ' -------------------------- Tag un-styled paragraphs as TX / TX1 / COTX1 -----------
     ' NOTE: must be done AFTER character styles, because if whole para has direct format
     ' it will be removed when apply style (but style won't be removed)
     ' This is total progress bar that will be covered in TagUnstyledText
     Dim sglTotalForText As Single
     sglTotalForText = TotalPercent - sglPercentComplete
-    
+
     Call TagUnstyledText(objTagProgress:=oProgressChar, StartingPercent:=sglPercentComplete, _
-        TotalPercent:=sglTotalForText)
-    
-    
+        TotalPercent:=sglTotalForText, Status:=strStatus)
+
+    ' Only tagging through main text story, because Endnotes story and Footnotes story should
+    ' already be tagged at Endnote Text and Footnote Text by dafault when created
+
     '---------------------------Return settings to original------------------------------
     sglPercentComplete = TotalPercent + StartPercent
     strStatus = "* Finishing up..." & vbCr & strStatus
@@ -1157,7 +1159,7 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
 End Function
 
 Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Single, _
-    TotalPercent As Single)
+    TotalPercent As Single, Status As String)
     ' Make sure we're always working with the right document
     Dim thisDoc As Document
     Set thisDoc = ActiveDocument
@@ -1177,6 +1179,7 @@ Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Si
     Dim strNextStyle As String
     Dim strNextNextStyle As String
     Dim strCOTX1 As String
+    Dim sglPercentComplete As Single
 
     ' Making these variables so we don't get any input errors with the style names t/o
     strTX = "Text - Standard (tx)"
@@ -1196,7 +1199,7 @@ Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Si
             sglPercentComplete = (((a / lngParaCount) * TotalPercent) + _
                 StartingPercent)
             strParaStatus = "* Tagging non-Macmillan paragraphs with Text " _
-                & "- Standard (tx): " & a & " of " & lngParaCount & vbNewLine & strStatus
+                & "- Standard (tx): " & a & " of " & lngParaCount & vbNewLine & Status
             Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, _
                 Percent:=sglPercentComplete)
         End If

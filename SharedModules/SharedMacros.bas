@@ -1335,8 +1335,8 @@ Sub ClearPilcrowFormat(StoryType As WdStoryType)
     With ActiveRange.Find
         .ClearFormatting
         .Replacement.ClearFormatting
-        .Text = "^13"
-        .Replacement.Text = "^13"
+        .Text = "^13"       ' need to use ^13 if using wildcards
+        .Replacement.Text = "^p"    ' DON'T replace with ^13, removes para style
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
