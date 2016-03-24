@@ -22,7 +22,6 @@
 				</group>
 				<group id="CustGrp3" label="Style Tools" >
 					<button id="CharacterStyles.MacmillanCharStyles" label="Tag Character Styles" image="tag" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="TagText.TagText" label="Tag Standard Text" image="tag" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="Reports.MacmillanStyleReport" label="Style Report" image="file" size="normal" onAction="RibbonControl.LaunchMacros" />
 					<button id="Reports.BookmakerReqs" label="Bookmaker Check" image="checkfile" size="normal" onAction="RibbonControl.LaunchMacros" />
 					<button id="LOCtagsMacro.LibraryOfCongressTags" label="CIP Application" image="index" size="normal" onAction="RibbonControl.LaunchMacros" />
