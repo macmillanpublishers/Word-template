@@ -13,11 +13,14 @@ Sub UniversalCastoff()
 '    https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production
 '    - info on how to format
 ' 3. Requires CastoffForm userform module and TextBoxEventHandler class module. Input validation is done in CastoffForm.
-
+    
+    ' ======= Check if EN and FN stories =====
+    Dim stStories() As Variant
+    stStories = StoryArray
 
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
-    If StartupSettings = True Then
+    If StartupSettings(StoriesUsed:=stStories) = True Then
         Call Cleanup
         Exit Sub
     End If

@@ -259,7 +259,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim strTabName As String
         Dim lngGroupCount As Long
         Dim lngButtonCount As Long
-        Dim a As Long
+        Dim A As Long
         Dim B As Long
         Dim c As Long
         Dim h As Long
@@ -286,8 +286,8 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 
             ' Get name of toolbar from XML
             If lngTabCount > 0 Then
-                For a = 1 To lngTabCount
-                    strXpath = "string(//tab[" & a & "]/@label)"
+                For A = 1 To lngTabCount
+                    strXpath = "string(//tab[" & A & "]/@label)"
                     strTabName = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
 
                     ' Test if toolbar already exists, and delete it - in case there are updates
@@ -304,13 +304,13 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                     Set NewToolbar = Application.CommandBars.Add(Name:=strTabName, Temporary:=False)
 
                     ' Count number of groups in tab
-                    strXpath = "count(//tab[" & a & "]/group)"
+                    strXpath = "count(//tab[" & A & "]/group)"
                     lngGroupCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
 
                     If lngGroupCount > 0 Then
                         For B = 1 To lngGroupCount
                             ' Count number of tabs in group
-                            strXpath = "count(//tab[" & a & "]/group[" & B & "]/button)"
+                            strXpath = "count(//tab[" & A & "]/group[" & B & "]/button)"
                             lngButtonCount = ShellAndWaitMac(strCmdStart & strXpath & strCmdEnd)
 
                             If lngButtonCount > 0 Then
@@ -319,7 +319,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                                 For c = 1 To lngButtonCount
 
                                     ' Start of Xpath for all button attributes - need to add attribute name AND close parens to use
-                                    strXpath = "string(//tab[" & a & "]/group[" & B & "]/button[" & c & "]/@"
+                                    strXpath = "string(//tab[" & A & "]/group[" & B & "]/button[" & c & "]/@"
 
                                     ' If first button in group, set BeginGroup to True
                                     If c = 1 Then blnBeginGroup = True Else blnBeginGroup = False
@@ -354,7 +354,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                             End If
                         Next B
                     End If
-                Next a
+                Next A
             End If
 
             ' Set Toolbar dimension AFTER creation
@@ -389,3 +389,4 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+

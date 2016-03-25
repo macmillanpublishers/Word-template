@@ -27,9 +27,13 @@ Sub LibraryOfCongressTags()
     '''                 is not eventually followed by <ch#> or <tp> tag
     ''''''''''''''''''''''''''''''
     
+    '------------check for endnotes and footnotes--------------------------
+    Dim stStories() As Variant
+    stStories = StoryArray
+    
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
-    If StartupSettings = True Then
+    If StartupSettings(StoriesUsed:=stStories) = True Then
         Call Cleanup
         Exit Sub
     End If
@@ -1152,7 +1156,7 @@ End Sub
 Private Sub cleanFile()
     Set activeRng = ActiveDocument.Range
     Dim tagsFind(10) As String         ' number of items in arrays should be declared here
-    Dim a As Long
+    Dim A As Long
     
     tagsFind(1) = "\<tp\>"
     tagsFind(2) = "\<\/tp\>"
@@ -1165,11 +1169,11 @@ Private Sub cleanFile()
     tagsFind(9) = "\<ch*\>"
     tagsFind(10) = "\<\/ch\>"
     
-    For a = 1 To UBound(tagsFind())
+    For A = 1 To UBound(tagsFind())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = tagsFind(a)
+      .Text = tagsFind(A)
       .Replacement.Text = ""
       .Wrap = wdFindContinue
       .Format = False

@@ -5,9 +5,13 @@ Dim activeRng As Range
 
 Sub EndnoteDeEmbed()
 
+    '------------check for endnotes and footnotes--------------------------
+    Dim stStories() As Variant
+    stStories = StoryArray
+    
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
-    If StartupSettings = True Then
+    If StartupSettings(StoriesUsed:=stStories) = True Then
         Call Cleanup
         Exit Sub
     End If

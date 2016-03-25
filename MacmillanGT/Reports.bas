@@ -36,18 +36,16 @@ Private Sub MakeReport(torDOTcom As Boolean)
     'StartTime = Timer                               '|
     '=================================================
     
+    '------------check for endnotes and footnotes--------------------------
+    Dim arrStories() As Variant
+    arrStories = StoryArray
+    
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
-    ' If torDOTcom = true, offer to accept all track changes
-    If StartupSettings(AcceptAll:=torDOTcom) = True Then
+    If StartupSettings(StoriesUsed:=arrStories) = True Then
         Call Cleanup
         Exit Sub
     End If
-    
-    '------------ check for endnotes and footnotes -------------------------
-    Dim arrStories() As Variant
-    
-    arrStories = StoryArray
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -306,7 +304,7 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     '''''''''''''''''''''
     Dim activeParaRange As Range
     Dim pageNumber As Integer
-    Dim a As Long
+    Dim A As Long
     
     
     'Alter built-in Normal (Web) style temporarily (later, maybe forever?)
@@ -331,10 +329,10 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
             Call UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
         End If
         
-        For a = LBound(Stories()) To UBound(Stories())
-            If J <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Style
-                Set activeParaRange = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Range
+        For A = LBound(Stories()) To UBound(Stories())
+            If J <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Style
+                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
                     
                 'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
@@ -377,7 +375,7 @@ CheckGoodStyles:
                      End If
                 End If
             End If
-        Next a
+        Next A
     Next J
     
     Status = "* Checking paragraphs for Macmillan styles..." & vbCr & Status
@@ -990,7 +988,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     Dim N As Integer
     Dim M As Integer
     Dim strBadStyles As String
-    Dim a As Long
+    Dim A As Long
     
     Dim TheOS As String
     TheOS = System.OperatingSystem
@@ -1048,9 +1046,9 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
             Call UpdateBarAndWait(Bar:=ProgressBar2, Status:=strStatus, Percent:=sglPercentComplete)
         End If
         
-        For a = LBound(Stories()) To UBound(Stories())
-            If N <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
-                paraStyle = ActiveDocument.StoryRanges(Stories(a)).Paragraphs(N).Style
+        For A = LBound(Stories()) To UBound(Stories())
+            If N <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
+                paraStyle = ActiveDocument.StoryRanges(Stories(A)).Paragraphs(N).Style
                 'Debug.Print paraStyle
                 
                 If Right(paraStyle, 1) = ")" Then
@@ -1071,7 +1069,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                     
                     'Debug.Print intBadCount
                     If intBadCount = UBound(arrTorStyles()) Then
-                        Set activeParaRange = ActiveDocument.StoryRanges(a).Paragraphs(N).Range
+                        Set activeParaRange = ActiveDocument.StoryRanges(A).Paragraphs(N).Range
                         pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
                         strBadStyles = strBadStyles & "** ERROR: Non-Bookmaker style on page " & pageNumber _
                             & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
@@ -1080,7 +1078,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                 
                 End If
             End If
-        Next a
+        Next A
 ErrResume:
     
     Next N
@@ -1105,7 +1103,7 @@ Private Function CountReqdStyles() As Variant
     Dim intStyleCount() As Variant
     ReDim intStyleCount(1 To 15) As Variant                  ' Delcare items in array. Must be dynamic to pass back to Sub
     
-    Dim a As Long
+    Dim A As Long
     Dim xCount As Integer
     
     Application.ScreenUpdating = False
@@ -1126,9 +1124,9 @@ Private Function CountReqdStyles() As Variant
     arrStyleName(14) = "Illustration holder (ill)"
     arrStyleName(15) = "Illustration Source (is)"
     
-    For a = 1 To UBound(arrStyleName())
+    For A = 1 To UBound(arrStyleName())
         On Error GoTo ErrHandler
-        intStyleCount(a) = 0
+        intStyleCount(A) = 0
         With ActiveDocument.Range.Find
             .ClearFormatting
             .Text = ""
@@ -1136,14 +1134,14 @@ Private Function CountReqdStyles() As Variant
             .Forward = True
             .Wrap = wdFindStop
             .Format = True
-            .Style = ActiveDocument.Styles(arrStyleName(a))
+            .Style = ActiveDocument.Styles(arrStyleName(A))
             .MatchCase = False
             .MatchWholeWord = False
             .MatchWildcards = False
             .MatchSoundsLike = False
             .MatchAllWordForms = False
-        Do While .Execute(Forward:=True) = True And intStyleCount(a) < 100   ' < 100 to prevent infinite loop, especially if content controls in title or author blocks
-            intStyleCount(a) = intStyleCount(a) + 1
+        Do While .Execute(Forward:=True) = True And intStyleCount(A) < 100   ' < 100 to prevent infinite loop, especially if content controls in title or author blocks
+            intStyleCount(A) = intStyleCount(A) + 1
         Loop
         End With
 ErrResume:
@@ -1168,7 +1166,7 @@ ErrResume:
 
 ErrHandler:
     If Err.Number = 5941 Or Err.Number = 5834 Then
-        intStyleCount(a) = 0
+        intStyleCount(A) = 0
         Resume ErrResume
     End If
         
@@ -1601,7 +1599,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     '''''''''''''''''''''
     Dim activeParaRange As Range
     Dim pageNumber As Integer
-    Dim a As Long
+    Dim A As Long
     
     '----------Collect all styles being used-------------------------------
     styleGoodCount = 0
@@ -1619,10 +1617,10 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
             
         End If
         
-        For a = LBound(Stories()) To UBound(Stories())
-            If J <= ActiveDocument.StoryRanges(Stories(a)).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Style
-                Set activeParaRange = activeDoc.StoryRanges(Stories(a)).Paragraphs(J).Range
+        For A = LBound(Stories()) To UBound(Stories())
+            If J <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Style
+                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
         
                 For k = 1 To styleGoodCount
@@ -1637,7 +1635,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
                     stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
                 End If
             End If
-        Next a
+        Next A
     Next J
     
     'Sort good styles
@@ -1720,7 +1718,7 @@ Private Function BookTypeCheck()
     Dim intCount As Integer
     Dim strErrors As String
     Dim strBookTypes(1 To 7) As String
-    Dim a As Long
+    Dim A As Long
     Dim blnMissing As Boolean
     Dim strISBN As String
     
@@ -1762,12 +1760,12 @@ Private Function BookTypeCheck()
             Selection.EndOf Unit:=wdLine, Extend:=wdExtend
             
             blnMissing = True
-                For a = 1 To UBound(strBookTypes())
-                    If InStr(Selection.Text, "(" & strBookTypes(a) & ")") > 0 Then
+                For A = 1 To UBound(strBookTypes())
+                    If InStr(Selection.Text, "(" & strBookTypes(A) & ")") > 0 Then
                         blnMissing = False
                         Exit For
                     End If
-                Next a
+                Next A
             
             If blnMissing = True Then
                 strErrors = strErrors & "** ERROR: Correct book type required in parentheses after" & vbNewLine & _

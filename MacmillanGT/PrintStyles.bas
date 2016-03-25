@@ -167,7 +167,7 @@ Private Sub PrintStylesMac()
     Dim strStyle As String
     Dim lngTextBoxes As Long
     Dim activeParas As Long
-    Dim a As Long
+    Dim A As Long
     
     ' Count the number of current text boxes etc., because the index number of the new ones
     ' will be offset by that amount
@@ -175,10 +175,10 @@ Private Sub PrintStylesMac()
     lngTextBoxes = tempDoc.Shapes.Count
     activeParas = tempDoc.Paragraphs.Count
     
-    For a = 1 To activeParas
-        If a Mod 50 = 0 Then
-            sglPercentComplete = Round((((a / activeParas) * 0.85) + 0.1), 2)
-            strStatusLoop = "* Adding style names to paragraph " & a & " of " & activeParas & "..." & vbNewLine & strStatus
+    For A = 1 To activeParas
+        If A Mod 50 = 0 Then
+            sglPercentComplete = Round((((A / activeParas) * 0.85) + 0.1), 2)
+            strStatusLoop = "* Adding style names to paragraph " & A & " of " & activeParas & "..." & vbNewLine & strStatus
             
             Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatusLoop
             DoEvents
@@ -187,7 +187,7 @@ Private Sub PrintStylesMac()
             'Debug.Print "Paragraph " & a & " in " & SecondsElapsed & " seconds"
         End If
     
-        tempDoc.Paragraphs(a).Range.Select
+        tempDoc.Paragraphs(A).Range.Select
         strStyle = Selection.Style
         
         ' Do not tag Text Std to speed up the macro (most common style)
@@ -218,7 +218,7 @@ Private Sub PrintStylesMac()
             End With
         End If
         
-    Next a
+    Next A
     
     strStatus = "* Adding style names to margin..." & vbNewLine & strStatus
 
@@ -422,7 +422,7 @@ Private Sub PrintStylesPC()
     Dim strStyle As String
     Dim lngTextBoxes As Long
     Dim activeParas As Long
-    Dim a As Long
+    Dim A As Long
     
     ' This is the template where the building block is saved
     strPath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\MacmillanGT.dotm"
@@ -444,10 +444,10 @@ Private Sub PrintStylesPC()
     lngTextBoxes = tempDoc.Shapes.Count
     activeParas = tempDoc.Paragraphs.Count
     
-    For a = 1 To activeParas
-        If a Mod 50 = 0 Then
-            sglPercentComplete = Round((((a / activeParas) * 0.85) + 0.1), 2)
-            strStatusLoop = "* Adding style names to paragraph " & a & " of " & activeParas & "..." & vbNewLine & strStatus
+    For A = 1 To activeParas
+        If A Mod 50 = 0 Then
+            sglPercentComplete = Round((((A / activeParas) * 0.85) + 0.1), 2)
+            strStatusLoop = "* Adding style names to paragraph " & A & " of " & activeParas & "..." & vbNewLine & strStatus
 
             Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
             
@@ -455,7 +455,7 @@ Private Sub PrintStylesPC()
             'Debug.Print "Paragraph " & a & " in " & SecondsElapsed & " seconds"
         End If
     
-        tempDoc.Paragraphs(a).Range.Select
+        tempDoc.Paragraphs(A).Range.Select
         strStyle = Selection.Style
         
         ' Don't label Text Std, to save time
@@ -466,7 +466,7 @@ Private Sub PrintStylesPC()
             tempDoc.Shapes(lngBoxCount).TextFrame.TextRange.Text = strStyle
         End If
         
-    Next a
+    Next A
     
     strStatus = "* Adding style names to margin..." & vbNewLine & strStatus
 

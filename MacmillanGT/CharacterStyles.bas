@@ -39,18 +39,16 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     'Remember time when macro starts
     'StartTime = Timer
     
+    '------------check for endnotes and footnotes--------------------------
+    Dim stStories() As Variant
+    stStories = StoryArray
+    
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
-    If StartupSettings = True Then
+    If StartupSettings(StoriesUsed:=stStories) = True Then
         Call Cleanup
         Exit Sub
     End If
-    
-    '------------check for endnotes and footnotes--------------------------
-    Dim stStories() As Variant
-    Dim a As Long
-    
-    stStories = StoryArray
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -1168,7 +1166,7 @@ Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Si
     thisDoc.Styles("Normal (Web)").NameLocal = "_"
 
     Dim lngParaCount As Long
-    Dim a As Long
+    Dim A As Long
     Dim strCurrentStyle As String
     Dim strTX As String
     Dim strTX1 As String
@@ -1192,19 +1190,19 @@ Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent As Si
 
     ' Loop through all paras, tag any w/o close parens as TX or TX1
     ' (or COTX1 if following chap opener)
-    For a = 1 To lngParaCount
+    For A = 1 To lngParaCount
 
-        If a Mod 100 = 0 Then
+        If A Mod 100 = 0 Then
             ' Increment progress bar
-            sglPercentComplete = (((a / lngParaCount) * TotalPercent) + _
+            sglPercentComplete = (((A / lngParaCount) * TotalPercent) + _
                 StartingPercent)
             strParaStatus = "* Tagging non-Macmillan paragraphs with Text " _
-                & "- Standard (tx): " & a & " of " & lngParaCount & vbNewLine & Status
+                & "- Standard (tx): " & A & " of " & lngParaCount & vbNewLine & Status
             Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, _
                 Percent:=sglPercentComplete)
         End If
 
-        strCurrentStyle = thisDoc.Paragraphs(a).Style
+        strCurrentStyle = thisDoc.Paragraphs(A).Style
         'Debug.Print a & ": " & strCurrentStyle
 
 On Error GoTo ErrorHandler1     ' adds this style if it is not in the document
@@ -1212,7 +1210,7 @@ On Error GoTo ErrorHandler1     ' adds this style if it is not in the document
         ' Macmillan styles all end in close parens
         If Right(strCurrentStyle, 1) <> ")" Then    ' it's not a Macmillan style
             ' If flush left, make No-Indent
-            If thisDoc.Paragraphs(a).FirstLineIndent = 0 Then
+            If thisDoc.Paragraphs(A).FirstLineIndent = 0 Then
                 strNewStyle = strTX1
             Else
                 strNewStyle = strTX
@@ -1220,7 +1218,7 @@ On Error GoTo ErrorHandler1     ' adds this style if it is not in the document
 
             ' Change the style of the paragraph in question
             ' This is where it will error if no style present
-            thisDoc.Paragraphs(a).Style = strNewStyle
+            thisDoc.Paragraphs(A).Style = strNewStyle
 
         Else ' it is already a Macmillan style
 On Error GoTo ErrorHandler2
@@ -1229,24 +1227,24 @@ On Error GoTo ErrorHandler2
                 InStr(strCurrentStyle, "(ct)") > 0 Or _
                 InStr(strCurrentStyle, "(ctnp)") > 0 Then
 
-                strNextStyle = thisDoc.Paragraphs(a + 1).Style
+                strNextStyle = thisDoc.Paragraphs(A + 1).Style
 
                 ' is the next para non-Macmillan (and thus should be COTX1)
                 If Right(strNextStyle, 1) <> ")" Then     ' it's not a Macmillan style
                     ' so it should be COTX1
                     ' Will error if this style not present in doc
-                    thisDoc.Paragraphs(a + 1).Style = strCOTX1
+                    thisDoc.Paragraphs(A + 1).Style = strCOTX1
                 Else ' it IS a Macmillan style too
                     ' it IT a chap opener? (can have CN followed by CT)
                     If InStr(strNextStyle, "(cn)") > 0 Or _
                         InStr(strNextStyle, "(ct)") > 0 Or _
                         InStr(strNextStyle, "(ctnp)") > 0 Then
 
-                        strNextNextStyle = thisDoc.Paragraphs(a + 2).Style
+                        strNextNextStyle = thisDoc.Paragraphs(A + 2).Style
 
                         If Right(strNextNextStyle, 1) <> ")" Then ' it's not Macmillan
                             ' so it should be COTX1
-                            thisDoc.Paragraphs(a + 2).Style = strCOTX1
+                            thisDoc.Paragraphs(A + 2).Style = strCOTX1
                         End If
                     End If
                 End If
@@ -1254,7 +1252,7 @@ On Error GoTo ErrorHandler2
                 ' It's a styled para but NOT a chap head, just move on
             End If
         End If
-    Next a
+    Next A
 
 On Error GoTo 0
 

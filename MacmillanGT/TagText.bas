@@ -8,6 +8,18 @@ Option Explicit
 ' Though it doesn't detect space needed between the bottom of a table and the following 'graph
 
 Sub TagText()
+    
+    '------------check for endnotes and footnotes--------------------------
+    Dim stStories() As Variant
+    stStories = StoryArray
+    
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings(StoriesUsed:=stStories) = True Then
+        Call Cleanup
+        Exit Sub
+    End If
+    
     ' Make sure we're always working with the right document
     Dim thisDoc As Document
     Set thisDoc = ActiveDocument

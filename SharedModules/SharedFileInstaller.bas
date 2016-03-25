@@ -51,7 +51,7 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
     
     '' --------------- Set up variable names ----------------------------------------------
     '' Create style directory and logfile names
-    Dim a As Long
+    Dim A As Long
     Dim arrLogInfo() As Variant
     ReDim arrLogInfo(1 To 3)
     Dim strStyleDir() As String
@@ -62,12 +62,12 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
     ReDim strFullLogPath(LBound(FileName()) To UBound(FileName()))
     
     ' ------------ Define Log Dirs and such -----------------------------------------
-    For a = LBound(FileName()) To UBound(FileName())
-        arrLogInfo() = CreateLogFileInfo(FileName(a))
-        strStyleDir(a) = arrLogInfo(1)
-        strLogDir(a) = arrLogInfo(2)
-        strFullLogPath(a) = arrLogInfo(3)
-    Next a
+    For A = LBound(FileName()) To UBound(FileName())
+        arrLogInfo() = CreateLogFileInfo(FileName(A))
+        strStyleDir(A) = arrLogInfo(1)
+        strLogDir(A) = arrLogInfo(2)
+        strFullLogPath(A) = arrLogInfo(3)
+    Next A
     
     'Debug.Print "Style Dir is: " & strStyleDir(1) & vbNewLine & _
                 "Log dir is: " & strLogDir(1) & vbNewLine & _

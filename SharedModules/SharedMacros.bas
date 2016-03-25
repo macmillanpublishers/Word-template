@@ -1002,10 +1002,12 @@ End Sub
 
 
 
-Function StartupSettings(Optional AcceptAll As Boolean = False) As Boolean
+Function StartupSettings(StoriesUsed As Variant, Optional AcceptAll As Boolean = False) As Boolean
     ' records/adjusts/checks settings and stuff before running the rest of the macro
     ' returns TRUE if some check is bad and we can't run the macro
     
+    ' mainDoc will only do stuff to main body text, not EN or FN stories. So
+    ' do all main-text-only stuff first, then loop through stories
     Dim mainDoc As Document
     Set mainDoc = ActiveDocument
     
@@ -1084,24 +1086,33 @@ Function StartupSettings(Optional AcceptAll As Boolean = False) As Boolean
     
     
     ' ========== Delete field codes ==========
-    Dim strContents As String
-    
-    ' This has some kind of problem with some type of fields in endnotes? Investiagte
-    ' Ideally would check all stories, but then we'd have to add the step of getting
-    ' all of the active stories.
-    ' With ActiveDocument.StoryRanges(StoryTypes)
-    With mainDoc
-        While .Fields.Count > 0
-            strContents = .Fields.Item(1).result
-            .Fields(1).Select
-            
-            With Selection
-                .Fields.Item(1).Delete
-                .InsertAfter strContents
-            End With
-        Wend
-    End With
-    
+    Dim A As Long
+    Dim thisRange As Range
+    Dim objField As Field
+    Dim strContent As String
+
+    For A = LBound(StoriesUsed) To UBound(StoriesUsed)
+        Set thisRange = ActiveDocument.StoryRanges(StoriesUsed(A))
+        For Each objField In thisRange.Fields
+'            Debug.Print thisRange.Fields.Count
+            If thisRange.Fields.Count > 0 Then
+                With objField
+'                    Debug.Print .Index & ": " & .Kind
+                    ' None or Cold means it has no result, so we just delete
+                    If .Kind = wdFieldKindNone Or .Kind = wdFieldKindCold Then
+                        .Delete
+                    Else ' It has a result, so we replace field w/ just its content
+                        strContent = .result
+                        .Select
+                        .Delete
+                        Selection.InsertAfter strContent
+                    End If
+                End With
+            End If
+        Next objField
+
+    Next A
+
     
     ' ========== Remove content controls ==========
     ' Doesn't work at all for a Mac

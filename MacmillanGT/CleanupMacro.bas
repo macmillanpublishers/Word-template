@@ -130,10 +130,14 @@ Sub MacmillanManuscriptCleanup()
     
     'Remember time when macro starts
     '  StartTime = Timer
-
+    
+    '------------check for endnotes and footnotes--------------------------
+    Dim stStories() As Variant
+    stStories = StoryArray
+    
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
-    If StartupSettings = True Then
+    If StartupSettings(StoriesUsed:=stStories) = True Then
         Call Cleanup
         Exit Sub
     End If
@@ -144,12 +148,6 @@ Sub MacmillanManuscriptCleanup()
         Exit Sub
     End If
         
-    '------------check for endnotes and footnotes--------------------------
-    Dim stStories() As Variant
-    Dim a As Long
-    
-    stStories = StoryArray
-    
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
     'Requires ProgressBar custom UserForm and Class
@@ -585,7 +583,7 @@ Private Sub FixUnderlines(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     Dim strUnderlines(1 To 16) As WdUnderline
-    Dim a As Long
+    Dim A As Long
     
     strUnderlines(1) = wdUnderlineDash
     strUnderlines(2) = wdUnderlineDashHeavy
@@ -604,7 +602,7 @@ Private Sub FixUnderlines(StoryType As WdStoryType)
     strUnderlines(15) = wdUnderlineWavyHeavy
     strUnderlines(16) = wdUnderlineWords
 
-    For a = LBound(strUnderlines()) To UBound(strUnderlines())
+    For A = LBound(strUnderlines()) To UBound(strUnderlines())
             With ActiveDocument.Range.Find
                 .ClearFormatting
                 .Replacement.ClearFormatting
@@ -612,11 +610,11 @@ Private Sub FixUnderlines(StoryType As WdStoryType)
                 .Replacement.Text = ""
                 .Wrap = wdFindStop
                 .Format = True
-                .Font.Underline = strUnderlines(a)
+                .Font.Underline = strUnderlines(A)
                 .Replacement.Font.Underline = wdUnderlineSingle
                 .Execute Replace:=wdReplaceAll
             End With
-    Next a
+    Next A
 End Sub
 
 Function zz_errorChecks()
