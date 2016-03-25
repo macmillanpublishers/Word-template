@@ -1115,7 +1115,7 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
     Next objStyle
 
     If IsArrayEmpty(strBkmkrNames) = True Then
-        Debug.Print "No bookmaker character styles in use."
+'        Debug.Print "No bookmaker character styles in use."
         TagBkmkrCharStyles = strBkmkrNames
         Exit Function
     End If
@@ -1130,7 +1130,7 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
 
     For x = LBound(strBkmkrNames) To UBound(strBkmkrNames)
         strTag = "bk" & Format(x, "0000")
-        Debug.Print strTag
+'        Debug.Print strTag
         
         With activeRng.Find
             .ClearFormatting
