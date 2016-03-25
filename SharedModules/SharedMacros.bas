@@ -592,8 +592,6 @@ Function PatternMatch(SearchPattern As String, SearchText As String, WholeString
         .Execute
     End With
     
-    
-    
     If Selection.Find.Found = True Then
         If WholeString = True Then
             ' The final paragraph return is the only character the new doc had it in,
@@ -1369,3 +1367,240 @@ Sub ClearPilcrowFormat(StoryType As WdStoryType)
     End With
 
 End Sub
+
+Sub StyleAllHyperlinks(StoriesInUse As Variant)
+    ' StoriesInUse is an array of wdStoryTypes in use
+    ' Clears active links and adds macmillan URL char styles
+    ' to any proper URLs.
+    ' Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
+    ' Also if you AutoFormat a second time it undoes all of the formatting already applied to hyperlinks
+    
+    Dim s As Long
+    
+    Call zz_clearFind
+    
+    For s = 1 To UBound(StoriesInUse)
+        'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
+        Call StyleHyperlinksA(StoryType:=StoriesInUse(s))
+    Next s
+    
+    Call AutoFormatHyperlinks
+    
+    For s = 1 To UBound(StoriesInUse)
+        Call StyleHyperlinksB(StoryType:=StoriesInUse(s))
+    Next s
+    
+End Sub
+
+Private Sub StyleHyperlinksA(StoryType As WdStoryType)
+    ' PRIVATE, if you want to style hyperlinks from another module,
+    ' call StyleAllHyperlinks sub above.
+    ' added by Erica 2014-10-07, v. 3.4
+    ' removes all live hyperlinks but leaves hyperlink text intact
+    ' then styles all URLs as "span hyperlink (url)" style
+    ' -----------------------------------------
+    ' this first bit removes all live hyperlinks from document
+    ' we want to remove these from urls AND text; will add back to just urls later
+    
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    ' remove all embedded hyperlinks regardless of character style
+    With activeRng
+        While .Hyperlinks.Count > 0
+            .Hyperlinks(1).Delete
+        Wend
+    End With
+    '------------------------------------------
+    'removes all hyperlink styles
+    Dim HyperlinkStyleArray(3) As String
+    Dim p As Long
+    
+On Error GoTo LinksErrorHandler:
+    
+    HyperlinkStyleArray(1) = "Hyperlink"        'built-in style applied automatically to links
+    HyperlinkStyleArray(2) = "FollowedHyperlink"    'built-in style applied automatically
+    HyperlinkStyleArray(3) = "span hyperlink (url)" 'Macmillan template style for links
+    
+    For p = 1 To UBound(HyperlinkStyleArray())
+        With activeRng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Style = HyperlinkStyleArray(p)
+            .Replacement.Style = ActiveDocument.Styles("Default Paragraph Font")
+            .Text = ""
+            .Replacement.Text = ""
+            .Forward = True
+            .Wrap = wdFindContinue
+            .Format = True
+            .MatchCase = False
+            .MatchWholeWord = False
+            .MatchWildcards = False
+            .MatchSoundsLike = False
+            .MatchAllWordForms = False
+            .Execute Replace:=wdReplaceAll
+        End With
+    Next
+    
+On Error GoTo 0
+    
+    Exit Sub
+    
+LinksErrorHandler:
+        '5834 means item does not exist
+        '5941 means style not present in collection
+        If Err.Number = 5834 Or Err.Number = 5941 Then
+            
+            'If style is not present, add style
+            Dim myStyle As Style
+            Set myStyle = ActiveDocument.Styles.Add(Name:="span hyperlink (url)", Type:=wdStyleTypeCharacter)
+            Resume
+'            ' Used to add highlight color, but actually if style is missing, it's
+'            ' probably a MS w/o Macmillan's styles and the highlight will be annoying.
+'            'If missing style was Macmillan built-in style, add character highlighting
+'            If myStyle = "span hyperlink (url)" Then
+'                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
+'            End If
+        Else
+            MsgBox "Error " & Err.Number & ": " & Err.Description
+            On Error GoTo 0
+            Exit Sub
+        End If
+
+End Sub
+
+Private Sub AutoFormatHyperlinks()
+    ' PRIVATE, if you want to style hyperlinks from another module,
+    ' call StyleAllHyperlinks sub above.
+    '--------------------------------------------------
+    ' converts all URLs to hyperlinks with built-in "Hyperlink" style
+    ' because some show up as plain text
+    ' Note this also removes all blank paragraphs regardless of style,
+    ' so needs to come after sub PreserveWhiteSpaceinBrkA
+    
+    
+    Dim f1 As Boolean, f2 As Boolean, f3 As Boolean
+    Dim f4 As Boolean, f5 As Boolean, f6 As Boolean
+    Dim f7 As Boolean, f8 As Boolean, f9 As Boolean
+    Dim f10 As Boolean
+      
+    'This first bit autoformats hyperlinks in main text story
+    With Options
+        ' Save current AutoFormat settings
+        f1 = .AutoFormatApplyHeadings
+        f2 = .AutoFormatApplyLists
+        f3 = .AutoFormatApplyBulletedLists
+        f4 = .AutoFormatApplyOtherParas
+        f5 = .AutoFormatReplaceQuotes
+        f6 = .AutoFormatReplaceSymbols
+        f7 = .AutoFormatReplaceOrdinals
+        f8 = .AutoFormatReplaceFractions
+        f9 = .AutoFormatReplacePlainTextEmphasis
+        f10 = .AutoFormatReplaceHyperlinks
+        ' Only convert URLs
+        .AutoFormatApplyHeadings = False
+        .AutoFormatApplyLists = False
+        .AutoFormatApplyBulletedLists = False
+        .AutoFormatApplyOtherParas = False
+        .AutoFormatReplaceQuotes = False
+        .AutoFormatReplaceSymbols = False
+        .AutoFormatReplaceOrdinals = False
+        .AutoFormatReplaceFractions = False
+        .AutoFormatReplacePlainTextEmphasis = False
+        .AutoFormatReplaceHyperlinks = True
+        ' Perform AutoFormat
+        ActiveDocument.Content.AutoFormat
+        ' Restore original AutoFormat settings
+        .AutoFormatApplyHeadings = f1
+        .AutoFormatApplyLists = f2
+        .AutoFormatApplyBulletedLists = f3
+        .AutoFormatApplyOtherParas = f4
+        .AutoFormatReplaceQuotes = f5
+        .AutoFormatReplaceSymbols = f6
+        .AutoFormatReplaceOrdinals = f7
+        .AutoFormatReplaceFractions = f8
+        .AutoFormatReplacePlainTextEmphasis = f9
+        .AutoFormatReplaceHyperlinks = f10
+    End With
+    
+    'This bit autoformats hyperlinks in endnotes and footnotes
+    ' from http://www.vbaexpress.com/forum/showthread.php?52466-applying-hyperlink-styles-in-footnotes-and-endnotes
+    Dim oDoc As Document
+    Dim oTemp As Document
+    Dim oNote As Range
+    Dim oRng As Range
+    
+    'oDoc.Save      ' Already saved active doc?
+    Set oDoc = ActiveDocument
+    Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False)
+    
+    If oDoc.Footnotes.Count >= 1 Then
+        Dim oFN As Footnote
+        For Each oFN In oDoc.Footnotes
+            Set oNote = oFN.Range
+            Set oRng = oTemp.Range
+            oRng.FormattedText = oNote.FormattedText
+            'oRng.Style = "Footnote Text"
+            Options.AutoFormatReplaceHyperlinks = True
+            oRng.AutoFormat
+            oRng.End = oRng.End - 1
+            oNote.FormattedText = oRng.FormattedText
+        Next oFN
+        Set oFN = Nothing
+    End If
+    
+    If oDoc.Endnotes.Count >= 1 Then
+        Dim oEN As Endnote
+        For Each oEN In oDoc.Endnotes
+            Set oNote = oEN.Range
+            Set oRng = oTemp.Range
+            oRng.FormattedText = oNote.FormattedText
+            'oRng.Style = "Endnote Text"
+            Options.AutoFormatReplaceHyperlinks = True
+            oRng.AutoFormat
+            oRng.End = oRng.End - 1
+            oNote.FormattedText = oRng.FormattedText
+        Next oEN
+        Set oEN = Nothing
+    End If
+    
+    oTemp.Close SaveChanges:=wdDoNotSaveChanges
+    Set oTemp = Nothing
+    Set oRng = Nothing
+    Set oNote = Nothing
+    
+End Sub
+
+Private Sub StyleHyperlinksB(StoryType As WdStoryType)
+    ' PRIVATE, if you want to style hyperlinks from another module,
+    ' call StyleAllHyperlinks sub above.
+    '--------------------------------------------------
+    ' apply macmillan URL style to hyperlinks we just tagged in Autoformat
+    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    With activeRng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Style = "Hyperlink"
+        .Replacement.Style = ActiveDocument.Styles("span hyperlink (url)")
+        .Text = ""
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindContinue
+        .Format = True
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute Replace:=wdReplaceAll
+    End With
+    
+    ' -----------------------------------------------
+    ' Removes all hyperlinks from the document (that were added with AutoFormat)
+    ' Text to display is left intact, macmillan style is left intact
+    With activeRng
+        While .Hyperlinks.Count > 0
+            .Hyperlinks(1).Delete
+        Wend
+    End With
+    
+End Sub
+
