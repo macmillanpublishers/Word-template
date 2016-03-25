@@ -41,18 +41,21 @@ Sub AutoExec()
 
         If blnToolbar = False Then
             Application.StatusBar = "Updating Macmillan Tools toolbar"
-            Call CreateMacToolbar(ThisDocument.Path)
+            Call CreateMacToolbar(PathToTemplate:=ThisDocument.Path)
         End If
     #Else
-        For Each Bar In CommandBars
-            If Bar.Name = "Macmillan Tools" Then
-                Bar.Delete
-                Exit For
-            End If
-        Next
-
-        ' Need to save template or user is prompted to save when closing Word
-        ThisDocument.Save
+        ' If opened read-only, can't save later
+        If IsReadOnly(Path:=ThisDocument.FullName) = False Then
+            For Each Bar In CommandBars
+                If Bar.Name = "Macmillan Tools" Then
+                    Bar.Delete
+                    Exit For
+                End If
+            Next
+    
+            ' Need to save template or user is prompted to save when closing Word
+            ThisDocument.Save
+        End If
     #End If
 
 
@@ -389,4 +392,5 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
