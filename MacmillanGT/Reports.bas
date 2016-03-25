@@ -681,8 +681,12 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
     
     'If Illustrations and sources exist, check that source comes after Ill and Cap
     If blnTor = True Then
-        If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & CheckPrev2Paras("Illustration holder (ill)", _
-            "Caption (cap)", "Illustration Source (is)")
+        If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & _
+            CheckPrev2Paras("Illustration holder (ill)", "Caption (cap)", "Illustration Source (is)")
+        If CheckFileName = True Then errorList = errorList & _
+            "**ERROR: Bookmaker can only accept file names that use" & vbNewLine & _
+            "letters, numbers, hyphens, or underscores. Punctuation," & vbNewLine & _
+            "spaces, and other special characters are not allowed." & vbNewLine & vbNewLine
     End If
     
     'Check that only heading styles follow page breaks
@@ -1917,3 +1921,40 @@ ErrHandler:
     End If
 End Sub
 
+
+Private Function CheckFileName() As Boolean
+' Returns error message if file name contains special characters
+
+    Dim strDocName As String
+    Dim strCheckChar As String
+    Dim strAllGoodChars As String
+    Dim lngNameLength As Long
+    Dim R As Long
+    Dim strErrorString As String
+    
+    CheckFileName = False
+    
+    ' Only alphanumeric, underscore and hyphen allowed in Bkmkr names
+    ' Will do vbTextCompare later for case insensitive search
+    strAllGoodChars = "ABCDEFGHIJKLMNOPQRSTUVWZYX1234567890_-"
+    
+    ' Get file name w/o extension
+    strDocName = ActiveDocument.Name
+    strDocName = Left(strDocName, InStrRev(strDocName, ".") - 1)
+    
+    lngNameLength = Len(strDocName)
+    
+    ' Loop: pull each char in file name, check if it appears in good char
+    ' list. If it doesn't appear, then it's bad! So return True
+    ' Error is same whether there is 1 or 100 bad chars, so exit as soon as
+    ' one is found.
+    
+    For R = 1 To lngNameLength
+        strCheckChar = Mid(strDocName, R, 1)
+        If InStr(strAllGoodChars, strCheckChar, Compare:=vbTextCompare) = 0 Then
+            CheckFileName = True
+            Exit Function
+        End If
+    Next R
+
+End Function
