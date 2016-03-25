@@ -1338,10 +1338,10 @@ Sub ClearPilcrowFormat(StoryType As WdStoryType)
 ' A pilcrow is the paragraph mark symbol. This clears all formatting and styles from
 ' pilcrows as found via ^p
     ' Change to story ranges?
-    Dim ActiveRange As Range
-    Set ActiveRange = ActiveDocument.StoryRanges(StoryType)
+    Dim activeRange As Range
+    Set activeRange = ActiveDocument.StoryRanges(StoryType)
 
-    With ActiveRange.Find
+    With activeRange.Find
         .ClearFormatting
         .Replacement.ClearFormatting
         .Text = "^13"       ' need to use ^13 if using wildcards

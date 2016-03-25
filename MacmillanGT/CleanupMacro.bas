@@ -652,3 +652,81 @@ Function zz_errorChecks()
     End If
 
 End Function
+
+
+Private Sub NumRangeHyphens(StoriesInDoc As Variant)
+    ' convert hyphens in number ranges to en-dashes,
+    ' but doesn't change hyphens in URLs or phone numbers
+
+    ' tag URLs w/ macmillan style, so we can avoid later
+    Call StyleAllHyperlinks(StoriesInUse:=StoriesInDoc)
+    
+    Dim strFindStart As String
+    Dim strFindEnd As String
+    Dim strTag As String
+    Dim strFindWhat As String
+    Dim strReplaceWith As String
+    Dim strLinkStyle As String
+    Dim activeRange As Range
+    Dim kStory As Long
+    
+    ' Patterns to find and replace
+    ' exclude start-with-hyphen or end-with-hyphen to exclude phone numbers
+    ' SSN, and the like
+    strFindStart = "([!\-]<[0-9]@)"
+    strFindEnd = "([0-9]@>[!\-])"
+    strTag = "`|url|`"
+    
+    strFindWhat = strFindStart & "\-" & strFindEnd
+    strReplaceWith = "\1" & strTag & "\2"
+    ' Macmillan URL style name
+    strLinkStyle = "span hyperlink (url)"
+    
+'    For kStory = LBound(StoriesInDoc) To UBound(StoriesInDoc)
+'        activeRange = ActiveDocument.StoryRanges(StoriesInDoc(kStory))
+    activeRange = ActiveDocument.Range
+    
+
+    With activeRange.Find
+        ' Find each thing that is also a URL
+        ' and replace hyphen with tags
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = strFindWhat
+        .Replacement.Text = strReplaceWith
+        .Style = strLinkStyle
+        .MatchWildcards = True
+        .Wrap = wdFindStop
+        .Forward = True
+        .Format = True
+        .Execute Replace:=wdReplaceAll
+
+        ' Find the rest and replace with en-dash
+        strReplaceWith = "\1^=\2"
+        
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = strFindWhat
+        .Replacement.Text = strReplaceWith
+        .MatchWildcards = True
+        .Wrap = wdFindStop
+        .Forward = True
+        .Format = True
+        .Execute Replace:=wdReplaceAll
+        
+        ' Replace url tags w/ original hyphen
+        strFindWhat = strFindStart & strTag & strFindEnd
+        strReplaceWith = "\1-\2"
+        
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = strFindWhat
+        .Replacement.Text = strReplaceWith
+        .MatchWildcards = True
+        .Wrap = wdFindStop
+        .Forward = True
+        .Format = True
+        .Execute Replace:=wdReplaceAll
+    End With
+    
+End Sub
