@@ -1081,18 +1081,36 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
     Dim strBkmkrNames() As String
     Dim z As Long
     
-    ' Loop through all styles to get array of bkmkr styles in use
+    ' Loop through all styles to get array of bkmkr styles in document
+    ' NOTE! The .InUse property does NOT mean "in use in the document"; it means
+    ' "any custom style or any modified built-in style". Ugh. Anyway, now we
+    ' have to loop through all styles to see if bookmaker styles are present,
+    ' then search for each of those styles to see if they are in use.
+    
     For Each objStyle In ActiveDocument.Styles
         ' If char style with "bookmaker" in name is in use...
         Debug.Print objStyle.NameLocal & " InUse: " & objStyle.InUse
-        If InStr(objStyle.NameLocal, "bookmaker") <> 0 And objStyle.Type = wdStyleTypeCharacter _
-            And objStyle.InUse = True Then
-                Debug.Print StoryType & ": " & objStyle.NameLocal
+        ' binary compare is default, but adding here to be clear that we are doing
+        ' a CASE SENSITIVE search, because "Bookmaker" is only for Paragraph styles,
+        ' which we don't want to mess with.
+        If InStr(objStyle.NameLocal, "bookmaker", Compare:=vbBinaryCompare) <> 0 And _
+            objStyle.Type = wdStyleTypeCharacter Then
+'            Debug.Print StoryType & ": " & objStyle.NameLocal
+            Selection.HomeKey Unit:=wdStory
+            ' Now see if it's being used ...
+            With Selection.Find
+                .Style = objStyle.NameLocal
+                .Wrap = wdFindContinue
+                .Format = True
+                .Execute
+            End With
+            
+            If Selection.Find.Found = True Then
                 '... add it to an array
                 z = z + 1
                 ReDim Preserve strBkmkrNames(1 To z)
                 strBkmkrNames(z) = objStyle.NameLocal
-
+            End If
         End If
     Next objStyle
 
