@@ -1067,21 +1067,6 @@ On Error GoTo BkmkrError
 End Sub
 
 
-Sub DeleteFields(StoryTypes As Variant)
-    Dim strContents As String
-    
-    With ActiveDocument.StoryRanges(StoryTypes)
-        While .Fields.Count > 0
-            strContents = .Fields.Item(1).result
-            .Fields(1).Select
-            
-            With Selection
-                .Fields.Item(1).Delete
-                .InsertAfter strContents
-            End With
-        Wend
-    End With
-End Sub
 
 
 'Private Sub TagBkmkrCharStyles()
