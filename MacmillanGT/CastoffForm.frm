@@ -18,6 +18,8 @@ Attribute VB_Exposed = False
 
 
 
+
+
 Option Explicit
 Public blnCancel As Boolean
 
@@ -331,7 +333,7 @@ Private Sub cmdYesCastoff_Click()
     End If
     
     ' Assign 0 to any inputs that are empty
-    Dim c As Long
+    Dim C As Long
     Dim ctrl As control
     For Each ctrl In Me.Controls
         If ctrl.Name Like "num*" Then

@@ -191,23 +191,23 @@ Sub MacmillanManuscriptCleanup()
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
     '-----------Delete hidden text ------------------------------------------------
-    Dim s As Long
+    Dim S As Long
     
-    For s = 1 To UBound(stStories())
-        If HiddenTextSucks(StoryType:=(stStories(s))) = True Then
+    For S = 1 To UBound(stStories())
+        If HiddenTextSucks(StoryType:=(stStories(S))) = True Then
             ' Notify user maybe?
         End If
-    Next s
+    Next S
     
     Call zz_clearFind
     
     ' ---------- Clear formatting from paragraph marks, symbols ----------------------------
     ' Per Westchester, can cause macro to break
     
-    For s = 1 To UBound(stStories())
-        Call ClearPilcrowFormat(StoryType:=(stStories(s)))
-        Call CleanSomeSymbols(StoryTypes:=(stStories(s)))
-    Next s
+    For S = 1 To UBound(stStories())
+        Call ClearPilcrowFormat(StoryType:=(stStories(S)))
+        Call CleanSomeSymbols(StoryTypes:=(stStories(S)))
+    Next S
     
     '-----------Find/Replace with Wildcards = False--------------------------------
     Call zz_clearFind                          'Clear find object
@@ -217,9 +217,9 @@ Sub MacmillanManuscriptCleanup()
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
-    For s = 1 To UBound(stStories())
-        Call RmNonWildcardItems(StoryType:=(stStories(s)))   'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
-    Next s
+    For S = 1 To UBound(stStories())
+        Call RmNonWildcardItems(StoryType:=(stStories(S)))   'has to be alone b/c Match Wildcards has to be disabled: Smart Quotes, Unicode (ellipse), section break
+    Next S
     
     Call zz_clearFind
 
@@ -229,9 +229,9 @@ Sub MacmillanManuscriptCleanup()
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
-    For s = 1 To UBound(stStories())
-        Call PreserveStyledCharactersA(StoryType:=(stStories(s)))              ' EW added v. 3.2, tags styled page breaks, tabs
-    Next s
+    For S = 1 To UBound(stStories())
+        Call PreserveStyledCharactersA(StoryType:=(stStories(S)))              ' EW added v. 3.2, tags styled page breaks, tabs
+    Next S
     Call zz_clearFind
     
     '---------------Find/Replace for rest of the typographic errors----------------------
@@ -240,9 +240,9 @@ Sub MacmillanManuscriptCleanup()
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
-    For s = 1 To UBound(stStories())
-        Call RmWhiteSpaceB(StoryType:=(stStories(s)))    'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
-    Next s
+    For S = 1 To UBound(stStories())
+        Call RmWhiteSpaceB(StoryType:=(stStories(S)))    'v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
+    Next S
     
     Call zz_clearFind
     
@@ -252,9 +252,9 @@ Sub MacmillanManuscriptCleanup()
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
-    For s = 1 To UBound(stStories())
-        Call PreserveStyledCharactersB(StoryType:=(stStories(s)))    ' EW added v. 3.2, replaces character tags with actual character
-    Next s
+    For S = 1 To UBound(stStories())
+        Call PreserveStyledCharactersB(StoryType:=(stStories(S)))    ' EW added v. 3.2, replaces character tags with actual character
+    Next S
     
     Call zz_clearFind
     
@@ -264,9 +264,9 @@ Sub MacmillanManuscriptCleanup()
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
     
-    For s = 1 To UBound(stStories())
-        Call FixUnderlines(StoryType:=(stStories(s)))
-    Next s
+    For S = 1 To UBound(stStories())
+        Call FixUnderlines(StoryType:=(stStories(S)))
+    Next S
     
     Call zz_clearFind
 
@@ -298,7 +298,7 @@ Private Sub RmNonWildcardItems(StoryType As WdStoryType)                        
     
     Dim noWildTagArray(3) As String                                   ' number of items in array should be declared here
     Dim noWildReplaceArray(3) As String              ' number of items in array should be declared here
-    Dim c As Long
+    Dim C As Long
     Dim wrapToggle As String
     
     wrapToggle = "wdFindContinue"
@@ -313,14 +313,14 @@ Private Sub RmNonWildcardItems(StoryType As WdStoryType)                        
     noWildReplaceArray(2) = "'"
     noWildReplaceArray(3) = """"
     
-    For c = 1 To UBound(noWildTagArray())
-        If c = 3 Then wrapToggle = "wdFindStop"
+    For C = 1 To UBound(noWildTagArray())
+        If C = 3 Then wrapToggle = "wdFindStop"
         
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
-            .Text = noWildTagArray(c)
-            .Replacement.Text = noWildReplaceArray(c)
+            .Text = noWildTagArray(C)
+            .Replacement.Text = noWildReplaceArray(C)
             .Wrap = wdFindContinue
             .Format = False
             .MatchCase = False
@@ -395,7 +395,7 @@ Private Sub RmWhiteSpaceB(StoryType As WdStoryType)
 
     Dim wsFindArray(33) As String              'number of items in array should be declared here
     Dim wsReplaceArray(33) As String       'and here
-    Dim i As Long
+    Dim I As Long
 
     wsFindArray(1) = ".{4,}"             '4 or more consecutive periods, into proper 4 dot ellipse
     wsFindArray(2) = "..."                  '3 consecutive periods, into 3 dot ellipse
@@ -502,12 +502,12 @@ Private Sub RmWhiteSpaceB(StoryType As WdStoryType)
         wsReplaceArray(33) = ". . ." & Chr(146)
     #End If
 
-    For i = 1 To UBound(wsFindArray())
+    For I = 1 To UBound(wsFindArray())
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
-            .Text = wsFindArray(i)
-            .Replacement.Text = wsReplaceArray(i)
+            .Text = wsFindArray(I)
+            .Replacement.Text = wsReplaceArray(I)
             .Wrap = wdFindContinue
             .Format = False
             .MatchCase = False

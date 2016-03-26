@@ -23,20 +23,20 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
     Dim lngBreak As Long
     Dim FileName() As String
     Dim FinalDir() As String
-    Dim z As Long
+    Dim Z As Long
     
-    For z = LBound(TemplatesToInstall()) To UBound(TemplatesToInstall())
+    For Z = LBound(TemplatesToInstall()) To UBound(TemplatesToInstall())
 '        Debug.Print "Path: " & TemplatesToInstall(z)
         
-        lngBreak = InStrRev(TemplatesToInstall(z), Application.PathSeparator)
+        lngBreak = InStrRev(TemplatesToInstall(Z), Application.PathSeparator)
 '        Debug.Print "Final sep at: " & lngBreak
         
         If lngBreak >= 1 Then
-            ReDim Preserve FileName(1 To z)
-            FileName(z) = Right(TemplatesToInstall(z), (Len(TemplatesToInstall(z)) - lngBreak))
+            ReDim Preserve FileName(1 To Z)
+            FileName(Z) = Right(TemplatesToInstall(Z), (Len(TemplatesToInstall(Z)) - lngBreak))
             
-            ReDim Preserve FinalDir(1 To z)
-            FinalDir(z) = Left(TemplatesToInstall(z), lngBreak - 1)
+            ReDim Preserve FinalDir(1 To Z)
+            FinalDir(Z) = Left(TemplatesToInstall(Z), lngBreak - 1)
             
 '            Debug.Print "File Name #" & z & ": " & FileName(z)
 '            Debug.Print "Directory #" & z & ": " & FinalDir(z)
@@ -46,7 +46,7 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
             Exit Sub
         End If
         
-    Next z
+    Next Z
     
     
     '' --------------- Set up variable names ----------------------------------------------
@@ -133,20 +133,20 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
     ' ---------------- Create new array of template files we need to install -----------------
     Dim strInstallFile() As String
     Dim strInstallDir() As String
-    Dim c As Long
-    Dim x As Long
+    Dim C As Long
+    Dim X As Long
     
-    x = 0
+    X = 0
     
-    For c = LBound(FileName()) To UBound(FileName())
-        If installCheck(c) = True Then
-            x = x + 1
-            ReDim Preserve strInstallFile(1 To x)
-                strInstallFile(x) = FileName(c)
-            ReDim Preserve strInstallDir(1 To x)
-                strInstallDir(x) = FinalDir(c)
+    For C = LBound(FileName()) To UBound(FileName())
+        If installCheck(C) = True Then
+            X = X + 1
+            ReDim Preserve strInstallFile(1 To X)
+                strInstallFile(X) = FileName(C)
+            ReDim Preserve strInstallDir(1 To X)
+                strInstallDir(X) = FinalDir(C)
         End If
-    Next c
+    Next C
     
     'Debug.Print strInstallFile(1) & vbNewLine & strInstallDir(1)
     
@@ -187,23 +187,23 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
     Call CloseOpenDocs
         
     '----------------- download template files ------------------------------------------
-    Dim d As Long
+    Dim D As Long
     
-    For d = LBound(strInstallFile()) To UBound(strInstallFile())
+    For D = LBound(strInstallFile()) To UBound(strInstallFile())
     
-        If IsReadOnly(strInstallDir(d)) = True Then
+        If IsReadOnly(strInstallDir(D)) = True Then
             ' Can't replace with new file if destination is read-only; Startup on Mac w/o admin is read-only
             Dim strReadOnlyError As String
             
-            strReadOnlyError = "Sorry, you don't have permission to install the file " & strInstallFile(d) & vbNewLine & vbNewLine & _
+            strReadOnlyError = "Sorry, you don't have permission to install the file " & strInstallFile(D) & vbNewLine & vbNewLine & _
                 "If you are in-house at Macmillan on a Mac, try re-installing the Macmillan Style Template & Macros from the Digital Workflow category in Self Service."
                 
                 MsgBox strReadOnlyError, vbOKOnly, "Update Failed"
                 Exit Sub
         Else
             'If False, error in download; user was notified in DownloadFromConfluence function
-            If DownloadFromConfluence(DownloadSource:=DownloadFrom, FinalDir:=strInstallDir(d), _
-                LogFile:=strFullLogPath(d), FileName:=strInstallFile(d)) = False Then
+            If DownloadFromConfluence(DownloadSource:=DownloadFrom, FinalDir:=strInstallDir(D), _
+                LogFile:=strFullLogPath(D), FileName:=strInstallFile(D)) = False Then
                 If Installer = True Then
                     #If Mac Then    ' because application.quit generates error on Mac
                         ActiveDocument.Close (wdDoNotSaveChanges)
@@ -220,7 +220,7 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
         ' Will be added again by MacmillanGT AutoExec when it's launched, to capture updates
         #If Mac Then
             Dim Bar As CommandBar
-            If strInstallFile(d) = "MacmillanGT.dotm" Then
+            If strInstallFile(D) = "MacmillanGT.dotm" Then
                 For Each Bar In CommandBars
                     If Bar.Name = "Macmillan Tools" Then
                         Bar.Delete
@@ -229,7 +229,7 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
                     Next
             End If
         #End If
-    Next d
+    Next D
     
     '------Display installation complete message   ---------------------------
     Dim strComplete As String

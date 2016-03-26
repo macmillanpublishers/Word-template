@@ -75,7 +75,7 @@ On Error GoTo ErrorContinue ' Tests for error because style not present,
         
         Dim strSearchStyle(1 To 6) As String
         Dim B As Long
-        Dim c As Long
+        Dim C As Long
         Dim lngCount As Long
         Dim lngParaIndex As Long
         Dim strThisStyle As String
@@ -174,16 +174,16 @@ On Error GoTo ErrorContinue ' Tests for error because style not present,
                         blnNextStyle = False
     
                         ' Test prev/next paras for extract styles
-                        For c = LBound(strExtractStyle()) To UBound(strExtractStyle())
+                        For C = LBound(strExtractStyle()) To UBound(strExtractStyle())
                             'Debug.Print "Searching for: " & strExtractStyle(c)
                             
                             ' Using InStr again so we don't have to list/loop through EVERY Extract/Epigraph/Etc style
-                            If InStr(strPrevStyle, strExtractStyle(c)) > 0 Then
+                            If InStr(strPrevStyle, strExtractStyle(C)) > 0 Then
                                 blnPrevStyle = True
                             End If
                             
                             ' Need two separate steps so we can capture instances where same style is before and after
-                            If InStr(strNextStyle, strExtractStyle(c)) > 0 Then
+                            If InStr(strNextStyle, strExtractStyle(C)) > 0 Then
                                 blnNextStyle = True
                             End If
     
@@ -191,7 +191,7 @@ On Error GoTo ErrorContinue ' Tests for error because style not present,
                             If blnPrevStyle = True And blnNextStyle = True Then
                                 Exit For
                             End If
-                        Next c
+                        Next C
     
                         On Error GoTo 0
     

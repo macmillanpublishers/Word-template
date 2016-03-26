@@ -39,59 +39,59 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     #End If
     
     Dim strPathsToTemplates() As String
-    Dim k As Long
-    k = 0
+    Dim K As Long
+    K = 0
     
     ' get the updater file for these requests
     If TemplatesYouWant = updaterTemplates Or _
         TemplatesYouWant = installTemplates Or _
         TemplatesYouWant = allTemplates Then
-        k = k + 1
-        ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = strStartupDir & Application.PathSeparator & "GtUpdater.dotm"
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStartupDir & Application.PathSeparator & "GtUpdater.dotm"
     End If
     
     ' get the tools file for these requests
     If TemplatesYouWant = toolsTemplates Or _
         TemplatesYouWant = installTemplates Or _
         TemplatesYouWant = allTemplates Then
-        k = k + 1
-        ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "MacmillanGT.dotm"
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "MacmillanGT.dotm"
     End If
     
     ' get the styles files for these requests
     If TemplatesYouWant = stylesTemplates Or _
         TemplatesYouWant = installTemplates Or _
         TemplatesYouWant = allTemplates Then
-        k = k + 1
-        ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "macmillan.dotm"
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan.dotm"
         
-        k = k + 1
-        ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "macmillan_NoColor.dotm"
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan_NoColor.dotm"
 
-        k = k + 1
-        ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = strStyleDir & Application.PathSeparator & "macmillan_CoverCopy.dotm"
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan_CoverCopy.dotm"
     End If
     
     ' also get the installer file
     If TemplatesYouWant = allTemplates And PathToRepo <> vbNullString Then
-        k = k + 1
-        ReDim Preserve strPathsToTemplates(1 To k)
-        strPathsToTemplates(k) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller" _
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller" _
             & Application.PathSeparator & "MacmillanTemplateInstaller.docm"
         
         ' Could also add paths to open _BETA and _DEVELOP installer files?
     End If
     
     ' DEBUGGING: check tha list!
-'    Dim h As Long
-'    For h = LBound(strPathsToTemplates) To (UBound(strPathsToTemplates))
-'        Debug.Print h & ": " & strPathsToTemplates(h)
-'    Next h
+'    Dim H As Long
+'    For H = LBound(strPathsToTemplates) To (UBound(strPathsToTemplates))
+'        Debug.Print H & ": " & strPathsToTemplates(H)
+'    Next H
     
     
     GetTemplatesList = strPathsToTemplates
@@ -783,7 +783,7 @@ Sub CreateTextFile(strText As String, suffix As String)
     '''end ''''for 32 char Mc OS bug part 1
     
     'set and open file for output
-    Dim e As Integer
+    Dim E As Integer
     fnum = FreeFile()
     Open reqReportDoc For Output As fnum
     
@@ -886,7 +886,7 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
     Dim num_cols As Long
     Dim the_array() As Variant
     Dim R As Long
-    Dim c As Long
+    Dim C As Long
     
         If IsItThere(Path) = False Then
             MsgBox "There was a problem with your Castoff.", vbCritical, "Error: CSV not available"
@@ -937,10 +937,10 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
         For R = lngHeaderRow To num_rows           ' start at 1 (not 0) if we are not using the header row
             If Len(lines(R)) > 0 Then
                 one_line = Split(lines(R), ",")
-                For c = lngHeaderCol To num_cols   ' start at 1 (not 0) if we are not using the header column
+                For C = lngHeaderCol To num_cols   ' start at 1 (not 0) if we are not using the header column
                     'Debug.Print one_line(c)
-                    the_array((R - lngHeaderRow), (c - lngHeaderCol)) = one_line(c)   ' -1 because if are not using header row/column from CSV
-                Next c
+                    the_array((R - lngHeaderRow), (C - lngHeaderCol)) = one_line(C)   ' -1 because if are not using header row/column from CSV
+                Next C
             End If
         Next R
     
@@ -1375,20 +1375,20 @@ Sub StyleAllHyperlinks(StoriesInUse As Variant)
     ' Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
     ' Also if you AutoFormat a second time it undoes all of the formatting already applied to hyperlinks
     
-    Dim s As Long
+    Dim S As Long
     
     Call zz_clearFind
     
-    For s = 1 To UBound(StoriesInUse)
+    For S = 1 To UBound(StoriesInUse)
         'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
-        Call StyleHyperlinksA(StoryType:=StoriesInUse(s))
-    Next s
+        Call StyleHyperlinksA(StoryType:=StoriesInUse(S))
+    Next S
     
     Call AutoFormatHyperlinks
     
-    For s = 1 To UBound(StoriesInUse)
-        Call StyleHyperlinksB(StoryType:=StoriesInUse(s))
-    Next s
+    For S = 1 To UBound(StoriesInUse)
+        Call StyleHyperlinksB(StoryType:=StoriesInUse(S))
+    Next S
     
 End Sub
 
@@ -1412,7 +1412,7 @@ Private Sub StyleHyperlinksA(StoryType As WdStoryType)
     '------------------------------------------
     'removes all hyperlink styles
     Dim HyperlinkStyleArray(3) As String
-    Dim p As Long
+    Dim P As Long
     
 On Error GoTo LinksErrorHandler:
     
@@ -1420,11 +1420,11 @@ On Error GoTo LinksErrorHandler:
     HyperlinkStyleArray(2) = "FollowedHyperlink"    'built-in style applied automatically
     HyperlinkStyleArray(3) = "span hyperlink (url)" 'Macmillan template style for links
     
-    For p = 1 To UBound(HyperlinkStyleArray())
+    For P = 1 To UBound(HyperlinkStyleArray())
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
-            .Style = HyperlinkStyleArray(p)
+            .Style = HyperlinkStyleArray(P)
             .Replacement.Style = ActiveDocument.Styles("Default Paragraph Font")
             .Text = ""
             .Replacement.Text = ""

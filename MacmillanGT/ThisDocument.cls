@@ -83,10 +83,10 @@ Sub AutoExec()
     strTemplatePaths = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
 
 '   ' DEBUG: check that paths are correct
-'    Dim q As Long
-'    For q = LBound(strTemplatePaths) To UBound(strTemplatePaths)
-'        Debug.Print q & ": " & strTemplatePaths(q)
-'    Next q
+'    Dim Q AS Long
+'    For Q = LBound(strTemplatePaths) To UBound(strTemplatePaths)
+'        Debug.Print Q & ": " & strTemplatePaths(Q)
+'    Next Q
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
     Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
@@ -264,8 +264,8 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim lngButtonCount As Long
         Dim A As Long
         Dim B As Long
-        Dim c As Long
-        Dim h As Long
+        Dim C As Long
+        Dim H As Long
         Dim NewToolbar As CommandBar
         
         Dim strImageName As String
@@ -319,13 +319,13 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                             If lngButtonCount > 0 Then
 
                                 ' Add new buttons
-                                For c = 1 To lngButtonCount
+                                For C = 1 To lngButtonCount
 
                                     ' Start of Xpath for all button attributes - need to add attribute name AND close parens to use
-                                    strXpath = "string(//tab[" & A & "]/group[" & B & "]/button[" & c & "]/@"
+                                    strXpath = "string(//tab[" & A & "]/group[" & B & "]/button[" & C & "]/@"
 
                                     ' If first button in group, set BeginGroup to True
-                                    If c = 1 Then blnBeginGroup = True Else blnBeginGroup = False
+                                    If C = 1 Then blnBeginGroup = True Else blnBeginGroup = False
 
                                     ' Get image name
                                     strImageName = ShellAndWaitMac(strCmdStart & strXpath & "image)" & strCmdEnd)
@@ -353,7 +353,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                                         .OnAction = strAction
                                         .BeginGroup = blnBeginGroup
                                     End With
-                                Next c
+                                Next C
                             End If
                         Next B
                     End If
@@ -392,5 +392,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
+
 
 

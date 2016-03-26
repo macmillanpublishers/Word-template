@@ -239,7 +239,7 @@ Function endnoteHeader(refSection As Integer) As String
 Dim sectionRng As Range
     Dim searchStylesArray(4) As String                       ' number of items in array should be declared here
     Dim searchTest As Boolean
-    Dim i As Long
+    Dim I As Long
     
     Call zz_clearFind
     
@@ -249,13 +249,13 @@ Dim sectionRng As Range
     searchStylesArray(3) = "Chap Title (ct)"
     searchStylesArray(4) = "Chap Title Nonprinting (ctnp)"
     searchTest = False
-    i = 1
+    I = 1
     
     Do Until searchTest = True
     Set sectionRng = ActiveDocument.Sections(refSection).Range
     With sectionRng.Find
       .ClearFormatting
-      .Style = searchStylesArray(i)
+      .Style = searchStylesArray(I)
       .Wrap = wdFindStop
       .Forward = True
     End With
@@ -265,8 +265,8 @@ Dim sectionRng As Range
     Else
     'following line for debug: comment later
         'MsgBox searchStylesArray(i) + " Not Found"
-        i = i + 1
-        If i = 5 Then
+        I = I + 1
+        If I = 5 Then
             searchTest = True
             endnoteHeader = "```No Header found```"
         End If

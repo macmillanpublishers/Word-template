@@ -82,11 +82,11 @@ Private Sub MakeReport(torDOTcom As Boolean)
         funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun..."
     End If
     
-    Dim x As Integer
+    Dim X As Integer
     
     'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
     Randomize           'Sets seed for Rnd below to value of system timer
-    x = Int(UBound(funArray()) * Rnd()) + 1
+    X = Int(UBound(funArray()) * Rnd()) + 1
     
     'Debug.Print x
     If torDOTcom = True Then
@@ -96,7 +96,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     End If
     
     sglPercentComplete = 0.02
-    strStatus = funArray(x)
+    strStatus = funArray(X)
     
     Dim oProgressBkmkr As ProgressBar
     Set oProgressBkmkr = New ProgressBar    ' Triggers Initialize
@@ -299,7 +299,7 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     Dim styleBadCount As Integer
     Dim styleBadOverflow As Boolean
     Dim activeParaCount As Integer
-    Dim J As Integer, k As Integer, L As Integer
+    Dim J As Integer, K As Integer, L As Integer
     Dim paraStyle As String
     '''''''''''''''''''''
     Dim activeParaRange As Range
@@ -338,17 +338,17 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
                 'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
                 If Right(paraStyle, 1) = ")" Then
 CheckGoodStyles:
-                    For k = 1 To styleGoodCount
+                    For K = 1 To styleGoodCount
                         'Debug.Print Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1)
                         ' "Left" function because now stylesGood includes page number, so won't match paraStyle
-                        If paraStyle = Left(stylesGood(k), InStrRev(stylesGood(k), " --") - 1) Then
-                        k = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                        If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
+                        K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
                             Exit For                                        'stylereport bug fix #1   v. 3.1
                         End If                                              'stylereport bug fix #1   v. 3.1
-                    Next k
+                    Next K
                     
-                    If k = styleGoodCount + 1 Then
-                        styleGoodCount = k
+                    If K = styleGoodCount + 1 Then
+                        styleGoodCount = K
                         ReDim Preserve stylesGood(1 To styleGoodCount)
                         stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
                     End If
@@ -396,9 +396,9 @@ CheckGoodStyles:
     If styleGoodCount = 0 Then
         strGoodStyles = ""
     Else
-        For k = LBound(stylesGood()) To UBound(stylesGood())
-            strGoodStyles = strGoodStyles & stylesGood(k) & vbCrLf
-        Next k
+        For K = LBound(stylesGood()) To UBound(stylesGood())
+            strGoodStyles = strGoodStyles & stylesGood(K) & vbCrLf
+        Next K
     End If
     
     'Debug.Print strGoodStyles
@@ -1598,7 +1598,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     ReDim stylesGood(stylesGoodLong)
     Dim styleGoodCount As Integer
     Dim activeParaCount As Integer
-    Dim J As Integer, k As Integer, L As Integer
+    Dim J As Integer, K As Integer, L As Integer
     Dim paraStyle As String
     '''''''''''''''''''''
     Dim activeParaRange As Range
@@ -1627,15 +1627,15 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
                 Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
         
-                For k = 1 To styleGoodCount
+                For K = 1 To styleGoodCount
                     ' "Left" function because now stylesGood includes page number, so won't match paraStyle
-                    If paraStyle = Left(stylesGood(k), InStrRev(stylesGood(k), " --") - 1) Then
-                        k = styleGoodCount                              'stylereport bug fix #1    v. 3.1
+                    If paraStyle = Left(stylesGood(K), InStrRev(stylesGood(K), " --") - 1) Then
+                        K = styleGoodCount                              'stylereport bug fix #1    v. 3.1
                         Exit For                                        'stylereport bug fix #1   v. 3.1
                     End If                                              'stylereport bug fix #1   v. 3.1
-                Next k
-                If k = styleGoodCount + 1 Then
-                    styleGoodCount = k
+                Next K
+                If K = styleGoodCount + 1 Then
+                    styleGoodCount = K
                     stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
                 End If
             End If
@@ -1643,16 +1643,16 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     Next J
     
     'Sort good styles
-    If k <> 0 Then
+    If K <> 0 Then
     ReDim Preserve stylesGood(1 To styleGoodCount)
     WordBasic.SortArray stylesGood()
     End If
     
     'Create single string for good styles
     Dim strGoodStyles As String
-    For k = LBound(stylesGood()) To UBound(stylesGood())
-        strGoodStyles = strGoodStyles & stylesGood(k) & vbNewLine
-    Next k
+    For K = LBound(stylesGood()) To UBound(stylesGood())
+        strGoodStyles = strGoodStyles & stylesGood(K) & vbNewLine
+    Next K
     
     'Debug.Print strGoodStyles
     
@@ -1681,15 +1681,15 @@ Private Sub ISBNcleanup()
     ' a character later, it won't return anything because the whole string needs to have the
     ' style applied for it to be found.
     
-    Dim g As Long
-    For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
+    Dim G As Long
+    For G = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
         
         'Move selection to start of document
         Selection.HomeKey Unit:=wdStory
 
         With Selection.Find
             .ClearFormatting
-            .Text = strISBNtextArray(g)
+            .Text = strISBNtextArray(G)
             .Replacement.ClearFormatting
             .Replacement.Text = ""
             .Forward = True
@@ -1706,7 +1706,7 @@ Private Sub ISBNcleanup()
         
         Selection.Find.Execute Replace:=wdReplaceAll
     
-    Next g
+    Next G
     
 Exit Sub
     

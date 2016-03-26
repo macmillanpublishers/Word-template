@@ -91,12 +91,12 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         End If
         
         '------------Get castoff for each Design selected-------------------
-        Dim d As Long
+        Dim D As Long
         
-        For d = LBound(lngDesign()) To UBound(lngDesign())
+        For D = LBound(lngDesign()) To UBound(lngDesign())
             
             'Error handling: lngDesign(d) must be in range of design array
-            If UBound(arrDesign(), 1) <= lngDesign(d) And UBound(arrDesign(), 2) <= FormInputs.TrimIndex Then
+            If UBound(arrDesign(), 1) <= lngDesign(D) And UBound(arrDesign(), 2) <= FormInputs.TrimIndex Then
                  MsgBox "There was an error generating your castoff. Please contact workflows@macmillan.com for assistance.", _
                     vbCritical, "Error 1: Design Count Out of Range"
                 Unload FormInputs
@@ -104,11 +104,11 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
             Else
     
                 '---------Calculate Page Count--------------------------------------
-                ReDim Preserve lngCastoffResult(d)
-                lngCastoffResult(d) = Castoff(lngDesign(d), arrDesign(), FormInputs)
+                ReDim Preserve lngCastoffResult(D)
+                lngCastoffResult(D) = Castoff(lngDesign(D), arrDesign(), FormInputs)
                 
             End If
-        Next d
+        Next D
         
         ' ----- Get spine size if POD -------
 
@@ -128,7 +128,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     ' Create text of castoff from arrays
     Dim strCastoffs As String
     Dim strPickupTitle As String
-    Dim e As Long
+    Dim E As Long
     
     ' If it's a pickup, there is only 1 option
     If FormInputs.chkDesignPickup Then
@@ -137,9 +137,9 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     Else
         strPickupTitle = ""
         strCastoffs = vbNewLine
-        For e = LBound(lngCastoffResult) To UBound(lngCastoffResult)
-            strCastoffs = strCastoffs & vbTab & strDesign(e) & ": " & lngCastoffResult(e) & vbNewLine
-        Next e
+        For E = LBound(lngCastoffResult) To UBound(lngCastoffResult)
+            strCastoffs = strCastoffs & vbTab & strDesign(E) & ": " & lngCastoffResult(E) & vbNewLine
+        Next E
     End If
     
     
@@ -332,15 +332,15 @@ Private Function SpineSize(PageCount As Long)
         End If
     
         '---------Lookup spine size in array-------------------------------
-        Dim c As Long
+        Dim C As Long
         
-        For c = LBound(arrSpine, 1) To UBound(arrSpine, 1)
+        For C = LBound(arrSpine, 1) To UBound(arrSpine, 1)
             'Debug.Print arrDesign(c, 0) & " = " & PageCount
-            If arrSpine(c, 0) = PageCount Then
-                strSpine = arrSpine(c, 1)
+            If arrSpine(C, 0) = PageCount Then
+                strSpine = arrSpine(C, 1)
                 Exit For
             End If
-        Next c
+        Next C
     Else
         strSpine = "Your page count of " & PageCount & _
                 " is out of range of the spine-size table."
