@@ -170,17 +170,17 @@ Sub MacmillanManuscriptCleanup()
     funArray(9) = "* Having a snack..."
     funArray(10) = "* Initiating launch sequence..."
     
-    Dim x As Integer
+    Dim X As Integer
     
     'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
     Randomize           'Sets seed for Rnd below to value of system timer
-    x = Int(UBound(funArray()) * Rnd()) + 1
+    X = Int(UBound(funArray()) * Rnd()) + 1
     
     'Debug.Print x
     
     strTitle = "Macmillan Manuscript Cleanup Macro"
     sglPercentComplete = 0.05
-    strStatus = funArray(x)
+    strStatus = funArray(X)
 
     Dim oProgressCleanup As ProgressBar
     Set oProgressCleanup = New ProgressBar  ' Triggers Initialize event, which also triggers Show method on PC only
@@ -201,11 +201,12 @@ Sub MacmillanManuscriptCleanup()
     
     Call zz_clearFind
     
-    ' ---------- Clear formatting from paragraph marks ----------------------------
+    ' ---------- Clear formatting from paragraph marks, symbols ----------------------------
     ' Per Westchester, can cause macro to break
     
     For s = 1 To UBound(stStories())
         Call ClearPilcrowFormat(StoryType:=(stStories(s)))
+        Call CleanSomeSymbols(StoryTypes:=(stStories(s)))
     Next s
     
     '-----------Find/Replace with Wildcards = False--------------------------------
@@ -683,10 +684,9 @@ Private Sub NumRangeHyphens(StoriesInDoc As Variant)
     strLinkStyle = "span hyperlink (url)"
     
 '    For kStory = LBound(StoriesInDoc) To UBound(StoriesInDoc)
-'        activeRange = ActiveDocument.StoryRanges(StoriesInDoc(kStory))
-    activeRange = ActiveDocument.Range
+'        Set activeRange = ActiveDocument.StoryRanges(StoriesInDoc(kStory))
+    Set activeRange = ActiveDocument.Range
     
-
     With activeRange.Find
         ' Find each thing that is also a URL
         ' and replace hyphen with tags
@@ -729,4 +729,34 @@ Private Sub NumRangeHyphens(StoriesInDoc As Variant)
         .Execute Replace:=wdReplaceAll
     End With
     
+End Sub
+
+
+Private Sub CleanSomeSymbols(StoryTypes As WdStoryType)
+' Remove formatting from some symbols
+    
+    Dim activeRange As Range
+    Set activeRange = ActiveDocument.StoryRanges(StoryTypes)
+    
+    Dim arrSymbols(1 To 3) As String
+    Dim X As Long
+    
+    arrSymbols(1) = "^0174"    ' (r) registered trademark symbol
+    arrSymbols(2) = "^0169"    ' (c) copyright symbol
+    arrSymbols(3) = "^0153"    ' TM trademark symbol
+    
+    ' Just removing superscript for right now
+    For X = LBound(arrSymbols) To UBound(arrSymbols)
+        
+        With activeRange.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Text = arrSymbols(X)
+            .Replacement.Text = "^&"
+            .Format = True
+            .Replacement.Font.Superscript = False
+            .MatchWildcards = True
+            .Execute Replace:=wdReplaceAll
+        End With
+    Next X
 End Sub
