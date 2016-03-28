@@ -1000,7 +1000,7 @@ End Sub
 
 
 
-Function StartupSettings(StoriesUsed As Variant, Optional AcceptAll As Boolean = False) As Boolean
+Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As Boolean = False) As Boolean
     ' records/adjusts/checks settings and stuff before running the rest of the macro
     ' returns TRUE if some check is bad and we can't run the macro
     
@@ -1094,6 +1094,12 @@ Function StartupSettings(StoriesUsed As Variant, Optional AcceptAll As Boolean =
     Dim thisRange As Range
     Dim objField As Field
     Dim strContent As String
+    
+    ' StoriesUsed is optional; if an array of stories is not passed, just use the main text story here
+    If IsArrayEmpty(StoriesUsed) = True Then
+        ReDim StoriesUsed(1 To 1)
+        StoriesUsed(1) = wdMainTextStory
+    End If
 
     For A = LBound(StoriesUsed) To UBound(StoriesUsed)
         Set thisRange = ActiveDocument.StoryRanges(StoriesUsed(A))
