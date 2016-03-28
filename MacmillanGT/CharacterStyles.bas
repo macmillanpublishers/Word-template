@@ -885,13 +885,16 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
         ' which we don't want to mess with.
         If InStr(1, objStyle.NameLocal, "bookmaker", vbBinaryCompare) <> 0 And _
             objStyle.Type = wdStyleTypeCharacter Then
-'            Debug.Print StoryType & ": " & objStyle.NameLocal
+            Debug.Print StoryType & ": " & objStyle.NameLocal
             Selection.HomeKey Unit:=wdStory
             ' Now see if it's being used ...
             With Selection.Find
+                .ClearFormatting
+                .Text = ""
                 .Style = objStyle.NameLocal
                 .Wrap = wdFindContinue
                 .Format = True
+                .Forward = True
                 .Execute
             End With
             
