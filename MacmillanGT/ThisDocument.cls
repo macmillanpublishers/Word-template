@@ -70,7 +70,7 @@ Sub AutoExec()
     Dim strTemplatePaths() As String
 
     ' Switch to "master" before going live!
-    downloadBranch = develop
+    downloadBranch = releases
 
     'True = standalone installer file, False = daily update checker already installed
     blnInstaller = False
