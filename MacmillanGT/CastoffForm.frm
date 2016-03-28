@@ -20,6 +20,7 @@ Attribute VB_Exposed = False
 
 
 
+
 Option Explicit
 Public blnCancel As Boolean
 
@@ -480,9 +481,6 @@ Private Sub chkDesignPickup_Click()
         ' required sections' heading colors
         Me.fraStandard_std.ForeColor = lngHexRed
         Me.fraPickup_pickup.ForeColor = lngHexBlack
-            
-        ' Clear this because it defaults to Offset for Pickup
-        Me.PrintType = vbNullString
         
         ' enable both trims but don't pick either
         Me.optTrim5x8.Enabled = True
