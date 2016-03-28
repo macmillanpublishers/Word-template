@@ -1084,6 +1084,12 @@ Function StartupSettings(StoriesUsed As Variant, Optional AcceptAll As Boolean =
     
     
     ' ========== Delete field codes ==========
+    ' Fields break cleanup and char styles, so we delete them (but retain their
+    ' result, if any). Furthermore, fields make no sense in a manuscript, so
+    ' even if they didn't break anything we don't want them.
+    ' Note, however, that even though linked endnotes and footnotes are
+    ' types of fields, this loop doesn't affect them.
+    
     Dim A As Long
     Dim thisRange As Range
     Dim objField As Field
@@ -1113,7 +1119,10 @@ Function StartupSettings(StoriesUsed As Variant, Optional AcceptAll As Boolean =
 
     
     ' ========== Remove content controls ==========
-    ' Doesn't work at all for a Mac
+    ' Content controls also break character styles and cleanup
+    ' They are used by some imprints for frontmatter templates
+    ' for editorial, though.
+    ' Doesn't work at all for a Mac, so...
     #If Win32 Then
         ClearContentControls
     #End If
@@ -1381,13 +1390,13 @@ Sub StyleAllHyperlinks(StoriesInUse As Variant)
     
     For S = 1 To UBound(StoriesInUse)
         'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
-        Call StyleHyperlinksA(StoryType:=StoriesInUse(S))
+        Call StyleHyperlinksA(StoryType:=(StoriesInUse(S)))
     Next S
     
     Call AutoFormatHyperlinks
     
     For S = 1 To UBound(StoriesInUse)
-        Call StyleHyperlinksB(StoryType:=StoriesInUse(S))
+        Call StyleHyperlinksB(StoryType:=(StoriesInUse(S)))
     Next S
     
 End Sub
@@ -1401,7 +1410,7 @@ Private Sub StyleHyperlinksA(StoryType As WdStoryType)
     ' -----------------------------------------
     ' this first bit removes all live hyperlinks from document
     ' we want to remove these from urls AND text; will add back to just urls later
-    
+    Dim activeRng As Range
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     ' remove all embedded hyperlinks regardless of character style
     With activeRng
@@ -1574,6 +1583,7 @@ Private Sub StyleHyperlinksB(StoryType As WdStoryType)
     ' call StyleAllHyperlinks sub above.
     '--------------------------------------------------
     ' apply macmillan URL style to hyperlinks we just tagged in Autoformat
+    Dim activeRng As Range
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     With activeRng.Find
         .ClearFormatting

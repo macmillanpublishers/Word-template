@@ -879,11 +879,11 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
     
     For Each objStyle In ActiveDocument.Styles
         ' If char style with "bookmaker" in name is in use...
-        Debug.Print objStyle.NameLocal & " InUse: " & objStyle.InUse
+'        Debug.Print objStyle.NameLocal & " InUse: " & objStyle.InUse
         ' binary compare is default, but adding here to be clear that we are doing
         ' a CASE SENSITIVE search, because "Bookmaker" is only for Paragraph styles,
         ' which we don't want to mess with.
-        If InStr(objStyle.NameLocal, "bookmaker", Compare:=vbBinaryCompare) <> 0 And _
+        If InStr(1, objStyle.NameLocal, "bookmaker", vbBinaryCompare) <> 0 And _
             objStyle.Type = wdStyleTypeCharacter Then
 '            Debug.Print StoryType & ": " & objStyle.NameLocal
             Selection.HomeKey Unit:=wdStory
@@ -1056,30 +1056,56 @@ On Error GoTo 0
 
 ErrorHandler1:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
-        Set myStyle = thisDoc.Styles.Add(Name:=strTX, Type:=wdStyleTypeParagraph)
+        ' so we'll add it
+        Set myStyle = thisDoc.Styles.Add(Name:=strNewStyle, Type:=wdStyleTypeParagraphOnly)
+        ' wdStyleType is enumerated here <https://msdn.microsoft.com/en-us/library/office/ff196870(v=office.15).aspx>
+        ' but mysteriously does NOT include wdStyleTypeParagraphOnly. Using wdStyleTypeParagraph
+        ' can (always?) create a linked style, wherein the paragraph style is linked to a
+        ' character style, and the paragraph style now has that character formatting, and you can't
+        ' unlink the styles even from the Modify menu. It's a mess -- just use wdStyleTypeParagraph,
+        ' which creates a new paragraph style based on Normal w/ no additional formatting.
+        
         With myStyle
             '.QuickStyle = True ' not available for Mac
-            .Font.Name = "Times New Roman"
-            .Font.Size = 12
+
+            ' If we set the style to "(no style)", the new style picks up the original
+            ' direct formatting of the paragraph in it's definition, which could be anything.
+            ' If we keep BaseStyle = Normal, it could also technically be anything. I'm
+            ' going to assume that Normal is more likely to have reasonable formatting
+            ' and stay with that as a base style. If this proves to not work out, we'll
+            ' have to define every possible formatting option when creating the new style.
+            
+            ' If it all works out, we'll just have to define the most important formatting,
+            ' and hope that Normal doesn't have crazy things like borders or red text.
+            
+            ' ALSO! If you set a format to something that is the same as Normal, it WON'T
+            ' be added to the style definition of the new style. So we may have to define
+            ' everything at some point anyway...
+            With .Font
+                .Name = "Times New Roman"
+                .Size = 12
+            End With
+            
             With .ParagraphFormat
                 .LineSpacingRule = wdLineSpaceDouble
                 .SpaceAfter = 0
                 .SpaceBefore = 0
+                .Borders(wdBorderLeft).Color = RGB(102, 204, 255)
+'                .Borders.DistanceFromLeft = 4 ' in points
+                
+                ' Different settings for each style
+                Select Case strNewStyle
+                    Case strTX
+                        .FirstLineIndent = 36 ' default unit is points, 36pt = 0.5in
+                        .Borders(wdBorderLeft).LineStyle = wdLineStyleSingle
+                        .Borders(wdBorderLeft).LineWidth = wdLineWidth600pt
 
-                With .Borders
-                    Select Case strNewStyle
-                        Case strTX
-                            .OutsideLineStyle = wdLineStyleSingle
-                            .OutsideLineWidth = wdLineWidth600pt
+                    Case strTX1
+                        .FirstLineIndent = 0
+                        .Borders(wdBorderLeft).LineStyle = wdLineStyleDouble
+                        .Borders(wdBorderLeft).LineWidth = wdLineWidth225pt
 
-                        Case strTX1
-                            .OutsideLineStyle = wdLineStyleDouble
-                            .OutsideLineWidth = wdLineWidth225pt
-
-                    End Select
-                .OutsideColor = RGB(102, 204, 255)
-
-                End With
+                End Select
             End With
         End With
 
@@ -1097,21 +1123,27 @@ ErrorHandler1:
 
 ErrorHandler2:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
-        Set myStyle = thisDoc.Styles.Add(Name:=strCOTX1, Type:=wdStyleTypeParagraph)
+        Set myStyle = thisDoc.Styles.Add(Name:=strCOTX1, Type:=wdStyleTypeParagraphOnly)
         With myStyle
             '.QuickStyle = True ' not available for Mac
-            ' will error if no TX1 in doc
+            ' Set BaseStyle to nothing before adding features to clear
+            ' other formatting from orig style.
+            .BaseStyle = vbNullString
+            ' will error if no TX1 in doc, so go back to Error1 and create it
 On Error GoTo ErrorHandler1
-            .BaseStyle = strTX1
+            strNewStyle = strTX1
+            .BaseStyle = strNewStyle
             With .ParagraphFormat
-                .SpaceBefore = 144
-                With .Borders
-                    .OutsideLineStyle = wdLineStyleSingle
-                    .OutsideLineWidth = wdLineWidth600pt
-                    .OutsideColor = RGB(0, 255, 0)
+                .SpaceBefore = 144      ' in points
+                With .Borders(wdBorderLeft)
+                    .LineStyle = wdLineStyleSingle
+                    .LineWidth = wdLineWidth600pt
+                    .Color = RGB(0, 255, 0)
                 End With
             End With
         End With
+        ' Reset On Erro to ErrorHandler2, or else it will continue to go
+        ' to ErrorHandler1 for any future errors
 On Error GoTo ErrorHandler2
         ' Now go back and try to assign that style again
         Resume
@@ -1124,4 +1156,7 @@ On Error GoTo ErrorHandler2
     
     Exit Sub
     
+End Sub
+
+Sub test()
 End Sub
