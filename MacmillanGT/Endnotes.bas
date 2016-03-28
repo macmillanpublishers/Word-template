@@ -229,6 +229,12 @@ Sub EndnoteDeEmbed()
     
     Call UpdateBarAndWait(Bar:=objProgressNotes, Status:=strStatus, Percent:=sglPercentComplete)
     
+    ' Delete all bookmarks added earlier
+    Dim bkm As Bookmark
+    For Each bkm In ActiveDocument.Bookmarks
+        bkm.Delete
+    Next bkm
+    
     Call Cleanup
     Unload objProgressNotes
 
