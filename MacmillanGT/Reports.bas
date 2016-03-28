@@ -1951,7 +1951,7 @@ Private Function CheckFileName() As Boolean
     
     For R = 1 To lngNameLength
         strCheckChar = Mid(strDocName, R, 1)
-        If InStr(strAllGoodChars, strCheckChar, Compare:=vbTextCompare) = 0 Then
+        If InStr(1, strAllGoodChars, strCheckChar, vbTextCompare) = 0 Then
             CheckFileName = True
             Exit Function
         End If
