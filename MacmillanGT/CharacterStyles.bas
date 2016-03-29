@@ -1016,7 +1016,9 @@ On Error GoTo ErrorHandler1     ' adds this style if it is not in the document
             ' This is where it will error if no style present
             thisDoc.Paragraphs(A).Style = strNewStyle
 
-        Else ' it is already a Macmillan style
+        ElseIf A < lngParaCount Then ' it is already a Macmillan style
+        ' but can't check next para if it's the last para
+        
 On Error GoTo ErrorHandler2
             ' is it a chap head?
             If InStr(strCurrentStyle, "(cn)") > 0 Or _
@@ -1126,6 +1128,7 @@ ErrorHandler1:
 
 ErrorHandler2:
     If Err.Number = 5834 Or Err.Number = 5941 Then  ' Style is not in doc
+        Debug.Print Err.Number & ": " & Err.Description
         Set myStyle = thisDoc.Styles.Add(Name:=strCOTX1, Type:=wdStyleTypeParagraphOnly)
         With myStyle
             '.QuickStyle = True ' not available for Mac
