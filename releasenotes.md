@@ -1,5 +1,29 @@
 # RELEASE NOTES #
 ## MacmillanGT.dotm ##
+### v. 3.1 ###
+* Added Castoff macro
+* Created Startup and Cleanup functions to include in each macro, which include removing all content controls, books, fields, and hidden text. 
+* Added tagging of unstyled paragraphs as TX or TX1 to Character Styles macro.
+* Cleanup converts hyphens in number ranges to en-dashes, but not in URLs or numbers with multiple hyphens (e.g., phone numbers, SSNs, ISBNs).
+* Cleanup removes superscript from (c), (r), TM.
+* Bookmaker Report verifies file name only includes alphanumerics characters, underline, or hyphen.
+* Fixed error causing PC to sometimes prompt user to save MacmillanGT.dotm on program launch.
+* Generates template paths in a single sub.
+* Cleanup and Character Styles clears all formatting from paragraph characters, per Westchester.
+* Added separate module to wait for Progress Bar to update before executing more code.
+
+### v. 3.0.7 ###
+#### March 14, 2016 ####
+* Fixing error with installer.
+
+### v. 3.0.6 ###
+#### March 11, 2016 ####
+* Fixed hard-coded template location in Print Styles macro.
+* Add check that download directory is not read-only.
+* Remove all hidden text in Cleanup and Character Styles macros.
+* Add hyphen + space as something to tag w/ *span preserve characters*.
+
+
 ### v. 3.0.5 ###
 #### February 5, 2016 ####
 * Converting all Mac directories (e.g. Documents, tmp) to AppleScript
@@ -86,6 +110,12 @@
 - - -
 
 ## GtUpdater.dotm ##
+#### March 14, 2016 ####
+* Fixing error with installer.
+
+### v. 1.0.4 ###
+#### March 11, 2016 ####
+* Add check that download directory is not read-only.
 
 ### v. 1.0.3 ###
 #### Feb. 5, 2016 ####
@@ -94,6 +124,14 @@
 - - -
 
 ## macmillan.dotm / macmillan_NoColor.dotm ##
+### v. 4.5 ###
+#### March 29, 2016 ####
+* added *bookmaker tighten (bkt)* and *bookmaker loosen (bkl)* styles.
+
+### v. 4.4.1 ###
+#### March 11, 2016 ####
+* Changed formatting of *span small caps* to be full caps at a smaller point size, per Issue #135.
+
 
 ### v. 4.4 ###
 #### Feb 5, 2016 ####
