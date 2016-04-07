@@ -146,27 +146,35 @@ Private Sub ExportVBComponent(VBComp As VBIDE.VBComponent, _
         End If
     End If
     
-    VBComp.Export FileName:=FName
-    
+    ' Don't auto-export UserForms, because they often add or remove a single
+    ' blank like that gets tracked in git in the code module AND the binary
+    ' .frx file. Will have to manage userforms manually.
+    If Extension <> ".frm" Then
+        VBComp.Export FileName:=FName
+    End If
     'Debug.Print FName
     
-    If Extension = ".frm" Then
-        Dim strBinaryFile As String
-        
-        strBinaryFile = Left(FName, Len(FName) - 1) & "x"
-        'Debug.Print strBinaryFile
-        
-        Dim strShellCmd As String
-        strShellCmd = "cmd.exe /C C: & cd " & strRepoPath & " & git checkout " & strBinaryFile
-        strShellCmd = Replace(strShellCmd, "\", "\\")
-        
-        'Debug.Print strShellCmd
-        
-        Dim result As Variant
-        
-        result = Shell(strShellCmd, vbMinimizedNoFocus)
-        'Debug.Print result
-    End If
+    ' ======================================
+    ' Was attempting to checkout UserForm binary after export, since git almost
+    ' always tracked modifications even when none are made, but it wasn't
+    ' quite working so we'll just skip it (see above)
+'    If Extension = ".frm" Then
+'        Dim strBinaryFile As String
+'
+'        strBinaryFile = Left(FName, Len(FName) - 1) & "x"
+'        'Debug.Print strBinaryFile
+'
+'        Dim strShellCmd As String
+'        strShellCmd = "cmd.exe /C C: & cd " & strRepoPath & " & git checkout " & strBinaryFile
+'        strShellCmd = Replace(strShellCmd, "\", "\\")
+'
+'        'Debug.Print strShellCmd
+'
+'        Dim result As Variant
+'
+'        result = Shell(strShellCmd, vbMinimizedNoFocus)
+'        'Debug.Print result
+'    End If
     
     End Sub
     
