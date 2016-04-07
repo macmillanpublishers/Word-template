@@ -20,8 +20,11 @@ Private Const strRepoPath = "C:\Users\erica.warren\Word-template"
 
 ' ===== DEPENDENCIES ==========================================
 ' Obviously clone the git repo and add its path ABOVE
+
 ' Each template gets its own subdirectory in the repo, name matches exactly (w/o extension)
 ' Modules that are shared among all template must have name start with "Shared"
+' modules that need to be imported into templates but not tracked in git
+' are in word-template/dependencies
 
 ' Not tested on Mac, because saving templates on Mac causes all kinds of nonsense
 
@@ -46,9 +49,29 @@ Sub ExportAllModules()
     Dim strSharedModules As String
     Dim strDirName As String
     Dim strTemplateModules As String
+    Dim strDependencies As String
+    Dim strDepFiles As String
+    Dim strEachFile As String
     
     ' This is where all shared modules go
     strSharedModules = strRepoPath & Application.PathSeparator & "SharedModules"
+    strDependencies = strRepoPath & Application.PathSeparator & "dependencies"
+    
+    ' Modules that need to be imported into templates but that we do not want
+    ' to track belong in word-templates/dependencies. We don't want to export
+    ' these, so let's get then into a string to compare against later
+    
+    ' Dir() w/ arguments returns first file name that matches
+    strEachFile = Dir(strDependencies & Application.PathSeparator & "*.*", vbNormal)
+'    Debug.Print strEachFile
+    Do While Len(strEachFile) > 0
+        strDepFiles = strDepFiles & strEachFile & vbNewLine
+'        Debug.Print strDepFiles
+        ' Dir() again w/o arguments returns the NEXT file that matches orig arguments
+        ' if nothing else matches, returns empty string
+        strEachFile = Dir
+    Loop
+    
     
     For Each oDoc In Documents
         ' Separate the name and the extension of the document
@@ -67,11 +90,14 @@ Sub ExportAllModules()
             
             ' Cycle through each module
             For Each oModule In oProject.VBComponents
-                ' Select save location based on module name
-                If oModule.Name Like "Shared*" Then
-                    Call ExportVBComponent(VBComp:=oModule, FolderName:=strSharedModules)
-                Else
-                    Call ExportVBComponent(VBComp:=oModule, FolderName:=strTemplateModules)
+                ' Skip modules in dependencies directory
+                If InStr(strDepFiles, oModule.Name) = 0 Then
+                    ' Select save location based on module name
+                    If oModule.Name Like "Shared*" Then
+                        Call ExportVBComponent(VBComp:=oModule, FolderName:=strSharedModules)
+                    Else
+                        Call ExportVBComponent(VBComp:=oModule, FolderName:=strTemplateModules)
+                    End If
                 End If
             Next
             
@@ -377,6 +403,7 @@ Sub CopyTemplateToRepo(TemplateDoc As Document, Optional OpenAfter As Boolean = 
         End If
         
         ' And then open the document again if you wanna.
+        ' Though note that AutoExec and Document_Open subs will run when you do!
         If OpenAfter = True Then
             Documents.Open FileName:=strCurrentTemplatePath, _
                         ReadOnly:=False, _
@@ -546,38 +573,3 @@ Private Function LocalPathToRepoPath(LocalPath As String, Optional VersionFile A
         Application.PathSeparator & strFileWithExt
     
 End Function
-
-
-Sub testing()
-    ' Debug.Print has a memory limit, this prints to a text file on desktop
-    ' right now prints stuff about fields, but leaving here so we can use
-    ' for other things later
-    Dim strStories() As Variant
-    Dim A As Long
-    Dim objField As Field
-    Dim fnum As Long
-    Dim strOutputFile As String
-    
-    strStories = StoryArray
-    
-    strOutputFile = Environ("USERPROFILE") & "\Desktop\fields5.txt"
-
-    fnum = FreeFile()
-    Open strOutputFile For Append As fnum
-
-    For A = LBound(strStories) To UBound(strStories)
-        Print #fnum, "======== STORY " & strStories(A) & " =============="
-        For Each objField In ActiveDocument.StoryRanges(strStories(A)).Fields
-            Print #fnum, "--------" & vbNewLine & "FIELD " & objField.Index
-            Print #fnum, "Code: " & objField.Code
-            Print #fnum, "Creator: " & objField.Creator
-            Print #fnum, "Kind: " & objField.Kind
-            Print #fnum, "Locked: " & objField.Locked
-            Print #fnum, "Type: " & objField.Type
-        Next objField
-    Next
-    
-    Close #fnum
-        
-        
-End Sub
