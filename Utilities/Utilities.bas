@@ -122,35 +122,47 @@ Private Sub ExportVBComponent(VBComp As VBIDE.VBComponent, _
 
     Dim Extension As String
     Dim FName As String
+    
+    
     Extension = GetFileExtension(VBComp:=VBComp)
-    If Trim(FileName) = vbNullString Then
-        FName = VBComp.Name & Extension
-    Else
-        FName = FileName
-        If InStr(1, FName, ".", vbBinaryCompare) = 0 Then
-            FName = FName & Extension
-        End If
-    End If
-    
-    If StrComp(Right(FolderName, 1), "\", vbBinaryCompare) = 0 Then
-        FName = FolderName & FName
-    Else
-        FName = FolderName & "\" & FName
-    End If
-    
-    If Dir(FName, vbNormal + vbHidden + vbSystem) <> vbNullString Then
-        If OverwriteExisting = True Then
-            Kill FName
-        Else
-            Exit Sub
-        End If
-    End If
-    
     ' Don't auto-export UserForms, because they often add or remove a single
     ' blank like that gets tracked in git in the code module AND the binary
-    ' .frx file. Will have to manage userforms manually.
+    ' .frx file. Will have to manage userforms manually
     If Extension <> ".frm" Then
-        VBComp.Export FileName:=FName
+        ' Build full file name of module
+        If Trim(FileName) = vbNullString Then
+            FName = VBComp.Name & Extension
+        Else
+            FName = FileName
+            If InStr(1, FName, ".", vbBinaryCompare) = 0 Then
+                FName = FName & Extension
+            End If
+        End If
+        
+        ' Can't delete ThisDocument.cls module, but doesn't always have code
+        ' So don't export if empty
+        If VBComp.CodeModule.CountOfLines <> 0 Then
+        
+            ' Build full path to save module to
+            If StrComp(Right(FolderName, 1), "\", vbBinaryCompare) = 0 Then
+                FName = FolderName & FName
+            Else
+                FName = FolderName & "\" & FName
+            End If
+        
+    
+            ' delete previous version of module
+            If Dir(FName, vbNormal + vbHidden + vbSystem) <> vbNullString Then
+                If OverwriteExisting = True Then
+                    Kill FName
+                Else
+                    Exit Sub
+                End If
+            End If
+    
+            ' Export the module
+            VBComp.Export FileName:=FName
+        End If
     End If
     'Debug.Print FName
     
