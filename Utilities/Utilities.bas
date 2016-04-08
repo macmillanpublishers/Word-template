@@ -215,12 +215,12 @@ End Function
 Sub ImportAllModules()
     ' Removes all modules in all open template
     ' and reimports them from the local Word-template git repo
-    ' SO BE SURE TO EXPORT EVERYTHING BEFORE YOU USE THIS!!
+    ' SO BE SURE THE MODULES IN THE REPO ARE UP TO DATE
     
     Dim oDocument As Document
     Dim strExtension As String              ' extension of current document
     Dim strSubDirName As String             ' name of subdirectory of template in repo
-    Dim strDirInRepo(1 To 2) As String      ' declare number of items in array
+    Dim strDirInRepo(1 To 3) As String      ' declare number of items in array
     Dim strModuleExt(1 To 3) As String     ' declare number of items in array
     Dim strModuleFileName As String         ' file name with extension, no path
     Dim A As Long
@@ -246,8 +246,10 @@ Sub ImportAllModules()
             If strExtension = ".dotm" Or strExtension = ".docm" Then
                 ' an array of the directories we're going to be adding modules from
                 ' every template gets (1) all modules in its directory and (2) all shared modules
+                ' and (3) all dependencies.
                 strDirInRepo(1) = strRepoPath & Application.PathSeparator & strSubDirName & Application.PathSeparator
                 strDirInRepo(2) = strRepoPath & Application.PathSeparator & "SharedModules" & Application.PathSeparator
+                strDirInRepo(3) = strRepoPath & Application.PathSeparator & "dependencies" & Application.PathSeparator
                       
                 ' an array of file extensions we're importing, since there are other files in the repo
                 strModuleExt(1) = "bas"
@@ -261,11 +263,11 @@ Sub ImportAllModules()
                 Set currentVBProject = Nothing
                 Set currentVBProject = oDocument.VBProject
                 
-                ' loop through the two directories
+                ' loop through the directories
                 For A = LBound(strDirInRepo()) To UBound(strDirInRepo())
                     ' for each directory, loop through all files of each extension
                     For B = LBound(strModuleExt()) To UBound(strModuleExt())
-                        ' with the Dir function this returns just the files in this directory
+                        ' Dir function returns first file that matches in that dir
                         strModuleFileName = Dir(strDirInRepo(A) & "*." & strModuleExt(B))
                         ' so loop through each file of that extension in that directory
                         Do While strModuleFileName <> "" And Counter < 100
@@ -303,7 +305,8 @@ Sub ImportAllModules()
                                     currentVBProject.VBComponents.Remove tempVBComp
                                 End If
                             End If
-                            ' have to do this to make the Dir function loop through all files
+                            ' calling Dir function again w/ no arguments gets NEXT file that
+                            ' matches original call. If no more files, returns empty string.
                             strModuleFileName = Dir()
                         Loop
                         
