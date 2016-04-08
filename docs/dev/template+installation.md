@@ -3,22 +3,22 @@ End users can install the template themselves following the instructions [on thi
 
 The installer macro downloads the template files that are attached to  [this Public Confluence page](https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production) and saves them in the correct locations on the user's computer. It is a sibling page to the Public space home page, so users won't see it in the page tree when viewing the home page.
 
-Note that the VBA code needs to reference the attachment URL, not the main page URL, i.e. the URL for the main attachments page is <https://confluence.macmillan.com/download/attachments/9044274>. Simply append the file name to the end of the URL to download that file.
+Note that the VBA code needs to reference the attachment URL, not the main page URL, i.e. the URL for the master attachments page is `https://confluence.macmillan.com/download/attachments/9044274/`. Simply append the file name to the end of the URL to download that file.
 
 # Git Confluence connector
 ## Production files
-The live production files (templates and version number files) are attached to the page listed above using the [Git for Confluence](https://marketplace.atlassian.com/plugins/nl.avisi.confluence.plugins.git-plugin/server/overview) add-on. This keeps the files synced with the `master` branch of the `Word-template` repo on GitHub. Any changes that are pushed to the `master` branch are automatically available for download.
+The live production files (templates and version number files) are attached to the page listed above using the [Git for Confluence](https://marketplace.atlassian.com/plugins/nl.avisi.confluence.plugins.git-plugin/server/overview) add-on. This keeps the files synced with the `master` branch of the `Word-template` repo on GitHub. Any changes that are pushed to the `master` branch are automatically available for download when the page syncs.
 
 Admin docs for the add-in [are available here](http://addons.avisi.com/git-for-confluence/documentation/).
 
 ## Beta testing and development files
-There are separate Confluence pages whose attachments are synced to the `releases` branch [(here)](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+pre-release) and the `develop` branch [(here)](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging). See Development Workflow for their uses.
+There are separate Confluence pages whose attachments are synced to the `releases` branch [(here)](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+pre-release) and the `develop` branch [(here)](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging). See [Development Workflow](development+workflow) for their uses.
 
 **Note:** The *downloadBranch* variable in the `AutoExec` procedure in the `ThisDocument` module of each template file (`MacmillanGT.dotm`, `GtUpdater.dotm`, and the installer file) needs to be set to the branch you want to download from. See [Development Workflow](development+workflow) for the process to manage this.
 
 
 ## Scheduled jobs
-The Git for Confluence add-on checks the repo for updates every five minutes. A Confluence administrator can sync the files manually by going to **General configuration > Administration > Scheduled Jobs**. One of the jobs in the list is **Synchronize Git repositories**, and it lists the time of the last sync and the time of the next scheduled sync. To sync the files manually, click on the **Run** link.
+The Git for Confluence add-on checks the repo for updates every five minutes. A Confluence administrator can sync the files manually by going to **General configuration > Administration > Scheduled Jobs**. One of the jobs in the list is **Synchronize Git repositories**, and it lists the time of the last sync and the time of the next scheduled sync. To sync the files manually, click on the **Run** link. You'll have to refresh the page to see if the sync is complete.
 
 
 # Installer file
@@ -38,7 +38,7 @@ If the file that is being checked is missing at any time (not just during the on
 There are a number of template files that need to be saved in specific directories for the macros to work correctly.
 
 ## Startup
-Word automatically loads any templates saved in the Startup directory  as Add-Ins when it launches. As soon as it is loaded, it will execute any `AutoExec` procedures in the `ThisDocument`.
+Word automatically loads any templates saved in the Startup directory as Add-Ins when it launches. As soon as it is loaded, it will execute any `AutoExec` procedures in the `ThisDocument` module.
 
 ### Files to be installed here
 * **GtUpdater.dotm:** Has an `AutoExec` procedure that loads `MacmillanGT.dotm` as an Add-In and also checks daily that `MacmillanGT.dotm` is up to date, then prompts the user and downloads the updated files if needed.

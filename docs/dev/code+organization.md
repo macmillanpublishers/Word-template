@@ -17,12 +17,15 @@ There are a number of different types of code modules, indicated by their file e
 * **FRX** - Form binary module. Each userform only appears in the Project Window as a single module, but when exported this binary file is created along with the code module. It contains information about how the form looks. Both files need to be present in the same directory to import the form module into a project.
 
 ## Git repo
-We use Git for version control, [and the repository is hosted on Github](https://github.com/macmillanpublishers/Word-template). Git can't merge binary files, so we also export all code modules to the repo (but note that end-users only need the templates files). Binary template files are stored in subdirectories with the same name as the file, along with the code modules that live in that template (with the exception of modules shared by different templates--see below).
+We use Git for version control, [and the repository is hosted on Github](https://github.com/macmillanpublishers/Word-template). Git can't merge binary files, so we also export all code modules to the repo (but note that end-users only need the binary templates files). Binary template files are stored in subdirectories with the same name as the file, along with the code modules that live in that template (with the exception of modules shared by different templates--see below).
 
 There is also a plain text file with the same name as each template file in its subdirectory, which stores that template's version number.
 
 
 # Global templates and modules
+
+## dependencies
+The Macmillan relies on the excellent [VBA-JSON](https://github.com/VBA-tools/VBA-JSON) and [VBA-Dictionary](https://github.com/VBA-tools/VBA-Dictionary) projects. The modules `JsonConverter.bas` and `Dictionary.cls` are imported into the template files. They are also saved in the subdirectory `dependencies`; however none of these files are tracked in Git. For the Import and Export utilities to work correctly, you need to clone both of those repos and copy the relevant modules to the `dependencies` subdirectory. 
 
 ## Shared modules
 Modules used used in multiple template files are stored in the `SharedModules` subdirectory. The module name *must* start with `Shared`. ***NOTE:*** Managing changes to these files among the different templates can get tricky; see info about this later.
@@ -123,8 +126,8 @@ A few macros just for working with VBA. To use, just copy this template file int
 ### ThisDocument.cls
 Contains two helpful macros: 
 
-* `ExportAllModules` exports all code modules of open template to local git repo
-* `ImportAllModules` imports all required modules from local git repo.
+* `ExportAllModules` exports all code modules of open template to local Git repo
+* `ImportAllModules` imports all required modules from local Git repo.
 
 ### VersionForm.frm, VersionForm.frx
 Opens a Userform which displays the current version number of each template file (based on the version text file in the repo); can optionally update versions as well.

@@ -6,30 +6,30 @@ The *downloadBranch* variable in the `AutoExec` procedure in the `ThisDocument` 
 ### master
 Current production files. The template and version files that are attached to [the production download page](https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production) (i.e., from which the installer downloads when installing for end-users) are synced directly to the repository with the Git for Confluence connector.
 
-Only `hotfix-*` branches may branch off of `master`, and only `hotfix-*` and `releases` branches may be merged into it. By definition, any changes merged into `master` are a new release and require that the version number be incremented.
+Only `hotfix-*` branches may branch off of `master`, and only `hotfix-*` and `releases` branches may be merged into it. By definition, any changes merged into `master` are a new release and require that the version number be incremented, which prompts users to update.
 
 ### releases
-Used for beta testing. These files are attached to [this page](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+pre-release) page via the Git for Confluence connector. 
+Used for beta testing. These files are attached to [this page](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+pre-release) via the Git for Confluence connector. 
 
 Primarily a way for our composition vendor (and any brave and interested individuals) to test updates before they get a wider release.
 
 Nothing should branch off of this branch, and only `hotfix-*` and `develop` may be merged into it. 
 
 ### develop
-Development branch. As much as possible, should be stable enough to be ready for the next release.  These files are attached to [this page](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging) page via the Git for Confluence connector.
+Development branch. As much as possible, should be stable enough to be ready for the next release. These files are attached to [this page](https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging) via the Git for Confluence connector.
 
-Only `features` branches may branch off of it, and only `features` and `hotfix-*` branches may be merged into it.
+Only `features` branches may branch off of it, though any branches may be merged into it.
 
 ### features
 Individual features are developed in their own branches with whatever name makes sense. The branches are deleted after the feature is merged into `develop`.
 
 ### hotfix-*
-Created when quick changes need to be made to `master` for urgent fixes that do not incorporate the current `develop` branch. The * in the branch name should be replaced by the new version number. Hotfix branches are deleted after they have been merged back into `master`.
+Created when quick changes need to be made to `master` for urgent fixes that do not incorporate the current `develop` branch. The * in the branch name should be replaced by the new version number. Hotfix branches are deleted after they have been merged back into `master` and `develop`.
 
 
 
 # Detailed steps for merging branches
-The specific steps involved in the development process are a little more complicated than presented [here](http://nvie.com/posts/a-successful-git-branching-model/), because (1) we need to manage the template binary files, and (2) some modules are shared among templates.
+The specific steps involved in the development process are a little more complicated than presented [here](http://nvie.com/posts/a-successful-git-branching-model/), because (1) we need to manage the template binary files, (2) some modules are shared among templates, and (3) some modules are from other repositories.
 
 ## New hotfix changes
 * Begin a new `hotfix-*` branch from `master`, using the new version number in the branch name. 
@@ -42,8 +42,8 @@ $ git checkout -b hotfix-2.0.1 master
 * Make whatever changes are required.
 * When you're happy with your changes, test *all* macros on both PC and Mac to make sure they are working.
 	* If you make any changes to any of the shared modules, open just the template that contains those changes and use the Export All Modules macro.
-	* Open all of the templates (don't forget the installer file!) and use the Import All Templates macro to update the shared modules in all templates.
-* Open all code templates (don't forget the installer file!).
+	* Next, open all of the macro templates (don't forget the installer file!) and use the Import All Templates macro to update the shared modules in all templates.
+* Open all code templates (don't forget to hold Shift down when you open the installer file!).
 * Use the Import All Modules macro.
 * Open all code templates again.
 * Verify that the *downloadBranch* variable in the `AutoExec` and `Document_Open` procedures is set to `master` in each template.
@@ -102,7 +102,7 @@ $ git merge --no-ff master
 $ git merge --no-ff develop
 ```
 
-* You will likely get merge conflicts here. Resolve them following the instructions listed below.
+* You may get merge conflicts here. Resolve them following the instructions listed below.
 * Change the variable *downloadBranch* in the `AutoExec` and `Document_Open` procedures in each template to `releases`.
 * Export All Modules, and commit and push the changes.
 * Test all of your macros on PC and Mac to make sure they are still working.
@@ -153,7 +153,7 @@ Updates to `master` will be available within five minutes of closing the pull re
 Before submitting a pull request to merge `releases` into `master`, the following groups must be notified.
 
 ### Westchester (composition vendor)
-email:  APS@antares.co.in, Macmillan_PreEdit@wbrt.com, Tina.Mingolello@wbrt.com, Terry.Colosimo@wbrt.com
+* **email:**  APS@antares.co.in, Macmillan_PreEdit@wbrt.com, Tina.Mingolello@wbrt.com, Terry.Colosimo@wbrt.com
 
 * 24-48 hours before release for bug fixes
 * 5-7 business days before release for template and/or macro updates, especially if they involve process changes 
