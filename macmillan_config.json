@@ -15,7 +15,7 @@
 
 	"paths":{
 		"root":"user",
-		"core":"MacmillanStyleTemplate",
+		"home":"MacmillanStyleTemplate",
 		"styles":"styles",
 		"assets":"assets",
 		"logs":"logs"
@@ -30,21 +30,21 @@
 			},
 		},
 
-		"codeTemplates":{
+		"macros":{
 			"tools":{
 				"fileName":"manuscript-macros",
 				"extension":"dotm",
 				"version":"3.1",
 			},
 			"updater":{
-				"fileName":"template-updater.dotm",
+				"fileName":"macro-updater",
 				"extension":"dotm",
 				"version":"1.1",
 			}
 		},
 
 		"styles":{
-			"all":{
+			"base":{
 				"fileName":"macmillan",
 				"extension":"dotx",
 				"version":"4.5",
