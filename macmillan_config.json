@@ -15,7 +15,7 @@
 
 	"paths":{
 		"root":"user",
-		"templates":"MacmillanStyleTemplate",
+		"core":"MacmillanStyleTemplate",
 		"styles":"styles",
 		"assets":"assets",
 		"logs":"logs"
@@ -24,48 +24,57 @@
 	"files":{
 		"config":{
 			"core":{
-				"fileName":"macmillan_config.json",
+				"fileName":"macmillan_config",
+				"extension":"json",
 				"version":"1.0"
 			},
 		},
 
 		"codeTemplates":{
 			"tools":{
-				"fileName":"manuscript-macros.dotm",
+				"fileName":"manuscript-macros",
+				"extension":"dotm",
 				"version":"3.1",
 			},
 			"updater":{
 				"fileName":"template-updater.dotm",
+				"extension":"dotm",
 				"version":"1.1",
 			}
 		},
 
 		"styles":{
 			"all":{
-				"fileName":"macmillan.dotx",
+				"fileName":"macmillan",
+				"extension":"dotx",
 				"version":"4.5",
 			},
 			"noColor":{
-				"fileName":"macmillan_NoColor.dotx",
+				"fileName":"macmillan_NoColor",
+				"extension":"dotx",
 				"version":"4.5",
 			},
 			"coverCopy":{
-				"fileName":"macmillan_CoverCopy.dotx",
+				"fileName":"macmillan_CoverCopy",
+				"extension":"dotx",
 				"version":"2.0",
 			}
 		},
 
 		"assets":{
 			"bookmakerCheck":{
-				"fileName":"Styles_Bookmaker.csv",
+				"fileName":"Styles_Bookmaker",
+				"extension":"csv",
 				"version":"1.0"
 			},
 			"castoffSMP":{
-				"fileName":"Castoff_SMP.csv",
+				"fileName":"Castoff_SMP",
+				"extension":"csv",
 				"version":"1.0"
 			},
 			"castoffTor":{
-				"fileName":"Castoff_TorDOTcom.csv",
+				"fileName":"Castoff_TorDOTcom",
+				"extension":"csv",
 				"version":"1.0"
 			}
 		}
