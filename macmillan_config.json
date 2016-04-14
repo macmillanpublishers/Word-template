@@ -15,7 +15,7 @@
 
 	"paths":{
 		"root":"user",
-		"home":"MacmillanStyleTemplate",
+		"home":"ManuscriptTools",
 		"styles":"styles",
 		"assets":"assets",
 		"logs":"logs"
