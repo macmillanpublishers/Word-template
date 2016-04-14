@@ -1,59 +1,73 @@
 {
 	"organization":{
 		"shortName":"macmillan",
-		"longName":"Macmillan Word Template",
-		"helpEmail":"workflows@macmillan.com",
-		"downloads":{
-			"baseURL":"https://confluence.macmillan.com/download/attachments",
-			"master":"35001370",
-			"releases":"9044274",
-			"develop":"40571207",
-			"current":"develop",
-			"active":true
-		}
+		"longName":"Macmillan Tools Template",
+		"helpEmail":"workflows@macmillan.com"
 	},
-	"files":{	
+
+	"downloads":{
+		"baseURL":"https://confluence.macmillan.com/download/attachments",
+		"master":"35001370",
+		"releases":"9044274",
+		"develop":"40571207",
+		"current":"develop"
+	},
+
+	"paths":{
+		"root":"user",
+		"templates":"MacmillanStyleTemplate",
+		"styles":"styles",
+		"assets":"assets",
+		"logs":"logs"
+	},
+
+	"files":{
 		"config":{
-			"fileName":"macmillan_config",
-			"ext":"json",
-			"version":"1.0",
-			"installLocation":"MacmillanStyleTemplate",
-			"template":false
+			"core":{
+				"fileName":"macmillan_config.json",
+				"version":"1.0"
+			},
 		},
-		"toolsTemplate":{
-			"fileName":"manuscript-macros",
-			"ext":"dotm",
-			"version":"3.1",
-			"installLocation":"MacmillanStyleTemplate",
-			"template":true
+
+		"codeTemplates":{
+			"tools":{
+				"fileName":"manuscript-macros.dotm",
+				"version":"3.1",
+			},
+			"updater":{
+				"fileName":"template-updater.dotm",
+				"version":"1.1",
+			}
 		},
-		"updaterTemplate":{
-			"fileName":"template-updater",
-			"ext":"dotm",
-			"version":"1.1",
-			"installLocation":"MacmillanStyleTemplate",
-			"template":true
+
+		"styles":{
+			"all":{
+				"fileName":"macmillan.dotx",
+				"version":"4.5",
+			},
+			"noColor":{
+				"fileName":"macmillan_NoColor.dotx",
+				"version":"4.5",
+			},
+			"coverCopy":{
+				"fileName":"macmillan_CoverCopy.dotx",
+				"version":"2.0",
+			}
 		},
-		"allStyles":{
-			"fileName":"macmillan",
-			"ext":"dotx",
-			"version":"4.5",
-			"installLocation":"styles",
-			"template":true
-		},
-		"noColorStyles":{
-			"fileName":"macmillan_NoColor",
-			"ext":"dotx",
-			"version":"4.5",
-			"installLocation":"styles",
-			"template":true
-		},
-		"coverCopyStyles":{
-			"fileName":"macmillan_CoverCopy",
-			"ext":"dotx",
-			"version":"2.0",
-			"installLocation":"styles",
-			"template":true
-		}		
-	}	
+
+		"assets":{
+			"bookmakerCheck":{
+				"fileName":"Styles_Bookmaker.csv",
+				"version":"1.0"
+			},
+			"castoffSMP":{
+				"fileName":"Castoff_SMP.csv",
+				"version":"1.0"
+			},
+			"castoffTor":{
+				"fileName":"Castoff_TorDOTcom.csv",
+				"version":"1.0"
+			}
+		}
+	}
 }
