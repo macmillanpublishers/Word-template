@@ -16,13 +16,15 @@
 	"paths":{
 		"root":"user",
 		"home":"ManuscriptTools",
-		"styleTemplates":"styles",
-		"assets":"assets",
-		"logs":"logs"
+		"configFiles":"config",
+		"macroFiles":"macros",
+		"styleFiles":"styles",
+		"assetFiles":"assets",
+		"logFiles":"logs"
 	},
 
 	"files":{
-		"config":{
+		"configFiles":{
 			"core":{
 				"fileName":"macmillan_config",
 				"extension":"json",
@@ -30,7 +32,7 @@
 			},
 		},
 
-		"macroTemplates":{
+		"macroFiles":{
 			"tools":{
 				"fileName":"manuscript-macros",
 				"extension":"dotm",
@@ -43,7 +45,7 @@
 			}
 		},
 
-		"styleTemplates":{
+		"styleFiles":{
 			"base":{
 				"fileName":"macmillan",
 				"extension":"dotx",
@@ -61,7 +63,7 @@
 			}
 		},
 
-		"assets":{
+		"assetFiles":{
 			"bookmakerCheck":{
 				"fileName":"Styles_Bookmaker",
 				"extension":"csv",
