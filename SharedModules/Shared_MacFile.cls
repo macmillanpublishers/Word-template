@@ -6,7 +6,7 @@ Attribute VB_Name = "Shared_MacFile"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
+Attribute VB_Exposed = True
 Option Explicit
 
 ' ========================================================================
@@ -22,20 +22,34 @@ Option Explicit
 ' ************************************************************************
 '           CLASS ENUMERATIONS
 ' ************************************************************************
-' This enum should exactly match the first-level items in the "files"
-' object in the config JSON file
-Public Enum GroupType
+
+    ' This enum should exactly match the first-level keys in the "files"
+    ' object in the config JSON file. Is there a way we can pull this
+    ' directly from the JSON? Maybe with a DevUtilities macro?
+    
+Public Enum MacFileGroup
     config = 1
     macroTemplates = 2
-    styleTemplates = 3
-    assets = 4
+    styleTemplates = 4
+    assets = 8
 End Enum
 
+' ------------------------------------------------------------------------
+    ' This enum should exactly match the second-level keys in the "files"
+    ' object in the config JSON file. Type should be unique among all files,
+    ' so not every Group + Type combo will match an actual file.
+
+Public Enum MacFileType
+    core = 1
+    tools = 2
+    updater = 3
+End Enum
 ' ************************************************************************
 '           CLASS CONSTANTS
 ' ************************************************************************
 
 Private p_FullJSON As Dictionary
+Private p_GroupName As MacFileGroup
 
 ' ************************************************************************
 '           PROPERTIES
@@ -73,17 +87,21 @@ End Property
 ' -----------------------------------------------------------------------------
     ' Group here is in reference to the first level of keys in the "file"
     ' object in the JSON file, grouping files with similar purposes together.
-    ' While this can be a string, should it be an Enum, because the only
-    ' acceptable values are those
+    ' The MacFileGroup enum should exactly match those keys.
+    ' Do we need to create a "Group" level Dictionary object here?
 
-Private Property Get GroupName() As String
-
+Private Property Let GroupName(GroupName_value As MacFileGroup)
+    p_GroupName = GroupName_value
 End Property
+Private Property Get GroupName() As MacFileGroup
+    GroupName = p_GroupName
+End Property
+
 ' -----------------------------------------------------------------------------
     ' name of file as a string, WITHOUT extension. We keep name and extension
     ' separate because some things (like log file names) require just the
     ' name w/o the extension.
 
 Private Property Get Name() As String
-
+    
 End Property
