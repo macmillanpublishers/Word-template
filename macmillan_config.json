@@ -16,6 +16,7 @@
 	"paths":{
 		"root":"user",
 		"home":"ManuscriptTools",
+		"startupFiles":"startup",
 		"configFiles":"config",
 		"macroFiles":"macros",
 		"styleFiles":"styles",
@@ -32,16 +33,24 @@
 			},
 		},
 
+		"startupFiles":{
+				"startupAuto":{
+					"fileName":"tools-startup",
+					"extension":"dotm",
+					"version":"1.0"					
+				}
+		},
+
 		"macroFiles":{
 			"tools":{
 				"fileName":"manuscript-macros",
 				"extension":"dotm",
-				"version":"3.1",
+				"version":"3.1"
 			},
 			"updater":{
 				"fileName":"macro-updater",
 				"extension":"dotm",
-				"version":"1.1",
+				"version":"1.1"
 			}
 		},
 
@@ -49,17 +58,17 @@
 			"base":{
 				"fileName":"macmillan",
 				"extension":"dotx",
-				"version":"4.5",
+				"version":"4.5"
 			},
 			"noColor":{
 				"fileName":"macmillan_NoColor",
 				"extension":"dotx",
-				"version":"4.5",
+				"version":"4.5"
 			},
 			"coverCopy":{
 				"fileName":"macmillan_CoverCopy",
 				"extension":"dotx",
-				"version":"2.0",
+				"version":"2.0"
 			}
 		},
 
