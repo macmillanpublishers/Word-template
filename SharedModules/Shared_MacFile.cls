@@ -39,10 +39,11 @@ End Enum
     ' object in the config JSON file. Type should be unique among all files,
     ' so not every Group + Type combo will match an actual file.
 
-Public Enum MacFileType
-    core = 1
-    tools = 2
-    updater = 3
+Public Enum MacFileGroup
+    configFiles = 2 ^ 0     '1
+    macroFiles = 2 ^ 1      ' 2
+    styleFiles = 2 ^ 2      ' 4
+    assetFiles = 2 ^ 3      ' 8
 End Enum
 ' ************************************************************************
 '           CLASS CONSTANTS
