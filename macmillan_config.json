@@ -16,7 +16,7 @@
 	"paths":{
 		"root":"user",
 		"home":"ManuscriptTools",
-		"styles":"styles",
+		"styleTemplates":"styles",
 		"assets":"assets",
 		"logs":"logs"
 	},
@@ -30,7 +30,7 @@
 			},
 		},
 
-		"macros":{
+		"macroTemplates":{
 			"tools":{
 				"fileName":"manuscript-macros",
 				"extension":"dotm",
@@ -43,7 +43,7 @@
 			}
 		},
 
-		"styles":{
+		"styleTemplates":{
 			"base":{
 				"fileName":"macmillan",
 				"extension":"dotx",
