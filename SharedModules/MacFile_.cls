@@ -35,7 +35,7 @@ Public Enum MacFileGroup
     styleFiles = 2 ^ 3      ' 8
     assetFiles = 2 ^ 4      ' 16
     updateCheck = macroFiles + styleFiles
-    noConfig = startupFiles + macroFiles + styleFiles + assetFiles
+    installFiles = startupFiles + macroFiles + styleFiles + assetFiles
     allFiles = configFiles + noConfig
 End Enum
 

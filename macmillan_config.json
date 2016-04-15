@@ -14,9 +14,8 @@
 	},
 
 	"paths":{
-		"root":"user",
+		"root":"macmillan",
 		"home":"ManuscriptTools",
-		"startupFiles":"startup",
 		"configFiles":"config",
 		"macroFiles":"macros",
 		"styleFiles":"styles",
@@ -37,7 +36,7 @@
 				"startupAuto":{
 					"fileName":"tools-startup",
 					"extension":"dotm",
-					"version":"1.0"					
+					"version":"1.0"
 				}
 		},
 
