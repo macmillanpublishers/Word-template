@@ -37,9 +37,25 @@ Public Enum MacFileGroup
     styleFiles = 2 ^ 3      ' 8
     assetFiles = 2 ^ 4      ' 16
     updateCheck = macroFiles + styleFiles
+    wordDocs = startupFiles + macroFiles + styleFiles
     installFiles = startupFiles + macroFiles + styleFiles + assetFiles
     allFiles = configFiles + noConfig
 End Enum
+
+
+' *****************************************************************************
+'           CLASS DATA TYPES
+' *****************************************************************************
+' Data type to manage version numbers, which follow Major.Minor.Patch format as
+' described here: http://semver.org/. Version in JSON must be stored as three
+' separate integers, Major and Minor must be an integer (can be 0) but Patch
+' can be null.
+
+Public Type VersionNumber
+    Major As Long
+    Minor As Long
+    Patch As Long
+End Type
 
 
 ' *****************************************************************************
@@ -168,4 +184,45 @@ End Property
 
 Private Property Get Extension() As String
     Extension = Me.FileJSON("extension")
+End Property
+
+' ===== ConfigVersion ==========================================================
+' Version of the file as noted in the config.JSON file. Note that Patch can be
+' null but Major and Minor cannot.
+
+Private Property Get ConfigVersion() As VersionNumber
+    Dim dictVersion As Dictionary
+    Set dictVersion = Me.FileJSON("version")
+    ConfigVersion.Major = dictVersion("major")
+    ConfigVersion.Minor = dictVersion("minor")
+    ConfigVersion.Patch = dictVersion("patch")
+End Property
+
+' ===== LocalVersion ==========================================================
+' For Word documents/templates: version of the file as noted in the Custom
+' Document Properties. Note, stored as three separate properties for Major,
+' Minor, and Patch. Patch may be null. Document must be open (though might be a
+' way to manage this by unzipping the file and reading XML directly?).
+
+Private Property Get LocalVersion() As VersionNumber
+    If Left(Me.Extension, 2) = "do" And _
+        InStr("ct", Mid(Me.Extension, 3, 1)) > 0 And _
+        InStr("mx", Right(Me.Extension, 1)) > 0 Then
+        
+        Dim objDoc As Document
+        Set objDoc = Documents.Open _
+            (FileName:=Me.FullLocalPath, ReadOnly:=True, Visible:=False)
+        LocalVersion.Major = objDoc.CustomDocumentProperties("Major")
+        LocalVersion.Minor = objDoc.CustomDocumentProperties("Minor")
+        LocalVersion.Pathc = objDoc.CustomDocumentProperties("Patch")
+    Else
+        LocalVersion = Me.ConfigVersion
+    End If
+End Property
+
+' ===== DownloadURL ===========================================================
+' Full URL to download the file, including file name.
+
+Private Property Get DownloadURL() As String
+    Dim dict
 End Property
