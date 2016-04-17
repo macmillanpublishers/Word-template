@@ -56,21 +56,24 @@ End Property
 
 ' ===== LocalPath =============================================================
 ' Returns string of the directory a specific file group should be saved in. If
-' it doesn't exist, it is created. This is why MacFileGroup enum must match the
-' keys of the "files" object and also be available keys in the "paths" object.
+' it doesn't exist, it is created.
 
 ' At least one file MUST be in the Word STARTUP directory, which is outside of
 ' our project structure, so it tests for that as well.
 
-Public Property Get LocalPath(GroupName As MacFileGroup) As String
+Public Property Get LocalPath(GroupName As String) As String
     Dim strLocalPath As String
     
     ' If this next line works, don't need "startupFiles" in "paths" object
     If GroupName = startupFiles Then
         strLocalPath = Application.StartupPath
     Else
+        If Me.PathsJSON.Exists(GroupName) Then
         strLocalPath = Me.HomeDir & Application.PathSeparator & _
             Me.PathsJSON(GroupName)
+        Else
+            MsgBox "That is not a valid GroupName!"
+        End If
     End If
 
     If IsItThere(strLocalPath) = False Then
