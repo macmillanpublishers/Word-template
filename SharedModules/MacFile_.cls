@@ -149,6 +149,24 @@ Public Property Get Running() As Boolean
     End If
 End Property
 
+' ===== UpToDate ==============================================================
+' Checks if the local file version number is up to date with the config file
+' version number. Only returns False if the local version is LOWER; if the
+' local version is HIGHER than the config, returns True. Compares each part of
+' the version number (Major.Minor.Patch) in turn.
+
+Public Property Get UpToDate() As Boolean
+    If Me.ConfigVersion.Major > Me.LocalVersion.Major Then
+        UpToDate = False
+    ElseIf Me.ConfigVersion.Minor > Me.LocalVersion.Minor Then
+        UpToDate = False
+    ElseIf Me.ConfigVersion.Patch > Me.LocalVersion.Patch Then
+        UpToDate = False
+    Else
+        UpToDate = True
+    End If
+End Property
+
 
 ' *****************************************************************************
 '           PRIVATE PROPERTIES
@@ -221,8 +239,100 @@ Private Property Get LocalVersion() As VersionNumber
 End Property
 
 ' ===== DownloadURL ===========================================================
-' Full URL to download the file, including file name.
+' Full URL to download the file, including file name. Set up now to get files
+' that are attached to a Macmillan Confluence page.
 
 Private Property Get DownloadURL() As String
-    Dim dict
+    Dim dictDownloads As Dictionary
+    Set dictDownloads = Paths_.FullJSON("downloads")
+    
+    DownloadURL = dictDownloads("baseURL") & "/" & _
+        dictDownloads(dictDownloads("current")) & "/" & Me.FullName
 End Property
+
+' ===== FullLogPath ===========================================================
+' Full path to the log file, including file name and extension.
+
+Private Property Get FullLogPath() As String
+    FullLogPath = Paths_.LocalPath(GroupName:="logFiles") & _
+        Application.PathSeparator & Me.Name & "_updates.log"
+End Property
+
+
+' *****************************************************************************
+'           PUBLIC METHODS
+' *****************************************************************************
+
+' ===== AssignFile ============================================================
+' To access all of the properties of the object, both FileGroup & SpecificFile
+' properties must be set. To make this easier, this method does both at once.
+
+Public Sub AssignFile(FileGroupName As String, SpecificFileType As String)
+    Me.FileGroup = FileGroupName
+    Me.SpecificFile = SpecificFileType
+End Sub
+
+' ===== DeleteFile ============================================================
+' Deletes the file in question, as long as it's not currently running this code
+
+Public Sub DeleteFile()
+    If Me.Running = False Then
+        If Me.Exists = True Then
+            Kill Me.FullLocalPath
+        End If
+    Else
+        MsgBox "You can't delete a file that is running a macro."
+    End If
+End Sub
+
+' ===== NotifyComplete ========================================================
+' Notifies the user that the download is complete. Outside Download method cuz
+' we only want to notify once even if we're downloading multiple files; also
+' some downloads are silent (e.g., Castoff values), though we should always
+' notify when we're downloading files that may contain updated functionality.
+' Also NOT in MacFileBunch_ because if the main macro template itself needs to
+' be updated, it will launch the updater template, which will only download a
+' single file but which will notify for all downloads.
+
+Public Sub NotifyComplete()
+    MsgBox "All downloads are complete. Yay!"
+End Sub
+
+
+' *****************************************************************************
+'           PRIVATE METHODS
+' *****************************************************************************
+
+' ===== StringVersion =========================================================
+' returns full version number as a string. May need to make Public? Takes an
+' argument so we can use it to return either the Config or Local version. Note
+' VersionNumber.Patch may be Null
+
+Private Function StringVersion(VersionType As VersionNumber) As String
+    Dim strVersionReturn As String
+    strVersionReturn = CStr(VersionType.Major) & "." & CStr(VersionType.Minor)
+
+    If CStr(VersionType.Patch) <> vbNullString Then
+        strVersionReturn = strVersionReturn & "." & CStr(VersionType.Patch)
+    End If
+
+    StringVersion = strVersionReturn
+End Function
+
+' ===== WriteToLog ============================================================
+' Writes line to log for the file. LogMessage only needs text, timestamp will
+' be added in this method. May make public later if we end up using this more
+' more than just download logs.
+
+Private Sub WriteToLog(LogMessage As String)
+    Dim strLogMessage As String
+    Dim FileNum As Integer
+    
+    strLogMessage = Now & " -- " & LogMessage
+    FileNum = FreeFile ' next file number
+    
+    Open LogFile For Append As #FileNum ' creates the file if it doesn't exist
+    Print #FileNum, strLogMessage ' write information at the end of the text file
+    Close #FileNum ' close the file
+End Sub
+
