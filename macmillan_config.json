@@ -28,7 +28,11 @@
 			"core":{
 				"fileName":"macmillan_config",
 				"extension":"json",
-				"version":"1.0"
+				"version":{
+					"major":1,
+					"minor":0,
+					"patch":null
+				}
 			},
 		},
 
@@ -36,7 +40,11 @@
 				"startupAuto":{
 					"fileName":"tools-startup",
 					"extension":"dotm",
-					"version":"1.0"
+					"version":{
+						"major":1,
+						"minor":0,
+						"patch":null
+					}
 				}
 		},
 
@@ -44,12 +52,20 @@
 			"tools":{
 				"fileName":"manuscript-macros",
 				"extension":"dotm",
-				"version":"3.1"
+				"version":{
+					"major":3,
+					"minor":1,
+					"patch":null
+				}
 			},
 			"updater":{
 				"fileName":"macro-updater",
 				"extension":"dotm",
-				"version":"1.1"
+				"version":{
+					"major":1,
+					"minor":1,
+					"patch":null
+				}
 			}
 		},
 
@@ -57,17 +73,29 @@
 			"base":{
 				"fileName":"macmillan",
 				"extension":"dotx",
-				"version":"4.5"
+				"version":{
+					"major":4,
+					"minor":5,
+					"patch":null
+				}
 			},
 			"noColor":{
 				"fileName":"macmillan_NoColor",
 				"extension":"dotx",
-				"version":"4.5"
+				"version":{
+					"major":4,
+					"minor":5,
+					"patch":null
+				}
 			},
 			"coverCopy":{
 				"fileName":"macmillan_CoverCopy",
 				"extension":"dotx",
-				"version":"2.0"
+				"version":{
+					"major":2,
+					"minor":0,
+					"patch":null
+				}
 			}
 		},
 
@@ -75,17 +103,29 @@
 			"bookmakerCheck":{
 				"fileName":"Styles_Bookmaker",
 				"extension":"csv",
-				"version":"1.0"
+				"version":{
+					"major":1,
+					"minor":0,
+					"patch":null
+				}
 			},
 			"castoffSMP":{
 				"fileName":"Castoff_SMP",
 				"extension":"csv",
-				"version":"1.0"
+				"version":{
+					"major":1,
+					"minor":0,
+					"patch":null
+				}
 			},
 			"castoffTor":{
 				"fileName":"Castoff_TorDOTcom",
 				"extension":"csv",
-				"version":"1.0"
+				"version":{
+					"major":1,
+					"minor":0,
+					"patch":null
+				}
 			}
 		}
 	}
