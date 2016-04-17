@@ -20,8 +20,11 @@ Private Const strRepoPath = "C:\Users\erica.warren\Word-template"
 
 ' ===== DEPENDENCIES ==========================================
 ' Obviously clone the git repo and add its path ABOVE
+
 ' Each template gets its own subdirectory in the repo, name matches exactly (w/o extension)
 ' Modules that are shared among all template must have name start with "Shared"
+' modules that need to be imported into templates but not tracked in git
+' are in word-template/dependencies
 
 ' Not tested on Mac, because saving templates on Mac causes all kinds of nonsense
 
@@ -46,9 +49,29 @@ Sub ExportAllModules()
     Dim strSharedModules As String
     Dim strDirName As String
     Dim strTemplateModules As String
+    Dim strDependencies As String
+    Dim strDepFiles As String
+    Dim strEachFile As String
     
     ' This is where all shared modules go
     strSharedModules = strRepoPath & Application.PathSeparator & "SharedModules"
+    strDependencies = strRepoPath & Application.PathSeparator & "dependencies"
+    
+    ' Modules that need to be imported into templates but that we do not want
+    ' to track belong in word-templates/dependencies. We don't want to export
+    ' these, so let's get then into a string to compare against later
+    
+    ' Dir() w/ arguments returns first file name that matches
+    strEachFile = Dir(strDependencies & Application.PathSeparator & "*.*", vbNormal)
+'    Debug.Print strEachFile
+    Do While Len(strEachFile) > 0
+        strDepFiles = strDepFiles & strEachFile & vbNewLine
+'        Debug.Print strDepFiles
+        ' Dir() again w/o arguments returns the NEXT file that matches orig arguments
+        ' if nothing else matches, returns empty string
+        strEachFile = Dir
+    Loop
+    
     
     For Each oDoc In Documents
         ' Separate the name and the extension of the document
@@ -67,11 +90,14 @@ Sub ExportAllModules()
             
             ' Cycle through each module
             For Each oModule In oProject.VBComponents
-                ' Select save location based on module name
-                If oModule.Name Like "Shared*" Then
-                    Call ExportVBComponent(VBComp:=oModule, FolderName:=strSharedModules)
-                Else
-                    Call ExportVBComponent(VBComp:=oModule, FolderName:=strTemplateModules)
+                ' Skip modules in dependencies directory
+                If InStr(strDepFiles, oModule.Name) = 0 Then
+                    ' Select save location based on module name
+                    If oModule.Name Like "Shared*" Then
+                        Call ExportVBComponent(VBComp:=oModule, FolderName:=strSharedModules)
+                    Else
+                        Call ExportVBComponent(VBComp:=oModule, FolderName:=strTemplateModules)
+                    End If
                 End If
             Next
             
@@ -96,51 +122,71 @@ Private Sub ExportVBComponent(VBComp As VBIDE.VBComponent, _
 
     Dim Extension As String
     Dim FName As String
+    
+    
     Extension = GetFileExtension(VBComp:=VBComp)
-    If Trim(FileName) = vbNullString Then
-        FName = VBComp.Name & Extension
-    Else
-        FName = FileName
-        If InStr(1, FName, ".", vbBinaryCompare) = 0 Then
-            FName = FName & Extension
-        End If
-    End If
-    
-    If StrComp(Right(FolderName, 1), "\", vbBinaryCompare) = 0 Then
-        FName = FolderName & FName
-    Else
-        FName = FolderName & "\" & FName
-    End If
-    
-    If Dir(FName, vbNormal + vbHidden + vbSystem) <> vbNullString Then
-        If OverwriteExisting = True Then
-            Kill FName
+    ' Don't auto-export UserForms, because they often add or remove a single
+    ' blank like that gets tracked in git in the code module AND the binary
+    ' .frx file. Will have to manage userforms manually
+    If Extension <> ".frm" Then
+        ' Build full file name of module
+        If Trim(FileName) = vbNullString Then
+            FName = VBComp.Name & Extension
         Else
-            Exit Sub
+            FName = FileName
+            If InStr(1, FName, ".", vbBinaryCompare) = 0 Then
+                FName = FName & Extension
+            End If
+        End If
+        
+        ' Can't delete ThisDocument.cls module, but doesn't always have code
+        ' So don't export if empty
+        If VBComp.CodeModule.CountOfLines <> 0 Then
+        
+            ' Build full path to save module to
+            If StrComp(Right(FolderName, 1), "\", vbBinaryCompare) = 0 Then
+                FName = FolderName & FName
+            Else
+                FName = FolderName & "\" & FName
+            End If
+        
+    
+            ' delete previous version of module
+            If Dir(FName, vbNormal + vbHidden + vbSystem) <> vbNullString Then
+                If OverwriteExisting = True Then
+                    Kill FName
+                Else
+                    Exit Sub
+                End If
+            End If
+    
+            ' Export the module
+            VBComp.Export FileName:=FName
         End If
     End If
-    
-    VBComp.Export FileName:=FName
-    
     'Debug.Print FName
     
-    If Extension = ".frm" Then
-        Dim strBinaryFile As String
-        
-        strBinaryFile = Left(FName, Len(FName) - 1) & "x"
-        'Debug.Print strBinaryFile
-        
-        Dim strShellCmd As String
-        strShellCmd = "cmd.exe /C C: & cd " & strRepoPath & " & git checkout " & strBinaryFile
-        strShellCmd = Replace(strShellCmd, "\", "\\")
-        
-        'Debug.Print strShellCmd
-        
-        Dim result As Variant
-        
-        result = Shell(strShellCmd, vbMinimizedNoFocus)
-        'Debug.Print result
-    End If
+    ' ======================================
+    ' Was attempting to checkout UserForm binary after export, since git almost
+    ' always tracked modifications even when none are made, but it wasn't
+    ' quite working so we'll just skip it (see above)
+'    If Extension = ".frm" Then
+'        Dim strBinaryFile As String
+'
+'        strBinaryFile = Left(FName, Len(FName) - 1) & "x"
+'        'Debug.Print strBinaryFile
+'
+'        Dim strShellCmd As String
+'        strShellCmd = "cmd.exe /C C: & cd " & strRepoPath & " & git checkout " & strBinaryFile
+'        strShellCmd = Replace(strShellCmd, "\", "\\")
+'
+'        'Debug.Print strShellCmd
+'
+'        Dim result As Variant
+'
+'        result = Shell(strShellCmd, vbMinimizedNoFocus)
+'        'Debug.Print result
+'    End If
     
     End Sub
     
@@ -169,12 +215,12 @@ End Function
 Sub ImportAllModules()
     ' Removes all modules in all open template
     ' and reimports them from the local Word-template git repo
-    ' SO BE SURE TO EXPORT EVERYTHING BEFORE YOU USE THIS!!
+    ' SO BE SURE THE MODULES IN THE REPO ARE UP TO DATE
     
     Dim oDocument As Document
     Dim strExtension As String              ' extension of current document
     Dim strSubDirName As String             ' name of subdirectory of template in repo
-    Dim strDirInRepo(1 To 2) As String      ' declare number of items in array
+    Dim strDirInRepo(1 To 3) As String      ' declare number of items in array
     Dim strModuleExt(1 To 3) As String     ' declare number of items in array
     Dim strModuleFileName As String         ' file name with extension, no path
     Dim A As Long
@@ -200,8 +246,10 @@ Sub ImportAllModules()
             If strExtension = ".dotm" Or strExtension = ".docm" Then
                 ' an array of the directories we're going to be adding modules from
                 ' every template gets (1) all modules in its directory and (2) all shared modules
+                ' and (3) all dependencies.
                 strDirInRepo(1) = strRepoPath & Application.PathSeparator & strSubDirName & Application.PathSeparator
                 strDirInRepo(2) = strRepoPath & Application.PathSeparator & "SharedModules" & Application.PathSeparator
+                strDirInRepo(3) = strRepoPath & Application.PathSeparator & "dependencies" & Application.PathSeparator
                       
                 ' an array of file extensions we're importing, since there are other files in the repo
                 strModuleExt(1) = "bas"
@@ -215,11 +263,11 @@ Sub ImportAllModules()
                 Set currentVBProject = Nothing
                 Set currentVBProject = oDocument.VBProject
                 
-                ' loop through the two directories
+                ' loop through the directories
                 For A = LBound(strDirInRepo()) To UBound(strDirInRepo())
                     ' for each directory, loop through all files of each extension
                     For B = LBound(strModuleExt()) To UBound(strModuleExt())
-                        ' with the Dir function this returns just the files in this directory
+                        ' Dir function returns first file that matches in that dir
                         strModuleFileName = Dir(strDirInRepo(A) & "*." & strModuleExt(B))
                         ' so loop through each file of that extension in that directory
                         Do While strModuleFileName <> "" And Counter < 100
@@ -257,7 +305,8 @@ Sub ImportAllModules()
                                     currentVBProject.VBComponents.Remove tempVBComp
                                 End If
                             End If
-                            ' have to do this to make the Dir function loop through all files
+                            ' calling Dir function again w/ no arguments gets NEXT file that
+                            ' matches original call. If no more files, returns empty string.
                             strModuleFileName = Dir()
                         Loop
                         
@@ -377,6 +426,7 @@ Sub CopyTemplateToRepo(TemplateDoc As Document, Optional OpenAfter As Boolean = 
         End If
         
         ' And then open the document again if you wanna.
+        ' Though note that AutoExec and Document_Open subs will run when you do!
         If OpenAfter = True Then
             Documents.Open FileName:=strCurrentTemplatePath, _
                         ReadOnly:=False, _
@@ -546,38 +596,3 @@ Private Function LocalPathToRepoPath(LocalPath As String, Optional VersionFile A
         Application.PathSeparator & strFileWithExt
     
 End Function
-
-
-Sub testing()
-    ' Debug.Print has a memory limit, this prints to a text file on desktop
-    ' right now prints stuff about fields, but leaving here so we can use
-    ' for other things later
-    Dim strStories() As Variant
-    Dim A As Long
-    Dim objField As Field
-    Dim fnum As Long
-    Dim strOutputFile As String
-    
-    strStories = StoryArray
-    
-    strOutputFile = Environ("USERPROFILE") & "\Desktop\fields5.txt"
-
-    fnum = FreeFile()
-    Open strOutputFile For Append As fnum
-
-    For A = LBound(strStories) To UBound(strStories)
-        Print #fnum, "======== STORY " & strStories(A) & " =============="
-        For Each objField In ActiveDocument.StoryRanges(strStories(A)).Fields
-            Print #fnum, "--------" & vbNewLine & "FIELD " & objField.Index
-            Print #fnum, "Code: " & objField.Code
-            Print #fnum, "Creator: " & objField.Creator
-            Print #fnum, "Kind: " & objField.Kind
-            Print #fnum, "Locked: " & objField.Locked
-            Print #fnum, "Type: " & objField.Type
-        Next objField
-    Next
-    
-    Close #fnum
-        
-        
-End Sub

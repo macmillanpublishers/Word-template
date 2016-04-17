@@ -1,5 +1,5 @@
 # Custom Ribbon tab / Mac toolbar
-The macros in the template are launched via a custom Ribbon tab on PCs and a custom floating toolbar on Mac. The custom Ribbon tab is created by converting the template to a .zip file, unzippping it, and then adding a `customUI\customUI.xml` file. That's a hassle; luckily you can just use the [Custom UI Editor for Microsoft Office](http://openxmldeveloper.org/blog/b/openxmldeveloper/archive/2009/08/07/7293.aspx), which also makes it easy to add images.
+The macros in the template are launched via a custom Ribbon tab on PCs and a custom floating toolbar on Mac. The custom Ribbon tab is created by converting the template to a .zip file, unzippping it, and then adding a `customUI\customUI.xml` file. That's a hassle; luckily you can just use the [Custom UI Editor for Microsoft Office](http://openxmldeveloper.org/blog/b/openxmldeveloper/archive/2009/08/07/7293.aspx), which also makes it easy to add images for buttons.
 
 The XML code is also saved directly in the repository as `MacmillanGT/MacmillanCustomRibbonPC2007-2013.xml`.
 
@@ -11,7 +11,7 @@ Word for Mac 2011 does not support custom XML, but it does support custom toolba
 
 
 # Update version numbers
-The auto-update macro is triggered by a new version-number text file being greater than the `Version` custom document property in the template. Maintaining all of these numbers in two places is a hassle, so the `Utilities.dotm` template contains a macro specifically for managing version numbers. See [here](using+the+vb+editor) for info about installing it.
+The auto-update macro is triggered by a new version-number text file being greater than the `Version` custom document property in the template. To make it easier to maintain the various files, the `Utilities.dotm` template contains a macro specifically for managing version numbers. See [here](using+the+vb+editor) for info about installing it.
 
 To check or change version numbers, click the red box button in the Quick Access Toolbar. A Userform will open displaying the current version number for each template. If you would like to change the number, enter the new version number in the text box provided and click **Update Versions**. This will update the `Version` custom document property in the template file, copy the template file to the repository, and update the version number text file in the repository. Now just commit the changes!
 
@@ -21,14 +21,14 @@ To check or change version numbers, click the red box button in the Quick Access
 We use Git for version control, and use [Github](https://github.com/macmillanpublishers/Word-template) as our remote repository. This assumes a basic familiarity with Git, but there are some specific issues with working in VBA (for example, code runs from within a binary file) that we address here.
 
 ## Line endings
-The Word template is designed to work cross-platform; however, working with [line endings](https://en.wikipedia.org/wiki/Newline) can be tricky. The code modules running in the template files need to use Windows-style line endings (CRLF) regardless of what platform the code is running on. Including any Unix-style (LF) line endings will prevent any code from running.
+The Word template is designed to work cross-platform; however, working with line endings can be tricky. The code modules running in the template files need to use Windows-style line endings (CRLF) regardless of what platform the code is running on. Including any Unix-style (LF) line endings will prevent any code from running.
 
 To sort this out, the `Word-template` repo contains a `.gitattributes` file which defines end-of-line characters for .bas, .cls, .frm, and .xml files to be CRLF in the working directory (Git converts all line endings to LR in the index). This should maintain the correct line endings regardless of platform.
 
 If you want to be extra sure, you can update your Git configuration settings based on OS. Run the commands below to have PC check out code into the working directly with CRLF, and to have Mac check out code with LF.
 
-* **PC** - `git config --global core.autocrlf true`
-* **Mac** - `git config --global core.autocrlf input`
+* **PC:** - `git config --global core.autocrlf true`
+* **Mac:** - `git config --global core.autocrlf input`
 
 
 

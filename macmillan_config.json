@@ -1,0 +1,92 @@
+{
+	"organization":{
+		"shortName":"macmillan",
+		"longName":"Macmillan Tools Template",
+		"helpEmail":"workflows@macmillan.com"
+	},
+
+	"downloads":{
+		"baseURL":"https://confluence.macmillan.com/download/attachments",
+		"master":"35001370",
+		"releases":"9044274",
+		"develop":"40571207",
+		"current":"develop"
+	},
+
+	"paths":{
+		"root":"macmillan",
+		"home":"ManuscriptTools",
+		"configFiles":"config",
+		"macroFiles":"macros",
+		"styleFiles":"styles",
+		"assetFiles":"assets",
+		"logFiles":"logs"
+	},
+
+	"files":{
+		"configFiles":{
+			"core":{
+				"fileName":"macmillan_config",
+				"extension":"json",
+				"version":"1.0"
+			},
+		},
+
+		"startupFiles":{
+				"startupAuto":{
+					"fileName":"tools-startup",
+					"extension":"dotm",
+					"version":"1.0"
+				}
+		},
+
+		"macroFiles":{
+			"tools":{
+				"fileName":"manuscript-macros",
+				"extension":"dotm",
+				"version":"3.1"
+			},
+			"updater":{
+				"fileName":"macro-updater",
+				"extension":"dotm",
+				"version":"1.1"
+			}
+		},
+
+		"styleFiles":{
+			"base":{
+				"fileName":"macmillan",
+				"extension":"dotx",
+				"version":"4.5"
+			},
+			"noColor":{
+				"fileName":"macmillan_NoColor",
+				"extension":"dotx",
+				"version":"4.5"
+			},
+			"coverCopy":{
+				"fileName":"macmillan_CoverCopy",
+				"extension":"dotx",
+				"version":"2.0"
+			}
+		},
+
+		"assetFiles":{
+			"bookmakerCheck":{
+				"fileName":"Styles_Bookmaker",
+				"extension":"csv",
+				"version":"1.0"
+			},
+			"castoffSMP":{
+				"fileName":"Castoff_SMP",
+				"extension":"csv",
+				"version":"1.0"
+			},
+			"castoffTor":{
+				"fileName":"Castoff_TorDOTcom",
+				"extension":"csv",
+				"version":"1.0"
+			}
+		}
+	}
+}
