@@ -51,7 +51,9 @@ Private Property Let FullJSON(strFullJSON As String)
 End Property
 
 Public Property Get FullJSON() As Dictionary
-    FullJSON = p_FullJSON
+' Shouldn't need to check if p_FullJSON Is Nothing, because it is set with
+' Class_Initialize.
+    Set FullJSON = p_FullJSON
 End Property
 
 ' ===== LocalPath =============================================================
