@@ -95,6 +95,30 @@ Public Property Get LogsDir() As String
     LogsDir = strLogsDir
 End Property
 
+' ===== TempPath ==========================================================
+' Path to OS-specific local temp directory.
+
+Public Property Get TempPath() As String
+    Dim strTmpDir As String
+    #If Mac Then
+        strTmpDir = MacScript("path to temporary items as string")
+    #Else
+        strTmpDir = Environ("TEMP")
+    #End If
+    
+    ' Not 100% confident these return trailing separator consistently, so:
+    If Right(strTmpDir, 1) = Application.PathSeparator Then
+        strTmpDir = Left(strTmpDir, Len(strTmpDir) - 1)
+    End If
+    
+    If IsItThere(strTmpDir) = True Then
+        FullTempPath = strTmpDir
+    Else
+        MsgBox "Um, your Temp folder is missing?"
+    End If
+End Property
+
+
 ' *****************************************************************************
 '       PRIVATE PROPERTIES
 ' *****************************************************************************
