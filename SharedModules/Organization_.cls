@@ -5,7 +5,7 @@ END
 Attribute VB_Name = "Organization_"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
+Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
 Option Explicit
 
