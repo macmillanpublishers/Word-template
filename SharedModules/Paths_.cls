@@ -6,7 +6,7 @@ Attribute VB_Name = "Paths_"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = True
+Attribute VB_Exposed = False
 Option Explicit
 
 ' =============================================================================
@@ -40,14 +40,14 @@ Private p_FullJSON As Dictionary
 ' *****************************************************************************
 
 ' ===== FullJSON ==============================================================
-' Dictionary object of all the data in the JSON config file. We want to read
-' the whole thing at Initialize so if we need to delete the config (e.g., to
+' Dictionary object of all the data in the JSON config file. We want to set
+' this property at Initialize so if we need to delete the config (e.g., to
 ' replace with a newer version), this instance can still run. The MacFile_ and
 ' MacFileDictionary_ objects will get the data from here. Note all of the
 ' objects in this dictionary are also dictionaries.
 
-Private Property Let FullJSON(strFullJSON As String)
-    Set p_FullJSON = JsonConverter.ParseJson(json_String:=strFullJSON)
+Private Property Set FullJSON(dictFullJSON As Dictionary)
+    Set p_FullJSON = dictFullJSON
 End Property
 
 Public Property Get FullJSON() As Dictionary
@@ -56,7 +56,7 @@ Public Property Get FullJSON() As Dictionary
     Set FullJSON = p_FullJSON
 End Property
 
-' ===== LocalPath =============================================================
+'' ===== LocalPath =============================================================
 ' Returns string of the directory a specific file group should be saved in. If
 ' it doesn't exist, it is created.
 
@@ -65,13 +65,13 @@ End Property
 
 Public Property Get LocalPath(GroupName As String) As String
     Dim strLocalPath As String
-    
+
     ' If this next line works, don't need "startupFiles" in "paths" object
     If GroupName = startupFiles Then
         strLocalPath = Application.StartupPath
     Else
         If Me.PathsJSON.Exists(GroupName) Then
-        strLocalPath = Me.HomeDir & Application.PathSeparator & _
+            strLocalPath = Me.HomeDir & Application.PathSeparator & _
             Me.PathsJSON(GroupName)
         Else
             MsgBox "That is not a valid GroupName!"
@@ -93,7 +93,7 @@ Public Property Get LogsDir() As String
     Dim strLogsDir As String
     strLogsDir = Me.HomeDir & Application.PathSeparator & _
         Me.PathsJSON("logFiles")
-    Me.Check (strLogsDir)
+    Me.CheckDir (strLogsDir)
     LogsDir = strLogsDir
 End Property
 
@@ -107,14 +107,14 @@ Public Property Get TempPath() As String
     #Else
         strTmpDir = Environ("TEMP")
     #End If
-    
+
     ' Not 100% confident these return trailing separator consistently, so:
     If Right(strTmpDir, 1) = Application.PathSeparator Then
         strTmpDir = Left(strTmpDir, Len(strTmpDir) - 1)
     End If
-    
+
     If IsItThere(strTmpDir) = True Then
-        FullTempPath = strTmpDir
+        TempPath = strTmpDir
     Else
         MsgBox "Um, your Temp folder is missing?"
     End If
@@ -124,10 +124,10 @@ End Property
 ' Full URL to download the file from, excluding the file name and trailing
 ' separator. Set up now to get files attached to a Macmillan Confluence page.
 
-Private Property Get DownloadURL() As String
+Public Property Get DownloadURL() As String
     Dim dictDownloads As Dictionary
     Set dictDownloads = Me.FullJSON("downloads")
-    
+
     DownloadURL = dictDownloads("baseURL") & "/" & _
         dictDownloads(dictDownloads("current"))
 End Property
@@ -141,9 +141,9 @@ End Property
 ' Takes full local path to config file as input (incl. name and extension).
 ' Writes it to CustomDocumentProperty for document to read later. All other
 ' objects should get this from here, not independently if possible.
-    
+
 Private Property Let FullConfigPath(strFullConfigPath As String)
-    ThisDocument.CustomDocumentProperties("FullConfigPath").Value = _
+    ThisDocument.CustomDocumentProperties("FullConfigPath").value = _
         strFullConfigPath
 End Property
 
@@ -171,13 +171,13 @@ End Property
 
 Private Property Get RootDir() As String
     Dim strRootDir As String
-    
+
     Select Case Me.PathsJSON("root")
         Case "macmillan"
             #If Mac Then
                 ' This returns a string with the trailing path separator
                 ' included so we need to remove it.
-                
+
                 ' Also Matt suggested Users/username/Library/Application Support
                 ' as a place less likely to be accidentally deleted.
                 strRootDir = MacScript("return (path to home folder) as string")
@@ -187,11 +187,13 @@ Private Property Get RootDir() As String
             #Else
                 strRootDir = Environ("HOMEDRIVE") & Environ("HOMEPATH")
             #End If
+        Case Else
+            MsgBox "That's not a valid value for Root directory."
     End Select
-    
+
     Me.CheckDir (strRootDir)
     RootDir = strRootDir
-    
+
 End Property
 
 ' ===== HomeDir ===============================================================
@@ -217,13 +219,15 @@ End Property
 ' root project dir). Making it its own method (with a pretty generic name) so
 ' it's easy to add additional checks later if we need to.
 
-Private Sub CheckDir(Dir As String)
+Private Sub CheckDir(MyDir As String)
     On Error GoTo CheckDirError
-    If IsItThere(Dir) = False Then
-        MkDir (Dir)
+    If IsItThere(MyDir) = False Then
+        MkDir MyDir
     End If
+    On Error GoTo 0
+    Exit Sub
 CheckDirError:
-    MsgBox "Nope! Looks like " & Dir & " doesn't exist and we can't create it" _
+    MsgBox "Nope! Looks like " & MyDir & " doesn't exist and we can't create it" _
         & vbNewLine & "Error " & Err.Number & ": " & Err.Description
 End Sub
 
@@ -235,18 +239,14 @@ End Sub
 ' ===== Initialize ============================================================
 ' This is a static class, so Initialize will be called the first time the
 ' default object is called. We want to read the JSON file ASAP, so if we do
-' anything to the original config file the data will be preserved here.
+' anything to the original config file the data will be preserved.
 
 Private Sub Class_Initialize()
     Dim strJSON As String
+    Dim dictJSON As Dictionary
+    
     strJSON = SharedMacros.ReadTextFile(Path:=Me.FullConfigPath, _
         FirstLineOnly:=False)
-    Me.FullJSON = strJSON
-End Sub
-
-
-Sub Test()
-    Dim strNewFolder As String
-    
-
+    Set dictJSON = JsonConverter.ParseJson(json_String:=strJSON)
+    Me.FullJSON = dictJSON
 End Sub
