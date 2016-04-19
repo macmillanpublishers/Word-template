@@ -120,6 +120,18 @@ Public Property Get TempPath() As String
     End If
 End Property
 
+' ===== DownloadURL ===========================================================
+' Full URL to download the file from, excluding the file name and trailing
+' separator. Set up now to get files attached to a Macmillan Confluence page.
+
+Private Property Get DownloadURL() As String
+    Dim dictDownloads As Dictionary
+    Set dictDownloads = Me.FullJSON("downloads")
+    
+    DownloadURL = dictDownloads("baseURL") & "/" & _
+        dictDownloads(dictDownloads("current"))
+End Property
+
 
 ' *****************************************************************************
 '       PRIVATE PROPERTIES
