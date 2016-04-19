@@ -25,7 +25,7 @@ Option Explicit
 '' *****************************************************************************
 ''           CLASS ENUMERATIONS
 '' *****************************************************************************
-'
+
 '' ===== MacFileGroup ==========================================================
 '' This enum should include the first-level keys in the "files" object in
 '' the config JSON file. Must be set to powers of two so we can use bitwise
@@ -66,7 +66,6 @@ Public Property Let FileGroup(FileGroup_value As String)
     Else
         MsgBox "That's not a valid option for this property."
     End If
-    
 End Property
 
 Public Property Get FileGroup() As String
@@ -584,7 +583,8 @@ Sub TestDownload()
     MyRequest.Resource = "Testing.dotm"
     MyRequest.Method = WebMethod.HttpGet
 
-    WebHelpers.RegisterConverter Name:="dotm", MediaType:="", _
+    WebHelpers.RegisterConverter Name:="dotm", _
+        MediaType:="application/vnd.ms-word.template.macroEnabled.12", _
         ConvertCallback:="Me.ConvertDoc", _
         ParseCallback:="Me.ParseDoc", ParseType:="Binary"
 

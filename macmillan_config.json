@@ -24,6 +24,18 @@
 	},
 
 	"files":{
+		"testFiles":{
+			"tester":{
+				"fileName":"Testing",
+				"extension":"dotm",
+				"version":{
+					"major":1,
+					"minor":0,
+					"patch":null
+				}
+			},
+		},
+
 		"configFiles":{
 			"core":{
 				"fileName":"macmillan_config",

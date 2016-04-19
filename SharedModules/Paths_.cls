@@ -245,8 +245,8 @@ Private Sub Class_Initialize()
     Dim strJSON As String
     Dim dictJSON As Dictionary
     
-    strJSON = SharedMacros.ReadTextFile(Path:=Me.FullConfigPath, _
+    strJSON = SharedMacros.ReadTextFile(Path:=FullConfigPath, _
         FirstLineOnly:=False)
     Set dictJSON = JsonConverter.ParseJson(json_String:=strJSON)
-    Me.FullJSON = dictJSON
+    FullJSON = dictJSON
 End Sub
