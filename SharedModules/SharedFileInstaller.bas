@@ -403,3 +403,8 @@ End Function
 
 
 
+Sub TryWebRequest()
+    Dim testFile As New MacFile_
+    testFile.AssignFile FileGroupName:="testFiles", SpecificFileType:="tester"
+    testFile.TestDownload
+End Sub

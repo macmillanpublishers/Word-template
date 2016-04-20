@@ -34,26 +34,30 @@ Option Explicit
 ' *****************************************************************************
 
 Private p_FullJSON As Dictionary
+Private p_PathsJSON As Dictionary
+
 
 ' *****************************************************************************
 '       PUBLIC PROPERTIES
 ' *****************************************************************************
 
 ' ===== FullJSON ==============================================================
-' Dictionary object of all the data in the JSON config file. We want to set
-' this property at Initialize so if we need to delete the config (e.g., to
-' replace with a newer version), this instance can still run. The MacFile_ and
+' Dictionary object of all the data in the JSON config file. We want to only
+' read the json file once, so if we need to delete the config (e.g., to replace
+' it with a newer version), this instance can still run. The MacFile_ and
 ' MacFileDictionary_ objects will get the data from here. Note all of the
 ' objects in this dictionary are also dictionaries.
 
-Private Property Set FullJSON(dictFullJSON As Dictionary)
-    Set p_FullJSON = dictFullJSON
-End Property
-
 Public Property Get FullJSON() As Dictionary
-' Shouldn't need to check if p_FullJSON Is Nothing, because it is set with
-' Class_Initialize.
+    If p_FullJSON Is Nothing Then
+        Dim strJSON As String
+        strJSON = SharedMacros.ReadTextFile(Path:=Me.FullConfigPath, _
+            FirstLineOnly:=False)
+        Set p_FullJSON = JsonConverter.ParseJson(json_String:=strJSON)
+    End If
+    
     Set FullJSON = p_FullJSON
+    
 End Property
 
 '' ===== LocalPath =============================================================
@@ -67,7 +71,7 @@ Public Property Get LocalPath(GroupName As String) As String
     Dim strLocalPath As String
 
     ' If this next line works, don't need "startupFiles" in "paths" object
-    If GroupName = startupFiles Then
+    If GroupName = "startupFiles" Then
         strLocalPath = Application.StartupPath
     Else
         If Me.PathsJSON.Exists(GroupName) Then
@@ -78,23 +82,16 @@ Public Property Get LocalPath(GroupName As String) As String
         End If
     End If
 
-    If IsItThere(strLocalPath) = False Then
-        MkDir (strLocalPath)
-    End If
-
+    Me.CheckDir (strLocalPath)
     LocalPath = strLocalPath
 End Property
 
 ' ===== LogsDir ===============================================================
-' Path to logs will always be the same for every file, so we won't get it from
-' LocalPath and FileGroup doesn't matter. If dir doesn't exist, will create.
+' Path to logs will always be the same for each file, so we won't get it from
+' MacFile_ directly.
 
 Public Property Get LogsDir() As String
-    Dim strLogsDir As String
-    strLogsDir = Me.HomeDir & Application.PathSeparator & _
-        Me.PathsJSON("logFiles")
-    Me.CheckDir (strLogsDir)
-    LogsDir = strLogsDir
+    LogsDir = Me.LocalPath(GroupName:="logFiles")
 End Property
 
 ' ===== TempPath ==========================================================
@@ -112,7 +109,8 @@ Public Property Get TempPath() As String
     If Right(strTmpDir, 1) = Application.PathSeparator Then
         strTmpDir = Left(strTmpDir, Len(strTmpDir) - 1)
     End If
-
+    
+    ' Don't use Me.CheckDir here because shouldn't create new Tmp dir
     If IsItThere(strTmpDir) = True Then
         TempPath = strTmpDir
     Else
@@ -122,7 +120,7 @@ End Property
 
 ' ===== DownloadURL ===========================================================
 ' Full URL to download the file from, excluding the file name and trailing
-' separator. Set up now to get files attached to a Macmillan Confluence page.
+' separator. Will be assigned to WebClient.BaseURL.
 
 Public Property Get DownloadURL() As String
     Dim dictDownloads As Dictionary
@@ -158,7 +156,10 @@ End Property
 ' change something later.
 
 Private Property Get PathsJSON() As Dictionary
-    PathsJSON = Me.FullJSON("paths")
+    If p_PathsJSON Is Nothing Then
+        Set p_PathsJSON = Me.FullJSON("paths")
+    End If
+    PathsJSON = p_PathsJSON
 End Property
 
 ' ===== RootDir ===============================================================
@@ -167,7 +168,7 @@ End Property
 ' because security at other levels can vary for macro files. Right now the only
 ' option is "user", but I've set it up as a Select statement so it will be
 ' relatively easy to add other options later. If the directory doesn't exist,
-' it throws an error.
+' it throws an error. Should we create a fallback?
 
 Private Property Get RootDir() As String
     Dim strRootDir As String
@@ -190,8 +191,12 @@ Private Property Get RootDir() As String
         Case Else
             MsgBox "That's not a valid value for Root directory."
     End Select
-
-    Me.CheckDir (strRootDir)
+    
+    ' Don't use Me.CheckDir, don't try to create home directory...
+    If IsItThere(strRootDir) = False Then
+        MsgBox "You don' seem to have a home directory..."
+    End If
+    
     RootDir = strRootDir
 
 End Property
@@ -238,15 +243,8 @@ End Sub
 
 ' ===== Initialize ============================================================
 ' This is a static class, so Initialize will be called the first time the
-' default object is called. We want to read the JSON file ASAP, so if we do
-' anything to the original config file the data will be preserved.
+' default object is called.
 
 Private Sub Class_Initialize()
-    Dim strJSON As String
-    Dim dictJSON As Dictionary
-    
-    strJSON = SharedMacros.ReadTextFile(Path:=FullConfigPath, _
-        FirstLineOnly:=False)
-    Set dictJSON = JsonConverter.ParseJson(json_String:=strJSON)
-    FullJSON = dictJSON
+
 End Sub

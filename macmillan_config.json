@@ -13,51 +13,56 @@
 		"current":"develop"
 	},
 
-	"paths":{
-		"root":"macmillan",
+	"paths":{"root":"macmillan",
 		"home":"ManuscriptTools",
+		"testFiles":"testing",
 		"configFiles":"config",
 		"macroFiles":"macros",
 		"styleFiles":"styles",
 		"assetFiles":"assets",
-		"logFiles":"logs"
-	},
+		"logFiles":"logs"},
 
-	"files":{
-		"testFiles":{
-			"tester":{
+	"files":
+	{
+		"testFiles":
+		{
+			"tester":
+			{
 				"fileName":"Testing",
+				"extension":"dotm",
+				"version":
+				{
+					"major":1,
+					"minor":0,
+					"patch":null
+				}
+			}
+		},
+		"configFiles":
+		{
+			"core":
+			{
+				"fileName":"macmillan_config",
+				"extension":"json",
+				"version":
+				{
+					"major":1,
+					"minor":0,
+					"patch":null
+				}
+			}
+		},
+
+		"startupFiles":{
+			"startupAuto":{
+				"fileName":"tools-startup",
 				"extension":"dotm",
 				"version":{
 					"major":1,
 					"minor":0,
 					"patch":null
 				}
-			},
-		},
-
-		"configFiles":{
-			"core":{
-				"fileName":"macmillan_config",
-				"extension":"json",
-				"version":{
-					"major":1,
-					"minor":0,
-					"patch":null
-				}
-			},
-		},
-
-		"startupFiles":{
-				"startupAuto":{
-					"fileName":"tools-startup",
-					"extension":"dotm",
-					"version":{
-						"major":1,
-						"minor":0,
-						"patch":null
-					}
-				}
+			}
 		},
 
 		"macroFiles":{

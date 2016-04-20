@@ -48,40 +48,44 @@ Option Explicit
 '           CLASS VARIABLES
 ' *****************************************************************************
 
-Private p_FileGroup As String
+Private p_GroupName As String
 Private p_SpecificFile As String
+Private p_GroupJSON As Dictionary
+Private p_FileJSON As Dictionary
+Private p_ConfigVersion As Dictionary
+Private p_LocalVersion As Dictionary
 
 
 ' *****************************************************************************
 '           PUBLIC PROPERTIES
 ' *****************************************************************************
 
-' ===== FileGroup =============================================================
+' ===== GroupName =============================================================
 ' Group here is in reference to the first level of keys in the "file" object in
 ' JSON file, grouping files with similar purposes together.
 
-Public Property Let FileGroup(FileGroup_value As String)
-    If Paths_.FullJSON("files").Exists(FileGroup_value) Then
-        p_FileGroup = FileGroup_value
+Public Property Let GroupName(GroupName_value As String)
+    If Paths_.FullJSON("files").Exists(GroupName_value) Then
+        p_GroupName = GroupName_value
     Else
-        MsgBox "That's not a valid option for this property."
+        MsgBox "That's not a valid option for the GroupName property."
     End If
 End Property
 
-Public Property Get FileGroup() As String
-    If p_FileGroup <> vbNullString Then
-        FileGroup = p_FileGroup
+Public Property Get GroupName() As String
+    If p_GroupName <> vbNullString Then
+        GroupName = p_GroupName
     Else
-        MsgBox "You must set the FileGroup property first!"
+        MsgBox "You must set the GroupName property first!"
     End If
 End Property
 
 ' ===== SpecificFile ==========================================================
-' Specific meaning "category" or "role"; one level below FileGroup in the JSON
+' Specific meaning "category" or "role"; one level below GroupName in the JSON
 ' file; i.e., what we are calling the file based on what it does in the project
 ' (not its Name, which can change). Options for specific file are limited to
-' the keys of the various objects in the FileGroups, and each must me unique
-'
+' the keys of the various objects in the GroupNames, and each must me unique.
+' Must also Set the FileJSON property now so we can access it later.
 ' The SpecificFile property needs to be set before you can access other info.
 
 Public Property Let SpecificFile(SpecificFile_value As String)
@@ -112,12 +116,12 @@ End Property
 ' name with extension.
 
 Public Property Get FullLocalPath() As String
-    FullLocalPath = Paths_.LocalPath(GroupName:=Me.FileGroup) & _
+    FullLocalPath = Paths_.LocalPath(Me.GroupName) & _
         Application.PathSeparator & Me.FullName
 End Property
 
 ' ===== Exists ================================================================
-' Tests whether the files exists at its FullLocalPath
+' Tests whether the file exists at its FullLocalPath
 
 Public Property Get Exists() As Boolean
     Exists = SharedMacros.IsItThere(Path:=Me.FullLocalPath)
@@ -125,7 +129,7 @@ End Property
 
 ' ===== Running ===============================================================
 ' Tests whether the file in question is the one that's currently running this
-' code, so we don't like delete ourselves or something.
+' code, so we don't, like, delete ourselves or something.
 
 Public Property Get Running() As Boolean
     If ThisDocument.Name = Me.FullName Then
@@ -159,20 +163,25 @@ End Property
 ' *****************************************************************************
 
 ' ===== GroupJSON =============================================================
-' Dictionary object of the FileGroup level in the JSON file. Not entirely sure
+' Dictionary object of the GroupName level in the JSON file. Not entirely sure
 ' we definitely need this here, but then I referenced it in two places so I
 ' figured why not.
 
 Private Property Get GroupJSON() As Dictionary
-    Set GroupJSON = Paths_.FullJSON("files")(Me.FileGroup)
+    If p_GroupJSON Is Nothing Then
+        Set p_GroupJSON = Paths_.FullJSON("files")(Me.GroupName)
+    End If
+    Set GroupJSON = p_GroupJSON
 End Property
 
 ' ===== FileJSON ==============================================================
-' Dictionary object of the info for the specific file, referenced by the
-' SpecificFile property.
+' Dictionary object of the info for the specific file.
 
 Private Property Get FileJSON() As Dictionary
-    Set FileJSON = Me.GroupJSON(Me.SpecificFile)
+    If p_FileJSON Is Nothing Then
+        Set p_FileJSON = Me.GroupJSON(Me.SpecificFile)
+    End If
+    Set FileJSON = p_FileJSON
 End Property
 
 ' ===== Name ==================================================================
@@ -195,7 +204,10 @@ End Property
 ' null but Major and Minor cannot.
 
 Private Property Get ConfigVersion() As Dictionary
-    Set ConfigVersion = Me.FileJSON("version")
+    If p_ConfigVersion Is Nothing Then
+        Set p_ConfigVersion = Me.FileJSON("version")
+    End If
+    Set ConfigVersion = p_ConfigVersion
 End Property
 
 ' ===== LocalVersion ==========================================================
@@ -209,15 +221,20 @@ Private Property Get LocalVersion() As Dictionary
     If Left(Me.Extension, 2) = "do" And _
         InStr("ct", Mid(Me.Extension, 3, 1)) > 0 And _
         InStr("mx", Right(Me.Extension, 1)) > 0 Then
-
-        Dim objDoc As Document
-        Set objDoc = Documents.Open _
-            (FileName:=Me.FullLocalPath, ReadOnly:=True, Visible:=False)
-        LocalVersion.Item("major") = objDoc.CustomDocumentProperties("Major")
-        LocalVersion.Item("minor") = objDoc.CustomDocumentProperties("Minor")
-        LocalVersion.Item("patch") = objDoc.CustomDocumentProperties("Patch")
+        
+        If p_LocalVersion Is Nothing Then
+            Set p_LocalVersion = New Dictionary
+            Dim objDoc As Document
+            Set objDoc = Documents.Open _
+                (FileName:=Me.FullLocalPath, ReadOnly:=True, Visible:=False)
+            p_LocalVersion.Item("major") = objDoc.CustomDocumentProperties("Major")
+            p_LocalVersion.Item("minor") = objDoc.CustomDocumentProperties("Minor")
+            p_LocalVersion.Item("patch") = objDoc.CustomDocumentProperties("Patch")
+        Else
+            Set LocalVersion = p_LocalVersion
+        End If
     Else
-        LocalVersion = Me.ConfigVersion
+        Set LocalVersion = Me.ConfigVersion
     End If
 End Property
 
@@ -243,12 +260,12 @@ End Property
 ' *****************************************************************************
 
 ' ===== AssignFile ============================================================
-' To access all of the properties of the object, both FileGroup & SpecificFile
+' To access all of the properties of the object, both GroupName & SpecificFile
 ' properties must be set. To make this easier, this method does both at once.
 
-Public Sub AssignFile(FileGroupName As String, SpecificFileType As String)
-    Me.FileGroup = FileGroupName
-    Me.SpecificFile = SpecificFileType
+Public Sub AssignFile(strGroupName As String, strSpecificFileType As String)
+    Me.GroupName = strGroupName
+    Me.SpecificFile = strSpecificFileType
 End Sub
 
 ' ===== DeleteFile ============================================================
@@ -596,7 +613,7 @@ Sub TestDownload()
     Dim MyWebResponse As WebResponse
     Set MyWebResponse = MyWebClient.Execute(MyRequest)
 
-    If MyWebResponse.StatusCode = Ok Then
+    If MyWebResponse.StatusCode = WebStatusCode.Ok Then
         If IsItThere(Me.FullTempPath) = True Then
             MsgBox "Yay it worked!"
         Else
@@ -611,7 +628,10 @@ End Sub
 Private Function ParseDoc(strContent As String) As Document
 ' parameter might need to be Variant
 ' Document may need to be object
-
+    If IsItThere(Me.FullTempPath) = True Then
+        Kill Me.FullTempPath
+    End If
+    
     Dim docParsed As Document
     Set docParsed = New Document
 
@@ -621,8 +641,8 @@ Private Function ParseDoc(strContent As String) As Document
     Put #lngFileNum, , strContent
     Close #lngFileNum
 
-    If IsItThere(Me.FullTemplatePath) = True Then
-        Set ParseDoc = Me.FullTemplatePath
+    If IsItThere(Me.FullTempPath) = True Then
+        Set ParseDoc = Me.FullTempPath
     Else
         MsgBox "wah wah, no file for you"
         Debug.Print Err.Number & Err.Description
