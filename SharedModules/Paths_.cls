@@ -50,8 +50,10 @@ Private p_PathsJSON As Dictionary
 
 Public Property Get FullJSON() As Dictionary
     If p_FullJSON Is Nothing Then
+        Dim strPath As String
+        strPath = FullConfigPath
         Dim strJSON As String
-        strJSON = SharedMacros.ReadTextFile(Path:=Me.FullConfigPath, _
+        strJSON = SharedMacros.ReadTextFile(Path:=strPath, _
             FirstLineOnly:=False)
         Set p_FullJSON = JsonConverter.ParseJson(json_String:=strJSON)
     End If
@@ -74,15 +76,15 @@ Public Property Get LocalPath(GroupName As String) As String
     If GroupName = "startupFiles" Then
         strLocalPath = Application.StartupPath
     Else
-        If Me.PathsJSON.Exists(GroupName) Then
-            strLocalPath = Me.HomeDir & Application.PathSeparator & _
-            Me.PathsJSON(GroupName)
+        If PathsJSON.Exists(GroupName) Then
+            strLocalPath = HomeDir & Application.PathSeparator & _
+            PathsJSON(GroupName)
         Else
             MsgBox "That is not a valid GroupName!"
         End If
     End If
 
-    Me.CheckDir (strLocalPath)
+    CheckDir (strLocalPath)
     LocalPath = strLocalPath
 End Property
 
@@ -91,7 +93,7 @@ End Property
 ' MacFile_ directly.
 
 Public Property Get LogsDir() As String
-    LogsDir = Me.LocalPath(GroupName:="logFiles")
+    LogsDir = LocalPath(GroupName:="logFiles")
 End Property
 
 ' ===== TempPath ==========================================================
@@ -110,7 +112,7 @@ Public Property Get TempPath() As String
         strTmpDir = Left(strTmpDir, Len(strTmpDir) - 1)
     End If
     
-    ' Don't use Me.CheckDir here because shouldn't create new Tmp dir
+    ' Don't use CheckDir here because shouldn't create new Tmp dir
     If IsItThere(strTmpDir) = True Then
         TempPath = strTmpDir
     Else
@@ -124,7 +126,7 @@ End Property
 
 Public Property Get DownloadURL() As String
     Dim dictDownloads As Dictionary
-    Set dictDownloads = Me.FullJSON("downloads")
+    Set dictDownloads = FullJSON("downloads")
 
     DownloadURL = dictDownloads("baseURL") & "/" & _
         dictDownloads(dictDownloads("current"))
@@ -152,12 +154,12 @@ End Property
 ' ===== PathsJSON =============================================================
 ' Dictionary object of the "paths" object in the config JSON. Contains names of
 ' all the assorted directories we need. Doesn't do anything with them; but want
-' to pull this dictionary from Me.FullJSON in a single place in case we need to
+' to pull this dictionary from FullJSON in a single place in case we need to
 ' change something later.
 
 Private Property Get PathsJSON() As Dictionary
     If p_PathsJSON Is Nothing Then
-        Set p_PathsJSON = Me.FullJSON("paths")
+        Set p_PathsJSON = FullJSON("paths")
     End If
     PathsJSON = p_PathsJSON
 End Property
@@ -173,7 +175,7 @@ End Property
 Private Property Get RootDir() As String
     Dim strRootDir As String
 
-    Select Case Me.PathsJSON("root")
+    Select Case PathsJSON("root")
         Case "macmillan"
             #If Mac Then
                 ' This returns a string with the trailing path separator
@@ -192,7 +194,7 @@ Private Property Get RootDir() As String
             MsgBox "That's not a valid value for Root directory."
     End Select
     
-    ' Don't use Me.CheckDir, don't try to create home directory...
+    ' Don't use CheckDir, don't try to create home directory...
     If IsItThere(strRootDir) = False Then
         MsgBox "You don' seem to have a home directory..."
     End If
@@ -208,8 +210,8 @@ End Property
 
 Private Property Get HomeDir() As String
     Dim strHomeDir As String
-    strHomeDir = Me.RootDir & Application.PathSeparator & Me.PathsJSON("home")
-    Me.CheckDir (strHomeDir)
+    strHomeDir = RootDir & Application.PathSeparator & PathsJSON("home")
+    CheckDir (strHomeDir)
     HomeDir = strHomeDir
 End Property
 

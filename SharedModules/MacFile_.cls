@@ -89,7 +89,7 @@ End Property
 ' The SpecificFile property needs to be set before you can access other info.
 
 Public Property Let SpecificFile(SpecificFile_value As String)
-    If Me.GroupJSON.Exists(SpecificFile_value) Then
+    If GroupJSON.Exists(SpecificFile_value) Then
         p_SpecificFile = SpecificFile_value
     Else
         MsgBox "That's not a valid option for this property."
@@ -108,7 +108,7 @@ End Property
 ' Full file name including extension, but not any path info
 
 Public Property Get FullName() As String
-    FullName = Me.Name & "." & Me.Extension
+    FullName = Name & "." & Extension
 End Property
 
 ' ===== FullLocalPath =========================================================
@@ -116,15 +116,15 @@ End Property
 ' name with extension.
 
 Public Property Get FullLocalPath() As String
-    FullLocalPath = Paths_.LocalPath(Me.GroupName) & _
-        Application.PathSeparator & Me.FullName
+    FullLocalPath = Paths_.LocalPath(GroupName) & _
+        Application.PathSeparator & FullName
 End Property
 
 ' ===== Exists ================================================================
 ' Tests whether the file exists at its FullLocalPath
 
 Public Property Get Exists() As Boolean
-    Exists = SharedMacros.IsItThere(Path:=Me.FullLocalPath)
+    Exists = SharedMacros.IsItThere(Path:=FullLocalPath)
 End Property
 
 ' ===== Running ===============================================================
@@ -132,7 +132,7 @@ End Property
 ' code, so we don't, like, delete ourselves or something.
 
 Public Property Get Running() As Boolean
-    If ThisDocument.Name = Me.FullName Then
+    If ThisDocument.Name = FullName Then
         Running = True
     Else
         Running = False
@@ -146,11 +146,11 @@ End Property
 ' the version number (Major.Minor.Patch) in turn.
 
 Public Property Get UpToDate() As Boolean
-    If Me.ConfigVersion.Major > Me.LocalVersion.Major Then
+    If ConfigVersion("major") > LocalVersion("major") Then
         UpToDate = False
-    ElseIf Me.ConfigVersion.Minor > Me.LocalVersion.Minor Then
+    ElseIf ConfigVersion("minor") > LocalVersion("minor") Then
         UpToDate = False
-    ElseIf Me.ConfigVersion.Patch > Me.LocalVersion.Patch Then
+    ElseIf ConfigVersion("patch") > LocalVersion("patch") Then
         UpToDate = False
     Else
         UpToDate = True
@@ -169,7 +169,7 @@ End Property
 
 Private Property Get GroupJSON() As Dictionary
     If p_GroupJSON Is Nothing Then
-        Set p_GroupJSON = Paths_.FullJSON("files")(Me.GroupName)
+        Set p_GroupJSON = Paths_.FullJSON("files")(GroupName)
     End If
     Set GroupJSON = p_GroupJSON
 End Property
@@ -179,7 +179,7 @@ End Property
 
 Private Property Get FileJSON() As Dictionary
     If p_FileJSON Is Nothing Then
-        Set p_FileJSON = Me.GroupJSON(Me.SpecificFile)
+        Set p_FileJSON = GroupJSON(SpecificFile)
     End If
     Set FileJSON = p_FileJSON
 End Property
@@ -189,14 +189,14 @@ End Property
 ' because some things (like log file names) require just the name w/o extension.
 
 Private Property Get Name() As String
-    Name = Me.FileJSON("fileName")
+    Name = FileJSON("fileName")
 End Property
 
 ' ===== Extension =============================================================
 ' File extension as a string, NOT including period.
 
 Private Property Get Extension() As String
-    Extension = Me.FileJSON("extension")
+    Extension = FileJSON("extension")
 End Property
 
 ' ===== ConfigVersion ==========================================================
@@ -205,7 +205,7 @@ End Property
 
 Private Property Get ConfigVersion() As Dictionary
     If p_ConfigVersion Is Nothing Then
-        Set p_ConfigVersion = Me.FileJSON("version")
+        Set p_ConfigVersion = FileJSON("version")
     End If
     Set ConfigVersion = p_ConfigVersion
 End Property
@@ -218,15 +218,15 @@ End Property
 
 Private Property Get LocalVersion() As Dictionary
     ' Word files: .docx, .dotx, .docm, .dotm
-    If Left(Me.Extension, 2) = "do" And _
-        InStr("ct", Mid(Me.Extension, 3, 1)) > 0 And _
-        InStr("mx", Right(Me.Extension, 1)) > 0 Then
+    If Left(Extension, 2) = "do" And _
+        InStr("ct", Mid(Extension, 3, 1)) > 0 And _
+        InStr("mx", Right(Extension, 1)) > 0 Then
         
         If p_LocalVersion Is Nothing Then
             Set p_LocalVersion = New Dictionary
             Dim objDoc As Document
             Set objDoc = Documents.Open _
-                (FileName:=Me.FullLocalPath, ReadOnly:=True, Visible:=False)
+                (FileName:=FullLocalPath, ReadOnly:=True, Visible:=False)
             p_LocalVersion.Item("major") = objDoc.CustomDocumentProperties("Major")
             p_LocalVersion.Item("minor") = objDoc.CustomDocumentProperties("Minor")
             p_LocalVersion.Item("patch") = objDoc.CustomDocumentProperties("Patch")
@@ -234,7 +234,7 @@ Private Property Get LocalVersion() As Dictionary
             Set LocalVersion = p_LocalVersion
         End If
     Else
-        Set LocalVersion = Me.ConfigVersion
+        Set LocalVersion = ConfigVersion
     End If
 End Property
 
@@ -243,7 +243,7 @@ End Property
 
 Private Property Get FullLogPath() As String
     FullLogPath = Paths_.LocalPath(GroupName:="logFiles") & _
-        Application.PathSeparator & Me.Name & "_updates.log"
+        Application.PathSeparator & Name & "_updates.log"
 End Property
 
 ' ===== FullTempPath ==========================================================
@@ -251,7 +251,7 @@ End Property
 ' we need to reference this before we can create it with ParseDoc, maybe.
 
 Private Property Get FullTempPath() As String
-    FullTempPath = Paths_.TempPath & Application.PathSeparator & Me.FullName
+    FullTempPath = Paths_.TempPath & Application.PathSeparator & FullName
 End Property
 
 
@@ -264,17 +264,17 @@ End Property
 ' properties must be set. To make this easier, this method does both at once.
 
 Public Sub AssignFile(strGroupName As String, strSpecificFileType As String)
-    Me.GroupName = strGroupName
-    Me.SpecificFile = strSpecificFileType
+    GroupName = strGroupName
+    SpecificFile = strSpecificFileType
 End Sub
 
 ' ===== DeleteFile ============================================================
 ' Deletes the file in question, as long as it's not currently running this code
 
 Public Sub DeleteFile()
-    If Me.Running = False Then
-        If Me.Exists = True Then
-            Kill Me.FullLocalPath
+    If Running = False Then
+        If Exists = True Then
+            Kill FullLocalPath
         End If
     Else
         MsgBox "You can't delete a file that is running a macro."
@@ -307,7 +307,7 @@ End Sub
 ''    Dim strBashTmp As String
 ''    Dim strErrMsg As String
 ''
-''    strTmpPath = Paths_.TempPath & Application.PathSeparator & Me.FullName
+''    strTmpPath = Paths_.TempPath & Application.PathSeparator & FullName
 ''
 ''    ' Mac can't use "MSXML2.XMLHTTP.3.0" lib, so we'll use curl
 ''    #If Mac Then
@@ -318,45 +318,45 @@ End Sub
 ''        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") _
 ''            <> 0 Then   'can't connect to internet
 ''            logString = "Tried update; unable to connect to network."
-''            Me.WriteToLog LogMessage:=logString
+''            WriteToLog LogMessage:=logString
 ''            strErrMsg = "There was an error trying to download the " & _
 ''                "Macmillan template." & vbNewLine & vbNewLine & "Please " & _
 ''                "check your internet connection or contact " & _
 ''                Organization_.HelpEmail & " for help."
 ''            MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & _
-''                Me.FullName & ")"
+''                FullName & ")"
 ''            Download = False
 ''            Exit Function
 ''        Else 'internet is working, download file
 ''            'Make sure file is there
 ''            Dim httpStatus As Long
 ''            httpStatus = ShellAndWaitMac _
-''                ("curl -s -o /dev/null -w '%{http_code}' " & Me.DownloadURL)
+''                ("curl -s -o /dev/null -w '%{http_code}' " & DownloadURL)
 ''
 ''            If httpStatus = 200 Then                    ' File is there
 ''                'Now delete file if already there, then download new file
 ''                ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & _
-''                    strBashTmp & " " & Me.DownloadURL)
+''                    strBashTmp & " " & DownloadURL)
 ''            ElseIf httpStatus = 404 Then            ' 404 = page not found
 ''                logString = "404 File not found. Cannot download file."
-''                Me.WriteToLog LogMessage:=logString
+''                WriteToLog LogMessage:=logString
 ''                strErrMsg = "It looks like that file isn't available for " & _
 ''                    "download." & vbNewLine & vbNewLine & "Please contact " & _
 ''                    Organization_.HelpEmail & " for help."
 ''                MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & _
-''                    Me.FullName & ")"
+''                    FullName & ")"
 ''                Download = False
 ''                Exit Function
 ''            Else
 ''                logString = "Http status is " & httpStatus & ". Cannot " & _
 ''                    "download file."
-''                Me.WriteToLog LogMessage:=logString
+''                WriteToLog LogMessage:=logString
 ''                strErrMsg = "There was an error trying to download the " & _
 ''                    "Macmillan templates." & vbNewLine & vbNewLine & "Please" _
 ''                    & " check your internet connection or contact " & _
 ''                    Organization_.HelpEmail & " for help."
 ''                MsgBox strErrMsg, vbCritical, "Error 2: Http status " & _
-''                    httpStatus & " (" & Me.FullName & ")"
+''                    httpStatus & " (" & FullName & ")"
 ''                Download = False
 ''                Exit Function
 ''            End If
@@ -376,28 +376,28 @@ End Sub
 ''        'Attempt to download file
 ''        On Error Resume Next
 ''            Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-''            WinHttpReq.Open "GET", Me.DownloadURL, False
+''            WinHttpReq.Open "GET", DownloadURL, False
 ''            WinHttpReq.Send
 ''
 ''                ' Exit sub if error in connecting to website
 ''                If Err.Number <> 0 Then 'HTTP request is not OK
 ''                    'Debug.Print WinHttpReq.Status
 ''                    logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
-''                    Me.WriteToLog LogMessage:=logString
+''                    WriteToLog LogMessage:=logString
 ''                    strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
 ''                        "Please check your internet connection or contact workflows@macmillan.com for help."
-''                    MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & Me.FullName & ")"
+''                    MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FullName & ")"
 ''                    Download = False
 ''                    On Error GoTo 0
 ''                    Exit Function
 ''                End If
 ''        On Error GoTo 0
 ''
-''        'Debug.Print "Http status for " & Me.FullName & ": " & WinHttpReq.Status
+''        'Debug.Print "Http status for " & FullName & ": " & WinHttpReq.Status
 ''        If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
 ''
 ''            'if connection OK, download file to temp dir
-''            Me.DownloadURL = WinHttpReq.ResponseBody
+''            DownloadURL = WinHttpReq.ResponseBody
 ''            Set oStream = CreateObject("ADODB.Stream")
 ''            oStream.Open
 ''            oStream.Type = 1
@@ -408,18 +408,18 @@ End Sub
 ''            Set WinHttpReq = Nothing
 ''        ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
 ''            logString = Now & " -- 404 File not found. Cannot download file."
-''            Me.WriteToLog LogMessage:=logString
+''            WriteToLog LogMessage:=logString
 ''            strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
 ''                "Please contact workflows@macmillan.com for help."
-''            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & Me.FullName & ")"
+''            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FullName & ")"
 ''            Download = False
 ''            Exit Function
 ''        Else
 ''            logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
-''            Me.WriteToLog LogMessage:=logString
+''            WriteToLog LogMessage:=logString
 ''            strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
 ''                "Please check your internet connection or contact workflows@macmillan.com for help."
-''            MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & Me.FullName & ")"
+''            MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FullName & ")"
 ''            Download = False
 ''            Exit Function
 ''        End If
@@ -427,17 +427,17 @@ End Sub
 ''
 ''    'Error if download was not successful
 ''    If IsItThere(strTmpPath) = False Then
-''        logString = Now & " -- " & Me.FullName & " file download to Temp was not successful."
-''        Me.WriteToLog LogMessage:=logString
+''        logString = Now & " -- " & FullName & " file download to Temp was not successful."
+''        WriteToLog LogMessage:=logString
 ''        strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
 ''            "Please contact workflows@macmillan.com for assitance."
-''        MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & Me.FullName & ")"
+''        MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FullName & ")"
 ''        Download = False
 ''        On Error GoTo 0
 ''        Exit Function
 ''    Else
-''        logString = Now & " -- " & Me.FullName & " file download to Temp was successful."
-''        Me.WriteToLog LogMessage:=logString
+''        logString = Now & " -- " & FullName & " file download to Temp was successful."
+''        WriteToLog LogMessage:=logString
 ''    End If
 ''
 ''
@@ -446,7 +446,7 @@ End Sub
 ''    If IsItThere(strFinalPath) = True Then
 ''
 ''        logString = Now & " -- Previous version file in final directory."
-''        Me.WriteToLog LogMessage:=logString
+''        WriteToLog LogMessage:=logString
 ''
 ''        ' get file extension
 ''        Dim strExt As String
@@ -461,12 +461,12 @@ End Sub
 ''
 ''        ' Test if dir is read only
 ''        If IsReadOnly(FinalDir) = True Then ' Dir is read only
-''            logString = Now & " -- old " & Me.FullName & " file is read only, can't delete/replace. " _
+''            logString = Now & " -- old " & FullName & " file is read only, can't delete/replace. " _
 ''                & "Alerting user."
-''            Me.WriteToLog LogMessage:=logString
+''            WriteToLog LogMessage:=logString
 ''            strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
 ''                "@macmillan.com for help."
-''            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & Me.FullName & ")"
+''            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FullName & ")"
 ''            Download = False
 ''            On Error GoTo 0
 ''            Exit Function
@@ -475,10 +475,10 @@ End Sub
 ''                Kill strFinalPath
 ''
 ''                If Err.Number = 70 Then         'File is open and can't be replaced
-''                    logString = Now & " -- old " & Me.FullName & " file is open, can't delete/replace. Alerting user."
-''                    Me.WriteToLog LogMessage:=logString
+''                    logString = Now & " -- old " & FullName & " file is open, can't delete/replace. Alerting user."
+''                    WriteToLog LogMessage:=logString
 ''                    strErrMsg = "Please close all other Word documents and try again."
-''                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & Me.FullName & ")"
+''                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FullName & ")"
 ''                    Download = False
 ''                    On Error GoTo 0
 ''                    Exit Function
@@ -487,13 +487,13 @@ End Sub
 ''        End If
 ''    Else
 ''        logString = Now & " -- No previous version file in final directory."
-''        Me.WriteToLog LogMessage:=logString
+''        WriteToLog LogMessage:=logString
 ''    End If
 ''
 ''    'If delete was successful, move downloaded file to final directory
 ''    If IsItThere(strFinalPath) = False Then
-''        logString = Now & " -- Final directory clear of " & Me.FullName & " file."
-''        Me.WriteToLog LogMessage:=logString
+''        logString = Now & " -- Final directory clear of " & FullName & " file."
+''        WriteToLog LogMessage:=logString
 ''
 ''        ' move template to final directory
 ''        Name strTmpPath As strFinalPath
@@ -502,7 +502,7 @@ End Sub
 ''        'Need to send these commands for it to work, see Confluence
 ''        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
 ''        #If Mac Then
-''            If InStr(1, Me.FullName, ".dotm") Then
+''            If InStr(1, FullName, ".dotm") Then
 ''            Dim strCommand As String
 ''            strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
 ''                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
@@ -513,11 +513,11 @@ End Sub
 ''        #End If
 ''
 ''    Else
-''        logString = Now & " -- old " & Me.FullName & " file not cleared from Final directory."
-''        Me.WriteToLog LogMessage:=logString
+''        logString = Now & " -- old " & FullName & " file not cleared from Final directory."
+''        WriteToLog LogMessage:=logString
 ''        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
 ''            "Please close all other Word documents and try again, or contact workflows@macmillan.com."
-''        MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & Me.FullName & ")"
+''        MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FullName & ")"
 ''        Download = False
 ''        On Error GoTo 0
 ''        Exit Function
@@ -525,14 +525,14 @@ End Sub
 ''
 ''    'If move was successful, yay! Else, :(
 ''    If IsItThere(strFinalPath) = True Then
-''        logString = Now & " -- " & Me.FullName & " file successfully saved to final directory."
-''        Me.WriteToLog LogMessage:=logString
+''        logString = Now & " -- " & FullName & " file successfully saved to final directory."
+''        WriteToLog LogMessage:=logString
 ''    Else
-''        logString = Now & " -- " & Me.FullName & " file not saved to final directory."
-''        Me.WriteToLog LogMessage:=logString
+''        logString = Now & " -- " & FullName & " file not saved to final directory."
+''        WriteToLog LogMessage:=logString
 ''        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
 ''            "Please cotact workflows@macmillan.com for assistance."
-''        MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & Me.FullName & ")"
+''        MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FullName & ")"
 ''        Download = False
 ''        On Error GoTo 0
 ''        Exit Function
@@ -602,8 +602,8 @@ Sub TestDownload()
 
     WebHelpers.RegisterConverter Name:="dotm", _
         MediaType:="application/vnd.ms-word.template.macroEnabled.12", _
-        ConvertCallback:="Me.ConvertDoc", _
-        ParseCallback:="Me.ParseDoc", ParseType:="Binary"
+        ConvertCallback:="ConvertDoc", _
+        ParseCallback:="ParseDoc", ParseType:="Binary"
 
     MyRequest.CustomResponseFormat = "dotm"
 
@@ -614,7 +614,7 @@ Sub TestDownload()
     Set MyWebResponse = MyWebClient.Execute(MyRequest)
 
     If MyWebResponse.StatusCode = WebStatusCode.Ok Then
-        If IsItThere(Me.FullTempPath) = True Then
+        If IsItThere(FullTempPath) = True Then
             MsgBox "Yay it worked!"
         Else
             MsgBox "Boo hoo, the file is not in the temp dir."
@@ -628,8 +628,8 @@ End Sub
 Private Function ParseDoc(strContent As String) As Document
 ' parameter might need to be Variant
 ' Document may need to be object
-    If IsItThere(Me.FullTempPath) = True Then
-        Kill Me.FullTempPath
+    If IsItThere(FullTempPath) = True Then
+        Kill FullTempPath
     End If
     
     Dim docParsed As Document
@@ -637,12 +637,12 @@ Private Function ParseDoc(strContent As String) As Document
 
     Dim lngFileNum As Long
     lngFileNum = FreeFile()
-    Open Me.FullTempPath For Binary Access Write As lngFileNum
+    Open FullTempPath For Binary Access Write As lngFileNum
     Put #lngFileNum, , strContent
     Close #lngFileNum
 
-    If IsItThere(Me.FullTempPath) = True Then
-        Set ParseDoc = Me.FullTempPath
+    If IsItThere(FullTempPath) = True Then
+        Set ParseDoc = FullTempPath
     Else
         MsgBox "wah wah, no file for you"
         Debug.Print Err.Number & Err.Description
@@ -656,7 +656,7 @@ Private Function ConvertDoc(variantBody As Variant) As String
     Dim strBuffer As String
     lngFileNum = FreeFile()
 
-    Open Me.FullLocalPath For Binary Access Read As #lnfFileNum
+    Open FullLocalPath For Binary Access Read As #lnfFileNum
     strBuffer = String$(LOF(Num), " ")
     Get #lngFileNum, , strBuffer
     Close #lngFileNum
