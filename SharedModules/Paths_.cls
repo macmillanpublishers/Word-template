@@ -50,12 +50,15 @@ Private p_PathsJSON As Dictionary
 
 Public Property Get FullJSON() As Dictionary
     If p_FullJSON Is Nothing Then
+        Debug.Print "Nothing"
         Dim strPath As String
         strPath = FullConfigPath
         Dim strJSON As String
         strJSON = SharedMacros.ReadTextFile(Path:=strPath, _
             FirstLineOnly:=False)
         Set p_FullJSON = JsonConverter.ParseJson(json_String:=strJSON)
+    Else
+        Debug.Print "Not Nothing!"
     End If
     
     Set FullJSON = p_FullJSON
@@ -129,7 +132,7 @@ Public Property Get DownloadURL() As String
     Set dictDownloads = FullJSON("downloads")
 
     DownloadURL = dictDownloads("baseURL") & "/" & _
-        dictDownloads(dictDownloads("current")) & "/"
+        dictDownloads(dictDownloads("current"))
 End Property
 
 
@@ -161,7 +164,7 @@ Private Property Get PathsJSON() As Dictionary
     If p_PathsJSON Is Nothing Then
         Set p_PathsJSON = FullJSON("paths")
     End If
-    PathsJSON = p_PathsJSON
+    Set PathsJSON = p_PathsJSON
 End Property
 
 ' ===== RootDir ===============================================================
@@ -215,7 +218,26 @@ Private Property Get HomeDir() As String
     HomeDir = strHomeDir
 End Property
 
+' *****************************************************************************
+'       PUBLIC METHODS
+' *****************************************************************************
 
+' ===== CleanUp ===============================================================
+' Static class will never call a Class_Terminate event, so we need to create
+' our own and remember to call it when the original sub is complete. Hopefully
+' can find a more reliable way to do this in the future. But we need to
+' explicitly set the object properties to Nothing or they will persist, even
+' beyond the end of the macro sometimes.
+
+Public Sub CleanUp()
+    If Not p_FullJSON Is Nothing Then
+        Set p_FullJSON = Nothing
+    End If
+    
+    If Not p_PathsJSON Is Nothing Then
+        Set p_PathsJSON = Nothing
+    End If
+End Sub
 ' *****************************************************************************
 '       PRIVATE METHODS
 ' *****************************************************************************
@@ -243,10 +265,5 @@ End Sub
 '       CLASS EVENTS
 ' *****************************************************************************
 
-' ===== Initialize ============================================================
-' This is a static class, so Initialize will be called the first time the
-' default object is called.
-
-Private Sub Class_Initialize()
-
-End Sub
+' ===== Terminate =============================================================
+' Psych! You can't call Class_Terminate on a static class.

@@ -597,25 +597,45 @@ End Sub
 ' ==============================================================
 Sub TestDownload()
     Dim MyRequest As New WebRequest
-    MyRequest.Resource = "Testing.dotm"
+    MyRequest.Resource = FullName
+    Debug.Print FullName
     MyRequest.Method = WebMethod.HttpGet
 
     WebHelpers.RegisterConverter Name:="dotm", _
         MediaType:="application/vnd.ms-word.template.macroEnabled.12", _
-        ConvertCallback:="ConvertDoc", _
+        ConvertCallback:="ConvertDoc", Instance:=Me, _
         ParseCallback:="ParseDoc", ParseType:="Binary"
 
-    MyRequest.CustomResponseFormat = "dotm"
+    WebHelpers.RegisterConverter Name:="jpg", _
+        MediaType:="image/jpeg", _
+        ConvertCallback:="ConvertDoc", Instance:=Me, _
+        ParseCallback:="ParseDoc", ParseType:="Binary"
+
+    MyRequest.CustomResponseFormat = Extension
 
     Dim MyWebClient As New WebClient
     MyWebClient.BaseUrl = Paths_.DownloadURL
-
+    
+    ' Enable error logging in Immediate window
+    WebHelpers.EnableLogging = True
+    
     Dim MyWebResponse As WebResponse
     Set MyWebResponse = MyWebClient.Execute(MyRequest)
 
     If MyWebResponse.StatusCode = WebStatusCode.Ok Then
         If IsItThere(FullTempPath) = True Then
-            MsgBox "Yay it worked!"
+            Debug.Print vbNewLine & "Yay it worked!" & vbNewLine
+            Debug.Print FullLocalPath
+            If IsItThere(FullLocalPath) = True Then
+                Kill FullLocalPath
+            End If
+            FileCopy FullTempPath, FullLocalPath
+            If IsItThere(FullLocalPath) = False Then
+                Debug.Print ":("
+            Else
+                Debug.Print ":)"
+            End If
+                
         Else
             MsgBox "Boo hoo, the file is not in the temp dir."
         End If
@@ -625,24 +645,43 @@ Sub TestDownload()
 
 End Sub
 
-Private Function ParseDoc(strContent As String) As Document
+Public Function ParseDoc(byteContent As Variant) As Dictionary
 ' parameter might need to be Variant
 ' Document may need to be object
+    Debug.Print VarType(byteContent)
+    
     If IsItThere(FullTempPath) = True Then
         Kill FullTempPath
     End If
     
-    Dim docParsed As Document
-    Set docParsed = New Document
+    ' Need to get parameter byteContent as Variant, but if you try to write
+    ' the Variant directly, includes 12-byte Variant header. Need to convert
+    ' to an explicit byte array first.
+    
+    Dim byteBuffer() As Byte
+    Dim lngLBound As Long
+    Dim lngUBound As Long
+    
+    If VarType(byteContent) = 8209 Then  'vbArray And vbByte
+        lngLBound = LBound(byteContent)
+        lngUBound = UBound(byteContent)
+        ReDim byteBuffer(lngLBound To lngUBound)
+        byteBuffer = byteContent
+    Else
+        MsgBox "You're SOL on this one"
+    End If
 
     Dim lngFileNum As Long
     lngFileNum = FreeFile()
     Open FullTempPath For Binary Access Write As lngFileNum
-    Put #lngFileNum, , strContent
+    Put #lngFileNum, 1, byteBuffer
     Close #lngFileNum
 
     If IsItThere(FullTempPath) = True Then
-        Set ParseDoc = FullTempPath
+        Dim aDictionary As Dictionary
+        Set aDictionary = New Dictionary
+        aDictionary("locaton") = FullTempPath
+        Set ParseDoc = aDictionary
     Else
         MsgBox "wah wah, no file for you"
         Debug.Print Err.Number & Err.Description
@@ -664,3 +703,28 @@ Private Function ConvertDoc(variantBody As Variant) As String
     ConvertDoc = strBuffer
 End Function
 
+
+' *****************************************************************************
+'       CLASS EVENTS
+' *****************************************************************************
+
+' Object properties will persist after the calling procedure is ended, even if
+' you set the MacFile_ object to Nothing at the end of that sub.
+
+Sub Class_Terminate()
+    If Not p_GroupJSON Is Nothing Then
+        Set p_GroupJSON = Nothing
+    End If
+    
+    If Not p_FileJSON Is Nothing Then
+        Set p_FileJSON = Nothing
+    End If
+    
+    If Not p_ConfigVersion Is Nothing Then
+        Set p_ConfigVersion = Nothing
+    End If
+    
+    If Not p_LocalVersion Is Nothing Then
+        Set p_LocalVersion = Nothing
+    End If
+End Sub
