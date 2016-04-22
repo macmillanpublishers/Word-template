@@ -129,7 +129,7 @@ Public Property Get DownloadURL() As String
     Set dictDownloads = FullJSON("downloads")
 
     DownloadURL = dictDownloads("baseURL") & "/" & _
-        dictDownloads(dictDownloads("current"))
+        dictDownloads(dictDownloads("current")) & "/"
 End Property
 
 

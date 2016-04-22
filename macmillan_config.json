@@ -7,9 +7,9 @@
 
 	"downloads":{
 		"baseURL":"https://confluence.macmillan.com/download/attachments",
-		"master":"35001370",
-		"releases":"9044274",
-		"develop":"40571207",
+		"master":"9044274",
+		"releases":"40571207",
+		"develop":"35001370",
 		"current":"develop"
 	},
 
