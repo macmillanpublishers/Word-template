@@ -186,12 +186,14 @@ Private Property Get RootDir() As String
 
                 ' Also Matt suggested Users/username/Library/Application Support
                 ' as a place less likely to be accidentally deleted.
-                strRootDir = MacScript("return (path to home folder) as string")
+                ' strRootDir = MacScript("return (path to application support) as string")
+                
+                strRootDir = MacScript("return (path to library folder from user domain) as string")
                 If Right(strRootDir, 1) = Application.PathSeparator Then
                     strRootDir = Left(strRootDir, Len(strRootDir) - 1)
                 End If
             #Else
-                strRootDir = Environ("HOMEDRIVE") & Environ("HOMEPATH")
+                strRootDir = Environ("USERPROFILE")
             #End If
         Case Else
             MsgBox "That's not a valid value for Root directory."
