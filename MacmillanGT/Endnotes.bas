@@ -12,7 +12,7 @@ Sub EndnoteDeEmbed()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -22,7 +22,7 @@ Sub EndnoteDeEmbed()
     Dim lastRefSection As Integer
     Dim chapterName As String
     Dim addChapterName As Boolean
-    Dim addHeader As Boolean
+    Dim AddHeader As Boolean
     Dim nRng As Range, eNote As Endnote, nref As String, refCopy As String
     Dim sectionCount As Long
     Dim EndnotesExist As Boolean
@@ -35,7 +35,7 @@ Sub EndnoteDeEmbed()
     
     BookmarkNum = 1
     lastRefSection = 0
-    addHeader = True
+    AddHeader = True
     TheOS = System.OperatingSystem
     palgraveTag = False
     
@@ -123,7 +123,7 @@ Sub EndnoteDeEmbed()
             BookmarkName = "Endnote" & BookmarkNum
             .Bookmarks.Add Name:=BookmarkName
             .InsertCrossReference wdRefTypeEndnote, wdEndnoteNumberFormatted, eNote.Index
-            nref = .Characters.First.Fields(1).result
+            nref = .Characters.First.Fields(1).Result
             If palgraveTag = False Then
                 .Characters.First.Fields(1).Unlink
             Else
@@ -167,12 +167,12 @@ Sub EndnoteDeEmbed()
           .Collapse wdCollapseEnd
           .End = .End - 1
           If .Characters.Last <> Chr(12) Then .InsertAfter vbCr
-          If addHeader = True Then
+          If AddHeader = True Then
             .InsertAfter "Notes" & vbCr
             With .Paragraphs.Last.Range
                 .Style = "BM Head (bmh)"
             End With
-            addHeader = False
+            AddHeader = False
           End If
           If addChapterName = True Then
             .InsertAfter chapterName '
@@ -229,7 +229,7 @@ Sub EndnoteDeEmbed()
     
     Call UpdateBarAndWait(Bar:=objProgressNotes, Status:=strStatus, Percent:=sglPercentComplete)
     
-    Call Cleanup
+    Call CleanUp
     Unload objProgressNotes
 
 

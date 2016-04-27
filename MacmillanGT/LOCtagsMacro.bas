@@ -34,7 +34,7 @@ Sub LibraryOfCongressTags()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -44,7 +44,7 @@ Sub LibraryOfCongressTags()
     
     If zz_errorChecksB <> False Then
         Call zz_clearFindB
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -189,7 +189,7 @@ Sub LibraryOfCongressTags()
     Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
    
 Finish:
-    Call Cleanup
+    Call CleanUp
     Unload oProgressCIP
     
     'If skipChapterTags = True Then

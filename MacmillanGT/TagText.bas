@@ -16,7 +16,7 @@ Sub TagText()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -60,7 +60,7 @@ Sub TagText()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings = True Then
-        Call Cleanup
+        Call CleanUp
         Unload objTagProgress
         Exit Sub
     End If
@@ -244,7 +244,7 @@ ContinueNextB:
     
     Call UpdateBarAndWait(Bar:=objTagProgress, Status:=strStatus, Percent:=sglPercentComplete)
     
-    Call Cleanup
+    Call CleanUp
     
     Unload objTagProgress
     
@@ -259,7 +259,7 @@ ErrorContinue:
     Else
         Debug.Print "ErrorContinue: " & Err.Number & " " & Err.Description
         On Error GoTo 0
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -310,7 +310,7 @@ ErrorNewStyle:
     Else
         Debug.Print "ErrorNewStyle: " & Err.Number & " " & Err.Description
         On Error GoTo 0
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
 

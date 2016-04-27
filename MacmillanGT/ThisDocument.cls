@@ -18,8 +18,6 @@ Sub AutoExec()
     ' MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
     ' ==============================================
 
-
-
     '=======================================
     ' By Erica Warren - erica.warren@macmillan.com
     ' ==== PART 1 =======
@@ -392,6 +390,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 

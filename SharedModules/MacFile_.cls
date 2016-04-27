@@ -300,260 +300,259 @@ End Sub
 '' the user of the error in the function -- but should probably move this to a
 '' global error handler class at some point.
 '
-'Public Function Download() As Boolean
-''
-''    Dim logString As String
-''    Dim strTmpPath As String
-''    Dim strBashTmp As String
-''    Dim strErrMsg As String
-''
-''    strTmpPath = Paths_.TempPath & Application.PathSeparator & FullName
-''
-''    ' Mac can't use "MSXML2.XMLHTTP.3.0" lib, so we'll use curl
-''    #If Mac Then
-''        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr _
-''            (strTmpPath, ":") - 1)), ":", "/")
-''
-''        'check for network
-''        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") _
-''            <> 0 Then   'can't connect to internet
-''            logString = "Tried update; unable to connect to network."
-''            WriteToLog LogMessage:=logString
-''            strErrMsg = "There was an error trying to download the " & _
-''                "Macmillan template." & vbNewLine & vbNewLine & "Please " & _
-''                "check your internet connection or contact " & _
-''                Organization_.HelpEmail & " for help."
-''            MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & _
-''                FullName & ")"
-''            Download = False
-''            Exit Function
-''        Else 'internet is working, download file
-''            'Make sure file is there
-''            Dim httpStatus As Long
-''            httpStatus = ShellAndWaitMac _
-''                ("curl -s -o /dev/null -w '%{http_code}' " & DownloadURL)
-''
-''            If httpStatus = 200 Then                    ' File is there
-''                'Now delete file if already there, then download new file
-''                ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & _
-''                    strBashTmp & " " & DownloadURL)
-''            ElseIf httpStatus = 404 Then            ' 404 = page not found
-''                logString = "404 File not found. Cannot download file."
-''                WriteToLog LogMessage:=logString
-''                strErrMsg = "It looks like that file isn't available for " & _
-''                    "download." & vbNewLine & vbNewLine & "Please contact " & _
-''                    Organization_.HelpEmail & " for help."
-''                MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & _
-''                    FullName & ")"
-''                Download = False
-''                Exit Function
-''            Else
-''                logString = "Http status is " & httpStatus & ". Cannot " & _
-''                    "download file."
-''                WriteToLog LogMessage:=logString
-''                strErrMsg = "There was an error trying to download the " & _
-''                    "Macmillan templates." & vbNewLine & vbNewLine & "Please" _
-''                    & " check your internet connection or contact " & _
-''                    Organization_.HelpEmail & " for help."
-''                MsgBox strErrMsg, vbCritical, "Error 2: Http status " & _
-''                    httpStatus & " (" & FullName & ")"
-''                Download = False
-''                Exit Function
-''            End If
-''
-''        End If
-''    #Else   ' PC download
-''
-''        'Check if file is already in tmp dir, delete if yes
-''        If IsItThere(strTmpPath) = True Then
-''            Kill strTmpPath
-''        End If
-''
-''        'try to download the file from Public Confluence page
-''        Dim WinHttpReq As Object
-''        Dim oStream As Object
-''
-''        'Attempt to download file
-''        On Error Resume Next
-''            Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-''            WinHttpReq.Open "GET", DownloadURL, False
-''            WinHttpReq.Send
-''
-''                ' Exit sub if error in connecting to website
-''                If Err.Number <> 0 Then 'HTTP request is not OK
-''                    'Debug.Print WinHttpReq.Status
-''                    logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
-''                    WriteToLog LogMessage:=logString
-''                    strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
-''                        "Please check your internet connection or contact workflows@macmillan.com for help."
-''                    MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FullName & ")"
-''                    Download = False
-''                    On Error GoTo 0
-''                    Exit Function
-''                End If
-''        On Error GoTo 0
-''
-''        'Debug.Print "Http status for " & FullName & ": " & WinHttpReq.Status
-''        If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
-''
-''            'if connection OK, download file to temp dir
-''            DownloadURL = WinHttpReq.ResponseBody
-''            Set oStream = CreateObject("ADODB.Stream")
-''            oStream.Open
-''            oStream.Type = 1
-''            oStream.Write WinHttpReq.ResponseBody
-''            oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
-''            oStream.Close
-''            Set oStream = Nothing
-''            Set WinHttpReq = Nothing
-''        ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
-''            logString = Now & " -- 404 File not found. Cannot download file."
-''            WriteToLog LogMessage:=logString
-''            strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
-''                "Please contact workflows@macmillan.com for help."
-''            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FullName & ")"
-''            Download = False
-''            Exit Function
-''        Else
-''            logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
-''            WriteToLog LogMessage:=logString
-''            strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
-''                "Please check your internet connection or contact workflows@macmillan.com for help."
-''            MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FullName & ")"
-''            Download = False
-''            Exit Function
-''        End If
-''    #End If
-''
-''    'Error if download was not successful
-''    If IsItThere(strTmpPath) = False Then
-''        logString = Now & " -- " & FullName & " file download to Temp was not successful."
-''        WriteToLog LogMessage:=logString
-''        strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
-''            "Please contact workflows@macmillan.com for assitance."
-''        MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FullName & ")"
-''        Download = False
-''        On Error GoTo 0
-''        Exit Function
-''    Else
-''        logString = Now & " -- " & FullName & " file download to Temp was successful."
-''        WriteToLog LogMessage:=logString
-''    End If
-''
-''
-''
-''    'If file exists already, log it and delete it
-''    If IsItThere(strFinalPath) = True Then
-''
-''        logString = Now & " -- Previous version file in final directory."
-''        WriteToLog LogMessage:=logString
-''
-''        ' get file extension
-''        Dim strExt As String
-''        strExt = Right(strFinalPath, InStrRev(StrReverse(strFinalPath), "."))
-''
-''        ' can't delete template if it's installed as an add-in
-''        If InStr(strExt, "dot") > 0 Then
-''            On Error Resume Next        'Error = add-in not available, don't need to uninstall
-''                AddIns(strFinalPath).Installed = False
-''            On Error GoTo 0
-''        End If
-''
-''        ' Test if dir is read only
-''        If IsReadOnly(FinalDir) = True Then ' Dir is read only
-''            logString = Now & " -- old " & FullName & " file is read only, can't delete/replace. " _
-''                & "Alerting user."
-''            WriteToLog LogMessage:=logString
-''            strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
-''                "@macmillan.com for help."
-''            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FullName & ")"
-''            Download = False
-''            On Error GoTo 0
-''            Exit Function
-''        Else
-''            On Error Resume Next
-''                Kill strFinalPath
-''
-''                If Err.Number = 70 Then         'File is open and can't be replaced
-''                    logString = Now & " -- old " & FullName & " file is open, can't delete/replace. Alerting user."
-''                    WriteToLog LogMessage:=logString
-''                    strErrMsg = "Please close all other Word documents and try again."
-''                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FullName & ")"
-''                    Download = False
-''                    On Error GoTo 0
-''                    Exit Function
-''                End If
-''            On Error GoTo 0
-''        End If
-''    Else
-''        logString = Now & " -- No previous version file in final directory."
-''        WriteToLog LogMessage:=logString
-''    End If
-''
-''    'If delete was successful, move downloaded file to final directory
-''    If IsItThere(strFinalPath) = False Then
-''        logString = Now & " -- Final directory clear of " & FullName & " file."
-''        WriteToLog LogMessage:=logString
-''
-''        ' move template to final directory
-''        Name strTmpPath As strFinalPath
-''
-''        'Mac won't load macros from a template downloaded from the internet to Startup.
-''        'Need to send these commands for it to work, see Confluence
-''        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
-''        #If Mac Then
-''            If InStr(1, FullName, ".dotm") Then
-''            Dim strCommand As String
-''            strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
-''                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
-''                Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
-''                'Debug.Print strCommand
-''                MacScript (strCommand)
-''            End If
-''        #End If
-''
-''    Else
-''        logString = Now & " -- old " & FullName & " file not cleared from Final directory."
-''        WriteToLog LogMessage:=logString
-''        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
-''            "Please close all other Word documents and try again, or contact workflows@macmillan.com."
-''        MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FullName & ")"
-''        Download = False
-''        On Error GoTo 0
-''        Exit Function
-''    End If
-''
-''    'If move was successful, yay! Else, :(
-''    If IsItThere(strFinalPath) = True Then
-''        logString = Now & " -- " & FullName & " file successfully saved to final directory."
-''        WriteToLog LogMessage:=logString
-''    Else
-''        logString = Now & " -- " & FullName & " file not saved to final directory."
-''        WriteToLog LogMessage:=logString
-''        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
-''            "Please cotact workflows@macmillan.com for assistance."
-''        MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FullName & ")"
-''        Download = False
-''        On Error GoTo 0
-''        Exit Function
-''    End If
-''
-''    'Cleanup: Get rid of temp file if downloaded correctly
-''    If IsItThere(strTmpPath) = True Then
-''        Kill strTmpPath
-''    End If
-''
-''    ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
-''    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
-''        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
-''            AddIns(strFinalPath).Installed = False
-''        On Error GoTo 0
-''    End If
-''
-''    Download = True
-'
-'End Function
-'
+Public Function Download() As Boolean
+
+    Dim logString As String
+    Dim strTmpPath As String
+    Dim strBashTmp As String
+    Dim strErrMsg As String
+
+    strTmpPath = Paths_.TempPath & Application.PathSeparator & FullName
+
+    ' Mac can't use "MSXML2.XMLHTTP.3.0" lib, so we'll use curl
+    #If Mac Then
+        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr _
+            (strTmpPath, ":") - 1)), ":", "/")
+
+        'check for network
+        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") _
+            <> 0 Then   'can't connect to internet
+            logString = "Tried update; unable to connect to network."
+            WriteToLog LogMessage:=logString
+            strErrMsg = "There was an error trying to download the " & _
+                "Macmillan template." & vbNewLine & vbNewLine & "Please " & _
+                "check your internet connection or contact " & _
+                Organization_.HelpEmail & " for help."
+            MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & _
+                FullName & ")"
+            Download = False
+            Exit Function
+        Else 'internet is working, download file
+            'Make sure file is there
+            Dim httpStatus As Long
+            httpStatus = ShellAndWaitMac _
+                ("curl -s -o /dev/null -w '%{http_code}' " & DownloadURL)
+
+            If httpStatus = 200 Then                    ' File is there
+                'Now delete file if already there, then download new file
+                ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & _
+                    strBashTmp & " " & DownloadURL)
+            ElseIf httpStatus = 404 Then            ' 404 = page not found
+                logString = "404 File not found. Cannot download file."
+                WriteToLog LogMessage:=logString
+                strErrMsg = "It looks like that file isn't available for " & _
+                    "download." & vbNewLine & vbNewLine & "Please contact " & _
+                    Organization_.HelpEmail & " for help."
+                MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & _
+                    FullName & ")"
+                Download = False
+                Exit Function
+            Else
+                logString = "Http status is " & httpStatus & ". Cannot " & _
+                    "download file."
+                WriteToLog LogMessage:=logString
+                strErrMsg = "There was an error trying to download the " & _
+                    "Macmillan templates." & vbNewLine & vbNewLine & "Please" _
+                    & " check your internet connection or contact " & _
+                    Organization_.HelpEmail & " for help."
+                MsgBox strErrMsg, vbCritical, "Error 2: Http status " & _
+                    httpStatus & " (" & FullName & ")"
+                Download = False
+                Exit Function
+            End If
+
+        End If
+    #Else   ' PC download
+
+        'Check if file is already in tmp dir, delete if yes
+        If IsItThere(strTmpPath) = True Then
+            Kill strTmpPath
+        End If
+
+        'try to download the file from Public Confluence page
+        Dim WinHttpReq As Object
+        Dim oStream As Object
+
+        'Attempt to download file
+        On Error Resume Next
+            Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
+            WinHttpReq.Open "GET", DownloadURL, False
+            WinHttpReq.Send
+
+                ' Exit sub if error in connecting to website
+                If Err.Number <> 0 Then 'HTTP request is not OK
+                    'Debug.Print WinHttpReq.Status
+                    logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
+                    WriteToLog LogMessage:=logString
+                    strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
+                        "Please check your internet connection or contact workflows@macmillan.com for help."
+                    MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FullName & ")"
+                    Download = False
+                    On Error GoTo 0
+                    Exit Function
+                End If
+        On Error GoTo 0
+
+        'Debug.Print "Http status for " & FullName & ": " & WinHttpReq.Status
+        If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
+
+            'if connection OK, download file to temp dir
+            Set oStream = CreateObject("ADODB.Stream")
+            oStream.Open
+            oStream.Type = 1
+            oStream.Write WinHttpReq.ResponseBody
+            oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
+            oStream.Close
+            Set oStream = Nothing
+            Set WinHttpReq = Nothing
+        ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
+            logString = Now & " -- 404 File not found. Cannot download file."
+            WriteToLog LogMessage:=logString
+            strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
+                "Please contact workflows@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FullName & ")"
+            Download = False
+            Exit Function
+        Else
+            logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
+            WriteToLog LogMessage:=logString
+            strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
+                "Please check your internet connection or contact workflows@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FullName & ")"
+            Download = False
+            Exit Function
+        End If
+    #End If
+
+    'Error if download was not successful
+    If IsItThere(strTmpPath) = False Then
+        logString = Now & " -- " & FullName & " file download to Temp was not successful."
+        WriteToLog LogMessage:=logString
+        strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
+            "Please contact workflows@macmillan.com for assitance."
+        MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FullName & ")"
+        Download = False
+        On Error GoTo 0
+        Exit Function
+    Else
+        logString = Now & " -- " & FullName & " file download to Temp was successful."
+        WriteToLog LogMessage:=logString
+    End If
+
+
+
+    'If file exists already, log it and delete it
+    If IsItThere(strFinalPath) = True Then
+
+        logString = Now & " -- Previous version file in final directory."
+        WriteToLog LogMessage:=logString
+
+        ' get file extension
+        Dim strExt As String
+        strExt = Right(strFinalPath, InStrRev(StrReverse(strFinalPath), "."))
+
+        ' can't delete template if it's installed as an add-in
+        If InStr(strExt, "dot") > 0 Then
+            On Error Resume Next        'Error = add-in not available, don't need to uninstall
+                AddIns(strFinalPath).Installed = False
+            On Error GoTo 0
+        End If
+
+        ' Test if dir is read only
+        If IsReadOnly(FinalDir) = True Then ' Dir is read only
+            logString = Now & " -- old " & FullName & " file is read only, can't delete/replace. " _
+                & "Alerting user."
+            WriteToLog LogMessage:=logString
+            strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
+                "@macmillan.com for help."
+            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FullName & ")"
+            Download = False
+            On Error GoTo 0
+            Exit Function
+        Else
+            On Error Resume Next
+                Kill strFinalPath
+
+                If Err.Number = 70 Then         'File is open and can't be replaced
+                    logString = Now & " -- old " & FullName & " file is open, can't delete/replace. Alerting user."
+                    WriteToLog LogMessage:=logString
+                    strErrMsg = "Please close all other Word documents and try again."
+                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FullName & ")"
+                    Download = False
+                    On Error GoTo 0
+                    Exit Function
+                End If
+            On Error GoTo 0
+        End If
+    Else
+        logString = Now & " -- No previous version file in final directory."
+        WriteToLog LogMessage:=logString
+    End If
+
+    'If delete was successful, move downloaded file to final directory
+    If IsItThere(strFinalPath) = False Then
+        logString = Now & " -- Final directory clear of " & FullName & " file."
+        WriteToLog LogMessage:=logString
+
+        ' move template to final directory
+        Name strTmpPath As strFinalPath
+
+        'Mac won't load macros from a template downloaded from the internet to Startup.
+        'Need to send these commands for it to work, see Confluence
+        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
+        #If Mac Then
+            If InStr(1, FullName, ".dotm") Then
+            Dim strCommand As String
+            strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
+                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
+                Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
+                'Debug.Print strCommand
+                MacScript (strCommand)
+            End If
+        #End If
+
+    Else
+        logString = Now & " -- old " & FullName & " file not cleared from Final directory."
+        WriteToLog LogMessage:=logString
+        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
+            "Please close all other Word documents and try again, or contact workflows@macmillan.com."
+        MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FullName & ")"
+        Download = False
+        On Error GoTo 0
+        Exit Function
+    End If
+
+    'If move was successful, yay! Else, :(
+    If IsItThere(strFinalPath) = True Then
+        logString = Now & " -- " & FullName & " file successfully saved to final directory."
+        WriteToLog LogMessage:=logString
+    Else
+        logString = Now & " -- " & FullName & " file not saved to final directory."
+        WriteToLog LogMessage:=logString
+        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
+            "Please cotact workflows@macmillan.com for assistance."
+        MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FullName & ")"
+        Download = False
+        On Error GoTo 0
+        Exit Function
+    End If
+
+    'Cleanup: Get rid of temp file if downloaded correctly
+    If IsItThere(strTmpPath) = True Then
+        Kill strTmpPath
+    End If
+
+    ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
+    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
+        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
+            AddIns(strFinalPath).Installed = False
+        On Error GoTo 0
+    End If
+
+    Download = True
+
+End Function
+
 
 ' *****************************************************************************
 '           PRIVATE METHODS
