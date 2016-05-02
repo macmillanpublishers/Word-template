@@ -58,7 +58,7 @@ Sub ExportAllModules()
     strDependencies = strRepoPath & Application.PathSeparator & "dependencies"
     
     ' Modules that need to be imported into templates but that we do not want
-    ' to track belong in word-templates/dependencies. We don't want to export
+    ' to track belong in word-template/dependencies. We don't want to export
     ' these, so let's get then into a string to compare against later
     
     ' Dir() w/ arguments returns first file name that matches
@@ -92,11 +92,14 @@ Sub ExportAllModules()
             For Each oModule In oProject.VBComponents
                 ' Skip modules in dependencies directory
                 If InStr(strDepFiles, oModule.Name) = 0 Then
-                    ' Select save location based on module name
-                    If oModule.Name Like "Shared*" Then
-                        Call ExportVBComponent(VBComp:=oModule, FolderName:=strSharedModules)
-                    Else
-                        Call ExportVBComponent(VBComp:=oModule, FolderName:=strTemplateModules)
+                    ' Don't export forms, they are always wonky. Will have to manage manually
+                    If oModule.Type <> vbext_ct_MSForm Then
+                        ' Select save location based on module name
+                        If oModule.Name Like "*_" Then
+                            Call ExportVBComponent(VBComp:=oModule, FolderName:=strSharedModules)
+                        Else
+                            Call ExportVBComponent(VBComp:=oModule, FolderName:=strTemplateModules)
+                        End If
                     End If
                 End If
             Next
