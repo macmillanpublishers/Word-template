@@ -21,7 +21,7 @@ Sub UniversalCastoff()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -161,7 +161,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     '-------------Report castoff info to user----------------------------------------------------------------
     Call CreateTextFile(strText:=strReportText, suffix:="Castoff")
     
-    Call Cleanup
+    Call CleanUp
     Unload FormInputs
             
 End Sub
@@ -388,7 +388,7 @@ End Function
     
 Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Long
     ' Figure out what the final sig/page count will be
-    Dim result As Long
+    Dim Result As Long
            
 '    If objCastForm.PrintType = objCastForm.optPrintPOD.Caption Then
 '        'POD only has to be even, not 16-page sig
@@ -423,13 +423,13 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
         
         ' Determine if we go up or down a signature
         If lngRemainderPgs < lngOverflow Then
-            result = lngLowerSig
+            Result = lngLowerSig
         Else
-            result = lngUpperSig
+            Result = lngUpperSig
         End If
 '    End If
 
-    FinalSig = result
+    FinalSig = Result
     
 End Function
 

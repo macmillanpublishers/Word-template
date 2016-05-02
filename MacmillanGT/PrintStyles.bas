@@ -155,10 +155,10 @@ Private Sub PrintStylesMac()
     Dim currentSpace As Long
     
     With tempDoc.Styles("Normal")
-        currentSize = .Font.Size
+        currentSize = .Font.size
         currentName = .Font.Name
         currentSpace = .ParagraphFormat.SpaceAfter
-        .Font.Size = 7
+        .Font.size = 7
         .Font.Name = "Calibri"
         .ParagraphFormat.SpaceAfter = 0
     End With
@@ -238,10 +238,10 @@ Private Sub PrintStylesMac()
     Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
     
-Cleanup:
+CleanUp:
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
-            .Font.Size = currentSize
+            .Font.size = currentSize
             .Font.Name = currentName
             .ParagraphFormat.SpaceAfter = currentSpace
         End With
@@ -295,7 +295,7 @@ Private Sub PrintStylesPC()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -407,10 +407,10 @@ Private Sub PrintStylesPC()
     Dim currentSpace As Long
     
     With tempDoc.Styles("Normal")
-        currentSize = .Font.Size
+        currentSize = .Font.size
         currentName = .Font.Name
         currentSpace = .ParagraphFormat.SpaceAfter
-        .Font.Size = 7
+        .Font.size = 7
         .Font.Name = "Calibri"
         .ParagraphFormat.SpaceAfter = 0
     End With
@@ -487,7 +487,7 @@ Private Sub PrintStylesPC()
 FinishUp:
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
-            .Font.Size = currentSize
+            .Font.size = currentSize
             .Font.Name = currentName
             .ParagraphFormat.SpaceAfter = currentSpace
         End With
@@ -505,7 +505,7 @@ FinishUp:
         .Options.PasteFormatBetweenDocuments = lngPasteFormat
     End With
     
-    Call Cleanup
+    Call CleanUp
     Unload objProgressPrint
 
 End Sub

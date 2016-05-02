@@ -9,7 +9,7 @@ If you double click on a *template* file, it creates a new *document* based on t
 ## Don't save template files on a Mac
 When you save a template file on a Mac, any custom UI elements (i.e., the Macmillan Tools tab in `MacmillanGT.dotm`) are removed. We use the following workaround to avoid saving a template on a Mac:
 
-Do primary development for all templates on a PC. When you need to make changes on a Mac, do the following:
+Do primary development for all templates on a PC. When you need to do testing and make changes on a Mac, do the following:
 1. Export *only* the code module(s) to your local repo--do not save the updated template file. 
 1. Commit and push the changes.
 1. Pull the changes to the local repo on your PC.
