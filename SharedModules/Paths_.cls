@@ -146,7 +146,7 @@ End Property
 ' objects should get this from here, not independently if possible.
 
 Private Property Let FullConfigPath(strFullConfigPath As String)
-    ThisDocument.CustomDocumentProperties("FullConfigPath").value = _
+    ThisDocument.CustomDocumentProperties("FullConfigPath").Value = _
         strFullConfigPath
 End Property
 

@@ -1,4 +1,4 @@
-Attribute VB_Name = "SharedMacros"
+Attribute VB_Name = "SharedMacros_"
 
 ' All should be declared as Public for use from other modules
 
@@ -239,11 +239,11 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
         If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
         
             'if connection OK, download file to temp dir
-            myURL = WinHttpReq.responseBody
+            myURL = WinHttpReq.ResponseBody
             Set oStream = CreateObject("ADODB.Stream")
             oStream.Open
             oStream.Type = 1
-            oStream.Write WinHttpReq.responseBody
+            oStream.Write WinHttpReq.ResponseBody
             oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
             oStream.Close
             Set oStream = Nothing
@@ -1189,7 +1189,7 @@ End Sub
 
 
 
-Sub Cleanup()
+Sub CleanUp()
     ' resets everything from StartupSettings sub.
     Dim cleanupDoc As Document
     Set cleanupDoc = ActiveDocument

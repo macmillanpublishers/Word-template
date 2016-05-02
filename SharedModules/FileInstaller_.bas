@@ -1,4 +1,4 @@
-Attribute VB_Name = "SharedFileInstaller"
+Attribute VB_Name = "FileInstaller_"
 ' created by Erica Warren - erica.warren@macmillan.com
 
 ' ======== PURPOSE ===================================

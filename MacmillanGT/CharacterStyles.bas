@@ -755,7 +755,7 @@ ErrorHandler:
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .SmallCaps = False
                     .AllCaps = True
-                    .size = 9
+                    .Size = 9
                 End With
                 Resume
             
@@ -794,7 +794,7 @@ ErrorHandler:
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .SmallCaps = False
                     .AllCaps = True
-                    .size = 9
+                    .Size = 9
                     .Bold = True
                 End With
                 Resume
@@ -806,7 +806,7 @@ ErrorHandler:
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .SmallCaps = False
                     .AllCaps = True
-                    .size = 9
+                    .Size = 9
                     .Italic = True
                 End With
                 Resume
@@ -1088,7 +1088,7 @@ ErrorHandler1:
             ' everything at some point anyway...
             With .Font
                 .Name = "Times New Roman"
-                .size = 12
+                .Size = 12
             End With
             
             With .ParagraphFormat

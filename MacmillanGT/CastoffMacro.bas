@@ -38,7 +38,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     ' Get estimated page count
     Dim lngCastoffResult() As Long
     
-    If FormInputs.chkDesignPickup.value = True Then
+    If FormInputs.chkDesignPickup.Value = True Then
         ' If it's a pickup, use the PickupDesign math to get the page count, only 1 result
         ReDim Preserve lngCastoffResult(0)
         lngCastoffResult(0) = PickupDesign(FormInputs)
@@ -133,7 +133,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     ' If it's a pickup, there is only 1 option
     If FormInputs.chkDesignPickup Then
         strCastoffs = lngCastoffResult(0)
-        strPickupTitle = "PICKUP TITLE: " & FormInputs.txtPrevTitle_pickup.value & vbNewLine
+        strPickupTitle = "PICKUP TITLE: " & FormInputs.txtPrevTitle_pickup.Value & vbNewLine
     Else
         strPickupTitle = ""
         strCastoffs = vbNewLine
@@ -371,11 +371,11 @@ Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
     
     ' divide total prev character count by page count to get avg characters per page in prev book
     Dim lngPrevCharPerBookPage As Long
-    lngPrevCharPerBookPage = objCastoffForm.numTxtPrevCharCount_pickup.value / objCastoffForm.numTxtPrevPageCount_pickup.value
+    lngPrevCharPerBookPage = objCastoffForm.numTxtPrevCharCount_pickup.Value / objCastoffForm.numTxtPrevPageCount_pickup.Value
     
     ' divide total characters of this doc by avg characters per page to get est page count, add additional pages
     Dim lngStartingResult As Long
-    lngStartingResult = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + objCastoffForm.numTxtAddlPgs_pickup.value
+    lngStartingResult = (lngCurrentMsCharCount / lngPrevCharPerBookPage) + objCastoffForm.numTxtAddlPgs_pickup.Value
     
     ' Calculate what the final sig will be
     Dim lngFinalPageCount As Long
@@ -388,7 +388,7 @@ End Function
     
 Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Long
     ' Figure out what the final sig/page count will be
-    Dim Result As Long
+    Dim result As Long
            
 '    If objCastForm.PrintType = objCastForm.optPrintPOD.Caption Then
 '        'POD only has to be even, not 16-page sig
@@ -423,13 +423,13 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
         
         ' Determine if we go up or down a signature
         If lngRemainderPgs < lngOverflow Then
-            Result = lngLowerSig
+            result = lngLowerSig
         Else
-            Result = lngUpperSig
+            result = lngUpperSig
         End If
 '    End If
 
-    FinalSig = Result
+    FinalSig = result
     
 End Function
 

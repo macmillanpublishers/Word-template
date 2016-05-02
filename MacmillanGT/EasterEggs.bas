@@ -90,7 +90,7 @@ Sub Triceratops()
                 ' Must be monospace font to see the Triceratops
                 .Font.Name = "Courier New"
                 ' 10 pt so it fits the width of the page
-                .Font.size = 10
+                .Font.Size = 10
                     ' All this for best view of Triceratops
                     With .ParagraphFormat
                     .Alignment = wdAlignParagraphLeft

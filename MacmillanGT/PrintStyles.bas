@@ -155,10 +155,10 @@ Private Sub PrintStylesMac()
     Dim currentSpace As Long
     
     With tempDoc.Styles("Normal")
-        currentSize = .Font.size
+        currentSize = .Font.Size
         currentName = .Font.Name
         currentSpace = .ParagraphFormat.SpaceAfter
-        .Font.size = 7
+        .Font.Size = 7
         .Font.Name = "Calibri"
         .ParagraphFormat.SpaceAfter = 0
     End With
@@ -241,7 +241,7 @@ Private Sub PrintStylesMac()
 CleanUp:
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
-            .Font.size = currentSize
+            .Font.Size = currentSize
             .Font.Name = currentName
             .ParagraphFormat.SpaceAfter = currentSpace
         End With
@@ -407,10 +407,10 @@ Private Sub PrintStylesPC()
     Dim currentSpace As Long
     
     With tempDoc.Styles("Normal")
-        currentSize = .Font.size
+        currentSize = .Font.Size
         currentName = .Font.Name
         currentSpace = .ParagraphFormat.SpaceAfter
-        .Font.size = 7
+        .Font.Size = 7
         .Font.Name = "Calibri"
         .ParagraphFormat.SpaceAfter = 0
     End With
@@ -487,7 +487,7 @@ Private Sub PrintStylesPC()
 FinishUp:
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
-            .Font.size = currentSize
+            .Font.Size = currentSize
             .Font.Name = currentName
             .ParagraphFormat.SpaceAfter = currentSpace
         End With

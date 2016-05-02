@@ -123,7 +123,7 @@ Sub EndnoteDeEmbed()
             BookmarkName = "Endnote" & BookmarkNum
             .Bookmarks.Add Name:=BookmarkName
             .InsertCrossReference wdRefTypeEndnote, wdEndnoteNumberFormatted, eNote.Index
-            nref = .Characters.First.Fields(1).Result
+            nref = .Characters.First.Fields(1).result
             If palgraveTag = False Then
                 .Characters.First.Fields(1).Unlink
             Else
