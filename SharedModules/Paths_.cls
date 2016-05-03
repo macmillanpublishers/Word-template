@@ -35,6 +35,13 @@ Option Explicit
 
 Private p_FullJSON As Dictionary
 Private p_PathsJSON As Dictionary
+Private p_DownloadURL As String
+Private p_FullConfigPath As String
+Private p_HomeDir As String
+Private p_LocalPath As String
+Private p_LogsDir As String
+Private p_RootDir As String
+Private p_TempPath As String
 
 
 ' *****************************************************************************
@@ -57,8 +64,6 @@ Public Property Get FullJSON() As Dictionary
         strJSON = SharedMacros.ReadTextFile(Path:=strPath, _
             FirstLineOnly:=False)
         Set p_FullJSON = JsonConverter.ParseJson(json_String:=strJSON)
-    Else
-        Debug.Print "Not Nothing!"
     End If
     
     Set FullJSON = p_FullJSON
@@ -73,22 +78,22 @@ End Property
 ' our project structure, so it tests for that as well.
 
 Public Property Get LocalPath(GroupName As String) As String
-    Dim strLocalPath As String
-
-    ' If this next line works, don't need "startupFiles" in "paths" object
-    If GroupName = "startupFiles" Then
-        strLocalPath = Application.StartupPath
-    Else
-        If PathsJSON.Exists(GroupName) Then
-            strLocalPath = HomeDir & Application.PathSeparator & _
-            PathsJSON(GroupName)
+    If p_LocalPath = vbNullString Then
+        ' If this next line works, don't need "startupFiles" in "paths" object
+        If GroupName = "startupFiles" Then
+            p_LocalPath = Application.StartupPath
         Else
-            MsgBox "That is not a valid GroupName!"
+            If PathsJSON.Exists(GroupName) Then
+                p_LocalPath = HomeDir & Application.PathSeparator & _
+                PathsJSON(GroupName)
+            Else
+                MsgBox "That is not a valid GroupName!"
+            End If
         End If
     End If
 
-    CheckDir (strLocalPath)
-    LocalPath = strLocalPath
+    CheckDir (p_LocalPath)
+    LocalPath = p_LocalPath
 End Property
 
 ' ===== LogsDir ===============================================================
@@ -96,28 +101,33 @@ End Property
 ' MacFile_ directly.
 
 Public Property Get LogsDir() As String
-    LogsDir = LocalPath(GroupName:="logFiles")
+    If p_LogsDir = vbNullString Then
+        ' LocalPath calls CheckDir, which will create if not extant
+        p_LogsDir = LocalPath(GroupName:="logFiles")
+    End If
+    LogsDir = p_LogsDir
 End Property
 
 ' ===== TempPath ==========================================================
 ' Path to OS-specific local temp directory.
 
 Public Property Get TempPath() As String
-    Dim strTmpDir As String
-    #If Mac Then
-        strTmpDir = MacScript("path to temporary items as string")
-    #Else
-        strTmpDir = Environ("TEMP")
-    #End If
-
-    ' Not 100% confident these return trailing separator consistently, so:
-    If Right(strTmpDir, 1) = Application.PathSeparator Then
-        strTmpDir = Left(strTmpDir, Len(strTmpDir) - 1)
-    End If
+    If p_TempPath = vbNullString Then
+        #If Mac Then
+            p_TempPath = MacScript("path to temporary items as string")
+        #Else
+            p_TempPath = Environ("TEMP")
+        #End If
     
+        ' Not 100% confident these return trailing separator consistently, so:
+        If Right(p_TempPath, 1) = Application.PathSeparator Then
+            p_TempPath = Left(p_TempPath, Len(p_TempPath) - 1)
+        End If
+    End If
+
     ' Don't use CheckDir here because shouldn't create new Tmp dir
-    If IsItThere(strTmpDir) = True Then
-        TempPath = strTmpDir
+    If IsItThere(p_TempPath) = True Then
+        TempPath = p_TempPath
     Else
         MsgBox "Um, your Temp folder is missing?"
     End If
@@ -128,11 +138,14 @@ End Property
 ' separator. Will be assigned to WebClient.BaseURL.
 
 Public Property Get DownloadURL() As String
-    Dim dictDownloads As Dictionary
-    Set dictDownloads = FullJSON("downloads")
-
-    DownloadURL = dictDownloads("baseURL") & "/" & _
-        dictDownloads(dictDownloads("current"))
+    If p_DownloadURL = vbNullString Then
+        Dim dictDownloads As Dictionary
+        Set dictDownloads = FullJSON("downloads")
+    
+        p_DownloadURL = dictDownloads("baseURL") & "/" & _
+            dictDownloads(dictDownloads("current"))
+    End If
+    DownloadURL = p_DownloadURL
 End Property
 
 
@@ -143,15 +156,20 @@ End Property
 ' ===== FullConfigPath ========================================================
 ' Takes full local path to config file as input (incl. name and extension).
 ' Writes it to CustomDocumentProperty for document to read later. All other
-' objects should get this from here, not independently if possible.
+' objects should get this from here, not independently, if possible. DON'T
+' check if it's there, because we need this path in order to save the file.
 
 Private Property Let FullConfigPath(strFullConfigPath As String)
+    p_FullConfigPath = strFullConfigPath
     ThisDocument.CustomDocumentProperties("FullConfigPath").Value = _
         strFullConfigPath
 End Property
 
 Private Property Get FullConfigPath() As String
-    FullConfigPath = ThisDocument.CustomDocumentProperties("FullConfigPath")
+    If p_FullConfigPath = vbNullString Then
+        p_FullConfigPath = ThisDocument.CustomDocumentProperties("FullConfigPath")
+    End If
+    FullConfigPath = p_FullConfigPath
 End Property
 
 ' ===== PathsJSON =============================================================
@@ -176,35 +194,39 @@ End Property
 ' it throws an error. Should we create a fallback?
 
 Private Property Get RootDir() As String
-    Dim strRootDir As String
+    If p_RootDir = vbNullString Then
 
-    Select Case PathsJSON("root")
-        Case "macmillan"
-            #If Mac Then
-                ' This returns a string with the trailing path separator
-                ' included so we need to remove it.
-
-                ' Also Matt suggested Users/username/Library/Application Support
-                ' as a place less likely to be accidentally deleted.
-                ' strRootDir = MacScript("return (path to application support) as string")
-                
-                strRootDir = MacScript("return (path to library folder from user domain) as string")
-                If Right(strRootDir, 1) = Application.PathSeparator Then
-                    strRootDir = Left(strRootDir, Len(strRootDir) - 1)
-                End If
-            #Else
-                strRootDir = Environ("USERPROFILE")
-            #End If
-        Case Else
-            MsgBox "That's not a valid value for Root directory."
-    End Select
+        Select Case PathsJSON("root")
+            Case "macmillan"
+                #If Mac Then
+                    ' This returns a string with the trailing path separator
+                    ' included so we need to remove it.
     
-    ' Don't use CheckDir, don't try to create home directory...
-    If IsItThere(strRootDir) = False Then
-        MsgBox "You don' seem to have a home directory..."
+                    ' Also Matt suggested Users/username/Library/Application Support
+                    ' as a place less likely to be accidentally deleted.
+                    ' strRootDir = MacScript("return (path to application" & _
+                    " support) as string")
+                    
+                    p_RootDir = MacScript("return (path to library folder " & _
+                        "from user domain) as string")
+                #Else
+                    p_RootDir = Environ("USERPROFILE")
+                #End If
+            Case Else
+                MsgBox "That's not a valid option for Root directory."
+        End Select
+        ' Make sure no trailing path separator
+        If Right(p_RootDir, 1) = Application.PathSeparator Then
+            p_RootDir = Left(p_RootDir, Len(p_RootDir) - 1)
+        End If
     End If
     
-    RootDir = strRootDir
+    ' Don't use CheckDir, don't try to create root directory...
+    If IsItThere(p_RootDir) = False Then
+        MsgBox "You don't seem to have a home directory..."
+    End If
+    
+    RootDir = p_RootDir
 
 End Property
 
@@ -214,10 +236,11 @@ End Property
 ' calling procedure doesn't need to test for existence.
 
 Private Property Get HomeDir() As String
-    Dim strHomeDir As String
-    strHomeDir = RootDir & Application.PathSeparator & PathsJSON("home")
-    CheckDir (strHomeDir)
-    HomeDir = strHomeDir
+    If p_HomeDir = vbNullString Then
+        p_HomeDir = RootDir & Application.PathSeparator & PathsJSON("home")
+    End If
+    CheckDir (p_HomeDir)
+    HomeDir = p_HomeDir
 End Property
 
 ' *****************************************************************************
@@ -231,7 +254,11 @@ End Property
 ' explicitly set the object properties to Nothing or they will persist, even
 ' beyond the end of the macro sometimes.
 
-Public Sub CleanUp()
+' And for fun let's reset all properties; might need to call before calling
+' procedures completes if we download a new config file. Can break out into
+' separate Property Let procedures later if we need finer control.
+
+Public Sub ClearPaths()
     If Not p_FullJSON Is Nothing Then
         Set p_FullJSON = Nothing
     End If
@@ -239,6 +266,14 @@ Public Sub CleanUp()
     If Not p_PathsJSON Is Nothing Then
         Set p_PathsJSON = Nothing
     End If
+    
+    p_DownloadURL = vbNullString
+    p_FullConfigPath = vbNullString
+    p_HomeDir = vbNullString
+    p_LocalPath = vbNullString
+    p_LogsDir = vbNullString
+    p_RootDir = vbNullString
+    p_TemplPath = vbNullString
 End Sub
 ' *****************************************************************************
 '       PRIVATE METHODS
@@ -260,6 +295,7 @@ Private Sub CheckDir(MyDir As String)
 CheckDirError:
     MsgBox "Nope! Looks like " & MyDir & " doesn't exist and we can't create it" _
         & vbNewLine & "Error " & Err.Number & ": " & Err.Description
+    On Error GoTo 0
 End Sub
 
 
