@@ -54,6 +54,13 @@ Private p_GroupJSON As Dictionary
 Private p_FileJSON As Dictionary
 Private p_ConfigVersion As Dictionary
 Private p_LocalVersion As Dictionary
+Private p_Exists As Boolean
+Private p_Extension As String
+Private p_FullLocalPath As String
+Private p_FullLogPath As String
+Private p_FullName As String
+Private p_FullTempPath As String
+Private p_Name As String
 
 
 ' *****************************************************************************
@@ -108,7 +115,10 @@ End Property
 ' Full file name including extension, but not any path info
 
 Public Property Get FullName() As String
-    FullName = Name & "." & Extension
+    If p_FullName = vbNullString Then
+        p_FullName = Name & "." & Extension
+    End If
+    FullName = p_FullName
 End Property
 
 ' ===== FullLocalPath =========================================================
@@ -116,20 +126,24 @@ End Property
 ' name with extension.
 
 Public Property Get FullLocalPath() As String
-    FullLocalPath = Paths_.LocalPath(GroupName) & _
-        Application.PathSeparator & FullName
+    If p_FullLocalPath = vbNullString Then
+        p_FullLocalPath = Paths_.LocalPath(GroupName) & _
+            Application.PathSeparator & FullName
+    End If
+    FullLocalPath = p_FullLocalPath
 End Property
 
 ' ===== Exists ================================================================
-' Tests whether the file exists at its FullLocalPath
+' Tests whether the file exists at its FullLocalPath. No private variable; we
+' always want to check in case it's deleted at runtime.
 
 Public Property Get Exists() As Boolean
-    Exists = SharedMacros.IsItThere(Path:=FullLocalPath)
+    Exists = SharedMacros_.IsItThere(Path:=FullLocalPath)
 End Property
 
 ' ===== Running ===============================================================
 ' Tests whether the file in question is the one that's currently running this
-' code, so we don't, like, delete ourselves or something.
+' code, so we don't, like, delete ourselves or something. Always check.
 
 Public Property Get Running() As Boolean
     If ThisDocument.Name = FullName Then
@@ -189,14 +203,20 @@ End Property
 ' because some things (like log file names) require just the name w/o extension.
 
 Private Property Get Name() As String
-    Name = FileJSON("fileName")
+    If p_Name = vbNullString Then
+        p_Name = FileJSON("fileName")
+    End If
+    Name = p_Name
 End Property
 
 ' ===== Extension =============================================================
 ' File extension as a string, NOT including period.
 
 Private Property Get Extension() As String
-    Extension = FileJSON("extension")
+    If p_Extension = vbNullString Then
+        p_Extension = FileJSON("extension")
+    End If
+    Extension = p_Extension
 End Property
 
 ' ===== ConfigVersion ==========================================================
@@ -216,34 +236,40 @@ End Property
 ' Minor, and Patch. Patch may be null. Document must be open (though might be a
 ' way to manage this by unzipping the file and reading XML directly?).
 
+' Will need to create a Property Let for Utilities updating stuff.
+
 Private Property Get LocalVersion() As Dictionary
-    ' Word files: .docx, .dotx, .docm, .dotm
-    If Left(Extension, 2) = "do" And _
-        InStr("ct", Mid(Extension, 3, 1)) > 0 And _
-        InStr("mx", Right(Extension, 1)) > 0 Then
-        
-        If p_LocalVersion Is Nothing Then
-            Set p_LocalVersion = New Dictionary
-            Dim objDoc As Document
-            Set objDoc = Documents.Open _
-                (FileName:=FullLocalPath, ReadOnly:=True, Visible:=False)
-            p_LocalVersion.Item("major") = objDoc.CustomDocumentProperties("Major")
-            p_LocalVersion.Item("minor") = objDoc.CustomDocumentProperties("Minor")
-            p_LocalVersion.Item("patch") = objDoc.CustomDocumentProperties("Patch")
+    If p_LocalVersion Is Nothing Then
+        ' Word files: .docx, .dotx, .docm, .dotm
+        If Left(Extension, 2) = "do" And _
+            InStr("ct", Mid(Extension, 3, 1)) > 0 And _
+            InStr("mx", Right(Extension, 1)) > 0 Then
+                Set p_LocalVersion = New Dictionary
+                Dim objDoc As Document
+                Set objDoc = Documents.Open _
+                    (FileName:=FullLocalPath, ReadOnly:=True, Visible:=False)
+                p_LocalVersion.Item("major") = _
+                    objDoc.CustomDocumentProperties("Major")
+                p_LocalVersion.Item("minor") = _
+                    objDoc.CustomDocumentProperties("Minor")
+                p_LocalVersion.Item("patch") = _
+                    objDoc.CustomDocumentProperties("Patch")
         Else
-            Set LocalVersion = p_LocalVersion
+            Set p_LocalVersion = ConfigVersion
         End If
-    Else
-        Set LocalVersion = ConfigVersion
     End If
+    Set LocalVersion = p_LocalVersion
 End Property
 
 ' ===== FullLogPath ===========================================================
 ' Full path to the log file, including file name and extension.
 
 Private Property Get FullLogPath() As String
-    FullLogPath = Paths_.LocalPath(GroupName:="logFiles") & _
-        Application.PathSeparator & Name & "_updates.log"
+    If p_FullLogPath = vbNullString Then
+        p_FullLogPath = Paths_.LocalPath(GroupName:="logFiles") & _
+            Application.PathSeparator & Name & "_updates.log"
+    End If
+    FullLogPath = p_FullLogPath
 End Property
 
 ' ===== FullTempPath ==========================================================
@@ -259,6 +285,20 @@ End Property
 '           PUBLIC METHODS
 ' *****************************************************************************
 
+' ===== ClearFile =============================================================
+' Resets private variables for most properties, in case we, say, update the
+' config file during runtime and want to read the new info. Don't want to use
+' Property Let at this point because most are read-only, but if we end up
+' needing finer control we can add that instead.
+
+Public Sub ClearFile()
+    p_Extension = vbNullString
+    p_FullLogPath = vbNullString
+    p_FullLocalPath = vbNullString
+    p_FullName = vbNullString
+    p_FullTempPath = vbNullString
+    p_Name = vbNullString
+End Sub
 ' ===== AssignFile ============================================================
 ' To access all of the properties of the object, both GroupName & SpecificFile
 ' properties must be set. To make this easier, this method does both at once.
@@ -272,12 +312,12 @@ End Sub
 ' Deletes the file in question, as long as it's not currently running this code
 
 Public Sub DeleteFile()
-    If Running = False Then
-        If Exists = True Then
+    If Exists = True Then
+        If Running = False Then
             Kill FullLocalPath
+        Else
+            MsgBox "You can't delete a file that is running a macro."
         End If
-    Else
-        MsgBox "You can't delete a file that is running a macro."
     End If
 End Sub
 
@@ -559,9 +599,12 @@ End Function
 ' *****************************************************************************
 
 ' ===== StringVersion =========================================================
-' returns full version number as a string. May need to make Public? Takes an
-' argument so we can use it to return either the Config or Local version. Note
-' "patch" may be Null
+' returns full version number as a string. Takes an argument so we can use it
+' to return either the Config or Local version. Note "patch" may be Null.
+'
+' May need to make public, in which case should probably be a property? Want to
+' keep config and local version dictionaries private, so need another way
+' indicate which version. Maybe two properties?
 
 Private Function StringVersion(dictVersion As Dictionary) As String
     Dim strVersionReturn As String
@@ -576,7 +619,7 @@ End Function
 
 ' ===== WriteToLog ============================================================
 ' Writes line to log for the file. LogMessage only needs text, timestamp will
-' be added in this method. May make public later if we end up using this more
+' be added in this method. May make public later if we end up using this for
 ' more than just download logs.
 
 Private Sub WriteToLog(LogMessage As String)
@@ -596,7 +639,7 @@ End Sub
 '       CLASS EVENTS
 ' *****************************************************************************
 
-' Object properties will persist after the calling procedure is ended, even if
+' *Object* properties may persist after the calling procedure is ended, even if
 ' you set the MacFile_ object to Nothing at the end of that sub.
 
 Sub Class_Terminate()
