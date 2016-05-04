@@ -277,7 +277,10 @@ End Property
 ' we need to reference this before we can create it with ParseDoc, maybe.
 
 Private Property Get FullTempPath() As String
-    FullTempPath = Paths_.TempPath & Application.PathSeparator & FullName
+    If p_FullTempPath = vbNullString Then
+        p_FullTempPath = Paths_.TempPath & Application.PathSeparator & FullName
+    End If
+    FullTempPath = p_FullTempPath
 End Property
 
 
@@ -299,6 +302,7 @@ Public Sub ClearFile()
     p_FullTempPath = vbNullString
     p_Name = vbNullString
 End Sub
+
 ' ===== AssignFile ============================================================
 ' To access all of the properties of the object, both GroupName & SpecificFile
 ' properties must be set. To make this easier, this method does both at once.
