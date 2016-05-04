@@ -1,4 +1,4 @@
-Attribute VB_Name = "SharedFileInstaller"
+Attribute VB_Name = "FileInstaller_"
 ' created by Erica Warren - erica.warren@macmillan.com
 
 ' ======== PURPOSE ===================================
@@ -401,5 +401,11 @@ Private Function ImportVariable(strFile As String) As String
  
 End Function
 
-
+Sub TryWebRequest()
+    Dim testFile As New MacFile_
+    testFile.AssignFile strGroupName:="testFiles", strSpecificFileType:="tester"
+    testFile.TestDownload
+    Set testFile = Nothing
+    Paths_.CleanUp
+End Sub
 

@@ -8,7 +8,7 @@ Dim strUsername As String
 Dim strMessage As String
 
 'This is the username used for Track Changes. How does this get entered by default?
-strUsername = Application.UserName
+strUsername = Application.Username
 
 'Weekday() returns an integer for the day of the week, starting at 1 on Sunday.
 If Weekday(Date) = 2 Then       'It's Monday!

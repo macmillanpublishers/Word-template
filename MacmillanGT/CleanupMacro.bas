@@ -138,13 +138,13 @@ Sub MacmillanManuscriptCleanup()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
     ' Change to just check for backtick characters
     If zz_errorChecks = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
         
@@ -277,7 +277,7 @@ Sub MacmillanManuscriptCleanup()
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
 
-    Call Cleanup
+    Call CleanUp
     Unload oProgressCleanup
     
     MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
