@@ -250,9 +250,12 @@ Sub ImportAllModules()
                 ' an array of the directories we're going to be adding modules from
                 ' every template gets (1) all modules in its directory and (2) all shared modules
                 ' and (3) all dependencies.
-                strDirInRepo(1) = strRepoPath & Application.PathSeparator & strSubDirName & Application.PathSeparator
-                strDirInRepo(2) = strRepoPath & Application.PathSeparator & "SharedModules" & Application.PathSeparator
-                strDirInRepo(3) = strRepoPath & Application.PathSeparator & "dependencies" & Application.PathSeparator
+                strDirInRepo(1) = strRepoPath & Application.PathSeparator & _
+                    strSubDirName & Application.PathSeparator
+                strDirInRepo(2) = strRepoPath & Application.PathSeparator & _
+                    "SharedModules" & Application.PathSeparator
+                strDirInRepo(3) = strRepoPath & Application.PathSeparator & _
+                    "dependencies" & Application.PathSeparator
                       
                 ' an array of file extensions we're importing, since there are other files in the repo
                 strModuleExt(1) = "bas"
@@ -290,6 +293,7 @@ Sub ImportAllModules()
                             ' So if that Set VBComp failed because it doesnt' exist, add it!
                             If VBComp Is Nothing Then
                                 currentVBProject.VBComponents.Import FileName:=strFullModulePath
+                                Debug.Print strFullModulePath
                             Else    ' it DOES exist already
                                 ' See then if it's the "ThisDocument" module, which can't be deleted
                                 ' So we can't import because it would just create a duplicate, not replace
@@ -406,7 +410,9 @@ Sub CopyTemplateToRepo(TemplateDoc As Document, Optional OpenAfter As Boolean = 
         
         ' Also not installed as an add-in
         If InStr(TemplateDoc.Name, "MacmillanGT") <> 0 Or InStr(TemplateDoc.Name, "GtUpdater") <> 0 Then
+            On Error Resume Next
             AddIns(strCurrentTemplatePath).Installed = False
+            On Error GoTo 0
         End If
 
         ' Template needs to be closed for FileCopy to work
