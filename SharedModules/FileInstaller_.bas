@@ -404,8 +404,8 @@ End Function
 Sub TryWebRequest()
     Dim testFile As New MacFile_
     testFile.AssignFile strGroupName:="testFiles", strSpecificFileType:="tester"
-    testFile.TestDownload
+    Debug.Print testFile.FullLocalPath
     Set testFile = Nothing
-    Paths_.CleanUp
+    Paths_.ClearPaths
 End Sub
 

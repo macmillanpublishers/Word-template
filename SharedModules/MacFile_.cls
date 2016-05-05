@@ -612,7 +612,8 @@ End Function
 
 Private Function StringVersion(dictVersion As Dictionary) As String
     Dim strVersionReturn As String
-    strVersionReturn = CStr(dictVersion("major")) & "." & CStr(dictVersion("minor"))
+    strVersionReturn = CStr(dictVersion("major")) & "." & _
+        CStr(dictVersion("minor"))
 
     If CStr(dictVersion("patch")) <> vbNullString Then
         strVersionReturn = strVersionReturn & "." & CStr(dictVersion("patch"))
@@ -639,10 +640,19 @@ Private Sub WriteToLog(LogMessage As String)
 End Sub
 
 
+
 ' *****************************************************************************
 '       CLASS EVENTS
 ' *****************************************************************************
 
+'' ===== Class_Initialize ======================================================
+'' Might need this at some point?
+'
+'Private Sub Class_Initialize()
+'
+'End Sub
+
+' ===== Class_Terminate =======================================================
 ' *Object* properties may persist after the calling procedure is ended, even if
 ' you set the MacFile_ object to Nothing at the end of that sub.
 
