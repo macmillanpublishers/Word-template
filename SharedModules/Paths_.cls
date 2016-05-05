@@ -61,7 +61,7 @@ Public Property Get FullJSON() As Dictionary
         Dim strPath As String
         strPath = FullConfigPath
         Dim strJSON As String
-        strJSON = SharedMacros.ReadTextFile(Path:=strPath, _
+        strJSON = SharedMacros_.ReadTextFile(Path:=strPath, _
             FirstLineOnly:=False)
         Set p_FullJSON = JsonConverter.ParseJson(json_String:=strJSON)
     End If
@@ -204,7 +204,7 @@ Private Property Get RootDir() As String
     
                     ' Also Matt suggested Users/username/Library/Application Support
                     ' as a place less likely to be accidentally deleted.
-                    ' strRootDir = MacScript("return (path to application" & _
+                    ' p_RootDir = MacScript("return (path to application" & _
                     " support) as string")
                     
                     p_RootDir = MacScript("return (path to library folder " & _
