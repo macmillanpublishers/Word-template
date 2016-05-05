@@ -209,7 +209,9 @@ Private Property Get RootDir() As String
                     p_RootDir = MacScript("return (path to library folder " & _
                         "from user domain) as string")
                 #Else
-                    p_RootDir = Environ("USERPROFILE")
+                    ' which is actually C:\Users\%USERNAME%\AppData\Roaming
+                    ' as recommended by Rakesh
+                    p_RootDir = Environ("APPDATA")
                 #End If
             Case Else
                 MsgBox "That's not a valid option for Root directory."
