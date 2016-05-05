@@ -98,10 +98,9 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     
 End Function
 
-
-Public Function IsItThere(Path)
-' Check if file or directory exists on PC or Mac
-    
+Public Function IsItThere(Path As String) As Boolean
+    ' Check if file or directory exists on PC or Mac
+    ' Dir() doesn't work on Mac if file is longer than 32 char
     'Debug.Print Path
     
     'Remove trailing path separator from dir if it's there
@@ -109,29 +108,31 @@ Public Function IsItThere(Path)
         Path = Left(Path, Len(Path) - 1)
     End If
     
-    Dim CheckDir As String
-    On Error GoTo ErrHandler            ' Because Dir(Path) throws an error on Mac if not existant
+    #If Mac Then
+        Dim strScript As String
+        strScript = "tell application " & Chr(34) & "System Events" & Chr(34) & _
+            "to return exists disk item (" & Chr(34) & Path & Chr(34) _
+            & " as string)"
+        IsItThere = SharedMacros_.ShellAndWaitMac(strScript)
+    #Else
+        Dim CheckDir As String
+        CheckDir = Dir(Path, vbDirectory)
         
-    CheckDir = Dir(Path, vbDirectory)
-    
-    If CheckDir = vbNullString Then
-        IsItThere = False
-    Else
-        IsItThere = True
-    End If
-    
-    On Error GoTo 0
-    
-Exit Function
-
-ErrHandler:
-    If Err.Number = 68 Then     ' "Device unavailable"
-        IsItThere = False
-    Else
-        Debug.Print "IsItThere Error " & Err.Number & ": " & Err.Description
-    End If
+        If CheckDir = vbNullString Then
+            IsItThere = False
+        Else
+            IsItThere = True
+        End If
+    #End If
 End Function
 
+
+Public Function KillAll(Path As String) As Boolean
+    ' Deletes file (or folder?) on PC or Mac. Mac can't use Kill() if file name
+    ' is longer than 32 char.
+    
+
+End Function
 Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String, _
     Optional DownloadSource As GitBranch = master) As Boolean
 'FinalDir is directory w/o file name
