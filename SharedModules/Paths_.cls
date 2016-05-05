@@ -240,7 +240,7 @@ Private Property Get HomeDir() As String
     If p_HomeDir = vbNullString Then
         p_HomeDir = RootDir & Application.PathSeparator & PathsJSON("home")
     End If
-    CheckDir MyDir:=p_HomeDir, IsHidden:=True
+    CheckDir p_HomeDir
     HomeDir = p_HomeDir
 End Property
 
@@ -286,7 +286,7 @@ End Sub
 ' root project dir). Making it its own method (with a pretty generic name) so
 ' it's easy to add additional checks later if we need to.
 
-Private Sub CheckDir(MyDir As String, Optional IsHidden As Boolean = False)
+Private Sub CheckDir(MyDir As String)
     On Error GoTo CheckDirError
     If IsItThere(MyDir) = False Then
         MkDir MyDir
