@@ -291,9 +291,6 @@ Private Sub CheckDir(MyDir As String)
     If IsItThere(MyDir) = False Then
         MkDir MyDir
     End If
-    If IsHidden = True Then
-        SetAttr MyDir, vbHidden
-    End If
     On Error GoTo 0
     Exit Sub
 CheckDirError:

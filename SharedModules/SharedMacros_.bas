@@ -129,9 +129,27 @@ End Function
 
 Public Function KillAll(Path As String) As Boolean
     ' Deletes file (or folder?) on PC or Mac. Mac can't use Kill() if file name
-    ' is longer than 32 char.
-    
-
+    ' is longer than 32 char. Returns true if successful.
+    If IsItThere(Path) = True Then
+        #If Mac Then
+            Dim strCommand As String
+            strCommand = MacScript("return quoted form of posix path of " & Path)
+            Debug.Print "Path var: " & strCommand
+            strCommand = "rm " & strCommand
+            Debug.Print "Command: " & strCommand
+            SharedMacros_.ShellAndWaitMac (strCommand)
+        #Else
+            Kill (Path)
+        #End If
+        ' Make sure it worked
+        If IsItThere(Path) = False Then
+            KillAll = True
+        Else
+            KillAll = False
+        End If
+    Else
+        KillAll = True
+    End If
 End Function
 Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String, _
     Optional DownloadSource As GitBranch = master) As Boolean
@@ -402,7 +420,7 @@ Public Function ShellAndWaitMac(cmd As String) As String
     Dim result As String
     Dim scriptCmd As String ' Macscript command
     
-    scriptCmd = "do shell script """ & cmd & """"
+    scriptCmd = "do shell script " & Chr(34) & cmd & Chr(34) & Chr(34)
     result = MacScript(scriptCmd) ' result contains stdout, should you care
     'Debug.Print result
     ShellAndWaitMac = result
