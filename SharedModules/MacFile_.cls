@@ -22,27 +22,6 @@ Option Explicit
 ' =============================================================================
 
 
-'' *****************************************************************************
-''           CLASS ENUMERATIONS
-'' *****************************************************************************
-
-'' ===== MacFileGroup ==========================================================
-'' This enum should include the first-level keys in the "files" object in
-'' the config JSON file. Must be set to powers of two so we can use bitwise
-'' flags to combine groups.
-'
-'Public Enum MacFileGroup
-'    configFiles = 2 ^ 0     ' 1
-'    startupFiles = 2 ^ 1    ' 2
-'    macroFiles = 2 ^ 2      ' 4
-'    styleFiles = 2 ^ 3      ' 8
-'    assetFiles = 2 ^ 4      ' 16
-'    updateCheck = macroFiles + styleFiles
-'    wordDocs = startupFiles + macroFiles + styleFiles
-'    installFiles = startupFiles + macroFiles + styleFiles + assetFiles
-'    allFiles = configFiles + noConfig
-'End Enum
-
 
 ' *****************************************************************************
 '           CLASS VARIABLES
@@ -338,31 +317,45 @@ Public Sub NotifyComplete()
     MsgBox "All downloads are complete. Yay!"
 End Sub
 
-'' ===== Download ==============================================================
-'' Downloads the file, which must be posted at the URL returned by the
-'' DownloadURL property. Returns False if there was an error, and it notifies
-'' the user of the error in the function -- but should probably move this to a
-'' global error handler class at some point.
-'
+' ===== Download ==============================================================
+' Downloads the file, which must be posted at the URL returned by the
+' DownloadURL property. WinHttp lib not available for Mac, so that uses curl.
+
+' Returns False if there was an error, and it notifies the user of the error in
+' the function -- but should probably move this to a global error handler?
+
 Public Function Download() As Boolean
-
-    Dim logString As String
-    Dim strTmpPath As String
-    Dim strBashTmp As String
+    Dim strLogMsg As String
     Dim strErrMsg As String
-
-    strTmpPath = Paths_.TempPath & Application.PathSeparator & FullName
-
-    ' Mac can't use "MSXML2.XMLHTTP.3.0" lib, so we'll use curl
+    
+    ' ----- START -------------------------------------------------------------
+    strLogMsg = "Beginning download procedure."
+    WriteToLog strLogMessage
+    
+    ' ----- DELETE TEMP -------------------------------------------------------
+    ' Delete the files in the tmp dir if it exists (Kill checks if exists)
+    If SharedMacros_.KillAll(FullTempPath) = False Then
+        ' delete failed, return an error
+        strLogMsg = "Failed to delete file from FullTempPath. Aborting " & _
+            "download."
+        WriteToLog strLogMsg
+        strErrMsg = "Something is broken. Download failed."
+        MsgBox strErrMsg
+    
+    
+    ' ----- ARE WE CONNECTED TO THE INTERNET? ---------------------------------
     #If Mac Then
-        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr _
-            (strTmpPath, ":") - 1)), ":", "/")
+        ' FullTempPath returns OSX-style path, with colons. Bash shell commands
+        ' require forward slashes, and no root volume name.
+        Dim strBashTmp As String
+        strBashTmp = Replace(Right(FullTempPath, Len(FullTempPath) - (InStr _
+            (FullTempPath, ":") - 1)), ":", "/")
 
         'check for network
         If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") _
             <> 0 Then   'can't connect to internet
-            logString = "Tried update; unable to connect to network."
-            WriteToLog LogMessage:=logString
+            strLogMsg = "Tried update; unable to connect to network."
+            WriteToLog LogMessage:=strLogMsg
             strErrMsg = "There was an error trying to download the " & _
                 "Macmillan template." & vbNewLine & vbNewLine & "Please " & _
                 "check your internet connection or contact " & _
@@ -382,8 +375,8 @@ Public Function Download() As Boolean
                 ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & _
                     strBashTmp & " " & DownloadURL)
             ElseIf httpStatus = 404 Then            ' 404 = page not found
-                logString = "404 File not found. Cannot download file."
-                WriteToLog LogMessage:=logString
+                strLogMsg = "404 File not found. Cannot download file."
+                WriteToLog LogMessage:=strLogMsg
                 strErrMsg = "It looks like that file isn't available for " & _
                     "download." & vbNewLine & vbNewLine & "Please contact " & _
                     Organization_.HelpEmail & " for help."
@@ -392,9 +385,9 @@ Public Function Download() As Boolean
                 Download = False
                 Exit Function
             Else
-                logString = "Http status is " & httpStatus & ". Cannot " & _
+                strLogMsg = "Http status is " & httpStatus & ". Cannot " & _
                     "download file."
-                WriteToLog LogMessage:=logString
+                WriteToLog LogMessage:=strLogMsg
                 strErrMsg = "There was an error trying to download the " & _
                     "Macmillan templates." & vbNewLine & vbNewLine & "Please" _
                     & " check your internet connection or contact " & _
@@ -426,8 +419,8 @@ Public Function Download() As Boolean
                 ' Exit sub if error in connecting to website
                 If Err.Number <> 0 Then 'HTTP request is not OK
                     'Debug.Print WinHttpReq.Status
-                    logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
-                    WriteToLog LogMessage:=logString
+                    strLogMsg = Now & " -- could not connect to Confluence site: Error " & Err.Number
+                    WriteToLog LogMessage:=strLogMsg
                     strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
                         "Please check your internet connection or contact workflows@macmillan.com for help."
                     MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FullName & ")"
@@ -450,16 +443,16 @@ Public Function Download() As Boolean
             Set oStream = Nothing
             Set WinHttpReq = Nothing
         ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
-            logString = Now & " -- 404 File not found. Cannot download file."
-            WriteToLog LogMessage:=logString
+            strLogMsg = Now & " -- 404 File not found. Cannot download file."
+            WriteToLog LogMessage:=strLogMsg
             strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
                 "Please contact workflows@macmillan.com for help."
             MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FullName & ")"
             Download = False
             Exit Function
         Else
-            logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
-            WriteToLog LogMessage:=logString
+            strLogMsg = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
+            WriteToLog LogMessage:=strLogMsg
             strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
                 "Please check your internet connection or contact workflows@macmillan.com for help."
             MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FullName & ")"
@@ -470,8 +463,8 @@ Public Function Download() As Boolean
 
     'Error if download was not successful
     If IsItThere(strTmpPath) = False Then
-        logString = Now & " -- " & FullName & " file download to Temp was not successful."
-        WriteToLog LogMessage:=logString
+        strLogMsg = Now & " -- " & FullName & " file download to Temp was not successful."
+        WriteToLog LogMessage:=strLogMsg
         strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
             "Please contact workflows@macmillan.com for assitance."
         MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FullName & ")"
@@ -479,8 +472,8 @@ Public Function Download() As Boolean
         On Error GoTo 0
         Exit Function
     Else
-        logString = Now & " -- " & FullName & " file download to Temp was successful."
-        WriteToLog LogMessage:=logString
+        strLogMsg = Now & " -- " & FullName & " file download to Temp was successful."
+        WriteToLog LogMessage:=strLogMsg
     End If
 
 
@@ -488,8 +481,8 @@ Public Function Download() As Boolean
     'If file exists already, log it and delete it
     If IsItThere(strFinalPath) = True Then
 
-        logString = Now & " -- Previous version file in final directory."
-        WriteToLog LogMessage:=logString
+        strLogMsg = Now & " -- Previous version file in final directory."
+        WriteToLog LogMessage:=strLogMsg
 
         ' get file extension
         Dim strExt As String
@@ -504,9 +497,9 @@ Public Function Download() As Boolean
 
         ' Test if dir is read only
         If IsReadOnly(FinalDir) = True Then ' Dir is read only
-            logString = Now & " -- old " & FullName & " file is read only, can't delete/replace. " _
+            strLogMsg = Now & " -- old " & FullName & " file is read only, can't delete/replace. " _
                 & "Alerting user."
-            WriteToLog LogMessage:=logString
+            WriteToLog LogMessage:=strLogMsg
             strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
                 "@macmillan.com for help."
             MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FullName & ")"
@@ -518,8 +511,8 @@ Public Function Download() As Boolean
                 Kill strFinalPath
 
                 If Err.Number = 70 Then         'File is open and can't be replaced
-                    logString = Now & " -- old " & FullName & " file is open, can't delete/replace. Alerting user."
-                    WriteToLog LogMessage:=logString
+                    strLogMsg = Now & " -- old " & FullName & " file is open, can't delete/replace. Alerting user."
+                    WriteToLog LogMessage:=strLogMsg
                     strErrMsg = "Please close all other Word documents and try again."
                     MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FullName & ")"
                     Download = False
@@ -529,14 +522,14 @@ Public Function Download() As Boolean
             On Error GoTo 0
         End If
     Else
-        logString = Now & " -- No previous version file in final directory."
-        WriteToLog LogMessage:=logString
+        strLogMsg = Now & " -- No previous version file in final directory."
+        WriteToLog LogMessage:=strLogMsg
     End If
 
     'If delete was successful, move downloaded file to final directory
     If IsItThere(strFinalPath) = False Then
-        logString = Now & " -- Final directory clear of " & FullName & " file."
-        WriteToLog LogMessage:=logString
+        strLogMsg = Now & " -- Final directory clear of " & FullName & " file."
+        WriteToLog LogMessage:=strLogMsg
 
         ' move template to final directory
         Name strTmpPath As strFinalPath
@@ -556,8 +549,8 @@ Public Function Download() As Boolean
         #End If
 
     Else
-        logString = Now & " -- old " & FullName & " file not cleared from Final directory."
-        WriteToLog LogMessage:=logString
+        strLogMsg = Now & " -- old " & FullName & " file not cleared from Final directory."
+        WriteToLog LogMessage:=strLogMsg
         strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
             "Please close all other Word documents and try again, or contact workflows@macmillan.com."
         MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FullName & ")"
@@ -568,11 +561,11 @@ Public Function Download() As Boolean
 
     'If move was successful, yay! Else, :(
     If IsItThere(strFinalPath) = True Then
-        logString = Now & " -- " & FullName & " file successfully saved to final directory."
-        WriteToLog LogMessage:=logString
+        strLogMsg = Now & " -- " & FullName & " file successfully saved to final directory."
+        WriteToLog LogMessage:=strLogMsg
     Else
-        logString = Now & " -- " & FullName & " file not saved to final directory."
-        WriteToLog LogMessage:=logString
+        strLogMsg = Now & " -- " & FullName & " file not saved to final directory."
+        WriteToLog LogMessage:=strLogMsg
         strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
             "Please cotact workflows@macmillan.com for assistance."
         MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FullName & ")"
