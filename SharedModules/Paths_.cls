@@ -57,7 +57,6 @@ Private p_TempPath As String
 
 Public Property Get FullJSON() As Dictionary
     If p_FullJSON Is Nothing Then
-        Debug.Print "Nothing"
         Dim strPath As String
         strPath = FullConfigPath
         Dim strJSON As String
@@ -239,7 +238,7 @@ Private Property Get HomeDir() As String
     If p_HomeDir = vbNullString Then
         p_HomeDir = RootDir & Application.PathSeparator & PathsJSON("home")
     End If
-    CheckDir (p_HomeDir)
+    CheckDir MyDir:=p_HomeDir, IsHidden:=True
     HomeDir = p_HomeDir
 End Property
 
@@ -273,7 +272,7 @@ Public Sub ClearPaths()
     p_LocalPath = vbNullString
     p_LogsDir = vbNullString
     p_RootDir = vbNullString
-    p_TemplPath = vbNullString
+    p_TempPath = vbNullString
 End Sub
 ' *****************************************************************************
 '       PRIVATE METHODS
@@ -285,10 +284,13 @@ End Sub
 ' root project dir). Making it its own method (with a pretty generic name) so
 ' it's easy to add additional checks later if we need to.
 
-Private Sub CheckDir(MyDir As String)
+Private Sub CheckDir(MyDir As String, Optional IsHidden As Boolean = False)
     On Error GoTo CheckDirError
     If IsItThere(MyDir) = False Then
         MkDir MyDir
+    End If
+    If IsHidden = True Then
+        SetAttr MyDir, vbHidden
     End If
     On Error GoTo 0
     Exit Sub
