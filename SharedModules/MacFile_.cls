@@ -22,7 +22,6 @@ Option Explicit
 ' =============================================================================
 
 
-
 ' *****************************************************************************
 '           CLASS VARIABLES
 ' *****************************************************************************
@@ -43,6 +42,138 @@ Private p_Name As String
 
 
 ' *****************************************************************************
+'           ERROR HANDLING STUFF
+' *****************************************************************************
+' Technically class methods (which are listed farther down) but it's easier to
+' maintain close to the error number enum, which has to appear above other
+' procedures. May move to its own class one day.
+
+' ===== MacFileErrors =========================================================
+' Each error we raise anywhere in this class should be included here. Note that
+' error numbers 0 - 512 are reserved for system errors. Include property or
+' method name in enum just to be clear for debugging.
+
+Private Enum MacFileError
+    MacFileErrGeneral = 20000       ' Not sure if we'll need, but here it is.
+    GroupNameErr1 = 20001
+    GroupNameErr2 = 20002
+    SpecificFileErr1 = 20003
+    SpecificFileErr2 = 20004
+    DeleteFileErr1 = 20005
+    DownloadErr1 = 20006
+    DownloadErr2 = 20007
+    DownloadErr3 = 20008
+    DownloadErr4 = 20009
+    DownloadErr5 = 20010
+    DownloadErr6 = 20011
+    DownloadErr7 = 20012
+    DownloadErr8 = 20013
+    DownloadErr9 = 20014
+End Enum
+
+' ===== ErrorChecker ==========================================================
+' Send all errors here, to make tracking/maintaining error handling easier.
+' Be sure to add the error to the MacFileErrors enum.
+'
+' USE: ErrorChecker() returns False if error is handled; procedure can continue
+' Each member procedure in the class should have the following:
+'''
+' On Error GoTo MemberName[Let | Set | Get]Error
+'   <...code...>
+' MemberName[Let | Set | Get]Finish:
+'   <...any cleanup code...>
+'   On Error GoTo 0
+'   Exit [Property | Sub | Function]
+' MemberName[Let | Set | Get]Error:
+'    If ErrorChecker(Err) = False Then
+'        Resume
+'    Else
+'        Resume MemberName[Let | Set | Get]Finish
+'    End If
+' End [Property | Sub | Function]
+
+Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
+    Dim strDescription As String
+    Dim strErrMessage As String
+    Dim blnNotifyUser As Boolean
+    
+    ' ----- Set defaults ------------------------------------------------------
+    ' Only need to change in Select statement below if want to set either to
+    ' False. For now at least, we'll have ErrorChecker = blnNotifyUser too.
+    blnNotifyUser = True
+    
+    ' ----- Check for errors --------------------------------------------------
+    ' Make sure we actually have an error, cuz you never know.
+    If objError.Number > 0 Then
+    
+    ' ----- Handle specific errors --------------------------------------------
+    ' Each case should be a MacFileError enum. Even if we aren't doing anything
+    ' to fix the error, still enter the following:
+    '   Err.Source "MacFile_.<MethodName>"
+    '   strDescription = "Description of the error for the log."
+    '   strErrMessage = "Message for the user if we're notifying them."
+        Select Case objError.Number
+            Case Is < 513
+                ' Errors 0 to 512 are system errors
+                strDescription = Err.Description
+                strErrMessage = "Something unexpected happened. Please click" _
+                    & "OK to exit." & vbNewLine & vbNewLine & "Contact " & _
+                    Organization_.HelpEmail & " if you need help."
+            Case MacFileError.GroupNameErr1
+                objError.Source = "MacFile_.GroupName"
+                strDescription = "Invalid value for GroupName property."
+                strErrMessage = "The value you've entered for the GroupName " _
+                    & "property is not valid. Make sure you only use file " & _
+                    "groups that are in the config.json file."
+            Case MacFileError.GroupNameErr2
+                objError.Source = "MacFile_.GroupName"
+                strDescription = "GroupName property has not been Let."
+                strErrMessage = "You can't Get the GroupName property before" _
+                    & " it has been Let. Try the MacFile_.AssignFile method " _
+                    & "to create a new object in this class."
+            Case MacFileError.SpecificFileErr1
+                objError.Source = "MacFile_.SpecificFile"
+                strDescription = "Invalid value for SpecificFile property."
+                strErrMessage = "The you've entered an invalid value for the" _
+                    & " SpecificFile property. Make sure you only use " & _
+                    "specific file types that are in the config.json file."
+            Case MacFileError.SpecificFileErr2
+                objError.Source "MacFile_.SpecificFile"
+                strDescription = "SpecificFile property has not been Let."
+                strErrMessage = "You can't Get the SpecificFile property " & _
+                    "before it has been Let. Try the MacFile_.AssignFile " & _
+                    "method to create a new object in this class."
+            Case MacFileError.DeleteFileErr1
+                objError.Source "MacFile_.DeleteFile"
+                strDescription = "File is currently executing code."
+                strErrMessage = "The file you are trying to delete is " & _
+                    "currently executing macro code."
+            Case Else
+                objError.Source "MacFile_"
+                strDescription = "Undocumented error number."
+                strErrMessage = "Not sure what's going on here..."
+        End Select
+    
+    Else
+        objError.Source = "MacFile_"
+        strDescription = "Everything's A-OK. Why are you even reading this?"
+        blnNotifyUser = False
+    End If
+    
+    WriteToLog objError.Source & " " & objError.Number & ": " & strDescription
+    
+    If blnNotifyUser = True Then
+        MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
+            "Macmillan Tools Error: " & objError.Number
+    End If
+    
+    objError.Clear
+    ErrorChecker = blnNotifyUser
+
+End Function
+
+
+' *****************************************************************************
 '           PUBLIC PROPERTIES
 ' *****************************************************************************
 
@@ -51,18 +182,40 @@ Private p_Name As String
 ' JSON file, grouping files with similar purposes together.
 
 Public Property Let GroupName(GroupName_value As String)
+    On Error GoTo GroupNameLetError
     If Paths_.FullJSON("files").Exists(GroupName_value) Then
         p_GroupName = GroupName_value
     Else
-        MsgBox "That's not a valid option for the GroupName property."
+        Err.Raise MacFileError.GroupNameErr1
+    End If
+GroupNameLetFinish:
+    On Error GoTo 0
+    Exit Property
+
+GroupNameLetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume GroupNameLetFinish
     End If
 End Property
 
 Public Property Get GroupName() As String
+    On Error GoTo GroupNameGetError
     If p_GroupName <> vbNullString Then
         GroupName = p_GroupName
     Else
-        MsgBox "You must set the GroupName property first!"
+        Err.Raise MacFileError.GroupNameErr2
+    End If
+GroupNameGetFinish:
+    On Error GoTo 0
+    Exit Property
+
+GroupNameGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume GroupNameGetFinish
     End If
 End Property
 
@@ -75,60 +228,127 @@ End Property
 ' The SpecificFile property needs to be set before you can access other info.
 
 Public Property Let SpecificFile(SpecificFile_value As String)
+    On Error GoTo SpecificFileLetError
     If GroupJSON.Exists(SpecificFile_value) Then
         p_SpecificFile = SpecificFile_value
     Else
-        MsgBox "That's not a valid option for this property."
+        Err.Raise MacFileError.SpecificFileErr1
+    End If
+SpecificFileLetFinish:
+    On Error GoTo 0
+    Exit Property
+
+SpecificFileLetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume SpecificFileLetFinish
     End If
 End Property
 
 Public Property Get SpecificFile() As String
+    On Error GoTo SpecifiFileGetError
     If p_SpecificFile <> vbNullString Then
         SpecificFile = p_SpecificFile
     Else
-        MsgBox "You must set the SpecificFile property first!"
+        Err.Raise MacFileError.SpecificFileErr2
+    End If
+SpecificFileGetFinish:
+    On Error GoTo 0
+    Exit Property
+
+SpecificFileGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume SpecificFileGetFinish
     End If
 End Property
 
 ' ===== FullName ==============================================================
-' Full file name including extension, but not any path info
+' Full file name including extension, but not any path info. Read only.
 
 Public Property Get FullName() As String
+    On Error GoTo FullNameGetError
     If p_FullName = vbNullString Then
         p_FullName = Name & "." & Extension
     End If
     FullName = p_FullName
+FullNameGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+FullNameGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume FullNameGetFinish
+    End If
 End Property
 
 ' ===== FullLocalPath =========================================================
 ' Returns string of the full path to the file, including root and full file
-' name with extension.
+' name with extension. Read only.
 
 Public Property Get FullLocalPath() As String
+    On Error GoTo FullLocalPathGetError
     If p_FullLocalPath = vbNullString Then
         p_FullLocalPath = Paths_.LocalPath(GroupName) & _
             Application.PathSeparator & FullName
     End If
     FullLocalPath = p_FullLocalPath
+FullLocalPathGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+FullLocalPathGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume FullLocalPathGetFinish
+    End If
 End Property
 
 ' ===== Exists ================================================================
 ' Tests whether the file exists at its FullLocalPath. No private variable; we
-' always want to check in case it's deleted at runtime.
+' always want to check in case it's deleted at runtime. Read only.
 
 Public Property Get Exists() As Boolean
+    On Error GoTo ExistsGetError
     Exists = SharedMacros_.IsItThere(Path:=FullLocalPath)
+ExistsGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+ExistsGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume ExistsGetFinish
+    End If
 End Property
 
 ' ===== Running ===============================================================
 ' Tests whether the file in question is the one that's currently running this
-' code, so we don't, like, delete ourselves or something. Always check.
+' code, so we don't, like, delete ourselves or something. Always check. Read
+' only.
 
 Public Property Get Running() As Boolean
+    On Error GoTo RunningGetError
     If ThisDocument.Name = FullName Then
         Running = True
     Else
         Running = False
+    End If
+RunningGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+RunningGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume RunningGetFinish
     End If
 End Property
 
@@ -136,9 +356,10 @@ End Property
 ' Checks if the local file version number is up to date with the config file
 ' version number. Only returns False if the local version is LOWER; if the
 ' local version is HIGHER than the config, returns True. Compares each part of
-' the version number (Major.Minor.Patch) in turn.
+' the version number (Major.Minor.Patch) in turn. Read only.
 
 Public Property Get UpToDate() As Boolean
+    On Error GoTo UpToDateGetError
     If ConfigVersion("major") > LocalVersion("major") Then
         UpToDate = False
     ElseIf ConfigVersion("minor") > LocalVersion("minor") Then
@@ -147,6 +368,16 @@ Public Property Get UpToDate() As Boolean
         UpToDate = False
     Else
         UpToDate = True
+    End If
+UpToDateGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+UpToDateGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume UpToDateGetFinish
     End If
 End Property
 
@@ -158,66 +389,123 @@ End Property
 ' ===== GroupJSON =============================================================
 ' Dictionary object of the GroupName level in the JSON file. Not entirely sure
 ' we definitely need this here, but then I referenced it in two places so I
-' figured why not.
+' figured why not. Read only.
 
 Private Property Get GroupJSON() As Dictionary
+    On Error GoTo GroupJSONGetError
     If p_GroupJSON Is Nothing Then
         Set p_GroupJSON = Paths_.FullJSON("files")(GroupName)
     End If
     Set GroupJSON = p_GroupJSON
+GroupJSONGetFinish:
+    On Error GoTo 0
+    Exit Property
+
+GroupJSONGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume GroupJSONGetFinish
+    End If
 End Property
 
 ' ===== FileJSON ==============================================================
-' Dictionary object of the info for the specific file.
+' Dictionary object of the info for the specific file. Read only.
 
 Private Property Get FileJSON() As Dictionary
+    On Error GoTo FileJSONGetError
     If p_FileJSON Is Nothing Then
         Set p_FileJSON = GroupJSON(SpecificFile)
     End If
     Set FileJSON = p_FileJSON
+FileJSONGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+FileJSONGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume FileJSONGetFinish
+    End If
 End Property
 
 ' ===== Name ==================================================================
 ' Name of file as a string, WITHOUT extension. Keep name and extension separate
 ' because some things (like log file names) require just the name w/o extension.
+' Read only.
 
 Private Property Get Name() As String
+    On Error GoTo NameGetError
     If p_Name = vbNullString Then
         p_Name = FileJSON("fileName")
     End If
     Name = p_Name
+NameGetFinish:
+    On Error GoTo 0
+    Exit Property
+
+NameGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume NameGetFinish
+    End If
 End Property
 
 ' ===== Extension =============================================================
-' File extension as a string, NOT including period.
+' File extension as a string, NOT including period. Read only.
 
 Private Property Get Extension() As String
+    On Error GoTo ExtensionGetError
     If p_Extension = vbNullString Then
         p_Extension = FileJSON("extension")
     End If
     Extension = p_Extension
+ExtensionGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+ExtensionGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume ExtensionGetFinish
+    End If
 End Property
 
 ' ===== ConfigVersion ==========================================================
 ' Version of the file as noted in the config.JSON file. Note that Patch can be
-' null but Major and Minor cannot.
+' null but Major and Minor cannot. Read only.
 
 Private Property Get ConfigVersion() As Dictionary
+    On Error GoTo ConfigVersionGetError
     If p_ConfigVersion Is Nothing Then
         Set p_ConfigVersion = FileJSON("version")
     End If
     Set ConfigVersion = p_ConfigVersion
+ConfigVersionGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+ConfigVersionGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume ConfigVersionGetFinish
+    End If
 End Property
 
 ' ===== LocalVersion ==========================================================
 ' For Word documents/templates: version of the file as noted in the Custom
-' Document Properties. Note, stored as three separate properties for Major,
-' Minor, and Patch. Patch may be null. Document must be open (though might be a
-' way to manage this by unzipping the file and reading XML directly?).
+' Document Properties. Stored as three separate properties for Major, Minor,
+' and Patch. Patch may be null. Document must be open (though might be a way to
+' manage this by unzipping the file and reading XML directly?). Read only.
 
 ' Will need to create a Property Let for Utilities updating stuff.
 
 Private Property Get LocalVersion() As Dictionary
+    On Error GoTo LocalVersionGetError
     If p_LocalVersion Is Nothing Then
         ' Word files: .docx, .dotx, .docm, .dotm
         If Left(Extension, 2) = "do" And _
@@ -238,28 +526,60 @@ Private Property Get LocalVersion() As Dictionary
         End If
     End If
     Set LocalVersion = p_LocalVersion
+LocalVersionGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+LocalVersionGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume LocalVersionGetFinish
+    End If
 End Property
 
 ' ===== FullLogPath ===========================================================
-' Full path to the log file, including file name and extension.
+' Full path to the log file, including file name and extension. Read only.
 
 Private Property Get FullLogPath() As String
+    On Error GoTo FullLogPathGetError
     If p_FullLogPath = vbNullString Then
         p_FullLogPath = Paths_.LocalPath(GroupName:="logFiles") & _
             Application.PathSeparator & Name & "_updates.log"
     End If
     FullLogPath = p_FullLogPath
+FullLogPathGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+FullLogPathGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume FullLogPathGetFinish
+    End If
 End Property
 
 ' ===== FullTempPath ==========================================================
 ' Full path to the file in the temp dir. NOT verifying if it's there, because
-' we need to reference this before we can create it with ParseDoc, maybe.
+' we need to reference this before we download it. Read only.
 
 Private Property Get FullTempPath() As String
+    On Error GoTo FullTempPathGetError
     If p_FullTempPath = vbNullString Then
         p_FullTempPath = Paths_.TempPath & Application.PathSeparator & FullName
     End If
     FullTempPath = p_FullTempPath
+FullTempPathGetFinish:
+    On Error GoTo 0
+    Exit Property
+    
+FullTempPathGetError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume FullTempPathGetFinish
+    End If
 End Property
 
 
@@ -274,12 +594,25 @@ End Property
 ' needing finer control we can add that instead.
 
 Public Sub ClearFile()
+    On Error GoTo ClearFileError
+
     p_Extension = vbNullString
     p_FullLogPath = vbNullString
     p_FullLocalPath = vbNullString
     p_FullName = vbNullString
     p_FullTempPath = vbNullString
     p_Name = vbNullString
+    
+ClearFileFinish:
+    On Error GoTo 0
+    Exit Sub
+    
+ClearFileError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume ClearFileFinish
+    End If
 End Sub
 
 ' ===== AssignFile ============================================================
@@ -287,20 +620,43 @@ End Sub
 ' properties must be set. To make this easier, this method does both at once.
 
 Public Sub AssignFile(strGroupName As String, strSpecificFileType As String)
+    On Error GoTo AssignFileError
+
     GroupName = strGroupName
     SpecificFile = strSpecificFileType
+
+AssignFileFinish:
+    On Error GoTo 0
+    Exit Sub
+
+AssignFileError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume AssignFileFinish
+    End If
 End Sub
 
 ' ===== DeleteFile ============================================================
 ' Deletes the file in question, as long as it's not currently running this code
+' and KillAll() checks if it exists so we don't have to here.
 
 Public Sub DeleteFile()
-    If Exists = True Then
-        If Running = False Then
-            Kill FullLocalPath
-        Else
-            MsgBox "You can't delete a file that is running a macro."
-        End If
+    On Error GoTo DeleteFileError
+    If Running = False Then
+        SharedMacros_.KillAll FullLocalPath
+    Else
+        Err.Raise MacFileError.DeleteFileErr1
+    End If
+DeleteFileFinish:
+    On Error GoTo 0
+    Exit Sub
+
+DeleteFileError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume DeleteFileFinish
     End If
 End Sub
 
@@ -314,7 +670,18 @@ End Sub
 ' single file but which will notify for all downloads.
 
 Public Sub NotifyComplete()
+    On Error GoTo NotifyCompleteError
     MsgBox "All downloads are complete. Yay!"
+NotifyCompleteFinish:
+    On Error GoTo 0
+    Exit Sub
+
+NotifyCompleteError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume NotifyCompleteFinish
+    End If
 End Sub
 
 ' ===== Download ==============================================================
@@ -325,8 +692,8 @@ End Sub
 ' the function -- but should probably move this to a global error handler?
 
 Public Function Download() As Boolean
+    On Error GoTo DownloadError
     Dim strLogMsg As String
-    Dim strErrMsg As String
     
     ' ----- START -------------------------------------------------------------
     strLogMsg = "Beginning download procedure."
@@ -336,12 +703,8 @@ Public Function Download() As Boolean
     ' Delete the files in the tmp dir if it exists (Kill checks if exists)
     If SharedMacros_.KillAll(FullTempPath) = False Then
         ' delete failed, return an error
-        strLogMsg = "Failed to delete file from FullTempPath. Aborting " & _
-            "download."
-        WriteToLog strLogMsg
-        strErrMsg = "Something is broken. Download failed."
-        MsgBox strErrMsg
-    
+        Err.Raise MacFileError.DownloadErr1
+    End If
     
     ' ----- ARE WE CONNECTED TO THE INTERNET? ---------------------------------
     #If Mac Then
@@ -587,7 +950,17 @@ Public Function Download() As Boolean
     End If
 
     Download = True
-
+DownloadFinish:
+    On Error GoTo 0
+    Exit Function
+    
+DownloadError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Download = False
+        Resume DownloadFinish
+    End If
 End Function
 
 
@@ -604,6 +977,7 @@ End Function
 ' indicate which version. Maybe two properties?
 
 Private Function StringVersion(dictVersion As Dictionary) As String
+    On Error GoTo StringVersionError
     Dim strVersionReturn As String
     strVersionReturn = CStr(dictVersion("major")) & "." & _
         CStr(dictVersion("minor"))
@@ -613,6 +987,16 @@ Private Function StringVersion(dictVersion As Dictionary) As String
     End If
 
     StringVersion = strVersionReturn
+StringVersionFinish:
+    On Error GoTo 0
+    Exit Function
+    
+StringVersionError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume StringVersionFinish
+    End If
 End Function
 
 ' ===== WriteToLog ============================================================
@@ -621,6 +1005,7 @@ End Function
 ' more than just download logs.
 
 Private Sub WriteToLog(LogMessage As String)
+    On Error GoTo WriteToLogError
     Dim strLogMessage As String
     Dim FileNum As Integer
 
@@ -628,8 +1013,18 @@ Private Sub WriteToLog(LogMessage As String)
     FileNum = FreeFile ' next file number
 
     Open LogFile For Append As #FileNum ' creates the file if it doesn't exist
-    Print #FileNum, strLogMessage ' write information at the end of the text file
+    Print #FileNum, strLogMessage ' write information to end of the text file
     Close #FileNum ' close the file
+WriteToLogFinish:
+    On Error GoTo 0
+    Exit Sub
+
+WriteToLogError:
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume WriteToLogFinish
+    End If
 End Sub
 
 

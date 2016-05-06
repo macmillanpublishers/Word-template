@@ -1,8 +1,34 @@
-# 1. Connection error
-There was an error connecting to Confluence. User asked to check their internet connection.
+# General strategy
+Errors are handled within each class in an `ErrorChecker` method that takes the VBA `Err` object as an argument and sorts through the `Err.Number` property with a `Select` block. Note that `Err.Number` is a Long data type, and error numbers 0 to 512 are reserved for built-in system errors. Custom errors can be numbered 513 to 65,535. When users need to be notified of the error, this is done through the `ErrorChecker` method.
 
-#  2. Http status [number]
-Connection was OK but http status <> 200. If http status = 404, file not found, file may be missing from Confluence Word Template downloads - production page.
+Our custom error numbers start at 20000, to avoid conflicts with the custom error numbers used in the [VBA-tools](https://github.com/VBA-tools) modules, which start at 10000. The second significant digit (i.e., second from the left) indicates the class module the error is listed in. Thus, all custom errors for the `MacFile_` class start at 20000, errors for the `Paths_` class start at 21000, and so on.
+
+ Custom error numbers are assigned via a `Private Enum` at the top of each module. The item's name should be the name of the procedure that produced it, followed by "Err" and an integer that increments for that member (i.e. the second custom error for the `MacFile_.Download` method is `DownloadErr2 = 20007`.
+
+We may move to error handling to a single class in the future.
+
+# Custom error numbers and descriptions
+| Error Number | Class | Enum | Description |
+| ------------ | ----- | ------ | ----------- |
+| 20001 | `MacFile_` | `GroupNameErr1` | The value entered for the `GroupName` property is not present in the `config.json` file, and therefore the `Property Let` procedure failed. The `GroupName` must match one of the objects in the `"files"` object. |
+| 20002 | `MacFile_` | `GroupNameErr2` | The `Property Get` procedure was attempted before the `Property Let` procedure had been executed. Using the `AssignFile` method to create new `MacFile_` objects should solve this problem. |
+| 20003 | `MacFile_` | `SpecificFileErr1` | The value entered for the `SpecificFile` property is not present in the `config.json` file, and therefore the `Property Let` procedure failed. The `SpecificFile` must match one of the objects in the `GroupName` object. |
+| 20004 | `MacFile_` | `SpecificFileErr2` | The `Property Get` procedure was attempted before the `Property Let` procedure had been executed. Using the `AssignFile` method to create new `MacFile_` objects should solve this problem. |
+| 20005 | `MacFile_` | `DeleteFileErr1` | Attempted to delete file that was currently executing code, so `Delete` was aborted. |
+| 20006 | `MacFile_` | `DownloadErr1` | Failed to delete file in `FullTempPath` before attempting download. Download aborted. |
+| 20007 | `MacFile_` | `DownloadErr2` |  |
+| 20008 | `MacFile_` | `DownloadErr3` |  |
+| 20009 | `MacFile_` | `DownloadErr4` |  |
+| 20010 | `MacFile_` | `DownloadErr5` |  |
+| 20011 | `MacFile_` | `DownloadErr6` |  |
+| 20012 | `MacFile_` | `DownloadErr7` |  |
+| 20013 | `MacFile_` | `DownloadErr8` |  |
+| 20014 | `MacFile_` | `DownloadErr9` |  |
+
+
+
+
+Http status Connection was OK but http status <> 200. If http status = 404, file not found, file may be missing from Confluence Word Template downloads - production page.
 
 # 3. Download failed
 Connection and http status are OK but file doesn't exist in temp directory.
@@ -20,4 +46,7 @@ No errors triggered earlier but new file is not saved in final directory.
 HTTP request returned 404: Page not found. Either file isn't available on Confluence or Confluence URL is wrong.
 
 # 8: Permission denied
-User needs admin permission to write to final template directory. If Mac, direct user to download from Self Service. If PC, contact IT and have them fix–users should have read/write permission to Startup and C:\ProgramDat
+User needs admin permission to write to final template directory. If Mac, direct user to download from Self Service. If PC, contact IT and have them fix–users should have read/write permission to Startup and C:\ProgramData
+
+# 9: Temp file delete failed
+Failed to delete previous file in temp dir before beginning download.
