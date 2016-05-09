@@ -130,6 +130,7 @@ End Function
 Public Function KillAll(Path As String) As Boolean
     ' Deletes file (or folder?) on PC or Mac. Mac can't use Kill() if file name
     ' is longer than 32 char. Returns true if successful.
+    On Error GoTo KillAllError
     If IsItThere(Path) = True Then
         ' Can't delete file if it's installed as an add-in
         If IsInstalledAddIn(Path) = True Then
@@ -156,6 +157,27 @@ Public Function KillAll(Path As String) As Boolean
     Else
         KillAll = True
     End If
+KillAllFinish:
+    On Error GoTo 0
+    Exit Function
+    
+KillAllError:
+    Dim strErrMsg As String
+    Select Case Err.Number
+        Case 70     ' File is open
+            strErrMsg = "Please close all other Word documents and try again."
+            MsgBox strErrMsg, vbCritical, "Macmillan Tools Error"
+            KillAll = False
+            Resume KillAllFinish
+        Case Else
+            strErrMsg = "Unexpected error. Please contact " & _
+                Organization_.HelpEmail & " for assistance." & vbNewLine & _
+                vbNewLine & "Error deleting " & Path & vbNewLine & _
+                Err.Number & ": " & Err.Description
+            MsgBox strErrMsg, vbCritical, "Macmillan Tools Error"
+            KillAll = False
+            Resume KillAllFinish
+        End Select
 End Function
 
 Public Function IsInstalledAddIn(FileName As String) As Boolean
