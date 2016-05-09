@@ -69,6 +69,7 @@ Private Enum MacFileError
     DownloadErr7 = 20012
     DownloadErr8 = 20013
     DownloadErr9 = 20014
+    FullLocalPathErr1 = 20015
 End Enum
 
 ' ===== ErrorChecker ==========================================================
@@ -100,8 +101,9 @@ Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
 
     ' ----- Set defaults ------------------------------------------------------
     ' Only need to change in Select statement below if want to set either to
-    ' False. For now at least, we'll have ErrorChecker = blnNotifyUser too.
+    ' False.
     blnNotifyUser = True
+    ErrorChecker = True
     strHelpContact = "Email " & Organization_.HelpEmail & " if you need help."
 
     ' ----- Check for errors --------------------------------------------------
@@ -176,18 +178,36 @@ Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
                     & " trying to download: " & Me.FullName & vbNewLine & _
                     objError.Source & ": " & objError.Description & vbNewLine _
                     & vbNewLine & strHelpContact
-                ' Need to get Source as passed in object first
+                ' Need to get Source as passed in object first, so do this last
                 objError.Source = "MacFile_.Download " & Me.FullName
+            Case MacFileError.DownloadErr5
+                objError.Source = "MacFile_.Download " & Me.FullName
+                strDescription = "File download failed."
+                strErrMessage = "Download of " & Me.FullName & " failed. " & _
+                    strHelpContact
+            Case MacFileError.DownloadErr6
+                objError.Source = "MacFile_.Download " & Me.FullName
+                strDescription = "File in final install location could not " _
+                    & "be deleted. If it was because the file was open, the " _
+                    & "user was notified."
+                blnNotifyUser = False
+            Case MacFileError.FullLocalPathErr1
+                objError.Source = "MacFile_.FullLocalPath " & Me.FullName
+                strDescription = "Final dir for file is read-only."
+                strErrMessage = "The folder you are trying to access, " & _
+                    Me.FullLocalPath & ", is read-only. " & strHelpContact
             Case Else
-                objError.Source "MacFile_.? " & Me.FullName
-                strDescription = "Undocumented error number."
-                strErrMessage = "Not sure what's going on here..."
+                objError.Source = "MacFile_.? " & Me.FullName
+                strDescription = "Undocumented error number - " & _
+                    objError.Number & ": " & objError.Description
+                strErrMessage = "Not sure what's going on here." & strHelpEmail
         End Select
 
     Else
         objError.Source = "MacFile_ " & Me.FullName
         strDescription = "Everything's A-OK. Why are you even reading this?"
         blnNotifyUser = False
+        ErrorChecker = False
     End If
 
     WriteToLog objError.Source & " - " & objError.Number & ": " & _
@@ -199,8 +219,6 @@ Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
     End If
 
     objError.Clear
-    ErrorChecker = blnNotifyUser
-
 End Function
 
 
@@ -326,6 +344,10 @@ Public Property Get FullLocalPath() As String
     If p_FullLocalPath = vbNullString Then
         p_FullLocalPath = Paths_.LocalPath(GroupName) & _
             Application.PathSeparator & FullName
+        ' Check if final dir is read-only
+        If SharedMacros_.IsReadOnly(p_FullLocalPath) = True Then
+            Err.Raise FullLocalPathErr1
+        End If
     End If
     FullLocalPath = p_FullLocalPath
 FullLocalPathGetFinish:
@@ -723,9 +745,15 @@ End Sub
 ' the function -- but should probably move this to a global error handler?
 
 Public Function Download() As Boolean
+    ' DownloadError section triggers ErrorChecker function. If ErrorChecker
+    ' returns True, user is notified, Download = False, & this function exits.
+    ' ErrorChecker function writes error info to log, so don't need to here.
+    ' Custom errors introduced through Err.Raise must be added to MacFileError
+    ' enum AND to ErrorChecker Select statement.
     On Error GoTo DownloadError
     ' Mac/PC variables
     Dim httpStatus As Long
+    Dim strLogMsg As String
     
     ' Mac variables
     Dim strBashTmp As String
@@ -738,13 +766,17 @@ Public Function Download() As Boolean
     WriteToLog "Beginning download procedure."
     
     ' ----- DELETE TEMP -------------------------------------------------------
-    ' Delete the files in the tmp dir if it exists (Kill checks if exists)
+    ' Delete the file in the tmp dir if it exists (KillAll checks if exists)
+    strLogMsg = "Temp dir clear of file."
     If SharedMacros_.KillAll(FullTempPath) = False Then
         ' delete failed, return an error
         Err.Raise MacFileError.DownloadErr1
+    Else
+        WriteToLog strLogMsg
     End If
     
     ' ----- ARE WE CONNECTED TO THE INTERNET? ---------------------------------
+    strLogMsg = "Internet connection confirmed."
     #If Mac Then
         ' FullTempPath returns OSX-style path, with colons. Bash shell commands
         ' require forward slashes, and no root volume name.
@@ -753,6 +785,8 @@ Public Function Download() As Boolean
         If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 _
             Then   'can't connect to internet
             Err.Raise MacFileError.DownloadErr2
+        Else
+            WriteToLog strLogMsg
         End If
     #Else
         Set httpRequest = CreateObject("WinHttp.WinHttpRequest.5.1")
@@ -760,10 +794,13 @@ Public Function Download() As Boolean
         httpRequest.Send
         If httpRequest.Status <> 200 Then
             Err.Raise MacFileError.DownloadErr2
+        Else
+            WriteToLog strLogMsg
         End If
     #End If
     
     ' ----- CHECK HTTP STATUS OF FILE -----------------------------------------
+    strLogMsg = "File is available at URL."
     #If Mac Then
         httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_" & _
             "code}' " & DownloadURL)
@@ -778,9 +815,12 @@ Public Function Download() As Boolean
     ElseIf httpStatus <> 200 Then
         ' Pass httpStatus as Source, status description as Description
         Err.Raise MacFileError.DownloadErr4, httpStatus, httpRequest.StatusText
+    Else
+        WriteToLog strLogMsg
     End If
 
     ' ----- DOWNLOAD FILE TO TEMP DIRECTORY -----------------------------------
+    strLogMsg = "File download to temp dir successful."
     #If Mac Then
         ShellAndWaitMac ("curl -o " & strBashTmp & " " & DownloadURL)
     #Else
@@ -796,85 +836,67 @@ Public Function Download() As Boolean
         Set httpRequest = Nothing
     #End If
 
-    'Error if download was not successful
+    ' Check if download was successful
     If IsItThere(FullTempPath) = False Then
         Err.Raise MacFileError.DownloadErr5
     Else
-        strLogMsg = Now & " -- " & FullName & " file download to Temp was successful."
-        WriteToLog LogMessage:=strLogMsg
+        WriteToLog strLogMsg
     End If
 
+    ' ----- CLEAR FILE FROM FINAL DIR ------------------------------------------
+    strLogMsg = "Final dir clear of previous file."
 
-
-    'If file exists already, log it and delete it
-    If IsItThere(strFinalPath) = True Then
-
-        strLogMsg = Now & " -- Previous version file in final directory."
-        WriteToLog LogMessage:=strLogMsg
-
-        ' get file extension
-        Dim strExt As String
-        strExt = Right(strFinalPath, InStrRev(StrReverse(strFinalPath), "."))
-
-        ' can't delete template if it's installed as an add-in
-        If InStr(strExt, "dot") > 0 Then
-            On Error Resume Next        'Error = add-in not available, don't need to uninstall
-                AddIns(strFinalPath).Installed = False
-            On Error GoTo 0
-        End If
-
-        ' Test if dir is read only
-        If IsReadOnly(FinalDir) = True Then ' Dir is read only
-            strLogMsg = Now & " -- old " & FullName & " file is read only, can't delete/replace. " _
-                & "Alerting user."
-            WriteToLog LogMessage:=strLogMsg
-            strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
-                "@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FullName & ")"
-            Download = False
-            On Error GoTo 0
-            Exit Function
-        Else
-            On Error Resume Next
-                Kill strFinalPath
-
-                If Err.Number = 70 Then         'File is open and can't be replaced
-                    strLogMsg = Now & " -- old " & FullName & " file is open, can't delete/replace. Alerting user."
-                    WriteToLog LogMessage:=strLogMsg
-                    strErrMsg = "Please close all other Word documents and try again."
-                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FullName & ")"
-                    Download = False
-                    On Error GoTo 0
-                    Exit Function
-                End If
-            On Error GoTo 0
-        End If
+    ' Check if there is a file in the final dir already
+    If IsItThere(Me.FullLocalPath) = False Then
+        WriteToLog "No previous file in final dir."
     Else
-        strLogMsg = Now & " -- No previous version file in final directory."
-        WriteToLog LogMessage:=strLogMsg
+        If SharedMacros_.KillAll(Me.FullLocalPath) = False Then
+            Err.Raise MacFileError.DownloadErr6
+        Else
+            WriteToLog strLogMsg
+        End If
     End If
 
-    'If delete was successful, move downloaded file to final directory
-    If IsItThere(strFinalPath) = False Then
-        strLogMsg = Now & " -- Final directory clear of " & FullName & " file."
-        WriteToLog LogMessage:=strLogMsg
-
-        ' move template to final directory
-        Name strTmpPath As strFinalPath
-
-        'Mac won't load macros from a template downloaded from the internet to Startup.
-        'Need to send these commands for it to work, see Confluence
-        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
-        #If Mac Then
-            If InStr(1, FullName, ".dotm") Then
+    ' ----- MOVE TMP FILE TO FINAL DIR ----------------------------------------
+    strLogMsg = "File successfully moved to final dir."
+    ' Mac 2011 can't handle file paths > 32 char
+    #If Mac And Application.Version < 16 Then
+        Dim strPosixTemp As String
+        Dim strPosixLocal As String
+        strPosixTemp = MacScript("return quoted form of posix path of " & _
+            FullTempPath)
+        strPosixLocal = MacScript("return quoted form of posix path of " & _
+            Me.FullLocalPath)
+        strMoveCmd = "mv " & strPosixTemp & " " & strPosixLocal
+        SharedMacros_.ShellAndWaitMac (strMoveCmd)
+    #Else
+        Name FullTempPath As Me.FullLocalPath
+    #End If
+    
+    ' Check if it worked
+    If IsItThere(Me.FullLocalPath) = False Then
+        Err.Raise MacFileError.DownloadErr7
+    Else
+        WriteToLog strLogMsg
+    End If
+    
+    ' ----- SET MAC TEMPLATE ATTRIBUTES ---------------------------------------
+    ' Mac won't load macros from a template downloaded from the internet at all
+    ' Need to send these commands for it to work, see Confluence docs for info.
+    ' Do NOT use open/save-as, this removes customUI.xml which creates Mac
+    ' Tools toolbar later.
+    #If Mac Then
+        If Extension = "dotm" Then
             Dim strCommand As String
-            strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
-                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
-                Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
+            strCommand = "do shell script " & Chr(34) & "xattr -wx " & _
+                "com.apple.FinderInfo \" & Chr(34) & "57 58 54 4D 4D 53 57" & _
+                " 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00" & _
+                "00 00 00 00 00 00\" & Chr(34) & Chr(32) & Chr(34) & " & " & _
+                "quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
                 'Debug.Print strCommand
                 MacScript (strCommand)
-            End If
-        #End If
+        End If
+    #End If
 
     Else
         strLogMsg = Now & " -- old " & FullName & " file not cleared from Final directory."
@@ -1026,3 +1048,5 @@ Sub Class_Terminate()
         Set p_LocalVersion = Nothing
     End If
 End Sub
+
+
