@@ -131,6 +131,11 @@ Public Function KillAll(Path As String) As Boolean
     ' Deletes file (or folder?) on PC or Mac. Mac can't use Kill() if file name
     ' is longer than 32 char. Returns true if successful.
     If IsItThere(Path) = True Then
+        ' Can't delete file if it's installed as an add-in
+        If IsInstalledAddIn(Path) = True Then
+            AddIns(Path).Installed = False
+        End If
+
         #If Mac Then
             Dim strCommand As String
             strCommand = MacScript("return quoted form of posix path of " & Path)
@@ -141,6 +146,7 @@ Public Function KillAll(Path As String) As Boolean
         #Else
             Kill (Path)
         #End If
+
         ' Make sure it worked
         If IsItThere(Path) = False Then
             KillAll = True
@@ -151,6 +157,26 @@ Public Function KillAll(Path As String) As Boolean
         KillAll = True
     End If
 End Function
+
+Public Function IsInstalledAddIn(FileName As String) As Boolean
+    ' Check if the file is currently loaded as an AddIn. Because we can't delete
+    ' it if it is loaded (though we can delete it if it's just referenced but
+    ' not loaded).
+    Dim objAddIn As AddIn
+    For Each objAddIn In AddIns
+        ' Check if in collection first; throws error if try to check .Installed
+        ' but it's not even referenced.
+        If objAddIn.Name = FileName Then
+            If objAddIn.Installed = True Then
+                IsInstalledAddIn = True
+            Else
+                IsInstalledAddIn = False
+            End If
+            Exit For
+        End If
+    Next objAddIn
+End Function
+
 Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String, _
     Optional DownloadSource As GitBranch = master) As Boolean
 'FinalDir is directory w/o file name
