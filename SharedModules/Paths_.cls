@@ -284,20 +284,34 @@ End Sub
 ' Parameter is string representing full path to a directory; checks if the dir
 ' exists and if not, creates it. Throws and error if it can't create (e.g.,
 ' root project dir). Making it its own method (with a pretty generic name) so
-' it's easy to add additional checks later if we need to.
+' it's easy to add additional checks later if we need to. Returns True if dir
+' exists.
 
-Private Sub CheckDir(MyDir As String)
+Private Function CheckDir(MyDir As String) As Boolean
     On Error GoTo CheckDirError
-    If IsItThere(MyDir) = False Then
-        MkDir MyDir
+    If SharedMacros_.IsItThere(MyDir) = False Then
+        ' Mac Word 2011 can't handle file path > 32 char
+        #If Mac And Application.Version < 15 Then
+            Dim strCommand As String
+            strCommand = MacScript("return quoted form of posix path of " & MyDir)
+            strCommand = "mkdir -p " & strCommand
+            SharedMacros_.ShellAndWaitMac (strCommand)
+        #Else
+            MkDir MyDir
+        #End If
+        ' Make sure it worked
+        CheckDir = SharedMacros_.IsItThere(MyDir)
+    Else
+        CheckDir = True
     End If
+CheckDirFinish:
     On Error GoTo 0
-    Exit Sub
+    Exit Function
 CheckDirError:
-    MsgBox "Nope! Looks like " & MyDir & " doesn't exist and we can't create it" _
+    MsgBox "Looks like " & MyDir & " doesn't exist and we can't create it." _
         & vbNewLine & "Error " & Err.Number & ": " & Err.Description
     On Error GoTo 0
-End Sub
+End Function
 
 
 ' *****************************************************************************

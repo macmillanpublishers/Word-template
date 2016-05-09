@@ -99,26 +99,26 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
 End Function
 
 Public Function IsItThere(Path As String) As Boolean
-    ' Check if file or directory exists on PC or Mac
-    ' Dir() doesn't work on Mac if file is longer than 32 char
+    ' Check if file or directory exists on PC or Mac.
+    ' Dir() doesn't work on Mac 2011 if file is longer than 32 char
     'Debug.Print Path
     
     'Remove trailing path separator from dir if it's there
     If Right(Path, 1) = Application.PathSeparator Then
         Path = Left(Path, Len(Path) - 1)
     End If
-    
-    #If Mac Then
+
+    #If Mac And Application.Version < 15 Then
         Dim strScript As String
         strScript = "tell application " & Chr(34) & "System Events" & Chr(34) & _
             "to return exists disk item (" & Chr(34) & Path & Chr(34) _
             & " as string)"
         IsItThere = SharedMacros_.ShellAndWaitMac(strScript)
     #Else
-        Dim CheckDir As String
-        CheckDir = Dir(Path, vbDirectory)
+        Dim strCheckDir As String
+        strCheckDir = Dir(Path, vbDirectory)
         
-        If CheckDir = vbNullString Then
+        If strCheckDir = vbNullString Then
             IsItThere = False
         Else
             IsItThere = True
@@ -136,13 +136,11 @@ Public Function KillAll(Path As String) As Boolean
         If IsInstalledAddIn(Path) = True Then
             AddIns(Path).Installed = False
         End If
-
-        #If Mac Then
+        ' Mac 2011 can't handle file paths > 32 char
+        #If Mac And Application.Version < 15 Then
             Dim strCommand As String
             strCommand = MacScript("return quoted form of posix path of " & Path)
-            Debug.Print "Path var: " & strCommand
             strCommand = "rm " & strCommand
-            Debug.Print "Command: " & strCommand
             SharedMacros_.ShellAndWaitMac (strCommand)
         #Else
             Kill (Path)
@@ -174,10 +172,10 @@ KillAllError:
                 Organization_.HelpEmail & " for assistance." & vbNewLine & _
                 vbNewLine & "Error deleting " & Path & vbNewLine & _
                 Err.Number & ": " & Err.Description
-            MsgBox strErrMsg, vbCritical, "Macmillan Tools Error"
-            KillAll = False
-            Resume KillAllFinish
-        End Select
+    End Select
+    MsgBox strErrMsg, vbCritical, "Macmillan Tools Error"
+    KillAll = False
+    Resume KillAllFinish
 End Function
 
 Public Function IsInstalledAddIn(FileName As String) As Boolean
@@ -1311,8 +1309,8 @@ End Sub
 
 Function IsReadOnly(Path As String) As Boolean
     ' Tests if the file or directory is read-only
-    
-    #If Mac Then
+    ' Mac 2011 can't deal with file paths > 32 char
+    #If Mac And Application.Version < 16 Then
         Dim strScript As String
         Dim blnWritable As Boolean
         

@@ -15,16 +15,16 @@ We may move to error handling to a single class in the future.
 | 20003 | `MacFile_` | `SpecificFileErr1` | The value entered for the `SpecificFile` property is not present in the `config.json` file, and therefore the `Property Let` procedure failed. The `SpecificFile` must match one of the objects in the `GroupName` object. |
 | 20004 | `MacFile_` | `SpecificFileErr2` | The `Property Get` procedure was attempted before the `Property Let` procedure had been executed. Using the `AssignFile` method to create new `MacFile_` objects should solve this problem. |
 | 20005 | `MacFile_` | `DeleteFileErr1` | Attempted to delete file that was currently executing code, so `Delete` was aborted. |
-| 20006 | `MacFile_` | `DownloadErr1` | Failed to delete file in `FullTempPath` before attempting download. Download aborted. |
-| 20007 | `MacFile_` | `DownloadErr2` |  |
-| 20008 | `MacFile_` | `DownloadErr3` |  |
-| 20009 | `MacFile_` | `DownloadErr4` |  |
+| 20006 | `MacFile_` | `DownloadErr1` | Deletion of previous file in `FullTempPath` failed. Download aborted. |
+| 20007 | `MacFile_` | `DownloadErr2` | No network connection. Download aborted. |
+| 20008 | `MacFile_` | `DownloadErr3` | File returned HTTP status of 404, not found. Check if file is correctly posted to DownloadURL. |
+| 20009 | `MacFile_` | `DownloadErr4` | File returned bad HTTP status other than 404. Check log for actual status code and description. |
 | 20010 | `MacFile_` | `DownloadErr5` |  |
 | 20011 | `MacFile_` | `DownloadErr6` |  |
 | 20012 | `MacFile_` | `DownloadErr7` |  |
 | 20013 | `MacFile_` | `DownloadErr8` |  |
 | 20014 | `MacFile_` | `DownloadErr9` |  |
-
+| 20015 | `MacFile_` | `FullLocalPathErr1` | Final dir for file is read-only. |
 
 
 

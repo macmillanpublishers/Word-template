@@ -96,16 +96,18 @@ Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
     Dim strDescription As String
     Dim strErrMessage As String
     Dim blnNotifyUser As Boolean
-    
+    Dim strHelpContact As String
+
     ' ----- Set defaults ------------------------------------------------------
     ' Only need to change in Select statement below if want to set either to
     ' False. For now at least, we'll have ErrorChecker = blnNotifyUser too.
     blnNotifyUser = True
-    
+    strHelpContact = "Email " & Organization_.HelpEmail & " if you need help."
+
     ' ----- Check for errors --------------------------------------------------
     ' Make sure we actually have an error, cuz you never know.
     If objError.Number > 0 Then
-    
+
     ' ----- Handle specific errors --------------------------------------------
     ' Each case should be a MacFileError enum. Even if we aren't doing anything
     ' to fix the error, still enter the following:
@@ -115,58 +117,87 @@ Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
         Select Case objError.Number
             Case Is < 513
                 ' Errors 0 to 512 are system errors
-                strDescription = Err.Description
+                strDescription = objError.Description
                 strErrMessage = "Something unexpected happened. Please click" _
-                    & "OK to exit." & vbNewLine & vbNewLine & "Contact " & _
-                    Organization_.HelpEmail & " if you need help."
+                    & " OK to exit." & vbNewLine & vbNewLine & strHelpContact
             Case MacFileError.GroupNameErr1
-                objError.Source = "MacFile_.GroupName"
+                objError.Source = "MacFile_.GroupName " & Me.FullName
                 strDescription = "Invalid value for GroupName property."
                 strErrMessage = "The value you've entered for the GroupName " _
                     & "property is not valid. Make sure you only use file " & _
                     "groups that are in the config.json file."
             Case MacFileError.GroupNameErr2
-                objError.Source = "MacFile_.GroupName"
+                objError.Source = "MacFile_.GroupName " & Me.FullName
                 strDescription = "GroupName property has not been Let."
                 strErrMessage = "You can't Get the GroupName property before" _
                     & " it has been Let. Try the MacFile_.AssignFile method " _
                     & "to create a new object in this class."
             Case MacFileError.SpecificFileErr1
-                objError.Source = "MacFile_.SpecificFile"
+                objError.Source = "MacFile_.SpecificFile " & Me.FullName
                 strDescription = "Invalid value for SpecificFile property."
                 strErrMessage = "The you've entered an invalid value for the" _
                     & " SpecificFile property. Make sure you only use " & _
                     "specific file types that are in the config.json file."
             Case MacFileError.SpecificFileErr2
-                objError.Source "MacFile_.SpecificFile"
+                objError.Source = "MacFile_.SpecificFile " & Me.FullName
                 strDescription = "SpecificFile property has not been Let."
                 strErrMessage = "You can't Get the SpecificFile property " & _
                     "before it has been Let. Try the MacFile_.AssignFile " & _
                     "method to create a new object in this class."
             Case MacFileError.DeleteFileErr1
-                objError.Source "MacFile_.DeleteFile"
+                objError.Source = "MacFile_.DeleteFile " & Me.FullName
                 strDescription = "File is currently executing code."
                 strErrMessage = "The file you are trying to delete is " & _
                     "currently executing macro code."
+            Case MacFileError.DownloadErr1
+                objError.Source = "MacFile_.Download " & Me.FullName
+                strDescription = "Failed to delete the previous file in the " _
+                    & "temp directory. Download aborted."
+                strErrMessage = "We weren't able to download the file " & _
+                    Me.FullName & " because of a stubborn temp file. " & _
+                    vbNewLine & vbNewLine & strHelpContact
+            Case MacFileError.DownloadErr2
+                objError.Source = "MacFile_.Download " & Me.FullName
+                strDescription = "No network connection. Download aborted."
+                strErrMessage = "We weren't able to download the file " & _
+                    Me.FullName & " because we can't connect to the " & _
+                        "internet. Check your network connection and try " & _
+                        "again." & vbNewLine & vbNewLine & strHelpContact
+            Case MacFileError.DownloadErr3
+                objError.Source = "MacFile_.Download " & Me.FullName
+                strDescription = "File HTTP status 404. Check if DownloadURL" _
+                    & " is correct, and file is posted."
+                strErrMessage = "Could not download " & Me.FullName & _
+                    " from the internet. " & strHelpContact
+            Case MacFileError.DownloadErr4
+                strDescription = "File HTTP status " & objError.Source & ": " _
+                    & objError.Description & ". Download aborted."
+                strErrMessage = "There is some problem with the file you are" _
+                    & " trying to download: " & Me.FullName & vbNewLine & _
+                    objError.Source & ": " & objError.Description & vbNewLine _
+                    & vbNewLine & strHelpContact
+                ' Need to get Source as passed in object first
+                objError.Source = "MacFile_.Download " & Me.FullName
             Case Else
-                objError.Source "MacFile_"
+                objError.Source "MacFile_.? " & Me.FullName
                 strDescription = "Undocumented error number."
                 strErrMessage = "Not sure what's going on here..."
         End Select
-    
+
     Else
-        objError.Source = "MacFile_"
+        objError.Source = "MacFile_ " & Me.FullName
         strDescription = "Everything's A-OK. Why are you even reading this?"
         blnNotifyUser = False
     End If
-    
-    WriteToLog objError.Source & " " & objError.Number & ": " & strDescription
-    
+
+    WriteToLog objError.Source & " - " & objError.Number & ": " & _
+        strDescription
+
     If blnNotifyUser = True Then
         MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
-            "Macmillan Tools Error: " & objError.Number
+            "Macmillan Tools Error: " & objError.Number & " " & Me.FullName
     End If
-    
+
     objError.Clear
     ErrorChecker = blnNotifyUser
 
@@ -343,7 +374,7 @@ Public Property Get Running() As Boolean
 RunningGetFinish:
     On Error GoTo 0
     Exit Property
-    
+
 RunningGetError:
     If ErrorChecker(Err) = False Then
         Resume
@@ -551,7 +582,7 @@ Private Property Get FullLogPath() As String
 FullLogPathGetFinish:
     On Error GoTo 0
     Exit Property
-    
+
 FullLogPathGetError:
     If ErrorChecker(Err) = False Then
         Resume
@@ -693,11 +724,18 @@ End Sub
 
 Public Function Download() As Boolean
     On Error GoTo DownloadError
-    Dim strLogMsg As String
+    ' Mac/PC variables
+    Dim httpStatus As Long
+    
+    ' Mac variables
+    Dim strBashTmp As String
+    
+    ' PC variables
+    Dim httpRequest As Object
+    Dim oStream As Object
     
     ' ----- START -------------------------------------------------------------
-    strLogMsg = "Beginning download procedure."
-    WriteToLog strLogMessage
+    WriteToLog "Beginning download procedure."
     
     ' ----- DELETE TEMP -------------------------------------------------------
     ' Delete the files in the tmp dir if it exists (Kill checks if exists)
@@ -710,130 +748,57 @@ Public Function Download() As Boolean
     #If Mac Then
         ' FullTempPath returns OSX-style path, with colons. Bash shell commands
         ' require forward slashes, and no root volume name.
-        Dim strBashTmp As String
         strBashTmp = Replace(Right(FullTempPath, Len(FullTempPath) - (InStr _
             (FullTempPath, ":") - 1)), ":", "/")
-
-        'check for network
-        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") _
-            <> 0 Then   'can't connect to internet
-            strLogMsg = "Tried update; unable to connect to network."
-            WriteToLog LogMessage:=strLogMsg
-            strErrMsg = "There was an error trying to download the " & _
-                "Macmillan template." & vbNewLine & vbNewLine & "Please " & _
-                "check your internet connection or contact " & _
-                Organization_.HelpEmail & " for help."
-            MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & _
-                FullName & ")"
-            Download = False
-            Exit Function
-        Else 'internet is working, download file
-            'Make sure file is there
-            Dim httpStatus As Long
-            httpStatus = ShellAndWaitMac _
-                ("curl -s -o /dev/null -w '%{http_code}' " & DownloadURL)
-
-            If httpStatus = 200 Then                    ' File is there
-                'Now delete file if already there, then download new file
-                ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & _
-                    strBashTmp & " " & DownloadURL)
-            ElseIf httpStatus = 404 Then            ' 404 = page not found
-                strLogMsg = "404 File not found. Cannot download file."
-                WriteToLog LogMessage:=strLogMsg
-                strErrMsg = "It looks like that file isn't available for " & _
-                    "download." & vbNewLine & vbNewLine & "Please contact " & _
-                    Organization_.HelpEmail & " for help."
-                MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & _
-                    FullName & ")"
-                Download = False
-                Exit Function
-            Else
-                strLogMsg = "Http status is " & httpStatus & ". Cannot " & _
-                    "download file."
-                WriteToLog LogMessage:=strLogMsg
-                strErrMsg = "There was an error trying to download the " & _
-                    "Macmillan templates." & vbNewLine & vbNewLine & "Please" _
-                    & " check your internet connection or contact " & _
-                    Organization_.HelpEmail & " for help."
-                MsgBox strErrMsg, vbCritical, "Error 2: Http status " & _
-                    httpStatus & " (" & FullName & ")"
-                Download = False
-                Exit Function
-            End If
-
+        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 _
+            Then   'can't connect to internet
+            Err.Raise MacFileError.DownloadErr2
         End If
-    #Else   ' PC download
-
-        'Check if file is already in tmp dir, delete if yes
-        If IsItThere(strTmpPath) = True Then
-            Kill strTmpPath
+    #Else
+        Set httpRequest = CreateObject("WinHttp.WinHttpRequest.5.1")
+        httpRequest.Open "http://www.google.com"
+        httpRequest.Send
+        If httpRequest.Status <> 200 Then
+            Err.Raise MacFileError.DownloadErr2
         End If
+    #End If
+    
+    ' ----- CHECK HTTP STATUS OF FILE -----------------------------------------
+    #If Mac Then
+        httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_" & _
+            "code}' " & DownloadURL)
+    #Else
+        httpRequest.Open "HEAD", DownloadURL
+        httpRequest.Send
+        httpStatus = httpRequest.Status
+    #End If
+    
+    If httpStatus = 404 Then
+        Err.Raise MacFileError.DownloadErr3
+    ElseIf httpStatus <> 200 Then
+        ' Pass httpStatus as Source, status description as Description
+        Err.Raise MacFileError.DownloadErr4, httpStatus, httpRequest.StatusText
+    End If
 
-        'try to download the file from Public Confluence page
-        Dim WinHttpReq As Object
-        Dim oStream As Object
-
-        'Attempt to download file
-        On Error Resume Next
-            Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-            WinHttpReq.Open "GET", DownloadURL, False
-            WinHttpReq.Send
-
-                ' Exit sub if error in connecting to website
-                If Err.Number <> 0 Then 'HTTP request is not OK
-                    'Debug.Print WinHttpReq.Status
-                    strLogMsg = Now & " -- could not connect to Confluence site: Error " & Err.Number
-                    WriteToLog LogMessage:=strLogMsg
-                    strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
-                        "Please check your internet connection or contact workflows@macmillan.com for help."
-                    MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FullName & ")"
-                    Download = False
-                    On Error GoTo 0
-                    Exit Function
-                End If
-        On Error GoTo 0
-
-        'Debug.Print "Http status for " & FullName & ": " & WinHttpReq.Status
-        If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
-
-            'if connection OK, download file to temp dir
-            Set oStream = CreateObject("ADODB.Stream")
-            oStream.Open
-            oStream.Type = 1
-            oStream.Write WinHttpReq.ResponseBody
-            oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
-            oStream.Close
-            Set oStream = Nothing
-            Set WinHttpReq = Nothing
-        ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
-            strLogMsg = Now & " -- 404 File not found. Cannot download file."
-            WriteToLog LogMessage:=strLogMsg
-            strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
-                "Please contact workflows@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FullName & ")"
-            Download = False
-            Exit Function
-        Else
-            strLogMsg = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
-            WriteToLog LogMessage:=strLogMsg
-            strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
-                "Please check your internet connection or contact workflows@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FullName & ")"
-            Download = False
-            Exit Function
-        End If
+    ' ----- DOWNLOAD FILE TO TEMP DIRECTORY -----------------------------------
+    #If Mac Then
+        ShellAndWaitMac ("curl -o " & strBashTmp & " " & DownloadURL)
+    #Else
+        httpRequest.Open "GET", DownloadURL
+        httpRequest.Send
+        Set oStream = CreateObject("ADODB.Stream")
+        oStream.Open
+        oStream.Type = 1
+        oStream.Write httpRequest.ResponseBody
+        oStream.SaveToFile FullTempPath, 2 ' 1 = no overwrite, 2 = overwrite
+        oStream.Close
+        Set oStream = Nothing
+        Set httpRequest = Nothing
     #End If
 
     'Error if download was not successful
-    If IsItThere(strTmpPath) = False Then
-        strLogMsg = Now & " -- " & FullName & " file download to Temp was not successful."
-        WriteToLog LogMessage:=strLogMsg
-        strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
-            "Please contact workflows@macmillan.com for assitance."
-        MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FullName & ")"
-        Download = False
-        On Error GoTo 0
-        Exit Function
+    If IsItThere(FullTempPath) = False Then
+        Err.Raise MacFileError.DownloadErr5
     Else
         strLogMsg = Now & " -- " & FullName & " file download to Temp was successful."
         WriteToLog LogMessage:=strLogMsg

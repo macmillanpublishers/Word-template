@@ -7,8 +7,46 @@ Here's info on how to [structure the XML](https://msdn.microsoft.com/en-us/libra
 
 A PC creates the tab from the XML directly, but to run the macros you need to include callbacks via the `RibbonControl.bas` module.
 
-Word for Mac 2011 does not support custom XML, but it does support custom toolbars. To make this easier to maintain, `MacmillanGT.ThisDocument` contains a procedure that creates the toolbar by reading the same XML files the PC uses. 
+Word for Mac 2011 does not support custom XML, but it does support custom toolbars. To make this easier to maintain, `MacmillanGT.ThisDocument` contains a procedure that creates the toolbar by reading the same XML files the PC uses.
 
+# Compiler constants
+To make different code for different operating systems or application versions, use a `#` before the `#If... Then... #Else` statement. The code will only be compiled if it passes the test (so you won't get compile errors on code that won't run on that system anyway). Further info and a list of available constants to test are listed [here](https://msdn.microsoft.com/en-us/library/office/gg264614.aspx). Some common ones are:
+
+* `Mac`: Any Mac operating system
+* `Win16`: 16-bit Windows
+* `Win32`: 32-bit Windows
+* `Win64`: 64-bit Windows
+
+Example:
+```
+#If Mac Then
+  ' Mac specific code
+#Else
+  ' PC specific code
+#End If
+```
+
+# Version numbers
+If you need to test which version of Office is running, you can use the `Application.Version` property. The correct versions are:
+
+| Office year (OS) | Version number |
+| -------------- | ---------------- |
+| 2016 (PC and Mac) | 16 |
+| 2013 (PC) | 15 |
+| 2011 (Mac) | 14 |
+| 2010 (PC) | 14 |
+| 2008 (Mac)* | 12 |
+| 2007 (PC)** | 12 |
+| 2003 (PC) | 11 |
+
+* Office for Mac 2008 does not support VBA at all.
+* Office 2007 is the first version to use the Ribbon interface.
+ 
+# Office for Mac 2011
+Office for Mac 2011 does not have the same object model as the PC versions do--much is the same, but the differences aren't documented anywhere consistently. Often this is overcome using the `MacScript()` function and compiler constants to run shell commands.
+
+## 33-character file name limit
+VBA in Office for Mac 2011 can't handle file paths longer than 32 characters, including the extension. The newer Office 2016 has overcome this, so test for the application version before calling any file functions such as `Kill()`, `Dir()`, `MkDir()`, and such. In fact, we're already created many custom functions for these in the `SharedMacros_` module.
 
 # Update version numbers
 The auto-update macro is triggered by a new version-number text file being greater than the `Version` custom document property in the template. To make it easier to maintain the various files, the `Utilities.dotm` template contains a macro specifically for managing version numbers. See [here](using+the+vb+editor) for info about installing it.
@@ -72,5 +110,3 @@ Assorted labels to be used as needed.
 The labels make it relatively easy to identify which issues should be tackled first. Each type of label has an order of priority (as listed above), and the types themselves take priority over each other as listed above. If you sort by labels and pick the highest priority label for each type that has issues attached to it, you'll get a more manageable list of which issues require attention.
 
 For example, all *priority:high* issues should be completed before any *priority:low* issues are started; within the *priority:high* list, all *effort:low* issues should be completed before any *effort:high* issues; and within the *effort:low* list, all *type:bug* issues should be completed before any *type:defect* issues.
-
-
