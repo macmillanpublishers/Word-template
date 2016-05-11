@@ -40,198 +40,7 @@ Private p_FullName As String
 Private p_FullTempPath As String
 Private p_Name As String
 
-
-' *****************************************************************************
-'           ERROR HANDLING STUFF
-' *****************************************************************************
-' Technically class methods (which are listed farther down) but it's easier to
-' maintain close to the error number enum, which has to appear above other
-' procedures. May move to its own class one day.
-
-' ===== MacFileErrors =========================================================
-' Each error we raise anywhere in this class should be included here. Note that
-' error numbers 0 - 512 are reserved for system errors. Include property or
-' method name in enum just to be clear for debugging.
-
-Private Enum MacFileError
-    MacFileErrGeneral = 20000       ' Not sure if we'll need, but here it is.
-    GroupNameErr1 = 20001
-    GroupNameErr2 = 20002
-    SpecificFileErr1 = 20003
-    SpecificFileErr2 = 20004
-    DeleteFileErr1 = 20005
-    DownloadErr1 = 20006
-    DownloadErr2 = 20007
-    DownloadErr3 = 20008
-    DownloadErr4 = 20009
-    DownloadErr5 = 20010
-    DownloadErr6 = 20011
-    DownloadErr7 = 20012
-    FullLocalPathErr1 = 20013
-    FullTempPathErr1 = 20014
-End Enum
-
-' ===== ErrorChecker ==========================================================
-' Send all errors here, to make tracking/maintaining error handling easier.
-' Be sure to add the error to the MacFileErrors enum.
-'
-' USE: ErrorChecker() returns False if error is handled; procedure can continue
-' Each member procedure in the class should have the following:
-'''
-' On Error GoTo MemberName[Let | Set | Get]Error
-'   <...code...>
-' MemberName[Let | Set | Get]Finish:
-'   <...any cleanup code...>
-'   On Error GoTo 0
-'   Exit [Property | Sub | Function]
-' MemberName[Let | Set | Get]Error:
-'    If ErrorChecker(Err) = False Then
-'        Resume
-'    Else
-'        Resume MemberName[Let | Set | Get]Finish
-'    End If
-' End [Property | Sub | Function]
-
-Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
-    Dim strDescription As String
-    Dim strErrMessage As String
-    Dim blnNotifyUser As Boolean
-    Dim strHelpContact As String
-
-    ' ----- Set defaults ------------------------------------------------------
-    ' Only need to change in Select statement below if want to set either to
-    ' False.
-    blnNotifyUser = True
-    ErrorChecker = True
-    strHelpContact = "Email " & Organization_.HelpEmail & " if you need help."
-
-    ' ----- Check for errors --------------------------------------------------
-    ' Make sure we actually have an error, cuz you never know.
-    If objError.Number > 0 Then
-
-    ' ----- Handle specific errors --------------------------------------------
-    ' Each case should be a MacFileError enum. Even if we aren't doing anything
-    ' to fix the error, still enter the following:
-    '   Err.Source "MacFile_.<MethodName>"
-    '   strDescription = "Description of the error for the log."
-    '   strErrMessage = "Message for the user if we're notifying them."
-        Select Case objError.Number
-            Case Is < 513
-                ' Errors 0 to 512 are system errors
-                strDescription = objError.Description
-                strErrMessage = "Something unexpected happened. Please click" _
-                    & " OK to exit." & vbNewLine & vbNewLine & strHelpContact
-            Case MacFileError.GroupNameErr1
-                objError.Source = "MacFile_.GroupName " & Me.FullName
-                strDescription = "Invalid value for GroupName property."
-                strErrMessage = "The value you've entered for the GroupName " _
-                    & "property is not valid. Make sure you only use file " & _
-                    "groups that are in the config.json file."
-            Case MacFileError.GroupNameErr2
-                objError.Source = "MacFile_.GroupName " & Me.FullName
-                strDescription = "GroupName property has not been Let."
-                strErrMessage = "You can't Get the GroupName property before" _
-                    & " it has been Let. Try the MacFile_.AssignFile method " _
-                    & "to create a new object in this class."
-            Case MacFileError.SpecificFileErr1
-                objError.Source = "MacFile_.SpecificFile " & Me.FullName
-                strDescription = "Invalid value for SpecificFile property."
-                strErrMessage = "The you've entered an invalid value for the" _
-                    & " SpecificFile property. Make sure you only use " & _
-                    "specific file types that are in the config.json file."
-            Case MacFileError.SpecificFileErr2
-                objError.Source = "MacFile_.SpecificFile " & Me.FullName
-                strDescription = "SpecificFile property has not been Let."
-                strErrMessage = "You can't Get the SpecificFile property " & _
-                    "before it has been Let. Try the MacFile_.AssignFile " & _
-                    "method to create a new object in this class."
-            Case MacFileError.DeleteFileErr1
-                objError.Source = "MacFile_.DeleteFile " & Me.FullName
-                strDescription = "File is currently executing code."
-                strErrMessage = "The file you are trying to delete is " & _
-                    "currently executing macro code."
-            Case MacFileError.DownloadErr1
-                objError.Source = "MacFile_.Download " & Me.FullName
-                strDescription = "Failed to delete the previous file in the " _
-                    & "temp directory. Download aborted."
-                strErrMessage = "We weren't able to download the file " & _
-                    Me.FullName & " because of a stubborn temp file. " & _
-                    vbNewLine & vbNewLine & strHelpContact
-            Case MacFileError.DownloadErr2
-                objError.Source = "MacFile_.Download " & Me.FullName
-                strDescription = "No network connection. Download aborted."
-                strErrMessage = "We weren't able to download the file " & _
-                    Me.FullName & " because we can't connect to the " & _
-                        "internet. Check your network connection and try " & _
-                        "again." & vbNewLine & vbNewLine & strHelpContact
-            Case MacFileError.DownloadErr3
-                objError.Source = "MacFile_.Download " & Me.FullName
-                strDescription = "File HTTP status 404. Check if DownloadURL" _
-                    & " is correct, and file is posted."
-                strErrMessage = "Could not download " & Me.FullName & _
-                    " from the internet. " & strHelpContact
-            Case MacFileError.DownloadErr4
-                strDescription = "File HTTP status " & objError.Source & ": " _
-                    & objError.Description & ". Download aborted."
-                strErrMessage = "There is some problem with the file you are" _
-                    & " trying to download: " & Me.FullName & vbNewLine & _
-                    objError.Source & ": " & objError.Description & vbNewLine _
-                    & vbNewLine & strHelpContact
-                ' Need to get Source as passed in object first, so do this last
-                objError.Source = "MacFile_.Download " & Me.FullName
-            Case MacFileError.DownloadErr5
-                objError.Source = "MacFile_.Download " & Me.FullName
-                strDescription = "File download failed."
-                strErrMessage = "Download of " & Me.FullName & " failed. " & _
-                    strHelpContact
-            Case MacFileError.DownloadErr6
-                ' SharedMacros_.KillAll() will notify user if file is open
-                objError.Source = "MacFile_.Download " & Me.FullName
-                strDescription = "File in final install location could not " _
-                    & "be deleted. If it was because the file was open, the " _
-                    & "user was notified."
-                blnNotifyUser = False
-            Case MacFileError.DownloadErr7
-                objError.Source = "MacFile_.Download " & Me.FullName
-                strDescription = Me.FullName & " not saved to final directory."
-                strErrMessage = "There was an error installing the " & _
-                "Macmillan template." & vbNewLine & vbNewLine & strHelpEmail
-            Case MacFileError.FullLocalPathErr1
-                objError.Source = "MacFile_.FullLocalPath " & Me.FullName
-                strDescription = "Final dir for file is read-only: " & _
-                    Me.FullLocalPath
-                strErrMessage = "The folder you are trying to access, " & _
-                    Me.FullLocalPath & ", is read-only. " & strHelpContact
-            Case MacFileError.FullTempPathErr1
-                objError.Source = "MacFile_.FullTempPath " & Me.FullName
-                strDescription = "Temp dir is read-only: " & FullTempPath
-                strErrMessage = "Your temp folder is read-only. " & _
-                    strHelpContact
-            Case Else
-                objError.Source = "MacFile_.? " & Me.FullName
-                strDescription = "Undocumented error number - " & _
-                    objError.Number & ": " & objError.Description
-                strErrMessage = "Not sure what's going on here." & strHelpEmail
-        End Select
-
-    Else
-        objError.Source = "MacFile_ " & Me.FullName
-        strDescription = "Everything's A-OK. Why are you even reading this?"
-        blnNotifyUser = False
-        ErrorChecker = False
-    End If
-
-    WriteToLog objError.Source & " - " & objError.Number & ": " & _
-        strDescription
-
-    If blnNotifyUser = True Then
-        MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
-            "Macmillan Tools Error: " & objError.Number & " " & Me.FullName
-    End If
-
-    objError.Clear
-End Function
-
+Private Const strModuleName As String = "MacFile_."
 
 ' *****************************************************************************
 '           PUBLIC PROPERTIES
@@ -246,14 +55,15 @@ Public Property Let GroupName(GroupName_value As String)
     If Paths_.FullJSON("files").Exists(GroupName_value) Then
         p_GroupName = GroupName_value
     Else
-        Err.Raise MacFileError.GroupNameErr1
+        Err.Raise MacError.err_GroupNameInvalid
     End If
 GroupNameLetFinish:
     On Error GoTo 0
     Exit Property
 
 GroupNameLetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "GroupNameLet" & " " & GroupName_value
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume GroupNameLetFinish
@@ -265,14 +75,15 @@ Public Property Get GroupName() As String
     If p_GroupName <> vbNullString Then
         GroupName = p_GroupName
     Else
-        Err.Raise MacFileError.GroupNameErr2
+        Err.Raise MacError.err_GroupNameNotSet
     End If
 GroupNameGetFinish:
     On Error GoTo 0
     Exit Property
 
 GroupNameGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "GroupNameGet"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume GroupNameGetFinish
@@ -292,14 +103,15 @@ Public Property Let SpecificFile(SpecificFile_value As String)
     If GroupJSON.Exists(SpecificFile_value) Then
         p_SpecificFile = SpecificFile_value
     Else
-        Err.Raise MacFileError.SpecificFileErr1
+        Err.Raise MacError.err_SpecificFileInvalid
     End If
 SpecificFileLetFinish:
     On Error GoTo 0
     Exit Property
 
 SpecificFileLetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "SpecificFileLet" & " " & SpecificFile_value
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume SpecificFileLetFinish
@@ -311,14 +123,15 @@ Public Property Get SpecificFile() As String
     If p_SpecificFile <> vbNullString Then
         SpecificFile = p_SpecificFile
     Else
-        Err.Raise MacFileError.SpecificFileErr2
+        Err.Raise MacError.err_SpecificFileNotSet
     End If
 SpecificFileGetFinish:
     On Error GoTo 0
     Exit Property
 
 SpecificFileGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "SpecificFileGet"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume SpecificFileGetFinish
@@ -339,7 +152,8 @@ FullNameGetFinish:
     Exit Property
     
 FullNameGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FullName"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullNameGetFinish
@@ -357,7 +171,7 @@ Public Property Get FullLocalPath() As String
             Application.PathSeparator & FullName
         ' Check if final dir is read-only
         If SharedMacros_.IsReadOnly(p_FullLocalPath) = True Then
-            Err.Raise FullLocalPathErr1
+            Err.Raise MacError.err_LocalReadOnly
         End If
     End If
     FullLocalPath = p_FullLocalPath
@@ -366,7 +180,8 @@ FullLocalPathGetFinish:
     Exit Property
     
 FullLocalPathGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FullLocalPathGet"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullLocalPathGetFinish
@@ -385,7 +200,8 @@ ExistsGetFinish:
     Exit Property
     
 ExistsGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Exists"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ExistsGetFinish
@@ -409,7 +225,8 @@ RunningGetFinish:
     Exit Property
 
 RunningGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Running"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume RunningGetFinish
@@ -438,7 +255,8 @@ UpToDateGetFinish:
     Exit Property
     
 UpToDateGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "UpToDate"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume UpToDateGetFinish
@@ -466,7 +284,8 @@ GroupJSONGetFinish:
     Exit Property
 
 GroupJSONGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "GroupJSON"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume GroupJSONGetFinish
@@ -487,7 +306,8 @@ FileJSONGetFinish:
     Exit Property
     
 FileJSONGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FileJSON"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FileJSONGetFinish
@@ -510,7 +330,8 @@ NameGetFinish:
     Exit Property
 
 NameGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Name"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume NameGetFinish
@@ -531,7 +352,8 @@ ExtensionGetFinish:
     Exit Property
     
 ExtensionGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Extension"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ExtensionGetFinish
@@ -553,7 +375,8 @@ ConfigVersionGetFinish:
     Exit Property
     
 ConfigVersionGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "ConfigVersion"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ConfigVersionGetFinish
@@ -595,7 +418,8 @@ LocalVersionGetFinish:
     Exit Property
     
 LocalVersionGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "LocalVersion"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume LocalVersionGetFinish
@@ -617,7 +441,8 @@ FullLogPathGetFinish:
     Exit Property
 
 FullLogPathGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FullLogPath"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullLogPathGetFinish
@@ -634,7 +459,7 @@ Private Property Get FullTempPath() As String
         p_FullTempPath = Paths_.TempPath & Application.PathSeparator & FullName
         ' Check if final dir is read-only
         If SharedMacros_.IsReadOnly(p_FullTempPath) = True Then
-            Err.Raise FullTempPathErr1
+            Err.Raise MacError.err_TempReadOnly
         End If
     End If
     FullTempPath = p_FullTempPath
@@ -643,7 +468,8 @@ FullTempPathGetFinish:
     Exit Property
     
 FullTempPathGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FullTempPath"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullTempPathGetFinish
@@ -676,7 +502,8 @@ ClearFileFinish:
     Exit Sub
     
 ClearFileError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "ClearFile"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ClearFileFinish
@@ -698,7 +525,8 @@ AssignFileFinish:
     Exit Sub
 
 AssignFileError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "AssignFile"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume AssignFileFinish
@@ -714,14 +542,15 @@ Public Sub DeleteFile()
     If Running = False Then
         SharedMacros_.KillAll FullLocalPath
     Else
-        Err.Raise MacFileError.DeleteFileErr1
+        Err.Raise MacError.err_DeleteThisDoc
     End If
 DeleteFileFinish:
     On Error GoTo 0
     Exit Sub
 
 DeleteFileError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "DeleteFile"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume DeleteFileFinish
@@ -745,7 +574,8 @@ NotifyCompleteFinish:
     Exit Sub
 
 NotifyCompleteError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "NotifyComplete"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume NotifyCompleteFinish
@@ -763,7 +593,7 @@ Public Function Download() As Boolean
     ' DownloadError section triggers ErrorChecker function. If ErrorChecker
     ' returns True, user is notified, Download = False, & this function exits.
     ' ErrorChecker function writes error info to log, so don't need to here.
-    ' Custom errors introduced through Err.Raise must be added to MacFileError
+    ' Custom errors introduced through Err.Raise must be added to MacError
     ' enum AND to ErrorChecker Select statement.
     On Error GoTo DownloadError
     ' Mac/PC variables
@@ -785,7 +615,7 @@ Public Function Download() As Boolean
     strLogMsg = "Temp dir clear of file."
     If SharedMacros_.KillAll(FullTempPath) = False Then
         ' delete failed, return an error
-        Err.Raise MacFileError.DownloadErr1
+        Err.Raise MacError.err_TempDeleteFail
     Else
         WriteToLog strLogMsg
     End If
@@ -799,7 +629,7 @@ Public Function Download() As Boolean
             (FullTempPath, ":") - 1)), ":", "/")
         If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 _
             Then   'can't connect to internet
-            Err.Raise MacFileError.DownloadErr2
+            Err.Raise MacError.err_NoInternet
         Else
             WriteToLog strLogMsg
         End If
@@ -808,7 +638,7 @@ Public Function Download() As Boolean
         httpRequest.Open "http://www.google.com"
         httpRequest.Send
         If httpRequest.Status <> 200 Then
-            Err.Raise MacFileError.DownloadErr2
+            Err.Raise MacError.err_NoInternet
         Else
             WriteToLog strLogMsg
         End If
@@ -826,10 +656,10 @@ Public Function Download() As Boolean
     #End If
     
     If httpStatus = 404 Then
-        Err.Raise MacFileError.DownloadErr3
+        Err.Raise MacError.err_Http404
     ElseIf httpStatus <> 200 Then
         ' Pass httpStatus as Source, status description as Description
-        Err.Raise MacFileError.DownloadErr4, httpStatus, httpRequest.StatusText
+        Err.Raise MacError.err_BadHttpStatus, , httpStatus
     Else
         WriteToLog strLogMsg
     End If
@@ -853,7 +683,7 @@ Public Function Download() As Boolean
 
     ' Check if download was successful
     If IsItThere(FullTempPath) = False Then
-        Err.Raise MacFileError.DownloadErr5
+        Err.Raise MacError.err_DownloadFail
     Else
         WriteToLog strLogMsg
     End If
@@ -867,7 +697,7 @@ Public Function Download() As Boolean
     Else
         ' KillAll() checks if file is open and notifies user.
         If SharedMacros_.KillAll(Me.FullLocalPath) = False Then
-            Err.Raise MacFileError.DownloadErr6
+            Err.Raise MacError.err_LocalDeleteFail
         Else
             WriteToLog strLogMsg
         End If
@@ -891,7 +721,7 @@ Public Function Download() As Boolean
     
     ' Check if it worked
     If IsItThere(Me.FullLocalPath) = False Then
-        Err.Raise MacFileError.DownloadErr7
+        Err.Raise MacError.err_LocalCopyFail
     Else
         Download = True
         WriteToLog strLogMsg
@@ -916,7 +746,7 @@ Public Function Download() As Boolean
 
     'Cleanup: Get rid of temp file if downloaded correctly
     If KillAll(FullTempPath) = False Then
-        Err.Raise MacFileError.DownloadErr1
+        Err.Raise MacError.err_TempDeleteFail
     End If
 
 
@@ -925,7 +755,8 @@ DownloadFinish:
     Exit Function
     
 DownloadError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Download" & " " & Me.FullName
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Download = False
@@ -962,7 +793,8 @@ StringVersionFinish:
     Exit Function
     
 StringVersionError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "StringVersion"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume StringVersionFinish
@@ -990,7 +822,8 @@ WriteToLogFinish:
     Exit Sub
 
 WriteToLogError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "WriteToLog"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume WriteToLogFinish

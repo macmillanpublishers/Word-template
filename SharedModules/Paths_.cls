@@ -43,6 +43,8 @@ Private p_LogsDir As String
 Private p_RootDir As String
 Private p_TempPath As String
 
+' For error handling
+Private Const strPaths As String = "Paths_."
 
 ' *****************************************************************************
 '       PUBLIC PROPERTIES
@@ -56,6 +58,7 @@ Private p_TempPath As String
 ' objects in this dictionary are also dictionaries.
 
 Public Property Get FullJSON() As Dictionary
+    On Error GoTo FullJSONGetError
     If p_FullJSON Is Nothing Then
         Dim strPath As String
         strPath = FullConfigPath
@@ -66,7 +69,17 @@ Public Property Get FullJSON() As Dictionary
     End If
     
     Set FullJSON = p_FullJSON
-    
+FullJSONGetFinish:
+    On Error GoTo 0
+    Exit Property
+
+FullJSONGetError:
+    Err.Source = strPaths & "FullJSON"
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume FullJSONGetFinish
+    End If
 End Property
 
 '' ===== LocalPath =============================================================
@@ -77,6 +90,7 @@ End Property
 ' our project structure, so it tests for that as well.
 
 Public Property Get LocalPath(GroupName As String) As String
+    On Error GoTo LocalPathGetError
     If p_LocalPath = vbNullString Then
         ' If this next line works, don't need "startupFiles" in "paths" object
         If GroupName = "startupFiles" Then
@@ -86,13 +100,24 @@ Public Property Get LocalPath(GroupName As String) As String
                 p_LocalPath = HomeDir & Application.PathSeparator & _
                 PathsJSON(GroupName)
             Else
-                MsgBox "That is not a valid GroupName!"
+                Err.Raise MacError.err_GroupNameInvalid
             End If
         End If
     End If
 
     CheckDir (p_LocalPath)
     LocalPath = p_LocalPath
+LocalPathGetFinish:
+    On Error GoTo 0
+    Exit Property
+
+LocalPathGetError:
+    Err.Source = strPaths & "LocalPathGet"
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume LocalPathGetFinish
+    End If
 End Property
 
 ' ===== LogsDir ===============================================================
@@ -100,17 +125,30 @@ End Property
 ' MacFile_ directly.
 
 Public Property Get LogsDir() As String
+    On Error GoTo LogsDirGetError
     If p_LogsDir = vbNullString Then
         ' LocalPath calls CheckDir, which will create if not extant
         p_LogsDir = LocalPath(GroupName:="logFiles")
     End If
     LogsDir = p_LogsDir
+LogsDirGetFinish:
+    On Error GoTo 0
+    Exit Property
+
+LogsDirGetError:
+    Err.Source = strPaths & "LogsDir"
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume LogsDirGetFinish
+    End If
 End Property
 
 ' ===== TempPath ==========================================================
 ' Path to OS-specific local temp directory.
 
 Public Property Get TempPath() As String
+    On Error GoTo TempPathError
     If p_TempPath = vbNullString Then
         #If Mac Then
             p_TempPath = MacScript("path to temporary items as string")
@@ -128,7 +166,18 @@ Public Property Get TempPath() As String
     If IsItThere(p_TempPath) = True Then
         TempPath = p_TempPath
     Else
-        MsgBox "Um, your Temp folder is missing?"
+        Err.Raise MacError.err_TempMissing
+    End If
+TempPathFinish:
+    On Error GoTo 0
+    Exit Property
+
+TempPathError:
+    Err.Source = strPaths & "TempPath"
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume TempPathFinish
     End If
 End Property
 
@@ -137,6 +186,7 @@ End Property
 ' separator. Will be assigned to WebClient.BaseURL.
 
 Public Property Get DownloadURL() As String
+    On Error GoTo DownloadURLError
     If p_DownloadURL = vbNullString Then
         Dim dictDownloads As Dictionary
         Set dictDownloads = FullJSON("downloads")
@@ -145,6 +195,17 @@ Public Property Get DownloadURL() As String
             dictDownloads(dictDownloads("current"))
     End If
     DownloadURL = p_DownloadURL
+DownloadURLFinish:
+    On Error GoTo 0
+    Exit Property
+
+DownloadURLError:
+    Err.Source = strPaths & "DownloadURL"
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume DownloadURLFinish
+    End If
 End Property
 
 
