@@ -19,34 +19,8 @@ We may move to error handling to a single class in the future.
 | 20007 | `MacFile_` | `DownloadErr2` | No network connection. Download aborted. |
 | 20008 | `MacFile_` | `DownloadErr3` | File returned HTTP status of 404, not found. Check if file is correctly posted to DownloadURL. |
 | 20009 | `MacFile_` | `DownloadErr4` | File returned bad HTTP status other than 404. Check log for actual status code and description. |
-| 20010 | `MacFile_` | `DownloadErr5` |  |
-| 20011 | `MacFile_` | `DownloadErr6` |  |
-| 20012 | `MacFile_` | `DownloadErr7` |  |
-| 20013 | `MacFile_` | `DownloadErr8` |  |
-| 20014 | `MacFile_` | `DownloadErr9` |  |
-| 20015 | `MacFile_` | `FullLocalPathErr1` | Final dir for file is read-only. |
-
-
-
-Http status Connection was OK but http status <> 200. If http status = 404, file not found, file may be missing from Confluence Word Template downloads - production page.
-
-# 3. Download failed
-Connection and http status are OK but file doesn't exist in temp directory.
-
-# 4. Previous version removal failed
-Kill old file in final dir failed. Probably attached to an open document. Told user to close all other open docs.
-
-# 5. Previous version uninstall failed
-Kill FinalPath didn't produce any errors, but the old file still remains in the final dir.
-
-# 6. Installation failed
-No errors triggered earlier but new file is not saved in final directory.
-
-# 7. File not found
-HTTP request returned 404: Page not found. Either file isn't available on Confluence or Confluence URL is wrong.
-
-# 8: Permission denied
-User needs admin permission to write to final template directory. If Mac, direct user to download from Self Service. If PC, contact IT and have them fix–users should have read/write permission to Startup and C:\ProgramData
-
-# 9: Temp file delete failed
-Failed to delete previous file in temp dir before beginning download.
+| 20010 | `MacFile_` | `DownloadErr5` | File download failed. |
+| 20011 | `MacFile_` | `DownloadErr6` | File in final install location could not be deleted. If it was because the file was open, the user was notified. |
+| 20012 | `MacFile_` | `DownloadErr7` | Everything else worked, but the file did not end up in the final directory. |
+| 20013 | `MacFile_` | `FullLocalPathErr1` | Final dir for file is read-only. |
+| 20014 | `MacFile_` | `FullTempPathErr1` | Temp path is read-only. |

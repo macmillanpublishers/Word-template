@@ -67,9 +67,8 @@ Private Enum MacFileError
     DownloadErr5 = 20010
     DownloadErr6 = 20011
     DownloadErr7 = 20012
-    DownloadErr8 = 20013
-    DownloadErr9 = 20014
-    FullLocalPathErr1 = 20015
+    FullLocalPathErr1 = 20013
+    FullTempPathErr1 = 20014
 End Enum
 
 ' ===== ErrorChecker ==========================================================
@@ -186,16 +185,28 @@ Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
                 strErrMessage = "Download of " & Me.FullName & " failed. " & _
                     strHelpContact
             Case MacFileError.DownloadErr6
+                ' SharedMacros_.KillAll() will notify user if file is open
                 objError.Source = "MacFile_.Download " & Me.FullName
                 strDescription = "File in final install location could not " _
                     & "be deleted. If it was because the file was open, the " _
                     & "user was notified."
                 blnNotifyUser = False
+            Case MacFileError.DownloadErr7
+                objError.Source = "MacFile_.Download " & Me.FullName
+                strDescription = Me.FullName & " not saved to final directory."
+                strErrMessage = "There was an error installing the " & _
+                "Macmillan template." & vbNewLine & vbNewLine & strHelpEmail
             Case MacFileError.FullLocalPathErr1
                 objError.Source = "MacFile_.FullLocalPath " & Me.FullName
-                strDescription = "Final dir for file is read-only."
+                strDescription = "Final dir for file is read-only: " & _
+                    Me.FullLocalPath
                 strErrMessage = "The folder you are trying to access, " & _
                     Me.FullLocalPath & ", is read-only. " & strHelpContact
+            Case MacFileError.FullTempPathErr1
+                objError.Source = "MacFile_.FullTempPath " & Me.FullName
+                strDescription = "Temp dir is read-only: " & FullTempPath
+                strErrMessage = "Your temp folder is read-only. " & _
+                    strHelpContact
             Case Else
                 objError.Source = "MacFile_.? " & Me.FullName
                 strDescription = "Undocumented error number - " & _
@@ -621,6 +632,10 @@ Private Property Get FullTempPath() As String
     On Error GoTo FullTempPathGetError
     If p_FullTempPath = vbNullString Then
         p_FullTempPath = Paths_.TempPath & Application.PathSeparator & FullName
+        ' Check if final dir is read-only
+        If SharedMacros_.IsReadOnly(p_FullTempPath) = True Then
+            Err.Raise FullTempPathErr1
+        End If
     End If
     FullTempPath = p_FullTempPath
 FullTempPathGetFinish:
@@ -850,6 +865,7 @@ Public Function Download() As Boolean
     If IsItThere(Me.FullLocalPath) = False Then
         WriteToLog "No previous file in final dir."
     Else
+        ' KillAll() checks if file is open and notifies user.
         If SharedMacros_.KillAll(Me.FullLocalPath) = False Then
             Err.Raise MacFileError.DownloadErr6
         Else
@@ -877,66 +893,33 @@ Public Function Download() As Boolean
     If IsItThere(Me.FullLocalPath) = False Then
         Err.Raise MacFileError.DownloadErr7
     Else
+        Download = True
         WriteToLog strLogMsg
     End If
     
     ' ----- SET MAC TEMPLATE ATTRIBUTES ---------------------------------------
     ' Mac won't load macros from a template downloaded from the internet at all
     ' Need to send these commands for it to work, see Confluence docs for info.
-    ' Do NOT use open/save-as, this removes customUI.xml which creates Mac
+    ' Do NOT use open/save-as, this removes customUI.xml, which creates Mac
     ' Tools toolbar later.
     #If Mac Then
         If Extension = "dotm" Then
             Dim strCommand As String
-            strCommand = "do shell script " & Chr(34) & "xattr -wx " & _
-                "com.apple.FinderInfo \" & Chr(34) & "57 58 54 4D 4D 53 57" & _
-                " 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00" & _
-                "00 00 00 00 00 00\" & Chr(34) & Chr(32) & Chr(34) & " & " & _
-                "quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
-                'Debug.Print strCommand
-                MacScript (strCommand)
+            strCommand = "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
+                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00" _
+                & " 00 00 00 00 00 00 00 00 00 00 00 00\" & Chr(34) & Chr(32) _
+                & Chr(34) & " & " & "quoted form of POSIX path of " & Chr(34) _
+                & Me.FullLocalPath & Chr(34)
+                SharedMacros_.ShellAndWaitMac (strCommand)
         End If
     #End If
 
-    Else
-        strLogMsg = Now & " -- old " & FullName & " file not cleared from Final directory."
-        WriteToLog LogMessage:=strLogMsg
-        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
-            "Please close all other Word documents and try again, or contact workflows@macmillan.com."
-        MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FullName & ")"
-        Download = False
-        On Error GoTo 0
-        Exit Function
-    End If
-
-    'If move was successful, yay! Else, :(
-    If IsItThere(strFinalPath) = True Then
-        strLogMsg = Now & " -- " & FullName & " file successfully saved to final directory."
-        WriteToLog LogMessage:=strLogMsg
-    Else
-        strLogMsg = Now & " -- " & FullName & " file not saved to final directory."
-        WriteToLog LogMessage:=strLogMsg
-        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
-            "Please cotact workflows@macmillan.com for assistance."
-        MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FullName & ")"
-        Download = False
-        On Error GoTo 0
-        Exit Function
-    End If
-
     'Cleanup: Get rid of temp file if downloaded correctly
-    If IsItThere(strTmpPath) = True Then
-        Kill strTmpPath
+    If KillAll(FullTempPath) = False Then
+        Err.Raise MacFileError.DownloadErr1
     End If
 
-    ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
-    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
-        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
-            AddIns(strFinalPath).Installed = False
-        On Error GoTo 0
-    End If
 
-    Download = True
 DownloadFinish:
     On Error GoTo 0
     Exit Function
