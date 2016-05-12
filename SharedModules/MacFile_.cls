@@ -40,138 +40,7 @@ Private p_FullName As String
 Private p_FullTempPath As String
 Private p_Name As String
 
-
-' *****************************************************************************
-'           ERROR HANDLING STUFF
-' *****************************************************************************
-' Technically class methods (which are listed farther down) but it's easier to
-' maintain close to the error number enum, which has to appear above other
-' procedures. May move to its own class one day.
-
-' ===== MacFileErrors =========================================================
-' Each error we raise anywhere in this class should be included here. Note that
-' error numbers 0 - 512 are reserved for system errors. Include property or
-' method name in enum just to be clear for debugging.
-
-Private Enum MacFileError
-    MacFileErrGeneral = 20000       ' Not sure if we'll need, but here it is.
-    GroupNameErr1 = 20001
-    GroupNameErr2 = 20002
-    SpecificFileErr1 = 20003
-    SpecificFileErr2 = 20004
-    DeleteFileErr1 = 20005
-    DownloadErr1 = 20006
-    DownloadErr2 = 20007
-    DownloadErr3 = 20008
-    DownloadErr4 = 20009
-    DownloadErr5 = 20010
-    DownloadErr6 = 20011
-    DownloadErr7 = 20012
-    DownloadErr8 = 20013
-    DownloadErr9 = 20014
-End Enum
-
-' ===== ErrorChecker ==========================================================
-' Send all errors here, to make tracking/maintaining error handling easier.
-' Be sure to add the error to the MacFileErrors enum.
-'
-' USE: ErrorChecker() returns False if error is handled; procedure can continue
-' Each member procedure in the class should have the following:
-'''
-' On Error GoTo MemberName[Let | Set | Get]Error
-'   <...code...>
-' MemberName[Let | Set | Get]Finish:
-'   <...any cleanup code...>
-'   On Error GoTo 0
-'   Exit [Property | Sub | Function]
-' MemberName[Let | Set | Get]Error:
-'    If ErrorChecker(Err) = False Then
-'        Resume
-'    Else
-'        Resume MemberName[Let | Set | Get]Finish
-'    End If
-' End [Property | Sub | Function]
-
-Private Function ErrorChecker(ByRef objError As ErrObject) As Boolean
-    Dim strDescription As String
-    Dim strErrMessage As String
-    Dim blnNotifyUser As Boolean
-    
-    ' ----- Set defaults ------------------------------------------------------
-    ' Only need to change in Select statement below if want to set either to
-    ' False. For now at least, we'll have ErrorChecker = blnNotifyUser too.
-    blnNotifyUser = True
-    
-    ' ----- Check for errors --------------------------------------------------
-    ' Make sure we actually have an error, cuz you never know.
-    If objError.Number > 0 Then
-    
-    ' ----- Handle specific errors --------------------------------------------
-    ' Each case should be a MacFileError enum. Even if we aren't doing anything
-    ' to fix the error, still enter the following:
-    '   Err.Source "MacFile_.<MethodName>"
-    '   strDescription = "Description of the error for the log."
-    '   strErrMessage = "Message for the user if we're notifying them."
-        Select Case objError.Number
-            Case Is < 513
-                ' Errors 0 to 512 are system errors
-                strDescription = Err.Description
-                strErrMessage = "Something unexpected happened. Please click" _
-                    & "OK to exit." & vbNewLine & vbNewLine & "Contact " & _
-                    Organization_.HelpEmail & " if you need help."
-            Case MacFileError.GroupNameErr1
-                objError.Source = "MacFile_.GroupName"
-                strDescription = "Invalid value for GroupName property."
-                strErrMessage = "The value you've entered for the GroupName " _
-                    & "property is not valid. Make sure you only use file " & _
-                    "groups that are in the config.json file."
-            Case MacFileError.GroupNameErr2
-                objError.Source = "MacFile_.GroupName"
-                strDescription = "GroupName property has not been Let."
-                strErrMessage = "You can't Get the GroupName property before" _
-                    & " it has been Let. Try the MacFile_.AssignFile method " _
-                    & "to create a new object in this class."
-            Case MacFileError.SpecificFileErr1
-                objError.Source = "MacFile_.SpecificFile"
-                strDescription = "Invalid value for SpecificFile property."
-                strErrMessage = "The you've entered an invalid value for the" _
-                    & " SpecificFile property. Make sure you only use " & _
-                    "specific file types that are in the config.json file."
-            Case MacFileError.SpecificFileErr2
-                objError.Source "MacFile_.SpecificFile"
-                strDescription = "SpecificFile property has not been Let."
-                strErrMessage = "You can't Get the SpecificFile property " & _
-                    "before it has been Let. Try the MacFile_.AssignFile " & _
-                    "method to create a new object in this class."
-            Case MacFileError.DeleteFileErr1
-                objError.Source "MacFile_.DeleteFile"
-                strDescription = "File is currently executing code."
-                strErrMessage = "The file you are trying to delete is " & _
-                    "currently executing macro code."
-            Case Else
-                objError.Source "MacFile_"
-                strDescription = "Undocumented error number."
-                strErrMessage = "Not sure what's going on here..."
-        End Select
-    
-    Else
-        objError.Source = "MacFile_"
-        strDescription = "Everything's A-OK. Why are you even reading this?"
-        blnNotifyUser = False
-    End If
-    
-    WriteToLog objError.Source & " " & objError.Number & ": " & strDescription
-    
-    If blnNotifyUser = True Then
-        MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
-            "Macmillan Tools Error: " & objError.Number
-    End If
-    
-    objError.Clear
-    ErrorChecker = blnNotifyUser
-
-End Function
-
+Private Const strModuleName As String = "MacFile_."
 
 ' *****************************************************************************
 '           PUBLIC PROPERTIES
@@ -186,14 +55,15 @@ Public Property Let GroupName(GroupName_value As String)
     If Paths_.FullJSON("files").Exists(GroupName_value) Then
         p_GroupName = GroupName_value
     Else
-        Err.Raise MacFileError.GroupNameErr1
+        Err.Raise MacError.err_GroupNameInvalid
     End If
 GroupNameLetFinish:
     On Error GoTo 0
     Exit Property
 
 GroupNameLetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "GroupNameLet" & " " & GroupName_value
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume GroupNameLetFinish
@@ -205,14 +75,15 @@ Public Property Get GroupName() As String
     If p_GroupName <> vbNullString Then
         GroupName = p_GroupName
     Else
-        Err.Raise MacFileError.GroupNameErr2
+        Err.Raise MacError.err_GroupNameNotSet
     End If
 GroupNameGetFinish:
     On Error GoTo 0
     Exit Property
 
 GroupNameGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "GroupNameGet"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume GroupNameGetFinish
@@ -232,14 +103,15 @@ Public Property Let SpecificFile(SpecificFile_value As String)
     If GroupJSON.Exists(SpecificFile_value) Then
         p_SpecificFile = SpecificFile_value
     Else
-        Err.Raise MacFileError.SpecificFileErr1
+        Err.Raise MacError.err_SpecificFileInvalid
     End If
 SpecificFileLetFinish:
     On Error GoTo 0
     Exit Property
 
 SpecificFileLetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "SpecificFileLet" & " " & SpecificFile_value
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume SpecificFileLetFinish
@@ -251,14 +123,15 @@ Public Property Get SpecificFile() As String
     If p_SpecificFile <> vbNullString Then
         SpecificFile = p_SpecificFile
     Else
-        Err.Raise MacFileError.SpecificFileErr2
+        Err.Raise MacError.err_SpecificFileNotSet
     End If
 SpecificFileGetFinish:
     On Error GoTo 0
     Exit Property
 
 SpecificFileGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "SpecificFileGet"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume SpecificFileGetFinish
@@ -279,7 +152,8 @@ FullNameGetFinish:
     Exit Property
     
 FullNameGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FullName"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullNameGetFinish
@@ -295,6 +169,10 @@ Public Property Get FullLocalPath() As String
     If p_FullLocalPath = vbNullString Then
         p_FullLocalPath = Paths_.LocalPath(GroupName) & _
             Application.PathSeparator & FullName
+        ' Check if final dir is read-only
+        If SharedMacros_.IsReadOnly(p_FullLocalPath) = True Then
+            Err.Raise MacError.err_LocalReadOnly
+        End If
     End If
     FullLocalPath = p_FullLocalPath
 FullLocalPathGetFinish:
@@ -302,7 +180,8 @@ FullLocalPathGetFinish:
     Exit Property
     
 FullLocalPathGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FullLocalPathGet"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullLocalPathGetFinish
@@ -321,7 +200,8 @@ ExistsGetFinish:
     Exit Property
     
 ExistsGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Exists"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ExistsGetFinish
@@ -343,9 +223,10 @@ Public Property Get Running() As Boolean
 RunningGetFinish:
     On Error GoTo 0
     Exit Property
-    
+
 RunningGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Running"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume RunningGetFinish
@@ -374,7 +255,8 @@ UpToDateGetFinish:
     Exit Property
     
 UpToDateGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "UpToDate"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume UpToDateGetFinish
@@ -402,7 +284,8 @@ GroupJSONGetFinish:
     Exit Property
 
 GroupJSONGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "GroupJSON"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume GroupJSONGetFinish
@@ -423,7 +306,8 @@ FileJSONGetFinish:
     Exit Property
     
 FileJSONGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FileJSON"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FileJSONGetFinish
@@ -446,7 +330,8 @@ NameGetFinish:
     Exit Property
 
 NameGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Name"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume NameGetFinish
@@ -467,7 +352,8 @@ ExtensionGetFinish:
     Exit Property
     
 ExtensionGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Extension"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ExtensionGetFinish
@@ -489,7 +375,8 @@ ConfigVersionGetFinish:
     Exit Property
     
 ConfigVersionGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "ConfigVersion"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ConfigVersionGetFinish
@@ -531,7 +418,8 @@ LocalVersionGetFinish:
     Exit Property
     
 LocalVersionGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "LocalVersion"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume LocalVersionGetFinish
@@ -551,9 +439,10 @@ Private Property Get FullLogPath() As String
 FullLogPathGetFinish:
     On Error GoTo 0
     Exit Property
-    
+
 FullLogPathGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FullLogPath"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullLogPathGetFinish
@@ -568,6 +457,10 @@ Private Property Get FullTempPath() As String
     On Error GoTo FullTempPathGetError
     If p_FullTempPath = vbNullString Then
         p_FullTempPath = Paths_.TempPath & Application.PathSeparator & FullName
+        ' Check if final dir is read-only
+        If SharedMacros_.IsReadOnly(p_FullTempPath) = True Then
+            Err.Raise MacError.err_TempReadOnly
+        End If
     End If
     FullTempPath = p_FullTempPath
 FullTempPathGetFinish:
@@ -575,7 +468,8 @@ FullTempPathGetFinish:
     Exit Property
     
 FullTempPathGetError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "FullTempPath"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullTempPathGetFinish
@@ -608,7 +502,8 @@ ClearFileFinish:
     Exit Sub
     
 ClearFileError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "ClearFile"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ClearFileFinish
@@ -630,7 +525,8 @@ AssignFileFinish:
     Exit Sub
 
 AssignFileError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "AssignFile"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume AssignFileFinish
@@ -646,14 +542,15 @@ Public Sub DeleteFile()
     If Running = False Then
         SharedMacros_.KillAll FullLocalPath
     Else
-        Err.Raise MacFileError.DeleteFileErr1
+        Err.Raise MacError.err_DeleteThisDoc
     End If
 DeleteFileFinish:
     On Error GoTo 0
     Exit Sub
 
 DeleteFileError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "DeleteFile"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume DeleteFileFinish
@@ -677,7 +574,8 @@ NotifyCompleteFinish:
     Exit Sub
 
 NotifyCompleteError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "NotifyComplete"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume NotifyCompleteFinish
@@ -692,270 +590,173 @@ End Sub
 ' the function -- but should probably move this to a global error handler?
 
 Public Function Download() As Boolean
+    ' DownloadError section triggers ErrorChecker function. If ErrorChecker
+    ' returns True, user is notified, Download = False, & this function exits.
+    ' ErrorChecker function writes error info to log, so don't need to here.
+    ' Custom errors introduced through Err.Raise must be added to MacError
+    ' enum AND to ErrorChecker Select statement.
     On Error GoTo DownloadError
+    ' Mac/PC variables
+    Dim httpStatus As Long
     Dim strLogMsg As String
     
+    ' Mac variables
+    Dim strBashTmp As String
+    
+    ' PC variables
+    Dim httpRequest As Object
+    Dim oStream As Object
+    
     ' ----- START -------------------------------------------------------------
-    strLogMsg = "Beginning download procedure."
-    WriteToLog strLogMessage
+    WriteToLog "Beginning download procedure."
     
     ' ----- DELETE TEMP -------------------------------------------------------
-    ' Delete the files in the tmp dir if it exists (Kill checks if exists)
+    ' Delete the file in the tmp dir if it exists (KillAll checks if exists)
+    strLogMsg = "Temp dir clear of file."
     If SharedMacros_.KillAll(FullTempPath) = False Then
         ' delete failed, return an error
-        Err.Raise MacFileError.DownloadErr1
+        Err.Raise MacError.err_TempDeleteFail
+    Else
+        WriteToLog strLogMsg
     End If
     
     ' ----- ARE WE CONNECTED TO THE INTERNET? ---------------------------------
+    strLogMsg = "Internet connection confirmed."
     #If Mac Then
         ' FullTempPath returns OSX-style path, with colons. Bash shell commands
         ' require forward slashes, and no root volume name.
-        Dim strBashTmp As String
         strBashTmp = Replace(Right(FullTempPath, Len(FullTempPath) - (InStr _
             (FullTempPath, ":") - 1)), ":", "/")
-
-        'check for network
-        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") _
-            <> 0 Then   'can't connect to internet
-            strLogMsg = "Tried update; unable to connect to network."
-            WriteToLog LogMessage:=strLogMsg
-            strErrMsg = "There was an error trying to download the " & _
-                "Macmillan template." & vbNewLine & vbNewLine & "Please " & _
-                "check your internet connection or contact " & _
-                Organization_.HelpEmail & " for help."
-            MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & _
-                FullName & ")"
-            Download = False
-            Exit Function
-        Else 'internet is working, download file
-            'Make sure file is there
-            Dim httpStatus As Long
-            httpStatus = ShellAndWaitMac _
-                ("curl -s -o /dev/null -w '%{http_code}' " & DownloadURL)
-
-            If httpStatus = 200 Then                    ' File is there
-                'Now delete file if already there, then download new file
-                ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & _
-                    strBashTmp & " " & DownloadURL)
-            ElseIf httpStatus = 404 Then            ' 404 = page not found
-                strLogMsg = "404 File not found. Cannot download file."
-                WriteToLog LogMessage:=strLogMsg
-                strErrMsg = "It looks like that file isn't available for " & _
-                    "download." & vbNewLine & vbNewLine & "Please contact " & _
-                    Organization_.HelpEmail & " for help."
-                MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & _
-                    FullName & ")"
-                Download = False
-                Exit Function
-            Else
-                strLogMsg = "Http status is " & httpStatus & ". Cannot " & _
-                    "download file."
-                WriteToLog LogMessage:=strLogMsg
-                strErrMsg = "There was an error trying to download the " & _
-                    "Macmillan templates." & vbNewLine & vbNewLine & "Please" _
-                    & " check your internet connection or contact " & _
-                    Organization_.HelpEmail & " for help."
-                MsgBox strErrMsg, vbCritical, "Error 2: Http status " & _
-                    httpStatus & " (" & FullName & ")"
-                Download = False
-                Exit Function
-            End If
-
-        End If
-    #Else   ' PC download
-
-        'Check if file is already in tmp dir, delete if yes
-        If IsItThere(strTmpPath) = True Then
-            Kill strTmpPath
-        End If
-
-        'try to download the file from Public Confluence page
-        Dim WinHttpReq As Object
-        Dim oStream As Object
-
-        'Attempt to download file
-        On Error Resume Next
-            Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-            WinHttpReq.Open "GET", DownloadURL, False
-            WinHttpReq.Send
-
-                ' Exit sub if error in connecting to website
-                If Err.Number <> 0 Then 'HTTP request is not OK
-                    'Debug.Print WinHttpReq.Status
-                    strLogMsg = Now & " -- could not connect to Confluence site: Error " & Err.Number
-                    WriteToLog LogMessage:=strLogMsg
-                    strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
-                        "Please check your internet connection or contact workflows@macmillan.com for help."
-                    MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FullName & ")"
-                    Download = False
-                    On Error GoTo 0
-                    Exit Function
-                End If
-        On Error GoTo 0
-
-        'Debug.Print "Http status for " & FullName & ": " & WinHttpReq.Status
-        If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
-
-            'if connection OK, download file to temp dir
-            Set oStream = CreateObject("ADODB.Stream")
-            oStream.Open
-            oStream.Type = 1
-            oStream.Write WinHttpReq.ResponseBody
-            oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
-            oStream.Close
-            Set oStream = Nothing
-            Set WinHttpReq = Nothing
-        ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
-            strLogMsg = Now & " -- 404 File not found. Cannot download file."
-            WriteToLog LogMessage:=strLogMsg
-            strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
-                "Please contact workflows@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FullName & ")"
-            Download = False
-            Exit Function
+        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 _
+            Then   'can't connect to internet
+            Err.Raise MacError.err_NoInternet
         Else
-            strLogMsg = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
-            WriteToLog LogMessage:=strLogMsg
-            strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
-                "Please check your internet connection or contact workflows@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FullName & ")"
-            Download = False
-            Exit Function
+            WriteToLog strLogMsg
+        End If
+    #Else
+        Set httpRequest = CreateObject("WinHttp.WinHttpRequest.5.1")
+        httpRequest.Open "http://www.google.com"
+        httpRequest.Send
+        If httpRequest.Status <> 200 Then
+            Err.Raise MacError.err_NoInternet
+        Else
+            WriteToLog strLogMsg
+        End If
+    #End If
+    
+    ' ----- CHECK HTTP STATUS OF FILE -----------------------------------------
+    strLogMsg = "File is available at URL."
+    #If Mac Then
+        httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_" & _
+            "code}' " & DownloadURL)
+    #Else
+        httpRequest.Open "HEAD", DownloadURL
+        httpRequest.Send
+        httpStatus = httpRequest.Status
+    #End If
+    
+    If httpStatus = 404 Then
+        Err.Raise MacError.err_Http404
+    ElseIf httpStatus <> 200 Then
+        ' Pass httpStatus as Source, status description as Description
+        Err.Raise MacError.err_BadHttpStatus, , httpStatus
+    Else
+        WriteToLog strLogMsg
+    End If
+
+    ' ----- DOWNLOAD FILE TO TEMP DIRECTORY -----------------------------------
+    strLogMsg = "File download to temp dir successful."
+    #If Mac Then
+        ShellAndWaitMac ("curl -o " & strBashTmp & " " & DownloadURL)
+    #Else
+        httpRequest.Open "GET", DownloadURL
+        httpRequest.Send
+        Set oStream = CreateObject("ADODB.Stream")
+        oStream.Open
+        oStream.Type = 1
+        oStream.Write httpRequest.ResponseBody
+        oStream.SaveToFile FullTempPath, 2 ' 1 = no overwrite, 2 = overwrite
+        oStream.Close
+        Set oStream = Nothing
+        Set httpRequest = Nothing
+    #End If
+
+    ' Check if download was successful
+    If IsItThere(FullTempPath) = False Then
+        Err.Raise MacError.err_DownloadFail
+    Else
+        WriteToLog strLogMsg
+    End If
+
+    ' ----- CLEAR FILE FROM FINAL DIR ------------------------------------------
+    strLogMsg = "Final dir clear of previous file."
+
+    ' Check if there is a file in the final dir already
+    If IsItThere(Me.FullLocalPath) = False Then
+        WriteToLog "No previous file in final dir."
+    Else
+        ' KillAll() checks if file is open and notifies user.
+        If SharedMacros_.KillAll(Me.FullLocalPath) = False Then
+            Err.Raise MacError.err_LocalDeleteFail
+        Else
+            WriteToLog strLogMsg
+        End If
+    End If
+
+    ' ----- MOVE TMP FILE TO FINAL DIR ----------------------------------------
+    strLogMsg = "File successfully moved to final dir."
+    ' Mac 2011 can't handle file paths > 32 char
+    If SharedMacros_.IsOldMac = True Then
+        Dim strPosixTemp As String
+        Dim strPosixLocal As String
+        strPosixTemp = MacScript("return quoted form of posix path of " & _
+            FullTempPath)
+        strPosixLocal = MacScript("return quoted form of posix path of " & _
+            Me.FullLocalPath)
+        strMoveCmd = "mv " & strPosixTemp & " " & strPosixLocal
+        SharedMacros_.ShellAndWaitMac (strMoveCmd)
+    Else
+        Name FullTempPath As Me.FullLocalPath
+    End If
+    
+    ' Check if it worked
+    If IsItThere(Me.FullLocalPath) = False Then
+        Err.Raise MacError.err_LocalCopyFail
+    Else
+        Download = True
+        WriteToLog strLogMsg
+    End If
+    
+    ' ----- SET MAC TEMPLATE ATTRIBUTES ---------------------------------------
+    ' Mac won't load macros from a template downloaded from the internet at all
+    ' Need to send these commands for it to work, see Confluence docs for info.
+    ' Do NOT use open/save-as, this removes customUI.xml, which creates Mac
+    ' Tools toolbar later.
+    #If Mac Then
+        If Extension = "dotm" Then
+            Dim strCommand As String
+            strCommand = "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
+                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00" _
+                & " 00 00 00 00 00 00 00 00 00 00 00 00\" & Chr(34) & Chr(32) _
+                & Chr(34) & " & " & "quoted form of POSIX path of " & Chr(34) _
+                & Me.FullLocalPath & Chr(34)
+                SharedMacros_.ShellAndWaitMac (strCommand)
         End If
     #End If
 
-    'Error if download was not successful
-    If IsItThere(strTmpPath) = False Then
-        strLogMsg = Now & " -- " & FullName & " file download to Temp was not successful."
-        WriteToLog LogMessage:=strLogMsg
-        strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
-            "Please contact workflows@macmillan.com for assitance."
-        MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FullName & ")"
-        Download = False
-        On Error GoTo 0
-        Exit Function
-    Else
-        strLogMsg = Now & " -- " & FullName & " file download to Temp was successful."
-        WriteToLog LogMessage:=strLogMsg
-    End If
-
-
-
-    'If file exists already, log it and delete it
-    If IsItThere(strFinalPath) = True Then
-
-        strLogMsg = Now & " -- Previous version file in final directory."
-        WriteToLog LogMessage:=strLogMsg
-
-        ' get file extension
-        Dim strExt As String
-        strExt = Right(strFinalPath, InStrRev(StrReverse(strFinalPath), "."))
-
-        ' can't delete template if it's installed as an add-in
-        If InStr(strExt, "dot") > 0 Then
-            On Error Resume Next        'Error = add-in not available, don't need to uninstall
-                AddIns(strFinalPath).Installed = False
-            On Error GoTo 0
-        End If
-
-        ' Test if dir is read only
-        If IsReadOnly(FinalDir) = True Then ' Dir is read only
-            strLogMsg = Now & " -- old " & FullName & " file is read only, can't delete/replace. " _
-                & "Alerting user."
-            WriteToLog LogMessage:=strLogMsg
-            strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
-                "@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FullName & ")"
-            Download = False
-            On Error GoTo 0
-            Exit Function
-        Else
-            On Error Resume Next
-                Kill strFinalPath
-
-                If Err.Number = 70 Then         'File is open and can't be replaced
-                    strLogMsg = Now & " -- old " & FullName & " file is open, can't delete/replace. Alerting user."
-                    WriteToLog LogMessage:=strLogMsg
-                    strErrMsg = "Please close all other Word documents and try again."
-                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FullName & ")"
-                    Download = False
-                    On Error GoTo 0
-                    Exit Function
-                End If
-            On Error GoTo 0
-        End If
-    Else
-        strLogMsg = Now & " -- No previous version file in final directory."
-        WriteToLog LogMessage:=strLogMsg
-    End If
-
-    'If delete was successful, move downloaded file to final directory
-    If IsItThere(strFinalPath) = False Then
-        strLogMsg = Now & " -- Final directory clear of " & FullName & " file."
-        WriteToLog LogMessage:=strLogMsg
-
-        ' move template to final directory
-        Name strTmpPath As strFinalPath
-
-        'Mac won't load macros from a template downloaded from the internet to Startup.
-        'Need to send these commands for it to work, see Confluence
-        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
-        #If Mac Then
-            If InStr(1, FullName, ".dotm") Then
-            Dim strCommand As String
-            strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
-                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
-                Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
-                'Debug.Print strCommand
-                MacScript (strCommand)
-            End If
-        #End If
-
-    Else
-        strLogMsg = Now & " -- old " & FullName & " file not cleared from Final directory."
-        WriteToLog LogMessage:=strLogMsg
-        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
-            "Please close all other Word documents and try again, or contact workflows@macmillan.com."
-        MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FullName & ")"
-        Download = False
-        On Error GoTo 0
-        Exit Function
-    End If
-
-    'If move was successful, yay! Else, :(
-    If IsItThere(strFinalPath) = True Then
-        strLogMsg = Now & " -- " & FullName & " file successfully saved to final directory."
-        WriteToLog LogMessage:=strLogMsg
-    Else
-        strLogMsg = Now & " -- " & FullName & " file not saved to final directory."
-        WriteToLog LogMessage:=strLogMsg
-        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
-            "Please cotact workflows@macmillan.com for assistance."
-        MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FullName & ")"
-        Download = False
-        On Error GoTo 0
-        Exit Function
-    End If
-
     'Cleanup: Get rid of temp file if downloaded correctly
-    If IsItThere(strTmpPath) = True Then
-        Kill strTmpPath
+    If KillAll(FullTempPath) = False Then
+        Err.Raise MacError.err_TempDeleteFail
     End If
 
-    ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
-    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
-        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
-            AddIns(strFinalPath).Installed = False
-        On Error GoTo 0
-    End If
 
-    Download = True
 DownloadFinish:
     On Error GoTo 0
     Exit Function
     
 DownloadError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "Download" & " " & Me.FullName
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Download = False
@@ -992,7 +793,8 @@ StringVersionFinish:
     Exit Function
     
 StringVersionError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "StringVersion"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume StringVersionFinish
@@ -1020,7 +822,8 @@ WriteToLogFinish:
     Exit Sub
 
 WriteToLogError:
-    If ErrorChecker(Err) = False Then
+    Err.Source = strModuleName & "WriteToLog"
+    If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume WriteToLogFinish
@@ -1061,3 +864,5 @@ Sub Class_Terminate()
         Set p_LocalVersion = Nothing
     End If
 End Sub
+
+

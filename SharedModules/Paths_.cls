@@ -220,6 +220,7 @@ End Property
 ' check if it's there, because we need this path in order to save the file.
 
 Private Property Let FullConfigPath(strFullConfigPath As String)
+    On Error GoTo FullConfigPathError
     p_FullConfigPath = strFullConfigPath
     ThisDocument.CustomDocumentProperties("FullConfigPath").Value = _
         strFullConfigPath
@@ -352,14 +353,14 @@ Private Function CheckDir(MyDir As String) As Boolean
     On Error GoTo CheckDirError
     If SharedMacros_.IsItThere(MyDir) = False Then
         ' Mac Word 2011 can't handle file path > 32 char
-        #If Mac And Application.Version < 15 Then
+        If SharedMacros_.IsOldMac = True Then
             Dim strCommand As String
             strCommand = MacScript("return quoted form of posix path of " & MyDir)
             strCommand = "mkdir -p " & strCommand
             SharedMacros_.ShellAndWaitMac (strCommand)
-        #Else
+        Else
             MkDir MyDir
-        #End If
+        End If
         ' Make sure it worked
         CheckDir = SharedMacros_.IsItThere(MyDir)
     Else

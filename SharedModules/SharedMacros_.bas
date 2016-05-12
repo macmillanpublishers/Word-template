@@ -3,13 +3,13 @@ Attribute VB_Name = "SharedMacros_"
 ' All should be declared as Public for use from other modules
 
 Option Explicit
+Private Const strModule As String = "SharedMacros_."
 
 Public Enum GitBranch
     master = 1
     releases = 2
     develop = 3
 End Enum
-
 
 ' *****************************************************************************
 '           ERROR HANDLING STUFF
@@ -40,6 +40,8 @@ Public Enum MacError
     err_LocalReadOnly = 20013
     err_TempReadOnly = 20014
     err_TempMissing = 20015
+    err_FileNotThere = 20016
+    err_NotWordFormat = 20017
 End Enum
 
 ' ===== ErrorChecker ==========================================================
@@ -96,7 +98,7 @@ Public Function ErrorChecker(ByRef objError As Object) As Boolean
                 strDescription = objError.Description
                 strErrMessage = "Something unexpected happened. Please click" _
                     & " OK to exit." & vbNewLine & vbNewLine & strHelpContact
-            Case MacError.GroupNameInvalid
+            Case MacError.err_GroupNameInvalid
                 strDescription = "Invalid value for GroupName property."
                 strErrMessage = "The value you've entered for the GroupName " _
                     & "property is not valid. Make sure you only use file " & _
@@ -123,22 +125,19 @@ Public Function ErrorChecker(ByRef objError As Object) As Boolean
             Case MacError.err_TempDeleteFail
                 strDescription = "Failed to delete the previous file in the " _
                     & "temp directory."
-                strErrMessage = "We weren't able to download the file " & _
-                    Me.FullName & " because of a stubborn temp file. " & _
-                    vbNewLine & vbNewLine & strHelpContact
+                strErrMessage = "We can't download the file; a temp file " & _
+                    "is still there." & vbNewLine & vbNewLine & strHelpContact
             Case MacError.err_NoInternet
-                objError.Source = "MacFile_.Download " & Me.FullName
                 strDescription = "No network connection. Download aborted."
                 strErrMessage = "We weren't able to download the file " & _
-                    Me.FullName & " because we can't connect to the " & _
-                        "internet. Check your network connection and try " & _
-                        "again." & vbNewLine & vbNewLine & strHelpContact
+                    "because we can't connect to the internet. Check your " & _
+                    "network connection and try again." & vbNewLine & _
+                    vbNewLine & strHelpContact
             Case MacError.err_Http404
-                objError.Source = "MacFile_.Download " & Me.FullName
                 strDescription = "File HTTP status 404. Check if DownloadURL" _
                     & " is correct, and file is posted."
-                strErrMessage = "Could not download " & Me.FullName & _
-                    " from the internet. " & strHelpContact
+                strErrMessage = "Could not download file from the internet. " _
+                & strHelpContact
             Case MacError.err_BadHttpStatus
                 strDescription = "File HTTP status " & objError.Description & _
                     " Download aborted."
@@ -161,7 +160,7 @@ Public Function ErrorChecker(ByRef objError As Object) As Boolean
                 strDescription = "File not saved to final directory: " & _
                     objError.Source
                 strErrMessage = "There was an error installing the " & _
-                "Macmillan template." & vbNewLine & vbNewLine & strHelpEmail
+                "Macmillan template." & vbNewLine & vbNewLine & strHelpContact
             Case MacError.err_LocalReadOnly
                 strDescription = "Final dir for file is read-only: " & _
                     objError.Source
@@ -176,11 +175,21 @@ Public Function ErrorChecker(ByRef objError As Object) As Boolean
                 strDescription = "Temp directory is missing."
                 strErrMessage = "There is an error with your temp folder. " & _
                     strHelpContact
+            Case MacError.err_FileNotThere
+                strDescription = "File does not exist: " & objError.Description
+                strErrMessage = "The file " & objError.Description & " does " _
+                    & "not exist." & strHelpContact
+            Case MacError.err_NotWordFormat
+                strDescription = "File extension is not a native Word " & _
+                    "document or template: " & Err.Description
+                strErrMessage = "This file does not appear to be a Word " & _
+                    "file: " & Err.Description & vbNewLine & vbNewLine & _
+                    strHelpContact
             Case Else
                 strDescription = "Undocumented error number - " & _
                     objError.Number & ": " & objError.Description & vbNewLine _
                     & vbNewLine & objError.Source
-                strErrMessage = "Not sure what's going on here." & strHelpEmail
+                strErrMessage = "Not sure what's going on here." & strHelpContact
         End Select
 
     Else
@@ -201,7 +210,119 @@ Public Function ErrorChecker(ByRef objError As Object) As Boolean
 
 End Function
 
+Public Function IsOldMac() As Boolean
+    ' Checks this is a Mac running Office 2011 or earlier. Good for things like
+    ' checking if we need to account for file paths > 3 char (which 2011 can't
+    ' handle but Mac 2016 can.
+    IsOldMac = False
+    #If Mac Then
+        If Application.Version < 16 Then
+            IsOldMac = True
+        End If
+    #End If
+End Function
 
+Public Function DocPropExists(objDoc As Document, PropName As String) As Boolean
+    ' Tests if a particular custom document property exists in the document. If
+    ' it's already a Document object we already know that it exists and is open
+    ' so we don't need to test for those here. Should be tested somewhere in
+    ' calling procedure though.
+    DocPropExists = False
+
+    Dim A As Long
+    Dim docProps As DocumentProperties
+    docProps = objDoc.CustomDocumentProperties
+
+    If docProps.Count > 0 Then
+        For A = 1 To docProps.Count
+            If dopProps.Name = PropName Then
+                DocPropExists = True
+                Exit Function
+            End If
+        Next A
+    Else
+        DocPropExists = False
+    End If
+End Function
+
+Public Function IsOpen(DocPath As String) As Boolean
+    ' Tests if the Word document is currently open.
+    On Error GoTo IsOpenError
+    Dim objDoc As Document
+    IsOpen = False
+    If IsItThere(DocPath) = True Then
+        If IsWordFormat(DocPath) = True Then
+            If Documents.Count > 0 Then
+                For Each objDoc In Documents
+                    If objDoc.fullPath = DocPath Then
+                        IsOpen = True
+                        Exit Function
+                    End If
+                Next objDoc
+            End If
+        Else
+            Err.Raise = MacError.err_NotWordFormat
+        End If
+    Else
+        Err.Raise = MacError.err_FileNotThere
+    End If
+IsOpenFinish:
+    On Error GoTo 0
+    Exit Function
+
+IsOpenError:
+    Err.Source = strModule & "IsOpen"
+    Err.Description = DocPath
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        IsOpen = False
+        Resume IsOpenFinish
+    End If
+End Function
+
+Public Function IsWordFormat(PathToFile As String) As Boolean
+    ' Checks extension to see if file is a Word document or template. Notably,
+    ' does not test if it's a file type that Word CAN open (e.g., .html), just
+    ' if it's a native Word file type.
+
+    ' Ignores final character for newer file types, just checks for .dot / .doc
+    Dim strExt As String
+    strExt = Left(Right(PathToFile, InStr(StrReverse(PathToFile), ".")), 4)
+    If strExt = ".dot" Or strExt = ".doc" Then
+        IsWordFormat = True
+    Else
+        IsWordFormat = False
+    End If
+    
+End Function
+
+Public Function IsLocked(FilePath As String) As Boolean
+    ' Tests if any file is locked by some kind of process.
+    On Error GoTo IsLockedError
+    IsLocked = False
+    If IsItThere(FilePath) = False Then
+        Err.Raise MacError.err_FileNotThere
+    Else
+        Dim FileNum As Long
+        FileNum = FreeFile()
+        ' If the file is already in use, next line will raise an error
+        Open FilePath For Binary Access Read Write Lock Read Write As FileNum
+        Close FileNum
+    End If
+IsLockedFinish:
+    On Error GoTo 0
+    Exit Function
+    
+IsLockedError:
+    Err.Source = strModule & "IsLocked"
+    Err.Description = FilePath
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume IsLockedFinish
+    End If
+End Function
 
 Public Function IsItThere(Path As String) As Boolean
     ' Check if file or directory exists on PC or Mac.
@@ -213,13 +334,13 @@ Public Function IsItThere(Path As String) As Boolean
         Path = Left(Path, Len(Path) - 1)
     End If
 
-    #If Mac And Application.Version < 15 Then
+    If IsOldMac = True Then
         Dim strScript As String
         strScript = "tell application " & Chr(34) & "System Events" & Chr(34) & _
             "to return exists disk item (" & Chr(34) & Path & Chr(34) _
             & " as string)"
         IsItThere = SharedMacros_.ShellAndWaitMac(strScript)
-    #Else
+    Else
         Dim strCheckDir As String
         strCheckDir = Dir(Path, vbDirectory)
         
@@ -228,7 +349,7 @@ Public Function IsItThere(Path As String) As Boolean
         Else
             IsItThere = True
         End If
-    #End If
+    End If
 End Function
 
 
@@ -242,11 +363,15 @@ Public Function KillAll(Path As String) As Boolean
             AddIns(Path).Installed = False
         End If
         ' Mac 2011 can't handle file paths > 32 char
-        #If Mac And Application.Version < 15 Then
-            Dim strCommand As String
-            strCommand = MacScript("return quoted form of posix path of " & Path)
-            strCommand = "rm " & strCommand
-            SharedMacros_.ShellAndWaitMac (strCommand)
+        #If Mac Then
+            If Application.Version < 16 Then
+                Dim strCommand As String
+                strCommand = MacScript("return quoted form of posix path of " & Path)
+                strCommand = "rm " & strCommand
+                SharedMacros_.ShellAndWaitMac (strCommand)
+            Else
+                Kill (Path)
+            End If
         #Else
             Kill (Path)
         #End If
@@ -304,15 +429,14 @@ End Function
 
  
 Public Function ShellAndWaitMac(cmd As String) As String
-
     Dim result As String
     Dim scriptCmd As String ' Macscript command
-    
-    scriptCmd = "do shell script " & Chr(34) & cmd & Chr(34) & Chr(34)
-    result = MacScript(scriptCmd) ' result contains stdout, should you care
-    'Debug.Print result
-    ShellAndWaitMac = result
-
+    #If Mac Then
+        scriptCmd = "do shell script " & Chr(34) & cmd & Chr(34) & Chr(34)
+        result = MacScript(scriptCmd) ' result contains stdout, should you care
+        'Debug.Print result
+        ShellAndWaitMac = result
+    #End If
 End Function
 
 
@@ -1096,7 +1220,7 @@ End Sub
 Function IsReadOnly(Path As String) As Boolean
     ' Tests if the file or directory is read-only
     ' Mac 2011 can't deal with file paths > 32 char
-    #If Mac And Application.Version < 16 Then
+    If IsOldMac() = True Then
         Dim strScript As String
         Dim blnWritable As Boolean
         
@@ -1117,13 +1241,13 @@ Function IsReadOnly(Path As String) As Boolean
         Else
             IsReadOnly = True
         End If
-    #Else
+    Else
         If (GetAttr(Path) And vbReadOnly) <> 0 Then
             IsReadOnly = True
         Else
             IsReadOnly = False
         End If
-    #End If
+    End If
     
 End Function
 

@@ -26,3 +26,5 @@ We may move to error handling to a single class in the future.
 | 20013 | `MacFile_` | `err_LocalReadOnly` | Final dir for file is read-only. |
 | 20014 | `MacFile_` | `err_TempReadOnly` | Temp path is read-only. |
 | 20015 | `Paths_` | `err_TempMissing` | Temp path does not exist. |
+| 20016 | `SharedMacros_` | `err_FileNotThere` | `IsItThere()` function returned false. Check log to see which procedure raised the error--does not get raised by the function itself. |
+| 20017 | `SharedMacros_` | `err_NotWordFormat` | `IsWordFormat()` function returned false. Check log to see which procedure raised the error--does not get raised in the `IsWordFormat()` function itself. |
