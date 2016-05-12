@@ -25,6 +25,18 @@ Option Explicit
 ' =============================================================================
 
 ' *****************************************************************************
+'       PRIVATE VARIABLES
+' *****************************************************************************
+Private p_ShortName As String
+Private p_LongName As String
+Private p_HelpEmail As String
+Private p_OrgJSON As Dictionary
+
+' For error handling
+Private Const strOrg As String = ".Organization_."
+
+
+' *****************************************************************************
 '       PUBLIC PROPERTIES
 ' *****************************************************************************
 
@@ -33,21 +45,63 @@ Option Explicit
 ' characters or hyphens.
 
  Public Property Get ShortName() As String
-    ShortName = Me.OrgJSON("shortName")
+    On Error GoTo ShortNameError
+    If p_ShortName = vbNullString Then
+        p_ShortName = Me.OrgJSON("shortName")
+    End If
+    ShortName = p_ShortName
+ShortNameGetFinish:
+    Exit Property
+
+ShortNameError:
+    Err.Source = Err.Source & strOrg & "ShortName.Get"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume ShortNameGetFinish
+    End If
  End Property
 
 ' ===== LongName ==============================================================
 ' Full name or organization, for like notifications and such.
 
 Public Property Get LongName() As String
-    LongName = Me.OrgJSON("longName")
+    On Error GoTo LongNameGetError
+    If p_LongName = vbNullString Then
+        p_LongName = Me.OrgJSON("longName")
+    End If
+    LongName = p_LongName
+LongNameGetFinish:
+    Exit Property
+
+LongNameGetError:
+    Err.Source = Err.Source & strOrg & "LongName.Get"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume LongNameGetFinish
+    End If
 End Property
 
 ' ===== HelpEmail =============================================================
 ' Email address for users to send queries to.
 
 Public Property Get HelpEmail() As String
-    HelpEmail = Me.OrgJSON("helpEmail")
+    On Error GoTo HelpEmailGetError
+    If p_HelpEmail = vbNullString Then
+        p_HelpEmail = OrgJSON("helpEmail")
+    End If
+    HelpEmail = p_HelpEmail
+HelpEmailGetFinish:
+    Exit Property
+
+HelpEmailGetError:
+    Err.Source = Err.Source & strOrg & "HelpEmail.Get"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume HelpEmailGetFinish
+    End If
 End Property
 
 
@@ -59,5 +113,19 @@ End Property
 ' Dictionary object of the "organization" info in the config JSON file.
 
 Private Property Get OrgJSON() As Dictionary
-    Set OrgJSON = Paths_.FullJSON("organization")
+    On Error GoTo OrgJsonGetError
+    If p_OrgJSON Is Nothing Then
+        Set p_OrgJSON = Paths_.FullJSON("organization")
+    End If
+    Set OrgJSON = p_OrgJSON
+OrgJsonGetFinish:
+    Exit Property
+
+OrgJsonGetError:
+    Err.Source = Err.Source & strOrg & "OrgJSON.Get"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume OrgJsonGetFinish:
+    End If
 End Property
