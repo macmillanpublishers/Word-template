@@ -3,7 +3,7 @@ Attribute VB_Name = "SharedMacros_"
 ' All should be declared as Public for use from other modules
 
 Option Explicit
-Private Const strModule As String = "SharedMacros_."
+Private Const strModule As String = ".SharedMacros_."
 
 Public Enum GitBranch
     master = 1
@@ -271,7 +271,7 @@ IsOpenFinish:
     Exit Function
 
 IsOpenError:
-    Err.Source = strModule & "IsOpen"
+    Err.Source = Err.Source & strModule & "IsOpen"
     Err.Description = DocPath
     If ErrorChecker(Err) = False Then
         Resume
@@ -306,7 +306,9 @@ Public Function IsLocked(FilePath As String) As Boolean
     Else
         Dim FileNum As Long
         FileNum = FreeFile()
-        ' If the file is already in use, next line will raise an error
+        ' If the file is already in use, next line will raise an error:
+        ' "70: Permission denied" (file is open, Word doc is loaded as add-in)
+        ' "75: Path/File access error" (File is read-only, etc.)
         Open FilePath For Binary Access Read Write Lock Read Write As FileNum
         Close FileNum
     End If
@@ -315,12 +317,17 @@ IsLockedFinish:
     Exit Function
     
 IsLockedError:
-    Err.Source = strModule & "IsLocked"
-    Err.Description = FilePath
-    If ErrorChecker(Err) = False Then
-        Resume
-    Else
+    Err.Source = Err.Source & strModule & "IsLocked"
+    If Err.Number = 70 Or Err.Number = 75 Then
+        IsLocked = True
         Resume IsLockedFinish
+    Else
+        Err.Description = FilePath
+        If ErrorChecker(Err) = False Then
+            Resume
+        Else
+            Resume IsLockedFinish
+        End If
     End If
 End Function
 
@@ -434,7 +441,7 @@ End Function
 
 Public Sub WriteToLog(LogMessage As String, Optional LogFilePath As String)
     On Error GoTo WriteToLogError
-    strLogFile As String
+    Dim strLogFile As String
     Dim strLogMessage As String
     Dim FileNum As Integer
 
@@ -457,7 +464,7 @@ WriteToLogFinish:
     Exit Sub
 
 WriteToLogError:
-    Err.Source = strModule & "WriteToLog"
+    Err.Source = Err.Source & strModule & "WriteToLog"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
