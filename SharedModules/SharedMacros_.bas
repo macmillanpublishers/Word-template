@@ -427,7 +427,44 @@ Public Function IsInstalledAddIn(FileName As String) As Boolean
     Next objAddIn
 End Function
 
- 
+' ===== WriteToLog ============================================================
+' Writes line to log for the file. LogMessage only needs text, timestamp will
+' be added in this method. May make public later if we end up using this for
+' more than just download logs.
+
+Public Sub WriteToLog(LogMessage As String, Optional LogFilePath As String)
+    On Error GoTo WriteToLogError
+    strLogFile As String
+    Dim strLogMessage As String
+    Dim FileNum As Integer
+
+    ' If no specific path was passed, write to generic log file
+    If LogFilePath = vbNullString Then
+        strLogFile = Paths_.LogsDir & Application.PathSeparator & _
+            "manuscript-tools.log"
+    Else
+        strLogFile = LogFilePath
+    End If
+    
+    ' prepend current date and time to message
+    strLogMessage = Now & " -- " & LogMessage
+    FileNum = FreeFile ' next file number
+    Open strLogFile For Append As #FileNum ' creates the file if doesn't exist
+    Print #FileNum, strLogMessage ' write information to end of the text file
+    Close #FileNum ' close the file
+WriteToLogFinish:
+    On Error GoTo 0
+    Exit Sub
+
+WriteToLogError:
+    Err.Source = strModule & "WriteToLog"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume WriteToLogFinish
+    End If
+End Sub
+
 Public Function ShellAndWaitMac(cmd As String) As String
     Dim result As String
     Dim scriptCmd As String ' Macscript command

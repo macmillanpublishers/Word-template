@@ -608,7 +608,8 @@ Public Function Download() As Boolean
     Dim oStream As Object
     
     ' ----- START -------------------------------------------------------------
-    WriteToLog "Beginning download procedure."
+    strLogMsg = "Beginning download procedure."
+    SharedMacros_.WriteToLog strLogMsg, FullLogPath
     
     ' ----- DELETE TEMP -------------------------------------------------------
     ' Delete the file in the tmp dir if it exists (KillAll checks if exists)
@@ -617,7 +618,7 @@ Public Function Download() As Boolean
         ' delete failed, return an error
         Err.Raise MacError.err_TempDeleteFail
     Else
-        WriteToLog strLogMsg
+        SharedMacros_.WriteToLog strLogMsg, FullLogPath
     End If
     
     ' ----- ARE WE CONNECTED TO THE INTERNET? ---------------------------------
@@ -631,7 +632,7 @@ Public Function Download() As Boolean
             Then   'can't connect to internet
             Err.Raise MacError.err_NoInternet
         Else
-            WriteToLog strLogMsg
+            SharedMacros_.WriteToLog strLogMsg, FullLogPath
         End If
     #Else
         Set httpRequest = CreateObject("WinHttp.WinHttpRequest.5.1")
@@ -640,7 +641,7 @@ Public Function Download() As Boolean
         If httpRequest.Status <> 200 Then
             Err.Raise MacError.err_NoInternet
         Else
-            WriteToLog strLogMsg
+            SharedMacros_.WriteToLog strLogMsg, FullLogPath
         End If
     #End If
     
@@ -661,7 +662,7 @@ Public Function Download() As Boolean
         ' Pass httpStatus as Source, status description as Description
         Err.Raise MacError.err_BadHttpStatus, , httpStatus
     Else
-        WriteToLog strLogMsg
+        SharedMacros_.WriteToLog strLogMsg, FullLogPath
     End If
 
     ' ----- DOWNLOAD FILE TO TEMP DIRECTORY -----------------------------------
@@ -685,7 +686,7 @@ Public Function Download() As Boolean
     If IsItThere(FullTempPath) = False Then
         Err.Raise MacError.err_DownloadFail
     Else
-        WriteToLog strLogMsg
+        SharedMacros_.WriteToLog strLogMsg, FullLogPath
     End If
 
     ' ----- CLEAR FILE FROM FINAL DIR ------------------------------------------
@@ -693,13 +694,13 @@ Public Function Download() As Boolean
 
     ' Check if there is a file in the final dir already
     If IsItThere(Me.FullLocalPath) = False Then
-        WriteToLog "No previous file in final dir."
+        SharedMacros_.WriteToLog "No previous file in final dir."
     Else
         ' KillAll() checks if file is open and notifies user.
         If SharedMacros_.KillAll(Me.FullLocalPath) = False Then
             Err.Raise MacError.err_LocalDeleteFail
         Else
-            WriteToLog strLogMsg
+            SharedMacros_.WriteToLog strLogMsg, FullLogPath
         End If
     End If
 
@@ -724,7 +725,7 @@ Public Function Download() As Boolean
         Err.Raise MacError.err_LocalCopyFail
     Else
         Download = True
-        WriteToLog strLogMsg
+        SharedMacros_.WriteToLog strLogMsg, FullLogPath
     End If
     
     ' ----- SET MAC TEMPLATE ATTRIBUTES ---------------------------------------
@@ -800,35 +801,6 @@ StringVersionError:
         Resume StringVersionFinish
     End If
 End Function
-
-' ===== WriteToLog ============================================================
-' Writes line to log for the file. LogMessage only needs text, timestamp will
-' be added in this method. May make public later if we end up using this for
-' more than just download logs.
-
-Private Sub WriteToLog(LogMessage As String)
-    On Error GoTo WriteToLogError
-    Dim strLogMessage As String
-    Dim FileNum As Integer
-
-    strLogMessage = Now & " -- " & LogMessage
-    FileNum = FreeFile ' next file number
-
-    Open LogFile For Append As #FileNum ' creates the file if it doesn't exist
-    Print #FileNum, strLogMessage ' write information to end of the text file
-    Close #FileNum ' close the file
-WriteToLogFinish:
-    On Error GoTo 0
-    Exit Sub
-
-WriteToLogError:
-    Err.Source = strModuleName & "WriteToLog"
-    If SharedMacros_.ErrorChecker(Err) = False Then
-        Resume
-    Else
-        Resume WriteToLogFinish
-    End If
-End Sub
 
 
 
