@@ -129,3 +129,21 @@ OrgJsonGetError:
         Resume OrgJsonGetFinish:
     End If
 End Property
+
+
+' *****************************************************************************
+'       PUBLIC METHODS
+' *****************************************************************************
+
+' ==== ClearAll ===============================================================
+' Resets all properties, in case we need to start over!
+
+Public Sub ClearAll()
+    If Not p_OrgJSON Is Nothing Then
+        Set p_OrgJSON = Nothing
+    End If
+
+    p_ShortName = vbNullString
+    p_LongName = vbNullString
+    p_HelpEmail = vbNullString
+End Sub

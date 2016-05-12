@@ -58,11 +58,10 @@ Public Property Let GroupName(GroupName_value As String)
         Err.Raise MacError.err_GroupNameInvalid
     End If
 GroupNameLetFinish:
-    On Error GoTo 0
     Exit Property
 
 GroupNameLetError:
-    Err.Source = strModuleName & "GroupNameLet" & " " & GroupName_value
+    Err.Source = Err.Source & strModuleName & "GroupName.Let " & GroupName_value
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -78,11 +77,10 @@ Public Property Get GroupName() As String
         Err.Raise MacError.err_GroupNameNotSet
     End If
 GroupNameGetFinish:
-    On Error GoTo 0
     Exit Property
 
 GroupNameGetError:
-    Err.Source = strModuleName & "GroupNameGet"
+    Err.Source = Err.Source & strModuleName & "GroupName.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -106,11 +104,11 @@ Public Property Let SpecificFile(SpecificFile_value As String)
         Err.Raise MacError.err_SpecificFileInvalid
     End If
 SpecificFileLetFinish:
-    On Error GoTo 0
     Exit Property
 
 SpecificFileLetError:
-    Err.Source = strModuleName & "SpecificFileLet" & " " & SpecificFile_value
+    Err.Source = Err.Source & strModuleName & "SpecificFile.Let " & _
+        SpecificFile_value
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -126,11 +124,10 @@ Public Property Get SpecificFile() As String
         Err.Raise MacError.err_SpecificFileNotSet
     End If
 SpecificFileGetFinish:
-    On Error GoTo 0
     Exit Property
 
 SpecificFileGetError:
-    Err.Source = strModuleName & "SpecificFileGet"
+    Err.Source = Err.Source & strModuleName & "SpecificFile.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -148,11 +145,10 @@ Public Property Get FullName() As String
     End If
     FullName = p_FullName
 FullNameGetFinish:
-    On Error GoTo 0
     Exit Property
     
 FullNameGetError:
-    Err.Source = strModuleName & "FullName"
+    Err.Source = Err.Source & strModuleName & "FullName.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -176,11 +172,10 @@ Public Property Get FullLocalPath() As String
     End If
     FullLocalPath = p_FullLocalPath
 FullLocalPathGetFinish:
-    On Error GoTo 0
     Exit Property
     
 FullLocalPathGetError:
-    Err.Source = strModuleName & "FullLocalPathGet"
+    Err.Source = Err.Source & strModuleName & "FullLocalPath.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -196,11 +191,10 @@ Public Property Get Exists() As Boolean
     On Error GoTo ExistsGetError
     Exists = SharedMacros_.IsItThere(Path:=FullLocalPath)
 ExistsGetFinish:
-    On Error GoTo 0
     Exit Property
     
 ExistsGetError:
-    Err.Source = strModuleName & "Exists"
+    Err.Source = Err.Source & strModuleName & "Exists.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -221,11 +215,10 @@ Public Property Get Running() As Boolean
         Running = False
     End If
 RunningGetFinish:
-    On Error GoTo 0
     Exit Property
 
 RunningGetError:
-    Err.Source = strModuleName & "Running"
+    Err.Source = Err.Source & strModuleName & "Running.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -251,11 +244,10 @@ Public Property Get UpToDate() As Boolean
         UpToDate = True
     End If
 UpToDateGetFinish:
-    On Error GoTo 0
     Exit Property
     
 UpToDateGetError:
-    Err.Source = strModuleName & "UpToDate"
+    Err.Source = Err.Source & strModuleName & "UpToDate.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -280,11 +272,10 @@ Private Property Get GroupJSON() As Dictionary
     End If
     Set GroupJSON = p_GroupJSON
 GroupJSONGetFinish:
-    On Error GoTo 0
     Exit Property
 
 GroupJSONGetError:
-    Err.Source = strModuleName & "GroupJSON"
+    Err.Source = Err.Source & strModuleName & "GroupJSON.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -302,11 +293,10 @@ Private Property Get FileJSON() As Dictionary
     End If
     Set FileJSON = p_FileJSON
 FileJSONGetFinish:
-    On Error GoTo 0
     Exit Property
     
 FileJSONGetError:
-    Err.Source = strModuleName & "FileJSON"
+    Err.Source = Err.Source & strModuleName & "FileJSON.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -326,11 +316,10 @@ Private Property Get Name() As String
     End If
     Name = p_Name
 NameGetFinish:
-    On Error GoTo 0
     Exit Property
 
 NameGetError:
-    Err.Source = strModuleName & "Name"
+    Err.Source = Err.Source & strModuleName & "Name.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -348,11 +337,10 @@ Private Property Get Extension() As String
     End If
     Extension = p_Extension
 ExtensionGetFinish:
-    On Error GoTo 0
     Exit Property
     
 ExtensionGetError:
-    Err.Source = strModuleName & "Extension"
+    Err.Source = Err.Source & strModuleName & "Extension.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -371,11 +359,10 @@ Private Property Get ConfigVersion() As Dictionary
     End If
     Set ConfigVersion = p_ConfigVersion
 ConfigVersionGetFinish:
-    On Error GoTo 0
     Exit Property
     
 ConfigVersionGetError:
-    Err.Source = strModuleName & "ConfigVersion"
+    Err.Source = Err.Source & strModuleName & "ConfigVersion.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -414,11 +401,10 @@ Private Property Get LocalVersion() As Dictionary
     End If
     Set LocalVersion = p_LocalVersion
 LocalVersionGetFinish:
-    On Error GoTo 0
     Exit Property
     
 LocalVersionGetError:
-    Err.Source = strModuleName & "LocalVersion"
+    Err.Source = Err.Source & strModuleName & "LocalVersion.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -437,11 +423,10 @@ Private Property Get FullLogPath() As String
     End If
     FullLogPath = p_FullLogPath
 FullLogPathGetFinish:
-    On Error GoTo 0
     Exit Property
 
 FullLogPathGetError:
-    Err.Source = strModuleName & "FullLogPath"
+    Err.Source = Err.Source & strModuleName & "FullLogPath.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -464,11 +449,10 @@ Private Property Get FullTempPath() As String
     End If
     FullTempPath = p_FullTempPath
 FullTempPathGetFinish:
-    On Error GoTo 0
     Exit Property
     
 FullTempPathGetError:
-    Err.Source = strModuleName & "FullTempPath"
+    Err.Source = Err.Source & strModuleName & "FullTempPath.Get"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -498,11 +482,10 @@ Public Sub ClearFile()
     p_Name = vbNullString
     
 ClearFileFinish:
-    On Error GoTo 0
     Exit Sub
     
 ClearFileError:
-    Err.Source = strModuleName & "ClearFile"
+    Err.Source = Err.Source & strModuleName & "ClearFile"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -521,11 +504,10 @@ Public Sub AssignFile(strGroupName As String, strSpecificFileType As String)
     SpecificFile = strSpecificFileType
 
 AssignFileFinish:
-    On Error GoTo 0
     Exit Sub
 
 AssignFileError:
-    Err.Source = strModuleName & "AssignFile"
+    Err.Source = Err.Source & strModuleName & "AssignFile"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -545,11 +527,10 @@ Public Sub DeleteFile()
         Err.Raise MacError.err_DeleteThisDoc
     End If
 DeleteFileFinish:
-    On Error GoTo 0
     Exit Sub
 
 DeleteFileError:
-    Err.Source = strModuleName & "DeleteFile"
+    Err.Source = Err.Source & strModuleName & "DeleteFile"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -570,11 +551,10 @@ Public Sub NotifyComplete()
     On Error GoTo NotifyCompleteError
     MsgBox "All downloads are complete. Yay!"
 NotifyCompleteFinish:
-    On Error GoTo 0
     Exit Sub
 
 NotifyCompleteError:
-    Err.Source = strModuleName & "NotifyComplete"
+    Err.Source = Err.Source & strModuleName & "NotifyComplete"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -752,11 +732,10 @@ Public Function Download() As Boolean
 
 
 DownloadFinish:
-    On Error GoTo 0
     Exit Function
     
 DownloadError:
-    Err.Source = strModuleName & "Download" & " " & Me.FullName
+    Err.Source = Err.Source & strModuleName & "Download " & Me.FullName
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -790,11 +769,10 @@ Private Function StringVersion(dictVersion As Dictionary) As String
 
     StringVersion = strVersionReturn
 StringVersionFinish:
-    On Error GoTo 0
     Exit Function
     
 StringVersionError:
-    Err.Source = strModuleName & "StringVersion"
+    Err.Source = Err.Source & strModuleName & "StringVersion"
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else

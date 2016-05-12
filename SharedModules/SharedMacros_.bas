@@ -42,6 +42,9 @@ Public Enum MacError
     err_TempMissing = 20015
     err_FileNotThere = 20016
     err_NotWordFormat = 20017
+    err_ConfigPathNull = 20018
+    err_RootDirInvalid = 20019
+    err_RootDirMissing = 20020
 End Enum
 
 ' ===== ErrorChecker ==========================================================
@@ -185,10 +188,19 @@ Public Function ErrorChecker(ByRef objError As Object) As Boolean
                 strErrMessage = "This file does not appear to be a Word " & _
                     "file: " & Err.Description & vbNewLine & vbNewLine & _
                     strHelpContact
+            Case MacError.err_ConfigPathNull
+                strDescription = "FullConfigPath custom doc property is not " _
+                    & "set in the document."
+                strErrMessage = "We can't find the config.json file because " _
+                    & "the local path is not in the template."
+            Case MacError.err_RootDirInvalid
+                strDescription = "Value for root directory in config.json is" _
+                    & " not an option in the RootDir property."
+                strErrMessage = "The folder where we save the Tools template" _
+                    & " doesn't exist. " & strHelpContact
             Case Else
                 strDescription = "Undocumented error number - " & _
-                    objError.Number & ": " & objError.Description & vbNewLine _
-                    & vbNewLine & objError.Source
+                    objError.Number & ": " & objError.Description
                 strErrMessage = "Not sure what's going on here." & strHelpContact
         End Select
 
@@ -317,6 +329,7 @@ IsLockedFinish:
     Exit Function
     
 IsLockedError:
+    Debug.Print Err.Source
     Err.Source = Err.Source & strModule & "IsLocked"
     If Err.Number = 70 Or Err.Number = 75 Then
         IsLocked = True

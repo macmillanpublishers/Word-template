@@ -30,6 +30,14 @@ Option Explicit
 ' =============================================================================
 
 ' *****************************************************************************
+'       CLASS CONSTANTS
+' *****************************************************************************
+' For error handling
+Private Const strPaths As String = "Paths_."
+Private Const strConfigKey As String = "FullConfigPath"
+
+
+' *****************************************************************************
 '       CLASS VARIABLES
 ' *****************************************************************************
 
@@ -43,8 +51,6 @@ Private p_LogsDir As String
 Private p_RootDir As String
 Private p_TempPath As String
 
-' For error handling
-Private Const strPaths As String = "Paths_."
 
 ' *****************************************************************************
 '       PUBLIC PROPERTIES
@@ -70,11 +76,10 @@ Public Property Get FullJSON() As Dictionary
     
     Set FullJSON = p_FullJSON
 FullJSONGetFinish:
-    On Error GoTo 0
     Exit Property
 
 FullJSONGetError:
-    Err.Source = strPaths & "FullJSON"
+    Err.Source = Err.Source & strPaths & "FullJSON.Get"
     If ErrorChecker(Err) = False Then
         Resume
     Else
@@ -108,11 +113,10 @@ Public Property Get LocalPath(GroupName As String) As String
     CheckDir (p_LocalPath)
     LocalPath = p_LocalPath
 LocalPathGetFinish:
-    On Error GoTo 0
     Exit Property
 
 LocalPathGetError:
-    Err.Source = strPaths & "LocalPathGet"
+    Err.Source = Err.Source & strPaths & "LocalPath.Get"
     If ErrorChecker(Err) = False Then
         Resume
     Else
@@ -132,11 +136,10 @@ Public Property Get LogsDir() As String
     End If
     LogsDir = p_LogsDir
 LogsDirGetFinish:
-    On Error GoTo 0
     Exit Property
 
 LogsDirGetError:
-    Err.Source = strPaths & "LogsDir"
+    Err.Source = Err.Source & strPaths & "LogsDir.Get"
     If ErrorChecker(Err) = False Then
         Resume
     Else
@@ -169,11 +172,10 @@ Public Property Get TempPath() As String
         Err.Raise MacError.err_TempMissing
     End If
 TempPathFinish:
-    On Error GoTo 0
     Exit Property
 
 TempPathError:
-    Err.Source = strPaths & "TempPath"
+    Err.Source = Err.Source & strPaths & "TempPath.Get"
     If ErrorChecker(Err) = False Then
         Resume
     Else
@@ -196,11 +198,10 @@ Public Property Get DownloadURL() As String
     End If
     DownloadURL = p_DownloadURL
 DownloadURLFinish:
-    On Error GoTo 0
     Exit Property
 
 DownloadURLError:
-    Err.Source = strPaths & "DownloadURL"
+    Err.Source = Err.Source & strPaths & "DownloadURL.Get"
     If ErrorChecker(Err) = False Then
         Resume
     Else
@@ -220,17 +221,52 @@ End Property
 ' check if it's there, because we need this path in order to save the file.
 
 Private Property Let FullConfigPath(strFullConfigPath As String)
-    On Error GoTo FullConfigPathError
+    On Error GoTo FullConfigPathLetError
     p_FullConfigPath = strFullConfigPath
-    ThisDocument.CustomDocumentProperties("FullConfigPath").Value = _
-        strFullConfigPath
+    ' Also update the actual doc properties
+
+    If SharedMacros_.DocPropExists(Me, strConfigKey) = True Then
+        ThisDocument.CustomDocumentProperties(strConfigKey).Value = _
+            p_FullConfigPath
+    Else
+        ThisDocument.CustomDocumentProperties.Add _
+            Name:=strConfigKey, _
+            LinkToContent:=False, _
+            Type:=msoPropertyTypeString, _
+            Value:=p_FullConfigPath
+    End If
+FullConfigPathLetFinish:
+    Exit Property
+
+FullConfigPathLetError:
+    Err.Source = Err.Source & strPaths & "FullConfigPath.Get"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume FullConfigPathLetFinish
+    End If
 End Property
 
 Private Property Get FullConfigPath() As String
+    On Error GoTo FullConfigPathGetError
     If p_FullConfigPath = vbNullString Then
-        p_FullConfigPath = ThisDocument.CustomDocumentProperties("FullConfigPath")
+        If SharedMacros_.DocPropExists(Me, strConfigKey) = True Then
+            p_FullConfigPath = ThisDocument.CustomDocumentProperties(strConfigKey)
+        Else
+            Err.Raise = MacError.err_ConfigPathNull
+        End If
     End If
     FullConfigPath = p_FullConfigPath
+FullConfigPathGetFinish:
+    Exit Property
+
+FullConfigPathGetError:
+    Err.Source = Err.Source & strPaths & "FullConfigPath.Get"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume FullConfigPathGetFinish
+    End If
 End Property
 
 ' ===== PathsJSON =============================================================
@@ -240,10 +276,21 @@ End Property
 ' change something later.
 
 Private Property Get PathsJSON() As Dictionary
+    On Error GoTo PathsJsonGetError
     If p_PathsJSON Is Nothing Then
         Set p_PathsJSON = FullJSON("paths")
     End If
     Set PathsJSON = p_PathsJSON
+PathsJsonGetFinish:
+    Exit Property
+
+PathsJsonGetError:
+    Err.Source = Err.Source & strPaths & "PathsJSON.Get"
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume PathsJsonGetError
+    End If
 End Property
 
 ' ===== RootDir ===============================================================
@@ -255,6 +302,7 @@ End Property
 ' it throws an error. Should we create a fallback?
 
 Private Property Get RootDir() As String
+    On Error GoTo RootDirGetError
     If p_RootDir = vbNullString Then
 
         Select Case PathsJSON("root")
@@ -276,7 +324,7 @@ Private Property Get RootDir() As String
                     p_RootDir = Environ("APPDATA")
                 #End If
             Case Else
-                MsgBox "That's not a valid option for Root directory."
+                Err.Raise MacError.err_RootDirInvalid
         End Select
         ' Make sure no trailing path separator
         If Right(p_RootDir, 1) = Application.PathSeparator Then
@@ -286,24 +334,44 @@ Private Property Get RootDir() As String
     
     ' Don't use CheckDir, don't try to create root directory...
     If IsItThere(p_RootDir) = False Then
-        MsgBox "You don't seem to have a home directory..."
+        Err.Raise MacError.err_RootDirMissing
     End If
     
     RootDir = p_RootDir
+RootDirGetFinish:
+    Exit Property
 
+RootDirGetError:
+    Err.Source = Err.Source & strPaths & "RootDir.Get"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume RootDirGetFinish
+    End If
 End Property
 
 ' ===== HomeDir ===============================================================
 ' Returns string of full path to the project home directory, i.e. where all of
-' the Word template files are saved. If it doesn't exist, it will create it, so
-' calling procedure doesn't need to test for existence.
+' the Word template files are saved. If it doesn't exist, CheckDir will create
+' it, so calling procedure doesn't need to test for existence.
 
 Private Property Get HomeDir() As String
+    On Error GoTo HomeDirGetError
     If p_HomeDir = vbNullString Then
         p_HomeDir = RootDir & Application.PathSeparator & PathsJSON("home")
     End If
     CheckDir p_HomeDir
     HomeDir = p_HomeDir
+HomeDirGetFinish:
+    Exit Property
+
+HomeDirGetError:
+    Err.Source = Err.Source & strPaths & "HomeDir.Get"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume HomeDirGetFinish
+    End If
 End Property
 
 ' *****************************************************************************
@@ -322,6 +390,7 @@ End Property
 ' separate Property Let procedures later if we need finer control.
 
 Public Sub ClearPaths()
+    On Error GoTo ClearPathsError
     If Not p_FullJSON Is Nothing Then
         Set p_FullJSON = Nothing
     End If
@@ -337,7 +406,19 @@ Public Sub ClearPaths()
     p_LogsDir = vbNullString
     p_RootDir = vbNullString
     p_TempPath = vbNullString
+ClearPathsFinish:
+    Exit Sub
+
+ClearPathsError:
+    Err.Source = Err.Source & strPaths & "ClearPaths"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume ClearPathsFinish
+    End If
 End Sub
+
+
 ' *****************************************************************************
 '       PRIVATE METHODS
 ' *****************************************************************************
@@ -367,12 +448,15 @@ Private Function CheckDir(MyDir As String) As Boolean
         CheckDir = True
     End If
 CheckDirFinish:
-    On Error GoTo 0
     Exit Function
+
 CheckDirError:
-    MsgBox "Looks like " & MyDir & " doesn't exist and we can't create it." _
-        & vbNewLine & "Error " & Err.Number & ": " & Err.Description
-    On Error GoTo 0
+    Err.Source = Err.Source & strPaths & "CheckDir " & MyDir
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume CheckDirFinish
+    End If
 End Function
 
 

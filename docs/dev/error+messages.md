@@ -28,3 +28,6 @@ We may move to error handling to a single class in the future.
 | 20015 | `Paths_` | `err_TempMissing` | Temp path does not exist. |
 | 20016 | `SharedMacros_` | `err_FileNotThere` | `IsItThere()` function returned false. Check log to see which procedure raised the error--does not get raised by the function itself. |
 | 20017 | `SharedMacros_` | `err_NotWordFormat` | `IsWordFormat()` function returned false. Check log to see which procedure raised the error--does not get raised in the `IsWordFormat()` function itself. |
+| 20018 | `Paths_` | `err_ConfigPathNull` | There is no "FullConfigPath" custom document property set in the template. |
+| 20019 | `Paths_` | `err_RootDirInvalid` | The value for the root directory in the `config.json` file is not an option in the `RootDir` property. |
+| 20020 | `Paths_` | `err_RootDirMissing` | The directory returned by the RootDir property doesn't exist. |
