@@ -45,11 +45,16 @@ Public Enum MacError
     err_ConfigPathNull = 20018
     err_RootDirInvalid = 20019
     err_RootDirMissing = 20020
+    err_LogReadOnly = 20021
 End Enum
 
 ' ===== ErrorChecker ==========================================================
 ' Send all errors here, to make tracking/maintaining error handling easier.
 ' Be sure to add the error to the MacErrors enum.
+
+' DO NOT use any other of our functions in this function, because those need to
+' direct errors here and using them here as well could create an infinite loop.
+
 '
 ' USE: ErrorChecker() returns False if error is handled; procedure can continue
 ' Each member procedure in the class should have the following:
@@ -71,155 +76,191 @@ End Enum
 '
 
 
-Public Function ErrorChecker(ByRef objError As Object) As Boolean
+Public Function ErrorChecker(ByRef objError As Object, Optional strValue As _
+    String) As Boolean
+    ' strValue - varies based on type of error passed. use for things like
+    '   file name, path, whatever is being checked that errored.
 
-    Dim strDescription As String
+    On Error GoTo ErrorCheckerError
     Dim strErrMessage As String
     Dim blnNotifyUser As Boolean
     Dim strHelpContact As String
+    Dim strFileName As String
 
     ' ----- Set defaults ------------------------------------------------------
     ' Only need to change in Select statement below if want to set either to
     ' False.
     blnNotifyUser = True
     ErrorChecker = True
-    strHelpContact = "Email " & Organization_.HelpEmail & " if you need help."
+    ' Eventually get this email from the config.json file, once we have error
+    ' handling that can handle an error in the error handler. At the moment, if
+    ' any procedure in the call stack to get the email errors, we end up in a
+    ' loop until it crashes.
+    strHelpContact = vbNewLine & vbNewLine & "Email workflows@macmillan.com" _
+        & " if you need help. Be sure to attach the MACRO_ERROR.txt file that" _
+        & " was just produced."
+
+    ' ----- Check if FileName parameter was passed ----------------------------
+    If strValue = vbNullString Then
+        strValue = "UNKNOWN"
+    End If
 
     ' ----- Check for errors --------------------------------------------------
     ' Make sure we actually have an error, cuz you never know.
-    If objError.Number > 0 Then
+    If objError.Number <> 0 Then
 
     ' ----- Handle specific errors --------------------------------------------
     ' Each case should be a MacError enum. Even if we aren't doing anything
     ' to fix the error, still enter the following:
     '   Err.Source "MacFile_.<MethodName>"
-    '   strDescription = "Description of the error for the log."
+    '   Err.Description = "Description of the error for the log."
     '   strErrMessage = "Message for the user if we're notifying them."
         Select Case objError.Number
             Case Is < 513
                 ' Errors 0 to 512 are system errors
-                strDescription = objError.Description
                 strErrMessage = "Something unexpected happened. Please click" _
-                    & " OK to exit." & vbNewLine & vbNewLine & strHelpContact
+                    & " OK to exit." & vbNewLine & "Value: " & strValue
             Case MacError.err_GroupNameInvalid
-                strDescription = "Invalid value for GroupName property."
+                Err.Description = "Invalid value for GroupName property: " & _
+                    strValue
                 strErrMessage = "The value you've entered for the GroupName " _
-                    & "property is not valid. Make sure you only use file " & _
+                    & "property, is not valid. Make sure you only use file " & _
                     "groups that are in the config.json file."
             Case MacError.err_GroupNameNotSet
-                strDescription = "GroupName property has not been Let."
+                Err.Description = "GroupName property has not been Let."
                 strErrMessage = "You can't Get the GroupName property before" _
                     & " it has been Let. Try the MacFile_.AssignFile method " _
                     & "to create a new object in this class."
             Case MacError.err_SpecificFileInvalid
-                strDescription = "Invalid value for SpecificFile property."
+                Err.Description = "Invalid value for SpecificFile property: " _
+                    & strValue
                 strErrMessage = "The you've entered an invalid value for the" _
                     & " SpecificFile property. Make sure you only use " & _
                     "specific file types that are in the config.json file."
             Case MacError.err_SpecificFileNotSet
-                strDescription = "SpecificFile property has not been Let."
+                Err.Description = "SpecificFile property has not been Let."
                 strErrMessage = "You can't Get the SpecificFile property " & _
                     "before it has been Let. Try the MacFile_.AssignFile " & _
                     "method to create a new object in this class."
             Case MacError.err_DeleteThisDoc
-                strDescription = "File is currently executing code."
+                Err.Description = "Can't delete file that is currently " & _
+                    "executing code: " & strValue
                 strErrMessage = "The file you are trying to delete is " & _
                     "currently executing macro code."
             Case MacError.err_TempDeleteFail
-                strDescription = "Failed to delete the previous file in the " _
-                    & "temp directory."
+                Err.Description = "Failed to delete the previous file in the " _
+                    & "temp directory: " & strValue
                 strErrMessage = "We can't download the file; a temp file " & _
-                    "is still there." & vbNewLine & vbNewLine & strHelpContact
+                    "is still there."
             Case MacError.err_NoInternet
-                strDescription = "No network connection. Download aborted."
+                Err.Description = "No network connection. Download aborted."
                 strErrMessage = "We weren't able to download the file " & _
                     "because we can't connect to the internet. Check your " & _
-                    "network connection and try again." & vbNewLine & _
-                    vbNewLine & strHelpContact
+                    "network connection and try again."
             Case MacError.err_Http404
-                strDescription = "File HTTP status 404. Check if DownloadURL" _
-                    & " is correct, and file is posted."
-                strErrMessage = "Could not download file from the internet. " _
-                & strHelpContact
+                Err.Description = "File HTTP status 404. Check if DownloadURL" _
+                    & " is correct, and file is posted: " & strValue
+                strErrMessage = "Could not download file from the internet."
             Case MacError.err_BadHttpStatus
-                strDescription = "File HTTP status " & objError.Description & _
-                    " Download aborted."
+                Err.Description = "File HTTP status: " & strValue & _
+                    ". Download aborted."
                 strErrMessage = "There is some problem with the file you are" _
-                    & " trying to download: " & vbNewLine & _
-                    objError.Source & ": " & objError.Description & vbNewLine _
-                    & vbNewLine & strHelpContact
+                    & " trying to download."
                 ' Need to get Source as passed in object first, so do this last
             Case MacError.err_DownloadFail
-                strDescription = "File download failed."
-                strErrMessage = "Download failed: " & objError.Source & _
-                    vbNewLine & vbNewLine & strHelpContact
+                Err.Description = "File download failed: " & strValue
+                strErrMessage = "Download failed."
             Case MacError.err_LocalDeleteFail
                 ' SharedMacros_.KillAll() will notify user if file is open
-                strDescription = "File in final install location could not " _
+                Err.Description = "File in final install location could not " _
                     & "be deleted. If it was because the file was open, the " _
-                    & "user was notified."
+                    & "user was notified: " & strValue
                 blnNotifyUser = False
             Case MacError.err_LocalCopyFail
-                strDescription = "File not saved to final directory: " & _
-                    objError.Source
+                Err.Description = "File not saved to final directory: " & _
+                    strValue
                 strErrMessage = "There was an error installing the " & _
-                "Macmillan template." & vbNewLine & vbNewLine & strHelpContact
+                "Macmillan template."
             Case MacError.err_LocalReadOnly
-                strDescription = "Final dir for file is read-only: " & _
-                    objError.Source
+                Err.Description = "Final dir for file is read-only: " & _
+                    strValue
                 strErrMessage = "The folder you are trying to access is " & _
-                 "read-only. " & strHelpContact & vbNewLine & vbNewLine & _
-                    objError.Source
+                 "read-only."
             Case MacError.err_TempReadOnly
-                strDescription = "Temp dir is read-only."
-                strErrMessage = "Your temp folder is read-only. " & _
-                    strHelpContact
+                Err.Description = "Temp dir is read-only: " & strValue
+                strErrMessage = "Your temp folder is read-only."
             Case MacError.err_TempMissing
-                strDescription = "Temp directory is missing."
-                strErrMessage = "There is an error with your temp folder. " & _
-                    strHelpContact
+                Err.Description = "Temp directory is missing: " & strValue
+                strErrMessage = "There is an error with your temp folder."
             Case MacError.err_FileNotThere
-                strDescription = "File does not exist: " & objError.Description
-                strErrMessage = "The file " & objError.Description & " does " _
-                    & "not exist." & strHelpContact
+                Err.Description = "File does not exist: " & strValue
+                strErrMessage = "The file " & strValue & " does " _
+                    & "not exist."
             Case MacError.err_NotWordFormat
-                strDescription = "File extension is not a native Word " & _
-                    "document or template: " & Err.Description
+                Err.Description = "File extension is not a native Word " & _
+                    "document or template: " & strValue
                 strErrMessage = "This file does not appear to be a Word " & _
-                    "file: " & Err.Description & vbNewLine & vbNewLine & _
-                    strHelpContact
+                    "file: " & strValue
             Case MacError.err_ConfigPathNull
-                strDescription = "FullConfigPath custom doc property is not " _
+                Err.Description = "FullConfigPath custom doc property is not " _
                     & "set in the document."
                 strErrMessage = "We can't find the config.json file because " _
-                    & "the local path is not in the template."
+                    & "the local path is not in the template properties."
             Case MacError.err_RootDirInvalid
-                strDescription = "Value for root directory in config.json is" _
-                    & " not an option in the RootDir property."
+                Err.Description = "Value for root directory in config.json is" _
+                    & " not an option in the RootDir property: " & strValue
                 strErrMessage = "The folder where we save the Tools template" _
-                    & " doesn't exist. " & strHelpContact
+                    & " doesn't exist."
+            Case MacError.err_LogReadOnly
+                Err.Description = "Log file is read only: " & strValue
+                strErrMessage = "There is a problem with the logs."
             Case Else
-                strDescription = "Undocumented error number - " & _
-                    objError.Number & ": " & objError.Description
-                strErrMessage = "Not sure what's going on here." & strHelpContact
+                Err.Description = "Undocumented error - " & _
+                    objError.Description
+                strErrMessage = "Not sure what's going on here."
         End Select
 
     Else
-        strDescription = "Everything's A-OK. Why are you even reading this?"
+        Err.Description = "Everything's A-OK. Why are you even reading this?"
         blnNotifyUser = False
         ErrorChecker = False
     End If
 
-    WriteToLog objError.Source & " - " & objError.Number & ": " & _
-        strDescription
+    ' ----- WRITE ERROR LOG ---------------------------------------------------
+    ' Output text file with error info, user could send via email.
+    ' Do not use WriteToLog function, because that sends errors here as well.
+    Dim strErrMsg As String
+    Dim LogFileNum As Long
+    Dim strTimeStamp As String
+    Dim strErrLog As Long
+    ' write error log to same location as current file
+    ' Format date so it can be part of file name. Only including date b/c users
+    ' will likely run things repeatedly before asking for help, and don't want
+    ' to generate a bunch of files.
+    strErrLog = ActiveDocument.Path & Application.PathSeparator & _
+        "MACRO_ERROR_" & Format(Date, "yyyy-mm-dd") & ".txt"
+    ' build error message, including timestamp
+    strErrMsg = Format(Time, "hh.mm.ss - ") & objError.Source & vbNewLine & _
+        objError.Number & ": " & objErr.Description & vbNewLine
+    LogFileNum = FreeFile ' next file number
+    Open strErrLog For Append As #LogFileNum ' creates the file if doesn't exist
+    Print #LogFileNum, strErrMsg ' write information to end of the text file
+    Close #LogFileNum ' close the file
 
     If blnNotifyUser = True Then
+        strErrMessage = strErrMessage & vbNewLine & vbNewLine & strHelpContact
         MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
-            "Macmillan Tools Error " & objError.Number & ": " & objError.Source
+            "Macmillan Tools Error"
     End If
-
+ErrorCheckerFinish:
     objError.Clear
+    Exit Function
 
+ErrorCheckerError:
+    ' Important note: Recursive error checking is perhaps a bad idea -- if the
+    ' same error gets triggered, procedure will get called too many times and
+    ' cause an "out of stack space" error and also crash.
+    ErrorChecker = True
 End Function
 
 Public Function IsOldMac() As Boolean
@@ -273,10 +314,10 @@ Public Function IsOpen(DocPath As String) As Boolean
                 Next objDoc
             End If
         Else
-            Err.Raise = MacError.err_NotWordFormat
+            Err.Raise MacError.err_NotWordFormat
         End If
     Else
-        Err.Raise = MacError.err_FileNotThere
+        Err.Raise MacError.err_FileNotThere
     End If
 IsOpenFinish:
     On Error GoTo 0
@@ -284,8 +325,7 @@ IsOpenFinish:
 
 IsOpenError:
     Err.Source = Err.Source & strModule & "IsOpen"
-    Err.Description = DocPath
-    If ErrorChecker(Err) = False Then
+    If ErrorChecker(Err, DocPath) = False Then
         Resume
     Else
         IsOpen = False
@@ -329,14 +369,12 @@ IsLockedFinish:
     Exit Function
     
 IsLockedError:
-    Debug.Print Err.Source
     Err.Source = Err.Source & strModule & "IsLocked"
     If Err.Number = 70 Or Err.Number = 75 Then
         IsLocked = True
         Resume IsLockedFinish
     Else
-        Err.Description = FilePath
-        If ErrorChecker(Err) = False Then
+        If ErrorChecker(Err, FilePath) = False Then
             Resume
         Else
             Resume IsLockedFinish
@@ -449,8 +487,7 @@ End Function
 
 ' ===== WriteToLog ============================================================
 ' Writes line to log for the file. LogMessage only needs text, timestamp will
-' be added in this method. May make public later if we end up using this for
-' more than just download logs.
+' be added in this method.
 
 Public Sub WriteToLog(LogMessage As String, Optional LogFilePath As String)
     On Error GoTo WriteToLogError
@@ -465,7 +502,13 @@ Public Sub WriteToLog(LogMessage As String, Optional LogFilePath As String)
     Else
         strLogFile = LogFilePath
     End If
-    
+
+    If IsItThere(strLogFile) = True Then
+        If IsReadOnly(strLogFile) = True Then
+            Err.Raise MacError.err_LogReadOnly
+        End If
+    End If
+
     ' prepend current date and time to message
     strLogMessage = Now & " -- " & LogMessage
     FileNum = FreeFile ' next file number
@@ -478,7 +521,7 @@ WriteToLogFinish:
 
 WriteToLogError:
     Err.Source = Err.Source & strModule & "WriteToLog"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, strLogFile) = False Then
         Resume
     Else
         Resume WriteToLogFinish
@@ -1275,7 +1318,10 @@ Sub CleanUp()
 End Sub
 
 Function IsReadOnly(Path As String) As Boolean
-    ' Tests if the file or directory is read-only
+    ' Tests if the file or directory is read-only -- does NOT test if file exists,
+    ' because sometimes you'll need to do that before this anyway to do something
+    ' different.
+    
     ' Mac 2011 can't deal with file paths > 32 char
     If IsOldMac() = True Then
         Dim strScript As String
@@ -1284,8 +1330,9 @@ Function IsReadOnly(Path As String) As Boolean
         strScript = _
             "set p to POSIX path of " & Chr(34) & Path & Chr(34) & Chr(13) & _
             "try" & Chr(13) & _
-            vbTab & "do shell script " & Chr(34) & "test -w \" & Chr(34) & "$(dirname " & Chr(34) & _
-                " & quoted form of p & " & Chr(34) & ")\" & Chr(34) & Chr(34) & Chr(13) & _
+            vbTab & "do shell script " & Chr(34) & "test -w \" & Chr(34) & _
+            "$(dirname " & Chr(34) & " & quoted form of p & " & Chr(34) & _
+            ")\" & Chr(34) & Chr(34) & Chr(13) & _
             vbTab & "return true" & Chr(13) & _
             "on error" & Chr(13) & _
             vbTab & "return false" & Chr(13) & _
@@ -1305,7 +1352,17 @@ Function IsReadOnly(Path As String) As Boolean
             IsReadOnly = False
         End If
     End If
-    
+
+IsReadOnlyFinish:
+    Exit Function
+
+IsReadOnlyError:
+    Err.Source = Err.Source & strModule & "IsReadOnly"
+    If SharedMacros_.ErrorChecker(Err) = False Then
+        Resume
+    Else
+        Resume IsReadOnly
+    End If
 End Function
 
 

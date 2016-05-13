@@ -61,8 +61,8 @@ GroupNameLetFinish:
     Exit Property
 
 GroupNameLetError:
-    Err.Source = Err.Source & strModuleName & "GroupName.Let " & GroupName_value
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    Err.Source = Err.Source & strModuleName & "GroupName.Let"
+    If SharedMacros_.ErrorChecker(Err, GroupName_value) = False Then
         Resume
     Else
         Resume GroupNameLetFinish
@@ -107,9 +107,8 @@ SpecificFileLetFinish:
     Exit Property
 
 SpecificFileLetError:
-    Err.Source = Err.Source & strModuleName & "SpecificFile.Let " & _
-        SpecificFile_value
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    Err.Source = Err.Source & strModuleName & "SpecificFile.Let"
+    If SharedMacros_.ErrorChecker(Err, SpecificFile_value) = False Then
         Resume
     Else
         Resume SpecificFileLetFinish
@@ -176,7 +175,7 @@ FullLocalPathGetFinish:
     
 FullLocalPathGetError:
     Err.Source = Err.Source & strModuleName & "FullLocalPath.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, p_FullLocalPath) = False Then
         Resume
     Else
         Resume FullLocalPathGetFinish
@@ -209,7 +208,9 @@ End Property
 
 Public Property Get Running() As Boolean
     On Error GoTo RunningGetError
-    If ThisDocument.Name = FullName Then
+    Dim strThisName As String
+    strThisName = ThisDocument.Name
+    If strThisName = FullName Then
         Running = True
     Else
         Running = False
@@ -219,7 +220,7 @@ RunningGetFinish:
 
 RunningGetError:
     Err.Source = Err.Source & strModuleName & "Running.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, strThisName) = False Then
         Resume
     Else
         Resume RunningGetFinish
@@ -320,7 +321,7 @@ NameGetFinish:
 
 NameGetError:
     Err.Source = Err.Source & strModuleName & "Name.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, p_Name) = False Then
         Resume
     Else
         Resume NameGetFinish
@@ -341,7 +342,7 @@ ExtensionGetFinish:
     
 ExtensionGetError:
     Err.Source = Err.Source & strModuleName & "Extension.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, p_Extension) = False Then
         Resume
     Else
         Resume ExtensionGetFinish
@@ -427,7 +428,7 @@ FullLogPathGetFinish:
 
 FullLogPathGetError:
     Err.Source = Err.Source & strModuleName & "FullLogPath.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, p_FullLogPath) = False Then
         Resume
     Else
         Resume FullLogPathGetFinish
@@ -453,7 +454,7 @@ FullTempPathGetFinish:
     
 FullTempPathGetError:
     Err.Source = Err.Source & strModuleName & "FullTempPath.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, p_FullTempPath) = False Then
         Resume
     Else
         Resume FullTempPathGetFinish
@@ -480,6 +481,18 @@ Public Sub ClearFile()
     p_FullName = vbNullString
     p_FullTempPath = vbNullString
     p_Name = vbNullString
+    If Not p_GroupJSON Is Nothing Then
+        Set p_GroupJSON = Nothing
+    End If
+    If Not p_FileJSON Is Nothing Then
+        Set p_FileJSON = Nothing
+    End If
+    If Not p_ConfigVersion Is Nothing Then
+        Set p_ConfigVersion = Nothing
+    End If
+    If Not p_LocalVersion Is Nothing Then
+        Set p_LocalVersion = Nothing
+    End If
     
 ClearFileFinish:
     Exit Sub
@@ -531,7 +544,7 @@ DeleteFileFinish:
 
 DeleteFileError:
     Err.Source = Err.Source & strModuleName & "DeleteFile"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, FullName) = False Then
         Resume
     Else
         Resume DeleteFileFinish
@@ -579,6 +592,7 @@ Public Function Download() As Boolean
     ' Mac/PC variables
     Dim httpStatus As Long
     Dim strLogMsg As String
+    Dim strDownloadURL As String
     
     ' Mac variables
     Dim strBashTmp As String
@@ -627,11 +641,12 @@ Public Function Download() As Boolean
     
     ' ----- CHECK HTTP STATUS OF FILE -----------------------------------------
     strLogMsg = "File is available at URL."
+    strDownloadURL = DownloadURL & "/" & Me.FullName
     #If Mac Then
         httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_" & _
-            "code}' " & DownloadURL)
+            "code}' " & strDownloadURL)
     #Else
-        httpRequest.Open "HEAD", DownloadURL
+        httpRequest.Open "HEAD", strDownloadURL
         httpRequest.Send
         httpStatus = httpRequest.Status
     #End If
@@ -648,9 +663,9 @@ Public Function Download() As Boolean
     ' ----- DOWNLOAD FILE TO TEMP DIRECTORY -----------------------------------
     strLogMsg = "File download to temp dir successful."
     #If Mac Then
-        ShellAndWaitMac ("curl -o " & strBashTmp & " " & DownloadURL)
+        ShellAndWaitMac ("curl -o " & strBashTmp & " " & strDownloadURL)
     #Else
-        httpRequest.Open "GET", DownloadURL
+        httpRequest.Open "GET", strDownloadURL
         httpRequest.Send
         Set oStream = CreateObject("ADODB.Stream")
         oStream.Open
@@ -729,14 +744,21 @@ Public Function Download() As Boolean
     If KillAll(FullTempPath) = False Then
         Err.Raise MacError.err_TempDeleteFail
     End If
-
-
 DownloadFinish:
     Exit Function
     
 DownloadError:
-    Err.Source = Err.Source & strModuleName & "Download " & Me.FullName
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    Err.Source = Err.Source & strModuleName & "Download"
+    Dim strDLerror As String
+    Select Case Err.Number
+        Case MacError.err_TempDeleteFail
+            strDLerror = FullTempPath
+        Case MacError.err_LocalCopyFail, MacError.err_LocalReadOnly
+            strDLerror = FullLocalPath
+        Case MacError.err_Http404, MacError.err_DownloadFail, _
+            MacError.err_BadHttpStatus
+            strDLerror = strHttpStatus & ": " & strDownloadURL
+    If SharedMacros_.ErrorChecker(Err, strDLerror) = False Then
         Resume
     Else
         Download = False

@@ -176,7 +176,7 @@ TempPathFinish:
 
 TempPathError:
     Err.Source = Err.Source & strPaths & "TempPath.Get"
-    If ErrorChecker(Err) = False Then
+    If ErrorChecker(Err, p_TempPath) = False Then
         Resume
     Else
         Resume TempPathFinish
@@ -253,7 +253,7 @@ Private Property Get FullConfigPath() As String
         If SharedMacros_.DocPropExists(Me, strConfigKey) = True Then
             p_FullConfigPath = ThisDocument.CustomDocumentProperties(strConfigKey)
         Else
-            Err.Raise = MacError.err_ConfigPathNull
+            Err.Raise MacError.err_ConfigPathNull
         End If
     End If
     FullConfigPath = p_FullConfigPath
@@ -262,6 +262,7 @@ FullConfigPathGetFinish:
 
 FullConfigPathGetError:
     Err.Source = Err.Source & strPaths & "FullConfigPath.Get"
+    Debug.Print Err.Number & ": " & Err.Description
     If SharedMacros_.ErrorChecker(Err) = False Then
         Resume
     Else
@@ -303,9 +304,10 @@ End Property
 
 Private Property Get RootDir() As String
     On Error GoTo RootDirGetError
+    Dim strRootCode As String
     If p_RootDir = vbNullString Then
-
-        Select Case PathsJSON("root")
+        strRootCode = PathsJSON("root")
+        Select Case strRootCode
             Case "macmillan"
                 #If Mac Then
                     ' This returns a string with the trailing path separator
@@ -343,7 +345,18 @@ RootDirGetFinish:
 
 RootDirGetError:
     Err.Source = Err.Source & strPaths & "RootDir.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    Dim strErrorValue As String
+
+    Select Case Err.Number
+        Case MacError.err_RootDirInvalid
+            strErrorValue = strRootCode
+        Case MacError.err_RootDirMissing
+            strErrorValue = p_RootDir
+        Case Else
+            strErrorValue = vbNullString
+    End Select
+
+    If SharedMacros_.ErrorChecker(Err, strErrorValue) = False Then
         Resume
     Else
         Resume RootDirGetFinish
@@ -452,7 +465,7 @@ CheckDirFinish:
 
 CheckDirError:
     Err.Source = Err.Source & strPaths & "CheckDir " & MyDir
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If SharedMacros_.ErrorChecker(Err, MyDir) = False Then
         Resume
     Else
         Resume CheckDirFinish
