@@ -37,7 +37,7 @@ Sub MacmillanCharStyles()
         'End If
     '------------check for endnotes and footnotes--------------------------
     Dim stStories() As Variant
-    Dim a As Long
+    Dim A As Long
     
     stStories = StoryArray
      
@@ -733,43 +733,89 @@ CharStyleError:
 
 End Sub
 
+Sub Test()
+  Dim testArray(1 To 5) As Boolean
+  Dim A As Long
+  For A = LBound(testArray) To UBound(testArray)
+    Debug.Print testArray(A)
+  Next
+  
+  Debug.Print "--"
+  
+  testArray(1) = True
+  testArray(2) = False
+  testArray(3) = True
+  testArray(4) = True
+  
+  For A = LBound(testArray) To UBound(testArray)
+    Debug.Print testArray(A)
+  Next
+  
+  Debug.Print "--"
+  Erase testArray
+
+  For A = LBound(testArray) To UBound(testArray)
+    Debug.Print testArray(A)
+  Next
+End Sub
+
+
 Private Sub LocalStyleTag(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
     '------------tag key styles-------------------------------
-    Dim tagStyleFindArray(11) As Boolean              ' number of items in array should be declared here
-    Dim tagStyleReplaceArray(11) As String         'and here
+    Dim tagStyleFindArray(1 To 8) As Boolean         ' Fixed at 8
+    Dim tagStyleReplaceArray(1 To 12) As String
     Dim g As Long
     
-    tagStyleFindArray(1) = False        'Bold
-    tagStyleFindArray(2) = False        'Italic
-    tagStyleFindArray(3) = False        'Underline
-    tagStyleFindArray(4) = False        'Smallcaps
-    tagStyleFindArray(5) = False        'Subscript
-    tagStyleFindArray(6) = False        'Superscript
-    tagStyleFindArray(7) = False        'Highlights
-    ' note 8 - 10 are below
-    tagStyleFindArray(11) = False       'Strikethrough
+' We aren't iterating through tagStyleFindArray below; each item is fixed to represent
+' a specific type of formatting. But keeping in an array makes it easy to reset. Also,
+' Boolean defaults to False once its been initialized (Dim), so we don't need to explicitly set
+' here for tagStyleFindArray
+
+' First 8 in tagStyleReplaceArray are single-formatting and must match up with the
+' settings for tagStyleFindArray. 9+ are multiple formats (e.g., bold and ital together),
+' so require further settings in the loop
     
-    tagStyleReplaceArray(1) = "`B|^&|B`"
-    tagStyleReplaceArray(2) = "`I|^&|I`"
-    tagStyleReplaceArray(3) = "`U|^&|U`"
-    tagStyleReplaceArray(4) = "`M|^&|M`"
-    tagStyleReplaceArray(5) = "`S|^&|S`"
-    tagStyleReplaceArray(6) = "`P|^&|P`"
-    tagStyleReplaceArray(8) = "`A|^&|A`"
-    tagStyleReplaceArray(9) = "`C|^&|C`"
-    tagStyleReplaceArray(10) = "`D|^&|D`"
-    tagStyleReplaceArray(11) = "`a|^&|a`"
+    tagStyleReplaceArray(1) = "`B|^&|B`" ' Bold
+    tagStyleReplaceArray(2) = "`I|^&|I`" ' Ital
+    tagStyleReplaceArray(3) = "`U|^&|U`" ' Underline
+    tagStyleReplaceArray(4) = "`M|^&|M`" ' Small Caps
+    tagStyleReplaceArray(5) = "`S|^&|S`" ' Subscript
+    tagStyleReplaceArray(6) = "`P|^&|P`" ' Superscript
+    tagStyleReplaceArray(7) = "`AA|^&|AA`" ' Strikethrough
+    tagStyleReplaceArray(8) = ""           ' Highlight - removing not tagging, so no replace text
     
-    For g = 1 To UBound(tagStyleFindArray())
+    tagStyleReplaceArray(9) = "`C|^&|C`" ' Bold + Smcap
+    tagStyleReplaceArray(10) = "`D|^&|D`" ' Ital + Smcap
+    tagStyleReplaceArray(11) = "`A|^&|A`" ' Bold + Ital
+    tagStyleReplaceArray(12) = "`BB|^&|BB`" ' Smcap + Bold + Ital
     
-    tagStyleFindArray(g) = True
-        
-        If tagStyleFindArray(8) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(2) = True     'bold and italic                        v. 3.1 update
-        If tagStyleFindArray(9) = True Then tagStyleFindArray(1) = True: tagStyleFindArray(4) = True: tagStyleFindArray(2) = False  'bold and smallcaps                 v. 3.1 update
-        If tagStyleFindArray(10) = True Then tagStyleFindArray(2) = True: tagStyleFindArray(4) = True: tagStyleFindArray(1) = False 'smallcaps and italic               v. 3.1 update
-        If tagStyleFindArray(11) = True Then tagStyleFindArray(2) = False: tagStyleFindArray(4) = False ' reset tags for strikethrough
+    For g = LBound(tagStyleReplaceArray) To UBound(tagStyleReplaceArray)
+    ' All tagStyleFindArray items are False at this point; current item is True to find just that
+    ' type of formatting for 1-8; for loops 9+, need to explicitly set formatting to search for
+    ' each type of formatting:
+
+        Select Case g
+          Case 1 To 8
+            tagStyleFindArray(g) = True
+          Case 9  ' Bold + Smcap
+            tagStyleFindArray(1) = True
+            tagStyleFindArray(4) = True
+
+          Case 10 ' Ital + Smcap
+            tagStyleFindArray(2) = True
+            tagStyleFindArray(4) = True
+
+          Case 11 ' Bold + Ital
+            tagStyleFindArray(1) = True
+            tagStyleFindArray(2) = True
+            
+          Case 12 ' Smcap + Bold + Ital
+            tagStyleFindArray(1) = True
+            tagStyleFindArray(2) = True
+            tagStyleFindArray(4) = True
+        End Select
         
         With activeRng.Find
             .ClearFormatting
@@ -784,8 +830,8 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
             .Font.SmallCaps = tagStyleFindArray(4)
             .Font.Subscript = tagStyleFindArray(5)
             .Font.Superscript = tagStyleFindArray(6)
-            .Highlight = tagStyleFindArray(7)
-            .Font.StrikeThrough = tagStyleFindArray(11)
+            .Font.StrikeThrough = tagStyleFindArray(7)
+            .Highlight = tagStyleFindArray(8)
             .Replacement.Highlight = False
             .MatchCase = False
             .MatchWholeWord = False
@@ -795,7 +841,8 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
             .Execute Replace:=wdReplaceAll
         End With
     
-    tagStyleFindArray(g) = False
+    ' Reset find array all to False
+    Erase tagStyleFindArray
     
     Next
     
@@ -809,8 +856,8 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-    Dim tagFindArray(23) As String              ' number of items in array should be declared here
-    Dim tagReplaceArray(23) As String         'and here
+    Dim tagFindArray(1 To 24) As String              ' number of items in array should be declared here
+    Dim tagReplaceArray(1 To 24) As String         'and here
     Dim h As Long
     
     tagFindArray(1) = "`B|(*)|B`"
@@ -835,7 +882,8 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagFindArray(20) = "`E|(*)|E`"
     tagFindArray(21) = "`G|(*)|G`"          'v. 3.8 added
     tagFindArray(22) = "`J|(*)|J`"
-    tagFindArray(23) = "`a|(*)|a`"
+    tagFindArray(23) = "`AA|(*)|AA`"
+    tagFindArray(24) = "`BB|(*)|BB`"
     
     tagReplaceArray(1) = "span boldface characters (bf)"
     tagReplaceArray(2) = "span italic characters (ital)"
@@ -861,6 +909,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType)
     tagReplaceArray(21) = "span symbols bold (symb)"                ' v. 3.8 added
     tagReplaceArray(22) = "span run-in computer type (comp)"
     tagReplaceArray(23) = "span strikethrough characters (str)"
+    tagReplaceArray(24) = "span smcap bold ital (scbi)"
     
     On Error GoTo ErrorHandler:
     
@@ -952,6 +1001,18 @@ ErrorHandler:
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .Bold = True
                     .Italic = True
+                End With
+                Resume
+                
+            Case "span smcap bold ital (scbi)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .Bold = True
+                    .Italic = True
+                    .SmallCaps = False
+                    .AllCaps = True
+                    .Size = 9
                 End With
                 Resume
                 
