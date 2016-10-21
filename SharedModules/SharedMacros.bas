@@ -35,7 +35,7 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
         strMacDocs = MacScript("return (path to documents folder) as string")
         strStyleDir = strMacDocs & strStylesName
     #Else
-        strStyleDir = Environ("PROGRAMDATA") & Application.PathSeparator & strStylesName
+        strStyleDir = Environ("APPDATA") & Application.PathSeparator & strStylesName
     #End If
     
     Dim strPathsToTemplates() As String
