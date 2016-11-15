@@ -453,18 +453,10 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
     'Create logfile name
     strLogFile = Left(FileName, InStrRev(FileName, ".") - 1)
     strLogFile = strLogFile & "_updates.log"
-    
-    'Create directory names based on OS
-    #If Mac Then
-        strMacDocs = MacScript("return (path to documents folder) as string")
-        strStyle = strMacDocs & "MacmillanStyleTemplate"
-        strLogFolder = strStyle & Application.PathSeparator & "log"
-        strLogPath = strLogFolder & Application.PathSeparator & strLogFile
-    #Else
-        strStyle = Environ("ProgramData") & "\MacmillanStyleTemplate"
-        strLogFolder = strStyle & Application.PathSeparator & "log"
-        strLogPath = strLogFolder & Application.PathSeparator & strLogFile
-    #End If
+    strStyle = StyleDir()
+    strLogFolder = strStyle & Application.PathSeparator & "log"
+    strLogPath = strLogFolder & Application.PathSeparator & strLogFile
+
     'Debug.Print strLogPath
 
     Dim arrFinalDirs() As Variant

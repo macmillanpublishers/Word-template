@@ -320,13 +320,7 @@ Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileN
     strVersion = strVersion & ".txt"
     
     ' Always download version file to Style Directory - on Mac can't write to Startup w/o admin priv
-    ' In future, find some way to use this w/o hard-coding the style dir location
-    #If Mac Then
-        strMacDocs = MacScript("return (path to documents folder) as string")
-        strStyleDir = strMacDocs & "MacmillanStyleTemplate"
-    #Else
-        strStyleDir = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate"
-    #End If
+    strStyleDir = StyleDir()
     
     strFullVersionPath = strStyleDir & Application.PathSeparator & strVersion
     'Debug.Print strVersion
