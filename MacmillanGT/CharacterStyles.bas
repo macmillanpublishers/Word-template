@@ -405,8 +405,8 @@ End Sub
 Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
     
-    Dim tagCharStylesArray(12) As String                                   ' number of items in array should be declared here
-    Dim CharStylePreserveArray(12) As String              ' number of items in array should be declared here
+    Dim tagCharStylesArray(16) As String                                   ' number of items in array should be declared here
+    Dim CharStylePreserveArray(16) As String              ' number of items in array should be declared here
     Dim D As Long
     
     CharStylePreserveArray(1) = "span hyperlink (url)"
@@ -417,12 +417,15 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     CharStylePreserveArray(6) = "span carry query (cq)"
     CharStylePreserveArray(7) = "span key phrase (kp)"
     CharStylePreserveArray(8) = "span preserve characters (pre)"  'added v. 3.2
-
     CharStylePreserveArray(9) = "span ISBN (isbn)"  'added v. 3.7
     CharStylePreserveArray(10) = "span symbols ital (symi)"     'added v. 3.8
     CharStylePreserveArray(11) = "span symbols bold (symb)"
     CharStylePreserveArray(12) = "span run-in computer type (comp)"
-    
+    CharStylePreserveArray(13) = "span alt font 1 (span1)"
+    CharStylePreserveArray(14) = "span alt font 2 (span2)"
+    CharStylePreserveArray(15) = "span illustration holder (illi)"
+    CharStylePreserveArray(16) = "span design note (dni)"
+        
     
     tagCharStylesArray(1) = "`H|^&|H`"
     tagCharStylesArray(2) = "`Z|^&|Z`"
@@ -436,6 +439,10 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
     tagCharStylesArray(10) = "`E|^&|E`"
     tagCharStylesArray(11) = "`G|^&|G`"
     tagCharStylesArray(12) = "`J|^&|J`"
+    tagCharStylesArray(13) = "`CC|^&|CC`"
+    tagCharStylesArray(14) = "`DD|^&|DD`"
+    tagCharStylesArray(15) = "`EE|^&|EE`"
+    tagCharStylesArray(16) = "`FF|^&|FF`"
     
     On Error GoTo CharStyleError
     
@@ -608,6 +615,10 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     tagFindArray(22) = "`J|(*)|J`"
     tagFindArray(23) = "`AA|(*)|AA`"
     tagFindArray(24) = "`BB|(*)|BB`"
+    tagFindArray(24) = "`CC|(*)|CC`"
+    tagFindArray(24) = "`DD|(*)|DD`"
+    tagFindArray(24) = "`EE|(*)|EE`"
+    tagFindArray(24) = "`FF|(*)|FF`"
     
     tagReplaceArray(1) = "span boldface characters (bf)"
     tagReplaceArray(2) = "span italic characters (ital)"
@@ -633,6 +644,10 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     tagReplaceArray(22) = "span run-in computer type (comp)"
     tagReplaceArray(23) = "span strikethrough characters (str)"
     tagReplaceArray(24) = "span smcap bold ital (scbi)"
+    tagReplaceArray(25) = "span alt font 1 (span1)"
+    tagReplaceArray(26) = "span alt font 2 (span2)"
+    tagReplaceArray(27) = "span illustration holder (illi)"
+    tagReplaceArray(28) = "span design note (dni)"
     
     For h = LBound(tagFindArray()) To UBound(tagFindArray())
     
@@ -851,18 +866,6 @@ ErrorHandler:
                 End With
                 Resume
                 
-            Case "span smcap bold ital (scbi)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
-                    Type:=wdStyleTypeCharacter)
-                With myStyle.Font
-                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
-                    .SmallCaps = False
-                    .AllCaps = True
-                    .Size = 9
-                    .Italic = True
-                    .Bold = True
-                End With
-                Resume
                 
             Case "span strikethrough characters (str)"
                 Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
