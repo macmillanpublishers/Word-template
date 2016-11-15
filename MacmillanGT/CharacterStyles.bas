@@ -249,8 +249,8 @@ End Sub
 Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
-    Dim tagArray(13) As String                                   ' number of items in array should be declared here
-    Dim StylePreserveArray(13) As String              ' number of items in array should be declared here
+    Dim tagArray(14) As String                                   ' number of items in array should be declared here
+    Dim StylePreserveArray(14) As String              ' number of items in array should be declared here
     Dim E As Long
     
     StylePreserveArray(1) = "Space Break (#)"
@@ -266,20 +266,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
     StylePreserveArray(11) = "Column Break (cbr)"
     StylePreserveArray(12) = "Design Note (dn)"
     StylePreserveArray(13) = "Bookmaker Page Break (br)"
-    
-    tagArray(1) = "`1`^&`1``"                                       'v. 3.1 patch  added extra backtick on trailing tag for all of these.
-    tagArray(2) = "`2`^&`2``"
-    tagArray(3) = "`3`^&`3``"
-    tagArray(4) = "`4`^&`4``"
-    tagArray(5) = "`5`^&`5``"
-    tagArray(6) = "`6`^&`6``"
-    tagArray(7) = "`7`^&`7``"
-    tagArray(8) = "`8`^&`8``"
-    tagArray(9) = "`9`^&`9``"
-    tagArray(10) = "`0`^&`0``"
-    tagArray(11) = "`L`^&`L``"
-    tagArray(12) = "`R`^&`R``"
-    tagArray(13) = "`N`^&`N``"
+    StylePreserveArray(14) = "Space Break - Internal (int)"
     
     On Error GoTo BreaksStyleError:
     
@@ -288,7 +275,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
           .ClearFormatting
           .Replacement.ClearFormatting
           .Text = "^13"
-          .Replacement.Text = tagArray(E)
+          .Replacement.Text = "`1`^&"
           .Wrap = wdFindContinue
           .Format = True
           .Style = StylePreserveArray(E)
@@ -366,28 +353,10 @@ End Sub
 Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     
-    Dim tagArrayB(13) As String                                   ' number of items in array should be declared here
-    Dim F As Long
-    
-    tagArrayB(1) = "`1`(^13)`1``"                             'v. 3.1 patch  added extra backtick on trailing tag for all of these.
-    tagArrayB(2) = "`2`(^13)`2``"
-    tagArrayB(3) = "`3`(^13)`3``"
-    tagArrayB(4) = "`4`(^13)`4``"
-    tagArrayB(5) = "`5`(^13)`5``"
-    tagArrayB(6) = "`6`(^13)`6``"
-    tagArrayB(7) = "`7`(^13)`7``"
-    tagArrayB(8) = "`8`(^13)`8``"
-    tagArrayB(9) = "`9`(^13)`9``"
-    tagArrayB(10) = "`0`(^13)`0``"
-    tagArrayB(11) = "`L`(^13)`L``"              ' for new column break, added v. 3.4.1
-    tagArrayB(12) = "`R`(^13)`R``"
-    tagArrayB(13) = "`N`(^13)`N``"
-    
-    For F = 1 To UBound(tagArrayB())
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
-            .Text = tagArrayB(F)
+            .Text = "`1`(^13)"
             .Replacement.Text = "\1"
             .Wrap = wdFindContinue
             .Format = False
@@ -398,7 +367,6 @@ Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
             .MatchAllWordForms = False
             .Execute Replace:=wdReplaceAll
         End With
-    Next
 
 End Sub
 
@@ -587,8 +555,8 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-    Dim tagFindArray(1 To 24) As String              ' number of items in array should be declared here
-    Dim tagReplaceArray(1 To 24) As String         'and here
+    Dim tagFindArray(1 To 28) As String              ' number of items in array should be declared here
+    Dim tagReplaceArray(1 To 28) As String         'and here
     Dim h As Long
     
     tagFindArray(1) = "`B|(*)|B`"
@@ -615,10 +583,10 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     tagFindArray(22) = "`J|(*)|J`"
     tagFindArray(23) = "`AA|(*)|AA`"
     tagFindArray(24) = "`BB|(*)|BB`"
-    tagFindArray(24) = "`CC|(*)|CC`"
-    tagFindArray(24) = "`DD|(*)|DD`"
-    tagFindArray(24) = "`EE|(*)|EE`"
-    tagFindArray(24) = "`FF|(*)|FF`"
+    tagFindArray(25) = "`CC|(*)|CC`"
+    tagFindArray(26) = "`DD|(*)|DD`"
+    tagFindArray(27) = "`EE|(*)|EE`"
+    tagFindArray(28) = "`FF|(*)|FF`"
     
     tagReplaceArray(1) = "span boldface characters (bf)"
     tagReplaceArray(2) = "span italic characters (ital)"
@@ -875,6 +843,14 @@ ErrorHandler:
                 End With
                 Resume
             
+            Case "span strikethrough characters (str)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .StrikeThrough = True
+                End With
+                Resume
+                
             'Else just skip if not from direct formatting
             Case Else
                 Resume NextLoop:
