@@ -803,7 +803,7 @@ End Function
 
 Function CheckAfterPB() As String
     Dim arrSecStartStyles() As String
-    ReDim arrSecStartStyles(1 To 44)
+    ReDim arrSecStartStyles(1 To 47)
     Dim kString As String
     Dim kCount As Integer
     Dim pageNumK As Integer
@@ -858,6 +858,9 @@ Function CheckAfterPB() As String
     arrSecStartStyles(42) = "Design Note (dn)"
     arrSecStartStyles(43) = "Front Sales Quote Head (fsqh)"
     arrSecStartStyles(44) = "Section Break (sbr)"
+    arrSecStartStyles(45) = "FM Head Nonprinting (fmhnp)"
+    arrSecStartStyles(46) = "BM Head Nonprinting (bmhnp)"
+    arrSecStartStyles(47) = "Chap Title ALT (act)"
     
     kCount = 0
     kString = ""
@@ -1681,15 +1684,15 @@ Private Sub ISBNcleanup()
     ' a character later, it won't return anything because the whole string needs to have the
     ' style applied for it to be found.
     
-    Dim G As Long
-    For G = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
+    Dim g As Long
+    For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
         
         'Move selection to start of document
         Selection.HomeKey Unit:=wdStory
 
         With Selection.Find
             .ClearFormatting
-            .Text = strISBNtextArray(G)
+            .Text = strISBNtextArray(g)
             .Replacement.ClearFormatting
             .Replacement.Text = ""
             .Forward = True
@@ -1706,7 +1709,7 @@ Private Sub ISBNcleanup()
         
         Selection.Find.Execute Replace:=wdReplaceAll
     
-    Next G
+    Next g
     
 Exit Sub
     
