@@ -472,32 +472,6 @@ CharStyleError:
 
 End Sub
 
-Sub test()
-  Dim testArray(1 To 5) As Boolean
-  Dim A As Long
-  For A = LBound(testArray) To UBound(testArray)
-    Debug.Print testArray(A)
-  Next
-  
-  Debug.Print "--"
-  
-  testArray(1) = True
-  testArray(2) = False
-  testArray(3) = True
-  testArray(4) = True
-  
-  For A = LBound(testArray) To UBound(testArray)
-    Debug.Print testArray(A)
-  Next
-  
-  Debug.Print "--"
-  Erase testArray
-
-  For A = LBound(testArray) To UBound(testArray)
-    Debug.Print testArray(A)
-  Next
-End Sub
-
 
 Private Sub LocalStyleTag(StoryType As WdStoryType)
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
@@ -726,8 +700,8 @@ On Error GoTo BkmkrError
                         ' hence start at 10
                         strAction = Mid(BkmkrStyles(Q), 10, InStr(BkmkrStyles(Q), "(") - 11)
                         strNewName = tagReplaceArray(h) & strAction
-                        Debug.Print "current style is: " & Selection.Style
-                        Debug.Print "new style is: " & strNewName
+'                        Debug.Print "current style is: " & Selection.Style
+'                        Debug.Print "new style is: " & strNewName
                         
                         ' Note these hybrid styles aren't in std template, so if they
                         ' haven't been created in this doc yet, will error.
@@ -964,7 +938,7 @@ Private Function TagBkmkrCharStyles(StoryType As Variant) As Variant
         ' which we don't want to mess with.
         If InStr(1, objStyle.NameLocal, "bookmaker", vbBinaryCompare) <> 0 And _
             objStyle.Type = wdStyleTypeCharacter Then
-            Debug.Print StoryType & ": " & objStyle.NameLocal
+'            Debug.Print StoryType & ": " & objStyle.NameLocal
             Selection.HomeKey Unit:=wdStory
             ' Now see if it's being used ...
             With Selection.Find
@@ -1241,7 +1215,4 @@ On Error GoTo ErrorHandler2
     
     Exit Sub
     
-End Sub
-
-Sub test()
 End Sub

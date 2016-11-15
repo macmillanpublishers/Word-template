@@ -31,7 +31,7 @@ Public Function StyleDir() As String
         strFullPath = Environ("APPDATA") & Application.PathSeparator & strStylesName
     #End If
     
-    Debug.Print strFullPath
+'    Debug.Print strFullPath
     StyleDir = strFullPath
     
 End Function
