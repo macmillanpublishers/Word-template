@@ -17,6 +17,25 @@ Public Enum TemplatesList
     installTemplates = 4
     allTemplates = 5
 End Enum
+Public Function StyleDir() As String
+    Dim strFullPath As String
+    Dim strMacDocs As String
+    Dim strStylesName As String
+    
+    strStylesName = "MacmillanStyleTemplate"
+    
+    #If Mac Then
+        strMacDocs = MacScript("return (path to documents folder) as string")
+        strFullPath = strMacDocs & strStylesName
+    #Else
+        strFullPath = Environ("APPDATA") & Application.PathSeparator & strStylesName
+    #End If
+    
+    Debug.Print strFullPath
+    StyleDir = strFullPath
+    
+End Function
+
 
 Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional PathToRepo As String) As Variant
     ' returns an array of paths to template files in their final installation locations
@@ -24,20 +43,10 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     
     Dim strStartupDir As String
     Dim strStyleDir As String
-    Dim strMacDocs As String
-    Dim strStylesName As String
-    
-    strStylesName = "MacmillanStyleTemplate"
     
     strStartupDir = Application.StartupPath
-    
-    #If Mac Then
-        strMacDocs = MacScript("return (path to documents folder) as string")
-        strStyleDir = strMacDocs & strStylesName
-    #Else
-        strStyleDir = Environ("APPDATA") & Application.PathSeparator & strStylesName
-    #End If
-    
+    strStyleDir = StyleDir()
+
     Dim strPathsToTemplates() As String
     Dim K As Long
     K = 0
