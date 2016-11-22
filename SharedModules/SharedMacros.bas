@@ -152,19 +152,39 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
     Dim strFinalPath As String
     Dim strErrMsg As String
     Dim myURL As String
+    Dim strBranch As String
+    Dim strDownloadRepo As String
+    Dim strBaseUrl As String
+    Dim strSubfolder As String
     
     strFinalPath = FinalDir & Application.PathSeparator & FileName
+
+'Get URL to download from. Hard coded for now since will be replaced with config refactor
+    ' Base URL everything is available from
+    strBaseUrl = "https://raw.githubusercontent.com/macmillanpublishers/"
     
-    'Get URL to download from
-    If DownloadSource = develop Then
-        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+staging
-        myURL = "https://confluence.macmillan.com/download/attachments/35001370/" & FileName
-    ElseIf DownloadSource = master Then
-        'actual page to update files is https://confluence.macmillan.com/display/PBL/Word+template+downloads+-+production
-        myURL = "https://confluence.macmillan.com/download/attachments/9044274/" & FileName
-    ElseIf DownloadSource = releases Then
-        myURL = "https://confluence.macmillan.com/download/attachments/40571207/" & FileName
+    ' Branch to download from
+    Select Case DownloadSource
+      Case develop
+        strBranch = "develop/"
+      Case master
+        strBranch = "master/"
+      Case releases
+        strBranch = "releases/"
+    End Select
+    
+    ' Determine repo and file path from file name. Will be handled better in config.
+    If InStr(FileName, "gt", Compare:=vbTextCompare) Then
+      strDownloadRepo = "Word-template/"
+      strSubfolder = Left(FileName, InStr(FileName, ".") - 1) & "/"
+    Else
+      strDownloadRepo = strDownloadRepo = "Word-template_assets/"
+      strSubfolder = vbNullString
     End If
+    
+    ' put it all together
+    myURL = strBaseUrl & strDownloadRepo & strBranch & strSubfolder & FileName
+    Debug.Print "Attempting to download: " & myURL
     
     'Get temp dir based on OS, then download file.
     #If Mac Then
