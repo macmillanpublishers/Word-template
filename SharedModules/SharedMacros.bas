@@ -174,11 +174,11 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
     End Select
     
     ' Determine repo and file path from file name. Will be handled better in config.
-    If InStr(FileName, "gt", Compare:=vbTextCompare) Then
+    If InStr(1, FileName, "gt", vbTextCompare) Then
       strDownloadRepo = "Word-template/"
       strSubfolder = Left(FileName, InStr(FileName, ".") - 1) & "/"
     Else
-      strDownloadRepo = strDownloadRepo = "Word-template_assets/"
+      strDownloadRepo = "Word-template_assets/"
       strSubfolder = vbNullString
     End If
     
