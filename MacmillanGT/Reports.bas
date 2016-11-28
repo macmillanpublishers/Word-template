@@ -89,8 +89,18 @@ Private Sub MakeReport(torDOTcom As Boolean)
     X = Int(UBound(funArray()) * Rnd()) + 1
     
     'Debug.Print x
+    ' If only creating an epub, just run style report since only difference now
+    ' is Bkmkr checks for non-Bookmaker styles.
     If torDOTcom = True Then
         strTitle = "Bookmaker Requirements Macro"
+        Dim strEpubMsg As String
+        strEpubMsg = "Hi there! Are you creating a PRINT PDF with Bookmaker?" & _
+          vbNewLine & vbNewLine & _
+          "If you are creating a PRINT PDF, click YES." & vbNewLine & _
+          "If you are ONLY creating an EPUB, click NO."
+        If MsgBox(strEpubMsg, vbYesNo) = vbNo Then
+          torDOTcom = False
+        End If
     Else
         strTitle = "Macmillan Style Report"
     End If
@@ -103,7 +113,6 @@ Private Sub MakeReport(torDOTcom As Boolean)
 
     oProgressBkmkr.Title = strTitle
     Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
     
     '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
     '-------because it should just be applied to the isbn numerals and hyphens-------------------
