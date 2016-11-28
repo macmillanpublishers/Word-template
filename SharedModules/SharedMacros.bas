@@ -1150,14 +1150,169 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
     ' They are used by some imprints for frontmatter templates
     ' for editorial, though.
     ' Doesn't work at all for a Mac, so...
-    #If Win32 Then
-        ClearContentControls
+    ' New version cleans up Cookbook template
+    #If Not Mac Then
+        CleanUpRecipeContentControls
     #End If
     
+    ' Unlinking any auto-generated TOCs
+    Call UpdateUnlinkTOC
+    Debug.Print "Updating and Unlinking Auto-TOC"
+
+    ' Mapping built-in TOC styles to Macmillan styles
+    Call ReMapTOCStyles
+    Debug.Print "Remapped built-in TOC styles to Macmillan ones"
     
+End Sub
+
+
+
+' ===== CookbookTOCStyleMap ====================================================
+'
+' Hardcoded style-map for TOC styles (for cookbook template)
+
+Private Function CookbookTOCStyleMap()
+Dim objStyleMapDict As New Dictionary
+
+
+objStyleMapDict.Add "TOC 1", "TOC Frontmatter Head (cfmh)"
+objStyleMapDict.Add "TOC 2", "TOC Backmatter Head (cbmh)"
+objStyleMapDict.Add "TOC 3", "TOC Part Number  (cpn)"
+objStyleMapDict.Add "TOC 4", "TOC Part Title (cpt)"
+objStyleMapDict.Add "TOC 5", "TOC Chapter Number (ccn)"
+objStyleMapDict.Add "TOC 6", "TOC Chapter Title (cct)"
+objStyleMapDict.Add "TOC 7", "TOC Author (cau)"
+objStyleMapDict.Add "TOC 8", "TOC Level-1 Chapter Head (ch1)"
+objStyleMapDict.Add "TOC 9", "TOC Chapter Subtitle (ccst)"
+
+Set CookbookTOCStyleMap = objStyleMapDict
 End Function
 
+' ===== ReMapTOCStyles =========================================================
+'
+' Replaces built-in TOC styles with Macmillan equivalents (based on Dict)
 
+Private Sub ReMapTOCStyles()
+Dim objStyleMapDict As Dictionary
+Dim objDictKey As Variant
+Dim objDictValue As Variant
+Dim rngActiveDoc As Range
+
+Set objStyleMapDict = CookbookTOCStyleMap
+Set rngActiveDoc = ActiveDocument.Range
+ 
+For Each objDictKey In objStyleMapDict.Keys()
+
+    'Need to add a check if style is present in Document &/or in use
+    objDictValue = objStyleMapDict(objDictKey)
+    
+     Call zz_clearFind
+        With rngActiveDoc.Find
+          .Text = ""
+          .Replacement.Text = ""
+          .Wrap = wdFindContinue
+          .Format = True
+          .Style = objDictKey
+          .Replacement.Style = objDictValue
+          .Execute Replace:=wdReplaceAll
+        End With
+Next
+
+End Sub
+
+' ===== UpdateUnlinkTOC ========================================================
+'
+' Cycles through all Fields in ActiveDocument:
+' Updates, unlocks, and unlinks each field
+
+Public Sub UpdateUnlinkTOC()
+Dim objField As Field
+
+For Each objField In ActiveDocument.Fields
+'    If objField.Type = wdFieldTOC Then         ''This is if you only want to update TOC fields
+        objField.Update
+        objField.Locked = False
+        objField.Unlink
+'    End If
+Next
+
+End Sub
+' ===== CleanUpRecipeContentControls ===========================================
+'
+' For cleaning up Cookstr Cookbook templates:
+'   1. Calls "UpdateUnlinkTOC" sub to update, unlock, and unlink TOC fields
+'   2. Cycles through all Content Controls in doc, Unlocks each CC.
+'   3. For all CCs of type 'group', if nested CCs are empty + have tag cookbook
+'       it deletes the group & all contents. If not, it deletes the group CC
+'       preserving contents)
+'   4. For all non-Group CC's, if CC is in paragraphs styled as Design Note:
+'       if CC is the last/only Content Control in the DN para, the para is deleted
+'   5. For any "Edirotial" CC's with placeholder content, the CC range text is
+'       set to match placeholder content (and persists when CC is deleted).
+'   6. All other ContentControls, CC is deleted, preserving non-placeholder content
+
+Private Sub CleanUpRecipeContentControls()
+Dim objCC As ContentControl
+Dim objCCs As ContentControls
+Dim objGroupCC As ContentControl
+Dim rngCC As Range
+Dim rngGroupCC As Range
+Dim rngIndexPara As Range
+Dim lngCCsInPara As Long
+Dim lngEmptyCCinGroup As Long
+Dim lngParaIndex As Long
+Dim objStyleMapDict As Dictionary
+Set objCCs = ActiveDocument.ContentControls
+Set objStyleMapDict = CookbookTOCStyleMap
+
+For Each objCC In objCCs
+    If objCC.LockContentControl = True Then
+        objCC.LockContentControl = False
+    End If
+    If objCC.Type = 7 Then            'check for grouped CC's
+        Set rngGroupCC = objCC.Range
+        lngEmptyCCinGroup = 0
+        For Each objGroupCC In rngGroupCC.ContentControls
+            If objGroupCC.PlaceholderText.value = objGroupCC.Range.Text And _
+                objGroupCC.Tag = "cookbook" Then
+                lngEmptyCCinGroup = lngEmptyCCinGroup + 1
+            End If
+        Next
+        If lngEmptyCCinGroup = rngGroupCC.ContentControls.Count Then
+            Debug.Print "Deleting a blank '" & _
+                rngGroupCC.ContentControls(1).Title & "' CC group"
+            objCC.Delete True
+        Else
+            objCC.Delete False
+        End If
+    ElseIf objCC.Tag = "cookbook" Or objCC.Tag = "cookbooks" Or _
+        objCC.Title = "Pub Year" Then
+        Set rngCC = objCC.Range
+        If rngCC.ParagraphStyle = "Design Note (dn)" Then
+            Debug.Print "Deleting a Design Note para with ContentControl: " _
+                & objCC.Title
+            lngParaIndex = ActiveDocument.Range(0, rngCC.End).Paragraphs.Count
+            Set rngIndexPara = ActiveDocument.Paragraphs(lngParaIndex).Range
+            lngCCsInPara = rngIndexPara.ContentControls.Count
+            Debug.Print lngCCsInPara & "is the lngpcount"
+            If rngIndexPara.ContentControls(lngCCsInPara).ID = objCC.ID Then
+                'to verify this is the last Content Control in this para
+                ActiveDocument.Paragraphs(lngParaIndex).Range.Delete
+            End If
+        Else
+            If objCC.Title = "Editorial" And objCC.Range.Text = _
+                objCC.PlaceholderText.value Then
+                objCC.Range.Text = objCC.PlaceholderText.value
+                Debug.Print "Setting blank 'Editorial' CCs to placeholder txt"
+            End If
+            objCC.Delete False
+            Debug.Print "Deleting CC (preserving content) from para: " & _
+                rngCC.ParagraphStyle
+        End If
+    End If
+Next
+
+End Sub
 Private Function FixTrackChanges() As Boolean
     Dim N As Long
     Dim oComments As Comments
@@ -1195,19 +1350,6 @@ Private Function FixTrackChanges() As Boolean
     Application.DisplayAlerts = True
     
 End Function
-
-
-Private Sub ClearContentControls()
-    'This is it's own sub because doesn't exist in Mac Word, breaks whole sub if included
-    Dim cc As ContentControl
-    
-    For Each cc In ActiveDocument.ContentControls
-        cc.Delete
-    Next
-
-End Sub
-
-
 
 
 Sub Cleanup()

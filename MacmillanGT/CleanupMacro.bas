@@ -353,7 +353,7 @@ Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     preserveCharFindArray(2) = "  "  ' two spaces
     preserveCharFindArray(3) = "   "    'three spaces
     preserveCharFindArray(4) = "^l"  ' soft return
-    preserveCharFindArray(5) = "- "  ' hyphen + space
+    preserveCharFindArray(5) = "-"  ' hyphen
     
     preserveCharReplaceArray(1) = "`E|"
     preserveCharReplaceArray(2) = "`G|"
