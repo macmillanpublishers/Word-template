@@ -44,13 +44,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Dim A As Long
     
     stStories = StoryArray
-    
-    ' ======= Run startup checks ========
-    ' True means a check failed (e.g., doc protection on)
-    If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call Cleanup
-        Exit Sub
-    End If
+
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -105,6 +99,15 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
       " Try it, it might be fun!"
       
     blnTagUnstyled = MsgBox(strTagTextMsg, vbYesNo)
+
+    
+    ' ======= Run startup checks ========
+    ' Run after progress bar is displayed, since ContentControl cleanup can take time
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings(StoriesUsed:=stStories) = True Then
+        Call Cleanup
+        Exit Sub
+    End If
     
     '-----------Delete hidden text ------------------------------------------------
     Dim S As Long
