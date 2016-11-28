@@ -1103,68 +1103,45 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
         End If
     End If
     
-    
     ' ========== Delete field codes ==========
     ' Fields break cleanup and char styles, so we delete them (but retain their
     ' result, if any). Furthermore, fields make no sense in a manuscript, so
     ' even if they didn't break anything we don't want them.
     ' Note, however, that even though linked endnotes and footnotes are
     ' types of fields, this loop doesn't affect them.
+    ' NOTE: Moved this to separate procedure
     
-    Dim A As Long
-    Dim thisRange As Range
-    Dim objField As Field
-    Dim strContent As String
-    
-    ' StoriesUsed is optional; if an array of stories is not passed, just use the main text story here
-    If IsArrayEmpty(StoriesUsed) = True Then
-        ReDim StoriesUsed(1 To 1)
-        StoriesUsed(1) = wdMainTextStory
-    End If
+    Call UpdateUnlinkFieldCodes(StoriesUsed)
 
-    For A = LBound(StoriesUsed) To UBound(StoriesUsed)
-        Set thisRange = ActiveDocument.StoryRanges(StoriesUsed(A))
-        For Each objField In thisRange.Fields
-'            Debug.Print thisRange.Fields.Count
-            If thisRange.Fields.Count > 0 Then
-                With objField
-'                    Debug.Print .Index & ": " & .Kind
-                    ' None or Cold means it has no result, so we just delete
-                    If .Kind = wdFieldKindNone Or .Kind = wdFieldKindCold Then
-                        .Delete
-                    Else ' It has a result, so we replace field w/ just its content
-                        strContent = .result
-                        .Select
-                        .Delete
-                        Selection.InsertAfter strContent
-                    End If
-                End With
-            End If
-        Next objField
-
-    Next A
-
-    
     ' ========== Remove content controls ==========
     ' Content controls also break character styles and cleanup
     ' They are used by some imprints for frontmatter templates
     ' for editorial, though.
     ' Doesn't work at all for a Mac, so...
-    ' New version cleans up Cookbook template
-    #If Not Mac Then
+    ' NOTE: New version cleans up Cookbook template. Mac way of checking only works
+    ' with template version 3+
+    Dim strOrigTemplate As String
+    Dim strCookbookMsg As String
+    #If Mac Then
+        Dim objDocProp As DocumentProperty
+        For Each objDocProp In mainDoc.CustomDocumentProperties
+          If objDocProp.Name = "OriginalTemplate" Then
+            If InStr(objDocProp.Value, "CookbookTemplate_v") > 0 Then
+              strCookbookMsg = "It looks like you are cleaning up a cookbook manuscript. " & _
+                "Note that cleanup specific to Macmillan's Cookbook template only works " & _
+                "on Windows PCs. Please ask your PE or another friendly coworker to run " & _
+                "this macro for you."
+              MsgBox strCookbookMsg
+              Exit For
+            End If
+            
+          End If
+        Next objDocProp
+    #Else
         CleanUpRecipeContentControls
     #End If
     
-    ' Unlinking any auto-generated TOCs
-    Call UpdateUnlinkTOC
-    Debug.Print "Updating and Unlinking Auto-TOC"
-
-    ' Mapping built-in TOC styles to Macmillan styles
-    Call ReMapTOCStyles
-    Debug.Print "Remapped built-in TOC styles to Macmillan ones"
-    
 End Sub
-
 
 
 ' ===== CookbookTOCStyleMap ====================================================
@@ -1189,54 +1166,93 @@ Set CookbookTOCStyleMap = objStyleMapDict
 End Function
 
 ' ===== ReMapTOCStyles =========================================================
-'
 ' Replaces built-in TOC styles with Macmillan equivalents (based on Dict)
 
 Private Sub ReMapTOCStyles()
-Dim objStyleMapDict As Dictionary
-Dim objDictKey As Variant
-Dim objDictValue As Variant
-Dim rngActiveDoc As Range
-
-Set objStyleMapDict = CookbookTOCStyleMap
-Set rngActiveDoc = ActiveDocument.Range
- 
-For Each objDictKey In objStyleMapDict.Keys()
-
+  On Error GoTo ReMapTOCStylesError
+  
+  Dim objStyleMapDict As Dictionary
+  Dim objDictKey As Variant
+  Dim objDictValue As Variant
+  Dim rngActiveDoc As Range
+  Dim myStyle As Style  ' for error handling
+  
+  Set objStyleMapDict = CookbookTOCStyleMap
+  Set rngActiveDoc = ActiveDocument.Range
+   
+  For Each objDictKey In objStyleMapDict.Keys()
+  
     'Need to add a check if style is present in Document &/or in use
     objDictValue = objStyleMapDict(objDictKey)
     
-     Call zz_clearFind
-        With rngActiveDoc.Find
-          .Text = ""
-          .Replacement.Text = ""
-          .Wrap = wdFindContinue
-          .Format = True
-          .Style = objDictKey
-          .Replacement.Style = objDictValue
-          .Execute Replace:=wdReplaceAll
-        End With
-Next
+    Call zz_clearFind
+    With rngActiveDoc.Find
+      .Text = ""
+      .Replacement.Text = ""
+      .Wrap = wdFindContinue
+      .Format = True
+      .Style = objDictKey
+      .Replacement.Style = objDictValue
+      .Execute Replace:=wdReplaceAll
+    End With
+  Next
+  
+  Exit Sub
 
+ReMapTOCStylesError:
+  If Err.Number = 5834 Or Err.Number = 5941 Then  ' style not present
+    Set myStyle = ActiveDocument.Styles.Add(Name:=objDictKey, _
+      Type:=wdStyleTypeParagraph)
+    Resume
+  Else
+    MsgBox "Oops, something happened! Email workflows@macmillan.com and " & _
+      "let them know that something's wrong." & vbNewLine & vbNewLine & _
+      "Error " & Err.Number & ": " & Err.Description
+  End If
 End Sub
 
-' ===== UpdateUnlinkTOC ========================================================
-'
-' Cycles through all Fields in ActiveDocument:
-' Updates, unlocks, and unlinks each field
+' ===== UpdateUnlinkFieldCodes ================================================
+' Cycles through all Fields in ActiveDocument. Updates, unlocks, and unlinks
+' each field. If this is our cookbook template with the automatic TOC, that
+' will be unlinked as well.
 
-Public Sub UpdateUnlinkTOC()
+Public Sub UpdateUnlinkFieldCodes(Optional p_stories As Variant)
 Dim objField As Field
+Dim A As Long
+Dim thisRange As Range
+Dim strContent As String
 
-For Each objField In ActiveDocument.Fields
-'    If objField.Type = wdFieldTOC Then         ''This is if you only want to update TOC fields
-        objField.Update
-        objField.Locked = False
-        objField.Unlink
-'    End If
-Next
+' p_stories is optional; if an array of stories is not passed,
+' just use the main text story here
+If IsArrayEmpty(p_stories) = True Then
+    ReDim p_stories(1 To 1)
+    p_stories(1) = wdMainTextStory
+End If
+
+For A = LBound(p_stories) To UBound(p_stories)
+    Set thisRange = ActiveDocument.StoryRanges(p_stories(A))
+    For Each objField In thisRange.Fields
+'            Debug.Print thisRange.Fields.Count
+        If thisRange.Fields.Count > 0 Then
+            With objField
+          '    If objField.Type = wdFieldTOC Then         ''This is if you only want to update TOC fields
+                  .Update
+                  .Locked = False
+                  .Unlink
+          '    End If
+            End With
+        End If
+    Next objField
+
+Next A
+
+' If automatic TOC was unlinked above, need to map built-in TOC styles to ours
+Call ReMapTOCStyles
+
 
 End Sub
+
+
 ' ===== CleanUpRecipeContentControls ===========================================
 '
 ' For cleaning up Cookstr Cookbook templates:
@@ -1273,7 +1289,7 @@ For Each objCC In objCCs
         Set rngGroupCC = objCC.Range
         lngEmptyCCinGroup = 0
         For Each objGroupCC In rngGroupCC.ContentControls
-            If objGroupCC.PlaceholderText.value = objGroupCC.Range.Text And _
+            If objGroupCC.PlaceholderText.Value = objGroupCC.Range.Text And _
                 objGroupCC.Tag = "cookbook" Then
                 lngEmptyCCinGroup = lngEmptyCCinGroup + 1
             End If
@@ -1301,8 +1317,8 @@ For Each objCC In objCCs
             End If
         Else
             If objCC.Title = "Editorial" And objCC.Range.Text = _
-                objCC.PlaceholderText.value Then
-                objCC.Range.Text = objCC.PlaceholderText.value
+                objCC.PlaceholderText.Value Then
+                objCC.Range.Text = objCC.PlaceholderText.Value
                 Debug.Print "Setting blank 'Editorial' CCs to placeholder txt"
             End If
             objCC.Delete False
