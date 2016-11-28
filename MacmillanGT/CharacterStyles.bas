@@ -93,12 +93,14 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Call UpdateBarAndWait(Bar:=oProgressChar, Status:=strStatus, Percent:=sglPercentComplete)
     
 ' Ask if user wants to tag non-Macmillan paragraphs too
+' NOTE: removing for now, better implementation in Validator, we can roll it out when
+' we merge that back in.
     Dim blnTagUnstyled As Boolean
-    Dim strTagTextMsg As String
-    strTagTextMsg = "Hi! Do you want do tag all unstyled paragraphs with Text - Standard (tx)?" & _
-      " Try it, it might be fun!"
-      
-    blnTagUnstyled = MsgBox(strTagTextMsg, vbYesNo)
+'    Dim strTagTextMsg As String
+'    strTagTextMsg = "Hi! Do you want to tag all unstyled paragraphs with Text - Standard (tx)?" & _
+'      " Try it, it might be fun!"
+'
+'    blnTagUnstyled = MsgBox(strTagTextMsg, vbYesNo)
 
     
     ' ======= Run startup checks ========
@@ -222,13 +224,15 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     ' NOTE: must be done AFTER character styles, because if whole para has direct format
     ' it will be removed when apply style (but style won't be removed)
     ' This is total progress bar that will be covered in TagUnstyledText
-    Dim sglTotalForText As Single
-    sglTotalForText = TotalPercent - sglPercentComplete
+    ' NOTE! Not ready yet. Use Validator implementation when we merge that in.
     
-    If blnTagUnstyled = True Then
-      Call TagUnstyledText(objTagProgress:=oProgressChar, StartingPercent:=sglPercentComplete, _
-        TotalPercent:=sglTotalForText, Status:=strStatus)
-    End If
+'    Dim sglTotalForText As Single
+'    sglTotalForText = TotalPercent - sglPercentComplete
+'
+'    If blnTagUnstyled = True Then
+'      Call TagUnstyledText(objTagProgress:=oProgressChar, StartingPercent:=sglPercentComplete, _
+'        TotalPercent:=sglTotalForText, Status:=strStatus)
+'    End If
 
     ' Only tagging through main text story, because Endnotes story and Footnotes story should
     ' already be tagged at Endnote Text and Footnote Text by dafault when created

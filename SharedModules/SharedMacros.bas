@@ -1102,16 +1102,6 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
             StartupSettings = True
         End If
     End If
-    
-    ' ========== Delete field codes ==========
-    ' Fields break cleanup and char styles, so we delete them (but retain their
-    ' result, if any). Furthermore, fields make no sense in a manuscript, so
-    ' even if they didn't break anything we don't want them.
-    ' Note, however, that even though linked endnotes and footnotes are
-    ' types of fields, this loop doesn't affect them.
-    ' NOTE: Moved this to separate procedure
-    
-    Call UpdateUnlinkFieldCodes(StoriesUsed)
 
     ' ========== Remove content controls ==========
     ' Content controls also break character styles and cleanup
@@ -1140,8 +1130,20 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
     #Else
         CleanUpRecipeContentControls
     #End If
+
     
-End Sub
+    ' ========== Delete field codes ==========
+    ' Fields break cleanup and char styles, so we delete them (but retain their
+    ' result, if any). Furthermore, fields make no sense in a manuscript, so
+    ' even if they didn't break anything we don't want them.
+    ' Note, however, that even though linked endnotes and footnotes are
+    ' types of fields, this loop doesn't affect them.
+    ' NOTE: Moved this to separate procedure to use Matt's code.
+    ' Must run AFTER content control cleanup.
+    
+    Call UpdateUnlinkFieldCodes(StoriesUsed)
+    
+End Function
 
 
 ' ===== CookbookTOCStyleMap ====================================================
