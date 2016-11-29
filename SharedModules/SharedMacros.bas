@@ -1071,19 +1071,6 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
     Application.ScreenUpdating = False
     
     
-    ' ========== STATUS BAR: store current setting and display ==========
-    System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
-    
-    
-    ' ========== Remove bookmarks ==========
-    Dim bkm As Bookmark
-    
-    For Each bkm In mainDoc.Bookmarks
-        bkm.Delete
-    Next bkm
-    
-    
     ' ========== Save current cursor location in a bookmark ==========
     ' Store current story, so we can return to it before selecting bookmark in Cleanup
     System.ProfileString(strSection, "Current_Story") = Selection.StoryType
@@ -1142,6 +1129,20 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
     ' Must run AFTER content control cleanup.
     
     Call UpdateUnlinkFieldCodes(StoriesUsed)
+    
+    
+    ' ========== STATUS BAR: store current setting and display ==========
+    ' Run after Content control cleanup
+    System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
+    Application.DisplayStatusBar = True
+    
+    
+    ' ========== Remove bookmarks ==========
+    Dim bkm As Bookmark
+    
+    For Each bkm In mainDoc.Bookmarks
+        bkm.Delete
+    Next bkm
     
 End Function
 
