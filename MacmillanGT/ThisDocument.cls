@@ -15,7 +15,7 @@ Option Base 1
 Sub AutoExec()
 
     ' ======= For testing / debugging ==============
-     MsgBox "I am NEWEST MacmillanGT AutoExec and I am running!"
+'     MsgBox "I am NEWEST MacmillanGT AutoExec and I am running!"
     ' ==============================================
 
 
@@ -122,7 +122,7 @@ Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
     ' Requires FileInstaller and SharedMacros modules be installed in the same template.
 
     ' ======= For testing / debugging ==============
-     MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
+''     MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
     ' ==============================================
     
     ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
