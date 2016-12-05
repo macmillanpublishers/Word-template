@@ -89,12 +89,14 @@ Sub AutoExec()
 '    Next Q
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
+    ' CHECK/UPDATE STYLES TEMPLATES ONLY.
     Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
         TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
     
+    ' BLAH BLAH ONTIME NOT WORKING JUST DON'T CHECK ANY MORE WE'LL GET RID OF WITH CONFIG FILE.
     ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
     ' finish running (because this AutoExec is called from GtUpdater in Startup
-    Application.OnTime When:=Now + TimeValue("00:00:01"), _
+'    Application.OnTime When:=Now + TimeValue("00:00:01"), _
         Name:=ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
 
 '    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)

@@ -73,7 +73,9 @@ Sub AutoExec()
     ' ====== PART 3: LOAD MAIN TEMPLATE ==============
     ' Delay so this sub can complete before we load MacmillanGT, because MacmillanGT checks GtUpdater, and
     ' we may need up update/replace it but we can't if it's still running.
-    Application.OnTime When:=Now + TimeValue("00:00:01"), Name:=LoadTemplate
+    Call LoadTemplate
+'    Application.OnTime When:=Now + TimeValue("00:00:01"), Name:=MacmillanGT.ThisDocument.TemplateCheck
+'    MsgBox "End GtUpdater"
     Exit Sub
 
 ErrHandler:
@@ -96,7 +98,7 @@ Function LoadTemplate()
     Dim strNewGT As String
     Dim strTemplateList() As String
     Dim strMessage As String
-    
+'    MsgBox "Loading MacmillanGT"
     strTemplateList = GetTemplatesList(TemplatesYouWant:=toolsTemplates)
     strNewGT = strTemplateList(1)
     'Debug.Print strNewGT
@@ -111,4 +113,5 @@ Function LoadTemplate()
             "workflows@macmillan.com and let them know that something is broken!"
         MsgBox strMessage, vbOKOnly, "We're So Sorry"
     End If
+'    MsgBox "Ending LoadTemplate"
 End Function
