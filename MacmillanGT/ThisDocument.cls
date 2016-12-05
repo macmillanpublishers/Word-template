@@ -15,7 +15,7 @@ Option Base 1
 Sub AutoExec()
 
     ' ======= For testing / debugging ==============
-    ' MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
+     MsgBox "I am NEWEST MacmillanGT AutoExec and I am running!"
     ' ==============================================
 
 
@@ -96,6 +96,8 @@ Sub AutoExec()
     ' finish running (because this AutoExec is called from GtUpdater in Startup
     Application.OnTime When:=Now + TimeValue("00:00:01"), _
         Name:="ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)"
+        
+'    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
 
     On Error GoTo 0
     Exit Sub
@@ -105,7 +107,7 @@ ErrHandler:
 End Sub
 
 
-Sub CheckGtUpdater(Branch As String, InstallerOrNot As Boolean)
+Sub CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
     ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
     ' GtUpdater.dotm can't be running code when this launches.
 
@@ -118,12 +120,13 @@ Sub CheckGtUpdater(Branch As String, InstallerOrNot As Boolean)
     ' Requires FileInstaller and SharedMacros modules be installed in the same template.
 
     ' ======= For testing / debugging ==============
-    ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
+     MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
     ' ==============================================
     
     ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
     Dim strInstallMe() As String
     Dim strTemplateName As String
+    strTemplateName = "Macmillan Updater"
 
     ' get array of files to install
     strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
@@ -265,7 +268,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim A As Long
         Dim B As Long
         Dim C As Long
-        Dim H As Long
+        Dim h As Long
         Dim NewToolbar As CommandBar
         
         Dim strImageName As String
@@ -392,6 +395,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
 
