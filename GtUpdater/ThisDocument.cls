@@ -27,7 +27,7 @@ Option Base 1
 Sub AutoExec()
 
     ' ======= For testing / debugging ==============
-    ' MsgBox "I am NEW GtUpdater and I am running!"
+     MsgBox "I am NEWEST GtUpdater and I am running!"
     ' ==============================================
 
     Dim downloadBranch As GitBranch
@@ -71,26 +71,13 @@ Sub AutoExec()
         TemplateName:=strTemplateName, TemplatesToInstall:=strTemplateList())
 
     ' ====== PART 3: LOAD MAIN TEMPLATE ==============
-    Dim strNewGT As String
-    strNewGT = strTemplateList(1)
-    'Debug.Print strNewGT
-
-    If IsItThere(strNewGT) = True Then
-        ' Have to add Template before loading if not in Startup
-        ' Could do Install:=True with Add method, but it somehow broke everything
-        AddIns.Add (strNewGT)
-        AddIns(strNewGT).Installed = True
-    Else
-        Dim strMessage As String
-            strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Tools template. Please send an email to " & _
-            "workflows@macmillan.com and let them know that something is broken!"
-        MsgBox strMessage, vbOKOnly, "We're So Sorry"
-    End If
-
-    On Error GoTo 0
+    ' Delay so this sub can complete before we load MacmillanGT, because MacmillanGT checks GtUpdater, and
+    ' we may need up update/replace it but we can't if it's still running.
+    Application.OnTime When:=Now + TimeValue("00:00:01"), Name:=LoadTemplate
     Exit Sub
 
 ErrHandler:
+    Dim strMessage As String
     If Err.Number = 75 Then     ' Change to whatever the actual error is when try to kill file
         ' Can we tell if this is a Macmillan install, and prompt them to use Self Service?"
         ' Could we launch Self Service from AppleScript or something?
@@ -102,3 +89,26 @@ ErrHandler:
 
 
 End Sub
+
+
+Function LoadTemplate()
+    ' ====== PART 3: LOAD MAIN TEMPLATE ==============
+    Dim strNewGT As String
+    Dim strTemplateList() As String
+    Dim strMessage As String
+    
+    strTemplateList = GetTemplatesList(TemplatesYouWant:=toolsTemplates)
+    strNewGT = strTemplateList(1)
+    'Debug.Print strNewGT
+
+    If IsItThere(strNewGT) = True Then
+        ' Have to add Template before loading if not in Startup
+        ' Could do Install:=True with Add method, but it somehow broke everything
+        AddIns.Add (strNewGT)
+        AddIns(strNewGT).Installed = True
+    Else
+        strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Tools template. Please send an email to " & _
+            "workflows@macmillan.com and let them know that something is broken!"
+        MsgBox strMessage, vbOKOnly, "We're So Sorry"
+    End If
+End Function
