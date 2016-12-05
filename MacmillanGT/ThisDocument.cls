@@ -97,6 +97,8 @@ Sub AutoExec()
     Application.OnTime When:=Now + TimeValue("00:00:01"), _
         Name:=ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
 
+'    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
+    
     On Error GoTo 0
     Exit Sub
 
@@ -105,7 +107,7 @@ ErrHandler:
 End Sub
 
 
-Sub CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
+Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
     ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
     ' GtUpdater.dotm can't be running code when this launches.
 
@@ -147,14 +149,14 @@ Sub CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
     End If
 
     On Error GoTo 0
-    Exit Sub
+    Exit Function
 
 ErrHandler:
     MsgBox Err.Number & ": " & Err.Description
     
     On Error GoTo 0
     
-End Sub
+End Function
 
 
 Private Sub CreateMacToolbar(PathToTemplate As String)
