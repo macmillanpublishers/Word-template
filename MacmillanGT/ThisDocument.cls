@@ -94,10 +94,10 @@ Sub AutoExec()
     
     ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
     ' finish running (because this AutoExec is called from GtUpdater in Startup
-    Application.OnTime When:=Now + TimeValue("00:00:01"), _
+'    Application.OnTime When:=Now + TimeValue("00:00:01"), _
         Name:="ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)"
         
-'    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
+    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
 
     On Error GoTo 0
     Exit Sub
