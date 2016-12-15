@@ -1224,6 +1224,10 @@ Dim objField As Field
 Dim A As Long
 Dim thisRange As Range
 Dim strContent As String
+Dim blnTOCpresent As Boolean
+
+' Test if we need to run ReMapTOCStyles later
+blnTOCpresent = False
 
 ' p_stories is optional; if an array of stories is not passed,
 ' just use the main text story here
@@ -1234,24 +1238,27 @@ End If
 
 For A = LBound(p_stories) To UBound(p_stories)
     Set thisRange = ActiveDocument.StoryRanges(p_stories(A))
-    For Each objField In thisRange.Fields
+    If thisRange.Fields.Count > 0 Then
+      For Each objField In thisRange.Fields
 '            Debug.Print thisRange.Fields.Count
-        If thisRange.Fields.Count > 0 Then
-            With objField
-          '    If objField.Type = wdFieldTOC Then         ''This is if you only want to update TOC fields
-                  .Update
-                  .Locked = False
-                  .Unlink
-          '    End If
-            End With
-        End If
-    Next objField
-
+          With objField
+            If .Type = wdFieldTOC Then
+              blnTOCpresent = True
+            End If
+            
+            .Update
+            .Locked = False
+            .Unlink
+          
+          End With
+        Next objField
+    End If
 Next A
 
 ' If automatic TOC was unlinked above, need to map built-in TOC styles to ours
-Call ReMapTOCStyles
-
+If blnTOCpresent = True Then
+  Call ReMapTOCStyles
+End If
 
 End Sub
 
