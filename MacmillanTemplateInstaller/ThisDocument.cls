@@ -65,14 +65,14 @@ Private Sub Document_Open()
 
     ' ====== PART 2: CHECK FOR UPDATES ===============
     ' Unload all add-ins first
-    Dim a As Long
+    Dim A As Long
     
-    For a = LBound(strAllTheTemplates()) To UBound(strAllTheTemplates())
+    For A = LBound(strAllTheTemplates()) To UBound(strAllTheTemplates())
         On Error Resume Next        'Error = add-in not available, don't need to uninstall
-            AddIns(strAllTheTemplates(a)).Installed = False
+            AddIns(strAllTheTemplates(A)).Installed = False
 
         On Error GoTo 0
-    Next a
+    Next A
     
     ' Run Installer macro
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
@@ -101,3 +101,4 @@ ErrHandler:
     End If
     
 End Sub
+

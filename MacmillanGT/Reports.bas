@@ -1026,7 +1026,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     ' download the list of good Tor styles from Confluence
     Dim downloadStyles As GitBranch
     ' switch to develop for testing
-    downloadStyles = master
+    downloadStyles = releases
     
     If DownloadFromConfluence(DownloadSource:=downloadStyles, _
                                 FinalDir:=strLogDir, _

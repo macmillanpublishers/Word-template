@@ -141,6 +141,9 @@ ErrHandler:
     End If
 End Function
 
+' ===== DownloadFromConfluence ================================================
+' Actually now it downloads from Github but don't want to mess with things, we're
+' going to be totally refacroting soon.
 Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String, _
     Optional DownloadSource As GitBranch = master) As Boolean
 'FinalDir is directory w/o file name
@@ -711,6 +714,28 @@ Function FootnotesExist() As Boolean
     
 End Function
 
+Public Function IsStyleInDoc(StyleName As Variant) As Boolean
+  On Error GoTo IsStyleInDocError
+  Dim blnResult As Boolean: blnResult = True
+  Dim TestStyle As Style
+  
+' Try to access this style. If not present in doc, will error
+  Set TestStyle = ActiveDocument.Styles.Item(StyleName)
+  IsStyleInDoc = blnResult
+  Exit Function
+  
+IsStyleInDocError:
+' 5941 = "The requested member of the collection does not exist."
+' Have to test here, ErrorChecker tries to create style if missing
+  If Err.Number = 5941 Then
+    blnResult = False
+    Resume Next
+  Else
+    Exit Function
+  End If
+' Otherwise, usual error stuff:
+  
+End Function
 
 Function IsArrayEmpty(Arr As Variant) As Boolean
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -832,7 +857,7 @@ Sub CreateTextFile(strText As String, suffix As String)
     End If
 End Sub
 
-Function GetText(styleName As String) As String
+Function GetText(StyleName As String) As String
     Dim fString As String
     Dim fCount As Integer
     
@@ -852,7 +877,7 @@ Function GetText(styleName As String) As String
             .Forward = True
             .Wrap = wdFindStop
             .Format = True
-            .Style = ActiveDocument.Styles(styleName)
+            .Style = ActiveDocument.Styles(StyleName)
             .MatchCase = False
             .MatchWholeWord = False
             .MatchWildcards = False
@@ -873,7 +898,7 @@ Function GetText(styleName As String) As String
         
         'If the next character is a paragraph return, add that to the selection
         'Otherwise the next Find will just select the same text with the paragraph return
-        If InStr(styleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
+        If InStr(StyleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
             Selection.MoveEndWhile Cset:=Chr(13), Count:=1
         End If
     Loop
