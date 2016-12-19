@@ -27,18 +27,15 @@ Sub AttachMe(TemplateName As String)
 
     Dim currentUser As String
     Dim myFile As String
-    Dim strMacDocs As String
-    Dim strMacStyleDir As String
+    Dim strStyleDir As String
         
-    'Set template path according to OS
-    #If Mac Then
-        strMacDocs = MacScript("return (path to documents folder) as string")
-        strMacStyleDir = strMacDocs & "MacmillanStyleTemplate"
-        myFile = strMacStyleDir & Application.PathSeparator & TemplateName
-    #Else
-        myFile = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & TemplateName
-    #End If
+    ' Get local style directory
+    strStyleDir = SharedMacros.StyleDir
+    myFile = strStyleDir & Application.PathSeparator & TemplateName
+   
         
+    ' Can't attach template to another template, so
+    If IsTemplate(ActiveDocument) = False Then
         'Check that file exists
         If IsItThere(myFile) = True Then
         
@@ -52,5 +49,18 @@ Sub AttachMe(TemplateName As String)
                     "Install the Macmillan Style Template and try again, or contact workflows@macmillan.com for assistance.", _
                     vbCritical, "Oh no!"
         End If
-        
-    End Sub
+    End If
+    
+End Sub
+
+Private Function IsTemplate(ByVal objDoc As Document) As Boolean
+  Select Case objDoc.SaveFormat
+    Case wdFormatTemplate, wdFormatDocument97, _
+         wdFormatXMLTemplate, wdFormatXMLTemplateMacroEnabled, _
+         wdFormatFlatXMLTemplate, wdFormatFlatXMLTemplateMacroEnabled
+      IsTemplate = True
+    Case Else
+      IsTemplate = False
+  End Select
+End Function
+
