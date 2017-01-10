@@ -55,7 +55,7 @@ End Sub
 
 Private Function IsTemplate(ByVal objDoc As Document) As Boolean
   Select Case objDoc.SaveFormat
-    Case wdFormatTemplate, wdFormatDocument97, _
+    Case wdFormatTemplate, _
          wdFormatXMLTemplate, wdFormatXMLTemplateMacroEnabled, _
          wdFormatFlatXMLTemplate, wdFormatFlatXMLTemplateMacroEnabled
       IsTemplate = True
