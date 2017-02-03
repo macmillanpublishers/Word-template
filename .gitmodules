@@ -7,3 +7,4 @@
 [submodule "vba_utilities"]
 	path = vba_utilities
 	url = https://github.com/macmillanpublishers/vba_utilities
+	branch = config
