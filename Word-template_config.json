@@ -1,4 +1,15 @@
-{
+"extension":"dotm",
+"version":{
+	"major":4,
+	"minor":0,
+	"patch":0
+},
+"location":{
+	"user":"AppData",
+	"server":"Startup"
+}
+"installType":"server"
+"updateData":{
 	"organization":{
 		"shortName":"macmillan",
 		"longName":"Macmillan Tools Template",
