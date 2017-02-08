@@ -13,6 +13,8 @@ Attribute VB_Name = "CharacterStyles"
 Option Explicit
 Option Base 1
 
+' This is a new comment !!
+
 Dim activeRng As Range
 
 Sub MacmillanCharStyles()

@@ -21,6 +21,7 @@ Attribute VB_Exposed = False
 
 
 
+
 Option Explicit
 Public blnCancel As Boolean
 
@@ -54,9 +55,9 @@ Private cImprintString As String
 Public Property Get TrimSize() As String
 ' Get Trim Size from option buttons
 ' Which may have been set by the user or the Property Let function
-    If Me.optTrim5x8.value = True Then
+    If Me.optTrim5x8.Value = True Then
         TrimSize = Me.optTrim5x8.Caption
-    ElseIf Me.optTrim6x9.value = True Then
+    ElseIf Me.optTrim6x9.Value = True Then
         TrimSize = Me.optTrim6x9.Caption
     End If
 End Property
@@ -67,9 +68,9 @@ Public Property Let TrimSize(strTrimSize As String)
 ' NOTE: when assigning values, use option button caption, not literal
     Select Case strTrimSize
         Case Me.optTrim5x8.Caption
-            Me.optTrim5x8.value = True
+            Me.optTrim5x8.Value = True
         Case Me.optTrim6x9.Caption
-            Me.optTrim6x9.value = True
+            Me.optTrim6x9.Value = True
         End Select
 End Property
 
@@ -77,9 +78,9 @@ End Property
 Public Property Get TrimIndex() As Long
 ' Get trim based on option buttons
 ' No Property Let because this is read only, no values allowed outside these two
-    If Me.optTrim5x8.value = True Then
+    If Me.optTrim5x8.Value = True Then
         TrimIndex = 0
-    ElseIf Me.optTrim6x9.value = True Then
+    ElseIf Me.optTrim6x9.Value = True Then
         TrimIndex = 1
     End If
 End Property
@@ -109,7 +110,7 @@ Public Property Get Imprint() As String
 
     If cImprintString <> "" Then
         Imprint = cImprintString
-    ElseIf Me.optPubTor.value = True Then
+    ElseIf Me.optPubTor.Value = True Then
         Imprint = Me.optPubTor.Caption
     Else
         Imprint = Me.optPubSMP.Caption
@@ -125,7 +126,7 @@ Public Property Get PublisherCode() As String
 
 ' Default is SMP.
 ' Add new publishers here as ElseIf
-    If Me.optPubTor.value = True Then
+    If Me.optPubTor.Value = True Then
         PublisherCode = "torDOTcom"
     Else
         PublisherCode = "SMP"
@@ -235,12 +236,12 @@ Private Sub UserForm_Initialize()
     Me.Imprint = GetText("Titlepage Imprint Line (imp)")
     
     'set all default selections
-    Me.optTrim5x8.value = False
-    Me.optTrim6x9.value = False
-    Me.chkDesignLoose.value = True
-    Me.chkDesignAverage.value = True
-    Me.chkDesignTight.value = True
-    Me.chkDesignPickup.value = False
+    Me.optTrim5x8.Value = False
+    Me.optTrim6x9.Value = False
+    Me.chkDesignLoose.Value = True
+    Me.chkDesignAverage.Value = True
+    Me.chkDesignTight.Value = True
+    Me.chkDesignPickup.Value = False
 
 End Sub
 
@@ -306,7 +307,7 @@ Private Sub cmdYesCastoff_Click()
     
     ' Also all "Standard" inputs are required if SMP or Tor.com, all "Pickup" are required if "Pickup Design"
     ' But OK to leave Parts blank
-    If Me.chkDesignPickup.value = False Then
+    If Me.chkDesignPickup.Value = False Then
         If Me.numTxtChapters_std = vbNullString Or Me.numTxtFrontmatter_std = vbNullString Then
             Me.Hide
             Beep
@@ -317,7 +318,7 @@ Private Sub cmdYesCastoff_Click()
         Else
             Me.Hide
         End If
-    ElseIf Me.chkDesignPickup.value = True Then
+    ElseIf Me.chkDesignPickup.Value = True Then
         If Me.txtPrevTitle_pickup = vbNullString Or Me.numTxtPrevPageCount_pickup = vbNullString Or _
             Me.numTxtPrevCharCount_pickup = vbNullString Or Me.numTxtAddlPgs_pickup = vbNullString Then
                 Me.Hide
@@ -338,8 +339,8 @@ Private Sub cmdYesCastoff_Click()
     Dim ctrl As control
     For Each ctrl In Me.Controls
         If ctrl.Name Like "num*" Then
-            If ctrl.value = vbNullString Then
-                ctrl.value = 0
+            If ctrl.Value = vbNullString Then
+                ctrl.Value = 0
             End If
         End If
     Next ctrl
@@ -384,24 +385,24 @@ Private Sub optPubSMP_Click()
     Me.fraDesign.ForeColor = lngHexRed
     
     ' Default for trim is NEITHER selected
-    Me.optTrim5x8.value = False
-    Me.optTrim6x9.value = False
+    Me.optTrim5x8.Value = False
+    Me.optTrim6x9.Value = False
     
     ' MAke sure both are enabled though
     Me.optTrim5x8.Enabled = True
     Me.optTrim6x9.Enabled = True
     
     ' Make sure each design is enabled AND checked (but not pickup)
-    Me.chkDesignLoose.value = True
+    Me.chkDesignLoose.Value = True
     Me.chkDesignLoose.Enabled = True
     
-    Me.chkDesignAverage.value = True
+    Me.chkDesignAverage.Value = True
     Me.chkDesignAverage.Enabled = True
     
-    Me.chkDesignTight.value = True
+    Me.chkDesignTight.Value = True
     Me.chkDesignTight.Enabled = True
     
-    Me.chkDesignPickup.value = False
+    Me.chkDesignPickup.Value = False
     Me.chkDesignPickup.Enabled = True
     
 End Sub
@@ -415,22 +416,22 @@ Private Sub optPubTor_Click()
     
     ' Only trim size is 5 x 8, disable other
     Me.optTrim5x8.Enabled = True
-    Me.optTrim5x8.value = True
+    Me.optTrim5x8.Value = True
     
-    Me.optTrim6x9.value = False
+    Me.optTrim6x9.Value = False
     Me.optTrim6x9.Enabled = False
     
     ' only design allowed is average
-    Me.chkDesignLoose.value = False
+    Me.chkDesignLoose.Value = False
     Me.chkDesignLoose.Enabled = False
     
-    Me.chkDesignAverage.value = True
+    Me.chkDesignAverage.Value = True
     Me.chkDesignAverage.Enabled = True
     
-    Me.chkDesignTight.value = False
+    Me.chkDesignTight.Value = False
     Me.chkDesignTight.Enabled = False
         
-    Me.chkDesignPickup.value = False
+    Me.chkDesignPickup.Value = False
     Me.chkDesignPickup.Enabled = False
 
 End Sub
@@ -441,7 +442,7 @@ Private Sub chkDesignPickup_Click()
     Dim ctrl As control
             
     ' If you are SELECTING pickup:
-    If Me.chkDesignPickup.value = True Then
+    If Me.chkDesignPickup.Value = True Then
         
         ' required sections' heading colors
         Me.fraStandard_std.ForeColor = lngHexBlack
@@ -453,13 +454,13 @@ Private Sub chkDesignPickup_Click()
         Me.optTrim6x9.Enabled = True
         
         ' don't pick any designs, we're getting design from prev title
-        Me.chkDesignLoose.value = False
+        Me.chkDesignLoose.Value = False
         Me.chkDesignLoose.Enabled = False
         
-        Me.chkDesignAverage.value = False
+        Me.chkDesignAverage.Value = False
         Me.chkDesignAverage.Enabled = False
         
-        Me.chkDesignTight.value = False
+        Me.chkDesignTight.Value = False
         Me.chkDesignTight.Enabled = False
         
 
@@ -487,13 +488,13 @@ Private Sub chkDesignPickup_Click()
         Me.optTrim6x9.Enabled = True
         
         ' Enable and select the other three designs
-        Me.chkDesignLoose.value = True
+        Me.chkDesignLoose.Value = True
         Me.chkDesignLoose.Enabled = True
         
-        Me.chkDesignAverage.value = True
+        Me.chkDesignAverage.Value = True
         Me.chkDesignAverage.Enabled = True
         
-        Me.chkDesignTight.value = True
+        Me.chkDesignTight.Value = True
         Me.chkDesignTight.Enabled = True
         
         ' Disable pickup section
