@@ -9,7 +9,7 @@ Option Explicit
 ' 2. Requires the macmillan style templates be saved in the correct directories
 '    that were nstalled on user's computer with Installer file or updated from MacmillanGT.dotm
 
-''' NEW COMMENTSZZZZZ
+''' SUCCESSSSSSSSSS
 
 Sub zz_AttachStyleTemplate()
     Call AttachMe("macmillan.dotm")
