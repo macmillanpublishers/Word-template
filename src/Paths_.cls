@@ -68,10 +68,10 @@ Public Property Get FullJSON() As Dictionary
     If p_FullJSON Is Nothing Then
         Dim strPath As String
         strPath = FullConfigPath
-        Dim strJSON As String
-        strJSON = SharedMacros_.ReadTextFile(Path:=strPath, _
+        Dim strJson As String
+        strJson = SharedMacros_.ReadTextFile(Path:=strPath, _
             FirstLineOnly:=False)
-        Set p_FullJSON = JsonConverter.ParseJson(json_String:=strJSON)
+        Set p_FullJSON = JsonConverter.ParseJson(json_String:=strJson)
     End If
     
     Set FullJSON = p_FullJSON

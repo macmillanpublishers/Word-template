@@ -528,11 +528,11 @@ WriteToLogError:
     End If
 End Sub
 
-Public Function ShellAndWaitMac(cmd As String) As String
+Public Function ShellAndWaitMac(Cmd As String) As String
     Dim result As String
     Dim scriptCmd As String ' Macscript command
     #If Mac Then
-        scriptCmd = "do shell script " & Chr(34) & cmd & Chr(34) & Chr(34)
+        scriptCmd = "do shell script " & Chr(34) & Cmd & Chr(34) & Chr(34)
         result = MacScript(scriptCmd) ' result contains stdout, should you care
         'Debug.Print result
         ShellAndWaitMac = result
