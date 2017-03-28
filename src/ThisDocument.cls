@@ -19,11 +19,19 @@ Sub AutoExec()
     ' ==============================================
 
 
-
     '=======================================
     ' By Erica Warren - erica.warren@macmillan.com
     ' ==== PART 1 =======
 
+' CHECK IF FLAG FILE IS PRESENT IN SAME DIR, IF YES THEN QUIT
+' WILL BE ADDED WHEN WE'RE UNLOAD/LOADING ADDINS AS PART OF UPDATE/INSTALL STUFF
+' AND DON'T WANT THIS TO LAUNCH EVERY TIME
+  Dim blnDisableAutoMacroFileExists As Boolean
+  blnDisableAutoMacroFileExists = IsItThere(ThisDocument.Path & Application.PathSeparator & _
+        "DISABLE_AUTO_EXEC.txt")
+  If blnDisableAutoMacroFileExists = True Then
+    Exit Sub
+  End If
 
     ' Check if toolbar is present if Mac, if not add it.
     ' If PC, remove "Add-Ins" tab that gets added for some reason.
@@ -52,7 +60,6 @@ Sub AutoExec()
                     Exit For
                 End If
             Next
-    
             ' Need to save template or user is prompted to save when closing Word
             ThisDocument.Save
         End If
@@ -132,10 +139,8 @@ Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
     ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
     Dim strInstallMe() As String
     Dim strTemplateName As String
-
     strTemplateName = "Macmillan Updater"
-
-
+	
     ' get array of files to install
     strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
 
@@ -157,7 +162,6 @@ Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
     End If
 
     On Error GoTo 0
-
     Exit Function
 
 
@@ -185,8 +189,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 ' When you create the custom ribbon on PC, must include Mac button images as well,
 ' which should have the same file name but ending in "_mac" and be PNG files
 ' that are 16 x 16 pixels, background RGB 191, 191, 191.
-    
-    
+
     Dim Bar As CommandBar
     Application.ScreenUpdating = False
 
@@ -194,17 +197,14 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         ' Code below is all Mac specific (paths and shell code) but could probably expand
         ' to PC if we ever want to support Word versions earlier than 2007 (no ribbon).
         ' Would have to figure out how to send shell commands on PC tho
-        
-        '------------------Time Start-----------------
-        ' ***** Comment out before going live ********
-        
+
 '        Dim StartTime As Double
 '        Dim SecondsElapsed As Double
 '
 '        'Remember time when macro starts
 '        StartTime = Timer
         '---------------------------------------------
-        
+
         Dim strPath As String
         Dim strFile As String
         Dim strMacZip As String
@@ -216,7 +216,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim strXmlPath As String
         Dim strImagePath As String
         Dim strMacImagePath As String
-        
+
         MsgBox "Please click OK and then WAIT a few seconds while we create " & _
             "the Macmillan Tools toolbar for you." & vbNewLine & vbNewLine & _
             "A notice will pop up when it's complete!"
@@ -229,6 +229,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         
         'Stop
         
+
         ' location we're going to copy the template to as a zip file
         strMacTmp = MacScript("path to temporary items as string")
         'Debug.Print "strMacTmp: " & strMacTmp
@@ -240,7 +241,6 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         'Debug.Print "strMacXML: " & strMacXML
         strMacImagePath = strMacXML & "images:"
         'Debug.Print "strMacImagePath: " & strMacImagePath
-        
         ' convert formats of above for command line
 
         strBashUnzip = Replace(Right(strMacUnzip, Len(strMacUnzip) - (InStr(strMacUnzip, ":") - 1)), ":", "/")
@@ -252,8 +252,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         ' path to button images
         strImagePath = Replace(Right(strMacImagePath, Len(strMacImagePath) - (InStr(strMacImagePath, ":") - 1)), ":", "/")
         'Debug.Print "strImagePath: " & strImagePath
-        
-        
+
         ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
         ' Copy this template to tmp as a zip file
         FileCopy strPath, strMacZip
@@ -269,7 +268,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         ' https://docs.oracle.com/javase/tutorial/jaxp/xslt/xpath.html
         ' http://www.thegeekstuff.com/2014/12/linux-parse-xml/
 
-        
+
         Dim strCmdStart As String
         Dim strCmdEnd As String
         Dim strXpath As String
@@ -282,7 +281,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim C As Long
         Dim H As Long
         Dim NewToolbar As CommandBar
-        
+
         Dim strImageName As String
         Dim blnBeginGroup As Boolean
         Dim strCaption As String
@@ -290,7 +289,6 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim shpButtonPic As Shape
         Dim NewButton As CommandBarButton
 
-        
 
         If IsItThere(strMacXML) = True Then
             ' first part "sed -e "s/xmlns/ignore/" customUI.xml" removes namespace, which messes up xmllint
@@ -349,7 +347,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                                     ' Get button caption and macro name
                                     strCaption = ShellAndWaitMac(strCmdStart & strXpath & "label)" & strCmdEnd)
                                     strAction = ShellAndWaitMac(strCmdStart & strXpath & "id)" & strCmdEnd)
-                                    
+
                                     ' Copy button image to clipboard w/ AppleScript
                                     Dim strCommand As String
                                     ' 199 is << and 200 is >> (but as a single character)
@@ -407,4 +405,3 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
-

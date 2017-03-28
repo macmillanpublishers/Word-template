@@ -238,7 +238,7 @@ Private Sub PrintStylesMac()
     Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
     
-Cleanup:
+CleanUp:
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
             .Font.Size = currentSize
@@ -295,7 +295,7 @@ Private Sub PrintStylesPC()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -505,7 +505,7 @@ FinishUp:
         .Options.PasteFormatBetweenDocuments = lngPasteFormat
     End With
     
-    Call Cleanup
+    Call CleanUp
     Unload objProgressPrint
 
 End Sub

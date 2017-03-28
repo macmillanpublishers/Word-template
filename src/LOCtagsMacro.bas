@@ -34,7 +34,7 @@ Sub LibraryOfCongressTags()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -44,7 +44,7 @@ Sub LibraryOfCongressTags()
     
     If zz_errorChecksB <> False Then
         Call zz_clearFindB
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -189,7 +189,7 @@ Sub LibraryOfCongressTags()
     Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
    
 Finish:
-    Call Cleanup
+    Call CleanUp
     Unload oProgressCIP
     
     'If skipChapterTags = True Then
@@ -1071,7 +1071,7 @@ Private Sub SaveAsTextFile()
  
  ' Saves a copy of the document as a text file in the same path as the parent document
     Dim strDocName As String
-    Dim docPath As String
+    Dim DocPath As String
     Dim intPos As Integer
     Dim encodingFmt As String
     Dim lineBreak As Boolean
@@ -1098,12 +1098,12 @@ Private Sub SaveAsTextFile()
     
         'Find position of extension in filename
         strDocName = ActiveDocument.Name
-        docPath = ActiveDocument.Path
+        DocPath = ActiveDocument.Path
         intPos = InStrRev(strDocName, ".")
         
                 'Strip off extension and add ".txt" extension
                 strDocName = Left(strDocName, intPos - 1)
-                strDocName = docPath & "\" & strDocName & "_CIP.txt"
+                strDocName = DocPath & "\" & strDocName & "_CIP.txt"
             
     #End If
     

@@ -13,6 +13,8 @@ Attribute VB_Name = "CharacterStyles"
 Option Explicit
 Option Base 1
 
+' This is a new comment !!
+
 Dim activeRng As Range
 
 Sub MacmillanCharStyles()
@@ -43,8 +45,17 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     Dim stStories() As Variant
     Dim A As Long
     
+<<<<<<< HEAD:src/CharacterStyles.bas
     stStories = StoryArray
 
+=======
+    ' ======= Run startup checks ========
+    ' True means a check failed (e.g., doc protection on)
+    If StartupSettings(StoriesUsed:=stStories) = True Then
+        Call CleanUp
+        Exit Sub
+    End If
+>>>>>>> config:src/CharacterStyles.bas
     
     '--------Progress Bar------------------------------
     'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -245,7 +256,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     
     ' If this is the whole macro, close out; otherwise calling macro will close it all down
     If TotalPercent = 1 Then
-        Call Cleanup
+        Call CleanUp
         Unload oProgressChar
         MsgBox "Macmillan character styles have been applied throughout your manuscript."
     End If
@@ -1167,7 +1178,7 @@ ErrorHandler1:
     Else
         Debug.Print "ErrorHandler1: " & Err.Number & " " & Err.Description
         On Error GoTo 0
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
 
@@ -1203,7 +1214,7 @@ On Error GoTo ErrorHandler2
     Else
         Debug.Print "ErrorHandler2: " & Err.Number & " " & Err.Description
         On Error GoTo 0
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
