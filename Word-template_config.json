@@ -1,5 +1,5 @@
 {
-	"fileName": "Word-template"
+	"fileName": "Word-template",
 	"version": {
 		"major": 3,
 		"minor": 10,
@@ -20,6 +20,6 @@
 		"server": {
 			"environmentVar": "WordStartup",
 			"useFullPath": false
-		},
+		}
 	}
 }
