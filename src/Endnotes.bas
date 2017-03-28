@@ -17,6 +17,10 @@ Attribute VB_Name = "Endnotes"
 Option Explicit
 Option Base 1
 
+Dim activeRng As Range
+' Comment
+
+
 ' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 '    GLOBAL VARIABLES and CONSTANTS
 ' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
