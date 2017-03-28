@@ -165,7 +165,7 @@ Public Property Get FullLocalPath() As String
         p_FullLocalPath = Paths_.LocalPath(GroupName) & _
             Application.PathSeparator & FullName
         ' Check if final dir is read-only
-        If MacroHelpers.IsReadOnly(p_FullLocalPath) = True Then
+        If Utils.IsReadOnly(p_FullLocalPath) = True Then
             Err.Raise MacError.err_LocalReadOnly
         End If
     End If
