@@ -69,7 +69,7 @@ Public Property Get FullJSON() As Dictionary
         Dim strPath As String
         strPath = FullConfigPath
         Dim strJson As String
-        strJson = SharedMacros_.ReadTextFile(Path:=strPath, _
+        strJson = Utils.ReadTextFile(Path:=strPath, _
             FirstLineOnly:=False)
         Set p_FullJSON = JsonConverter.ParseJson(json_String:=strJson)
     End If
@@ -225,7 +225,7 @@ Private Property Let FullConfigPath(strFullConfigPath As String)
     p_FullConfigPath = strFullConfigPath
     ' Also update the actual doc properties
 
-    If SharedMacros_.DocPropExists(Me, strConfigKey) = True Then
+    If Utils.DocPropExists(Me, strConfigKey) = True Then
         ThisDocument.CustomDocumentProperties(strConfigKey).Value = _
             p_FullConfigPath
     Else
@@ -240,7 +240,7 @@ FullConfigPathLetFinish:
 
 FullConfigPathLetError:
     Err.Source = Err.Source & strPaths & "FullConfigPath.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullConfigPathLetFinish
@@ -250,7 +250,7 @@ End Property
 Private Property Get FullConfigPath() As String
     On Error GoTo FullConfigPathGetError
     If p_FullConfigPath = vbNullString Then
-        If SharedMacros_.DocPropExists(Me, strConfigKey) = True Then
+        If Utils.DocPropExists(Me, strConfigKey) = True Then
             p_FullConfigPath = ThisDocument.CustomDocumentProperties(strConfigKey)
         Else
             Err.Raise MacError.err_ConfigPathNull
@@ -263,7 +263,7 @@ FullConfigPathGetFinish:
 FullConfigPathGetError:
     Err.Source = Err.Source & strPaths & "FullConfigPath.Get"
     Debug.Print Err.Number & ": " & Err.Description
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullConfigPathGetFinish
@@ -356,7 +356,7 @@ RootDirGetError:
             strErrorValue = vbNullString
     End Select
 
-    If SharedMacros_.ErrorChecker(Err, strErrorValue) = False Then
+    If MacroHelpers.ErrorChecker(Err, strErrorValue) = False Then
         Resume
     Else
         Resume RootDirGetFinish
@@ -380,7 +380,7 @@ HomeDirGetFinish:
 
 HomeDirGetError:
     Err.Source = Err.Source & strPaths & "HomeDir.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume HomeDirGetFinish
@@ -424,7 +424,7 @@ ClearPathsFinish:
 
 ClearPathsError:
     Err.Source = Err.Source & strPaths & "ClearPaths"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ClearPathsFinish
@@ -445,18 +445,18 @@ End Sub
 
 Private Function CheckDir(MyDir As String) As Boolean
     On Error GoTo CheckDirError
-    If SharedMacros_.IsItThere(MyDir) = False Then
+    If Utils.IsItThere(MyDir) = False Then
         ' Mac Word 2011 can't handle file path > 32 char
-        If SharedMacros_.IsOldMac = True Then
+        If Utils.IsOldMac = True Then
             Dim strCommand As String
             strCommand = MacScript("return quoted form of posix path of " & MyDir)
             strCommand = "mkdir -p " & strCommand
-            SharedMacros_.ShellAndWaitMac (strCommand)
+            Utils.ShellAndWaitMac (strCommand)
         Else
             MkDir MyDir
         End If
         ' Make sure it worked
-        CheckDir = SharedMacros_.IsItThere(MyDir)
+        CheckDir = Utils.IsItThere(MyDir)
     Else
         CheckDir = True
     End If
@@ -465,7 +465,7 @@ CheckDirFinish:
 
 CheckDirError:
     Err.Source = Err.Source & strPaths & "CheckDir " & MyDir
-    If SharedMacros_.ErrorChecker(Err, MyDir) = False Then
+    If MacroHelpers.ErrorChecker(Err, MyDir) = False Then
         Resume
     Else
         Resume CheckDirFinish

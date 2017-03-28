@@ -689,7 +689,7 @@ Private Sub NumRangeHyphens()
       With rngStory
         If .StoryType = wdMainTextStory Or .StoryType = wdEndnotesStory Then
           For Each strStyle In colNoteStyle
-            If SharedMacros.IsStyleInDoc(strStyle) = True Then
+            If MacroHelpers.IsStyleInDoc(strStyle) = True Then
               With .Find
                   .ClearFormatting
                   .Replacement.ClearFormatting

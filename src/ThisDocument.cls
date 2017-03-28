@@ -69,7 +69,7 @@ Option Base 1
 ''===== PART 2 ============================
 ''===== USE ===============================
 '' Calls SharedFileInstaller.Installer
-'' Requires SharedFileInstaller and SharedMacros modules be installed in the same template.
+'' Requires SharedFileInstaller and MacroHelpers modules be installed in the same template.
 '
 '    Dim downloadBranch As GitBranch
 '    Dim blnInstaller As Boolean
@@ -128,7 +128,7 @@ Option Base 1
 '    ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
 '    ' and be saved in the STARTUP directory.
 '    '
-'    ' Requires FileInstaller and SharedMacros modules be installed in the same template.
+'    ' Requires FileInstaller and MacroHelpers modules be installed in the same template.
 '
 '    ' ======= For testing / debugging ==============
 '

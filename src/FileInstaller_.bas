@@ -9,7 +9,7 @@ Attribute VB_Name = "FileInstaller_"
 ' The template file needs to be uploaded as an attachment to https://confluence.macmillan.com/display/PBL/Test
 ' If this is an installer file, The Part 1 code needs to reside in the ThisDocument module as a sub called
 ' Documents_Open in a .docm file so that it will launch when users open the file.
-' Requires the SharedMacros module be installed in the same template.
+' Requires the MacroHelpers module be installed in the same template.
 
 Option Explicit
 Option Base 1

@@ -267,7 +267,7 @@ End Sub
 Private Sub PrintStylesPC()
 
     ' ===== DEPENDENCIES ==========================================================
-    ' Requires modules AttachTemplateMacro (and thus also Macmillan style templates), SharedMacros, and ProgressBar
+    ' Requires modules AttachTemplateMacro (and thus also Macmillan style templates), MacroHelpers, and ProgressBar
     ' Before you run this, create a text box with the listed settings below, then select the
     ' text box and go to Insert > Text Box > Save Selection to Text Box Gallery (Word 2013). In the
     ' Create New Building Block dialog that opens, name the Building Block "StyleNames1" and

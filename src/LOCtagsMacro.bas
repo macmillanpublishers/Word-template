@@ -3,7 +3,7 @@ Attribute VB_Name = "LOCtagsMacro"
 ' Produces a text file of the manuscript with tags added for CIP application
 
 ' ======= DEPENDENCIES =======================
-' 1. Requires ProgressBar userform and SharedMacros module
+' 1. Requires ProgressBar userform and MacroHelpers module
 ' 2. Manuscript must be tagged with Macmillan styles.
       
 Option Explicit

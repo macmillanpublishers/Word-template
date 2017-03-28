@@ -8,7 +8,7 @@ Sub UniversalCastoff()
 ' the current text of the document.
 
 ' ========== DEPENDENCIES ====================
-' 1. Requires SharedMacros module to be installed in same template
+' 1. Requires MacroHelpers module to be installed in same template
 ' 2. Requires design character count CSV files and spine size files be saved as attachments to
 '    https://confluence.macmillan.com/display/PBL/Word+Template+downloads+-+production
 '    - info on how to format

@@ -55,7 +55,7 @@ ShortNameGetFinish:
 
 ShortNameError:
     Err.Source = Err.Source & strOrg & "ShortName.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ShortNameGetFinish
@@ -76,7 +76,7 @@ LongNameGetFinish:
 
 LongNameGetError:
     Err.Source = Err.Source & strOrg & "LongName.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume LongNameGetFinish
@@ -97,7 +97,7 @@ HelpEmailGetFinish:
 
 HelpEmailGetError:
     Err.Source = Err.Source & strOrg & "HelpEmail.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume HelpEmailGetFinish
@@ -123,7 +123,7 @@ OrgJsonGetFinish:
 
 OrgJsonGetError:
     Err.Source = Err.Source & strOrg & "OrgJSON.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume OrgJsonGetFinish:

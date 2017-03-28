@@ -6,7 +6,7 @@ Attribute VB_Name = "Reports"
 ' ====== DEPENDENCIES ============
 ' 1. Manuscript must be styled with Macmillan custom styles to generate full report.
 ' 2. Requires ProgressBar userform
-' 3. Requires SharedMacros be installed in same template.
+' 3. Requires MacroHelpers be installed in same template.
 
 
 Option Explicit

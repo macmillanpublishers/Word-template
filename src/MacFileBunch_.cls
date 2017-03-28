@@ -16,7 +16,7 @@ Attribute VB_Exposed = False
 ''
 '' DEPENDENCIES
 '' MacFile_.cls custom class.
-'' SharedMacros_.bas module.
+'' MacroHelpers.bas module.
 '' Also requires VBA-Json and VBA-Dictionary, available here:
 '' https://github.com/VBA-tools
 '' =============================================================================

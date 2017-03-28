@@ -5,7 +5,7 @@ Option Explicit
 ' Attaches assorted templates with custom Macmillan styles to the current document
 
 ' ======== DEPENDENCIES ============
-' 1. Requires SharedMacros module be installed in the same template
+' 1. Requires MacroHelpers module be installed in the same template
 ' 2. Requires the macmillan style templates be saved in the correct directories
 '    that were nstalled on user's computer with Installer file or updated from MacmillanGT.dotm
 
@@ -31,7 +31,7 @@ Sub AttachMe(TemplateName As String)
     Dim strStyleDir As String
         
     ' Get local style directory
-    strStyleDir = SharedMacros.StyleDir
+    strStyleDir = MacroHelpers.StyleDir
     myFile = strStyleDir & Application.PathSeparator & TemplateName
    
         

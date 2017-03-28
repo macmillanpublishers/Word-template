@@ -171,7 +171,7 @@ Public Function ErrorChecker(ByRef objError As Object, Optional strValue As _
                 Err.Description = "File download failed: " & strValue
                 strErrMessage = "Download failed."
             Case MacError.err_LocalDeleteFail
-                ' SharedMacros_.KillAll() will notify user if file is open
+                ' Utils.KillAll() will notify user if file is open
                 Err.Description = "File in final install location could not " _
                     & "be deleted. If it was because the file was open, the " _
                     & "user was notified: " & strValue
@@ -301,7 +301,7 @@ WriteToLogFinish:
 
 WriteToLogError:
     Err.Source = Err.Source & strModule & "WriteToLog"
-    If SharedMacros_.ErrorChecker(Err, strLogFile) = False Then
+    If MacroHelpers.ErrorChecker(Err, strLogFile) = False Then
         Resume
     Else
         Resume WriteToLogFinish

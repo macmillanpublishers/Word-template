@@ -62,7 +62,7 @@ GroupNameLetFinish:
 
 GroupNameLetError:
     Err.Source = Err.Source & strModuleName & "GroupName.Let"
-    If SharedMacros_.ErrorChecker(Err, GroupName_value) = False Then
+    If MacroHelpers.ErrorChecker(Err, GroupName_value) = False Then
         Resume
     Else
         Resume GroupNameLetFinish
@@ -81,7 +81,7 @@ GroupNameGetFinish:
 
 GroupNameGetError:
     Err.Source = Err.Source & strModuleName & "GroupName.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume GroupNameGetFinish
@@ -108,7 +108,7 @@ SpecificFileLetFinish:
 
 SpecificFileLetError:
     Err.Source = Err.Source & strModuleName & "SpecificFile.Let"
-    If SharedMacros_.ErrorChecker(Err, SpecificFile_value) = False Then
+    If MacroHelpers.ErrorChecker(Err, SpecificFile_value) = False Then
         Resume
     Else
         Resume SpecificFileLetFinish
@@ -127,7 +127,7 @@ SpecificFileGetFinish:
 
 SpecificFileGetError:
     Err.Source = Err.Source & strModuleName & "SpecificFile.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume SpecificFileGetFinish
@@ -148,7 +148,7 @@ FullNameGetFinish:
     
 FullNameGetError:
     Err.Source = Err.Source & strModuleName & "FullName.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FullNameGetFinish
@@ -165,7 +165,7 @@ Public Property Get FullLocalPath() As String
         p_FullLocalPath = Paths_.LocalPath(GroupName) & _
             Application.PathSeparator & FullName
         ' Check if final dir is read-only
-        If SharedMacros_.IsReadOnly(p_FullLocalPath) = True Then
+        If MacroHelpers.IsReadOnly(p_FullLocalPath) = True Then
             Err.Raise MacError.err_LocalReadOnly
         End If
     End If
@@ -175,7 +175,7 @@ FullLocalPathGetFinish:
     
 FullLocalPathGetError:
     Err.Source = Err.Source & strModuleName & "FullLocalPath.Get"
-    If SharedMacros_.ErrorChecker(Err, p_FullLocalPath) = False Then
+    If MacroHelpers.ErrorChecker(Err, p_FullLocalPath) = False Then
         Resume
     Else
         Resume FullLocalPathGetFinish
@@ -188,13 +188,13 @@ End Property
 
 Public Property Get Exists() As Boolean
     On Error GoTo ExistsGetError
-    Exists = SharedMacros_.IsItThere(Path:=FullLocalPath)
+    Exists = Utils.IsItThere(Path:=FullLocalPath)
 ExistsGetFinish:
     Exit Property
     
 ExistsGetError:
     Err.Source = Err.Source & strModuleName & "Exists.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ExistsGetFinish
@@ -220,7 +220,7 @@ RunningGetFinish:
 
 RunningGetError:
     Err.Source = Err.Source & strModuleName & "Running.Get"
-    If SharedMacros_.ErrorChecker(Err, strThisName) = False Then
+    If MacroHelpers.ErrorChecker(Err, strThisName) = False Then
         Resume
     Else
         Resume RunningGetFinish
@@ -249,7 +249,7 @@ UpToDateGetFinish:
     
 UpToDateGetError:
     Err.Source = Err.Source & strModuleName & "UpToDate.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume UpToDateGetFinish
@@ -277,7 +277,7 @@ GroupJSONGetFinish:
 
 GroupJSONGetError:
     Err.Source = Err.Source & strModuleName & "GroupJSON.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume GroupJSONGetFinish
@@ -298,7 +298,7 @@ FileJSONGetFinish:
     
 FileJSONGetError:
     Err.Source = Err.Source & strModuleName & "FileJSON.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume FileJSONGetFinish
@@ -321,7 +321,7 @@ NameGetFinish:
 
 NameGetError:
     Err.Source = Err.Source & strModuleName & "Name.Get"
-    If SharedMacros_.ErrorChecker(Err, p_Name) = False Then
+    If MacroHelpers.ErrorChecker(Err, p_Name) = False Then
         Resume
     Else
         Resume NameGetFinish
@@ -342,7 +342,7 @@ ExtensionGetFinish:
     
 ExtensionGetError:
     Err.Source = Err.Source & strModuleName & "Extension.Get"
-    If SharedMacros_.ErrorChecker(Err, p_Extension) = False Then
+    If MacroHelpers.ErrorChecker(Err, p_Extension) = False Then
         Resume
     Else
         Resume ExtensionGetFinish
@@ -364,7 +364,7 @@ ConfigVersionGetFinish:
     
 ConfigVersionGetError:
     Err.Source = Err.Source & strModuleName & "ConfigVersion.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ConfigVersionGetFinish
@@ -406,7 +406,7 @@ LocalVersionGetFinish:
     
 LocalVersionGetError:
     Err.Source = Err.Source & strModuleName & "LocalVersion.Get"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume LocalVersionGetFinish
@@ -428,7 +428,7 @@ FullLogPathGetFinish:
 
 FullLogPathGetError:
     Err.Source = Err.Source & strModuleName & "FullLogPath.Get"
-    If SharedMacros_.ErrorChecker(Err, p_FullLogPath) = False Then
+    If MacroHelpers.ErrorChecker(Err, p_FullLogPath) = False Then
         Resume
     Else
         Resume FullLogPathGetFinish
@@ -444,7 +444,7 @@ Private Property Get FullTempPath() As String
     If p_FullTempPath = vbNullString Then
         p_FullTempPath = Paths_.TempPath & Application.PathSeparator & FullName
         ' Check if final dir is read-only
-        If SharedMacros_.IsReadOnly(p_FullTempPath) = True Then
+        If Utils.IsReadOnly(p_FullTempPath) = True Then
             Err.Raise MacError.err_TempReadOnly
         End If
     End If
@@ -454,7 +454,7 @@ FullTempPathGetFinish:
     
 FullTempPathGetError:
     Err.Source = Err.Source & strModuleName & "FullTempPath.Get"
-    If SharedMacros_.ErrorChecker(Err, p_FullTempPath) = False Then
+    If MacroHelpers.ErrorChecker(Err, p_FullTempPath) = False Then
         Resume
     Else
         Resume FullTempPathGetFinish
@@ -499,7 +499,7 @@ ClearFileFinish:
     
 ClearFileError:
     Err.Source = Err.Source & strModuleName & "ClearFile"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume ClearFileFinish
@@ -521,7 +521,7 @@ AssignFileFinish:
 
 AssignFileError:
     Err.Source = Err.Source & strModuleName & "AssignFile"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume AssignFileFinish
@@ -535,7 +535,7 @@ End Sub
 Public Sub DeleteFile()
     On Error GoTo DeleteFileError
     If Running = False Then
-        SharedMacros_.KillAll FullLocalPath
+        Utils.KillAll FullLocalPath
     Else
         Err.Raise MacError.err_DeleteThisDoc
     End If
@@ -544,7 +544,7 @@ DeleteFileFinish:
 
 DeleteFileError:
     Err.Source = Err.Source & strModuleName & "DeleteFile"
-    If SharedMacros_.ErrorChecker(Err, FullName) = False Then
+    If MacroHelpers.ErrorChecker(Err, FullName) = False Then
         Resume
     Else
         Resume DeleteFileFinish
@@ -568,7 +568,7 @@ NotifyCompleteFinish:
 
 NotifyCompleteError:
     Err.Source = Err.Source & strModuleName & "NotifyComplete"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume NotifyCompleteFinish
@@ -603,16 +603,16 @@ Public Function Download() As Boolean
     
     ' ----- START -------------------------------------------------------------
     strLogMsg = "Beginning download procedure."
-    SharedMacros_.WriteToLog strLogMsg, FullLogPath
+    MacroHelpers.WriteToLog strLogMsg, FullLogPath
     
     ' ----- DELETE TEMP -------------------------------------------------------
     ' Delete the file in the tmp dir if it exists (KillAll checks if exists)
     strLogMsg = "Temp dir clear of file."
-    If SharedMacros_.KillAll(FullTempPath) = False Then
+    If Utils.KillAll(FullTempPath) = False Then
         ' delete failed, return an error
         Err.Raise MacError.err_TempDeleteFail
     Else
-        SharedMacros_.WriteToLog strLogMsg, FullLogPath
+        MacroHelpers.WriteToLog strLogMsg, FullLogPath
     End If
     
     ' ----- ARE WE CONNECTED TO THE INTERNET? ---------------------------------
@@ -626,7 +626,7 @@ Public Function Download() As Boolean
             Then   'can't connect to internet
             Err.Raise MacError.err_NoInternet
         Else
-            SharedMacros_.WriteToLog strLogMsg, FullLogPath
+            MacroHelpers.WriteToLog strLogMsg, FullLogPath
         End If
     #Else
         Set httpRequest = CreateObject("WinHttp.WinHttpRequest.5.1")
@@ -635,7 +635,7 @@ Public Function Download() As Boolean
         If httpRequest.Status <> 200 Then
             Err.Raise MacError.err_NoInternet
         Else
-            SharedMacros_.WriteToLog strLogMsg, FullLogPath
+            MacroHelpers.WriteToLog strLogMsg, FullLogPath
         End If
     #End If
     
@@ -657,7 +657,7 @@ Public Function Download() As Boolean
         ' Pass httpStatus as Source, status description as Description
         Err.Raise MacError.err_BadHttpStatus, , httpStatus
     Else
-        SharedMacros_.WriteToLog strLogMsg, FullLogPath
+        MacroHelpers.WriteToLog strLogMsg, FullLogPath
     End If
 
     ' ----- DOWNLOAD FILE TO TEMP DIRECTORY -----------------------------------
@@ -681,7 +681,7 @@ Public Function Download() As Boolean
     If IsItThere(FullTempPath) = False Then
         Err.Raise MacError.err_DownloadFail
     Else
-        SharedMacros_.WriteToLog strLogMsg, FullLogPath
+        MacroHelpers.WriteToLog strLogMsg, FullLogPath
     End If
 
     ' ----- CLEAR FILE FROM FINAL DIR ------------------------------------------
@@ -689,20 +689,20 @@ Public Function Download() As Boolean
 
     ' Check if there is a file in the final dir already
     If IsItThere(Me.FullLocalPath) = False Then
-        SharedMacros_.WriteToLog "No previous file in final dir."
+        MacroHelpers.WriteToLog "No previous file in final dir."
     Else
         ' KillAll() checks if file is open and notifies user.
-        If SharedMacros_.KillAll(Me.FullLocalPath) = False Then
+        If Utils.KillAll(Me.FullLocalPath) = False Then
             Err.Raise MacError.err_LocalDeleteFail
         Else
-            SharedMacros_.WriteToLog strLogMsg, FullLogPath
+            MacroHelpers.WriteToLog strLogMsg, FullLogPath
         End If
     End If
 
     ' ----- MOVE TMP FILE TO FINAL DIR ----------------------------------------
     strLogMsg = "File successfully moved to final dir."
     ' Mac 2011 can't handle file paths > 32 char
-    If SharedMacros_.IsOldMac = True Then
+    If Utils.IsOldMac = True Then
         Dim strPosixTemp As String
         Dim strPosixLocal As String
         strPosixTemp = MacScript("return quoted form of posix path of " & _
@@ -710,7 +710,7 @@ Public Function Download() As Boolean
         strPosixLocal = MacScript("return quoted form of posix path of " & _
             Me.FullLocalPath)
         strMoveCmd = "mv " & strPosixTemp & " " & strPosixLocal
-        SharedMacros_.ShellAndWaitMac (strMoveCmd)
+        Utils.ShellAndWaitMac (strMoveCmd)
     Else
         Name FullTempPath As Me.FullLocalPath
     End If
@@ -720,7 +720,7 @@ Public Function Download() As Boolean
         Err.Raise MacError.err_LocalCopyFail
     Else
         Download = True
-        SharedMacros_.WriteToLog strLogMsg, FullLogPath
+        MacroHelpers.WriteToLog strLogMsg, FullLogPath
     End If
     
     ' ----- SET MAC TEMPLATE ATTRIBUTES ---------------------------------------
@@ -736,7 +736,7 @@ Public Function Download() As Boolean
                 & " 00 00 00 00 00 00 00 00 00 00 00 00\" & Chr(34) & Chr(32) _
                 & Chr(34) & " & " & "quoted form of POSIX path of " & Chr(34) _
                 & Me.FullLocalPath & Chr(34)
-                SharedMacros_.ShellAndWaitMac (strCommand)
+                Utils.ShellAndWaitMac (strCommand)
         End If
     #End If
 
@@ -758,7 +758,7 @@ DownloadError:
         Case MacError.err_Http404, MacError.err_DownloadFail, _
             MacError.err_BadHttpStatus
             strDLerror = strHttpStatus & ": " & strDownloadURL
-    If SharedMacros_.ErrorChecker(Err, strDLerror) = False Then
+    If MacroHelpers.ErrorChecker(Err, strDLerror) = False Then
         Resume
     Else
         Download = False
@@ -795,7 +795,7 @@ StringVersionFinish:
     
 StringVersionError:
     Err.Source = Err.Source & strModuleName & "StringVersion"
-    If SharedMacros_.ErrorChecker(Err) = False Then
+    If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else
         Resume StringVersionFinish
