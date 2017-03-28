@@ -242,8 +242,8 @@ Sub EndnoteDeEmbed()
 End Sub
 
 Function endnoteHeader(refSection As Integer) As String
-Dim sectionRng As Range
-    Dim searchStylesArray(4) As String                       ' number of items in array should be declared here
+	Dim sectionRng As Range
+    Dim searchStylesArray(7) As String                       ' number of items in array should be declared here
     Dim searchTest As Boolean
     Dim I As Long
     
@@ -254,6 +254,11 @@ Dim sectionRng As Range
     searchStylesArray(2) = "Chap Number (cn)"
     searchStylesArray(3) = "Chap Title (ct)"
     searchStylesArray(4) = "Chap Title Nonprinting (ctnp)"
+    searchStylesArray(5) = "FM Head Nonprinting (fmhnp)"
+    searchStylesArray(6) = "BM Head Nonprinting (bmhnp)"
+    searchStylesArray(7) = "Chap Title ALT (act)"
+
+
     searchTest = False
     I = 1
     

@@ -212,7 +212,7 @@ Sub MacmillanManuscriptCleanup()
     '-----------Find/Replace with Wildcards = False--------------------------------
     Call zz_clearFind                          'Clear find object
     
-    sglPercentComplete = 0.2
+    sglPercentComplete = 0.19
     strStatus = "* Fixing quotes, unicode, section breaks..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
@@ -224,7 +224,7 @@ Sub MacmillanManuscriptCleanup()
     Call zz_clearFind
 
     '-------------Tag characters styled "span preserve characters"-----------------
-    sglPercentComplete = 0.4
+    sglPercentComplete = 0.37
     strStatus = "* Preserving styled whitespace characters..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
@@ -235,7 +235,7 @@ Sub MacmillanManuscriptCleanup()
     Call zz_clearFind
     
     '---------------Find/Replace for rest of the typographic errors----------------------
-    sglPercentComplete = 0.6
+    sglPercentComplete = 0.52
     strStatus = "* Removing unstyled whitespace, fixing ellipses and dashes..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
@@ -247,7 +247,7 @@ Sub MacmillanManuscriptCleanup()
     Call zz_clearFind
     
     '---------------Remove tags from "span preserve characters"-------------------------
-    sglPercentComplete = 0.86
+    sglPercentComplete = 0.66
     strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
@@ -259,7 +259,7 @@ Sub MacmillanManuscriptCleanup()
     Call zz_clearFind
     
     '---------------Convert all underlines to standard-------------------------
-    sglPercentComplete = 0.87
+    sglPercentComplete = 0.7
     strStatus = "* Standardizing underline format..." & vbCr & strStatus
     
     Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
@@ -270,7 +270,16 @@ Sub MacmillanManuscriptCleanup()
     
     Call zz_clearFind
 
+    '-----------------Convert hyphens in number ranges to en-dashes -----------------
+    sglPercentComplete = 0.87
+    strStatus = "* Standardizing underline format..." & vbCr & strStatus
     
+    Call UpdateBarAndWait(Bar:=oProgressCleanup, Status:=strStatus, Percent:=sglPercentComplete)
+
+    Call NumRangeHyphens
+
+    Call zz_clearFind
+
     '-----------------Restore original settings--------------------------------------
     sglPercentComplete = 1#
     strStatus = "* Finishing up..." & vbCr & strStatus
@@ -353,7 +362,7 @@ Private Sub PreserveStyledCharactersA(StoryType As WdStoryType)
     preserveCharFindArray(2) = "  "  ' two spaces
     preserveCharFindArray(3) = "   "    'three spaces
     preserveCharFindArray(4) = "^l"  ' soft return
-    preserveCharFindArray(5) = "- "  ' hyphen + space
+    preserveCharFindArray(5) = "-"  ' hyphen
     
     preserveCharReplaceArray(1) = "`E|"
     preserveCharReplaceArray(2) = "`G|"
@@ -655,80 +664,50 @@ Function zz_errorChecks()
 End Function
 
 
-Private Sub NumRangeHyphens(StoriesInDoc As Variant)
-    ' convert hyphens in number ranges to en-dashes,
-    ' but doesn't change hyphens in URLs or phone numbers
+Private Sub NumRangeHyphens()
+    ' convert hyphens in number ranges to en-dashes, in notes only.
 
-    ' tag URLs w/ macmillan style, so we can avoid later
-    Call StyleAllHyperlinks(StoriesInUse:=StoriesInDoc)
-    
-    Dim strFindStart As String
-    Dim strFindEnd As String
-    Dim strTag As String
     Dim strFindWhat As String
     Dim strReplaceWith As String
-    Dim strLinkStyle As String
-    Dim activeRange As Range
-    Dim kStory As Long
-    
-    ' Patterns to find and replace
-    ' exclude start-with-hyphen or end-with-hyphen to exclude phone numbers
-    ' SSN, and the like
-    strFindStart = "([!\-]<[0-9]@)"
-    strFindEnd = "([0-9]@>[!\-])"
-    strTag = "`|url|`"
-    
-    strFindWhat = strFindStart & "\-" & strFindEnd
-    strReplaceWith = "\1" & strTag & "\2"
-    ' Macmillan URL style name
-    strLinkStyle = "span hyperlink (url)"
-    
-'    For kStory = LBound(StoriesInDoc) To UBound(StoriesInDoc)
-'        Set activeRange = ActiveDocument.StoryRanges(StoriesInDoc(kStory))
-    Set activeRange = ActiveDocument.Range
-    
-    With activeRange.Find
-        ' Find each thing that is also a URL
-        ' and replace hyphen with tags
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = strFindWhat
-        .Replacement.Text = strReplaceWith
-        .Style = strLinkStyle
-        .MatchWildcards = True
-        .Wrap = wdFindStop
-        .Forward = True
-        .Format = True
-        .Execute Replace:=wdReplaceAll
+    Dim colNoteStyle As Collection
+    Dim strStyle As Variant
+    Dim rngStory As Range
+    Dim blnStyleAvail As Boolean
 
-        ' Find the rest and replace with en-dash
-        strReplaceWith = "\1^=\2"
-        
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = strFindWhat
-        .Replacement.Text = strReplaceWith
-        .MatchWildcards = True
-        .Wrap = wdFindStop
-        .Forward = True
-        .Format = True
-        .Execute Replace:=wdReplaceAll
-        
-        ' Replace url tags w/ original hyphen
-        strFindWhat = strFindStart & strTag & strFindEnd
-        strReplaceWith = "\1-\2"
-        
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = strFindWhat
-        .Replacement.Text = strReplaceWith
-        .MatchWildcards = True
-        .Wrap = wdFindStop
-        .Forward = True
-        .Format = True
-        .Execute Replace:=wdReplaceAll
-    End With
+    Set colNoteStyle = New Collection
+    colNoteStyle.Add "Endnote Text"
+    colNoteStyle.Add "Endnote Text (ntx)"
+    colNoteStyle.Add "Bibliography Text (bibtx)"
     
+    ' Pattern to find and replace
+    ' must be preceded by a period, comma, colon, or close parens PLUS a space
+    ' must be followed by a period, comma, close parens, OR a space.
+    strFindWhat = "([.:\,\)\(] [0-9]{1,})\-([0-9]{1,}[.\,\) ])"
+    strReplaceWith = "\1^=\2"
+    
+    For Each rngStory In ActiveDocument.StoryRanges
+      With rngStory
+        If .StoryType = wdMainTextStory Or .StoryType = wdEndnotesStory Then
+          For Each strStyle In colNoteStyle
+            If SharedMacros.IsStyleInDoc(strStyle) = True Then
+              With .Find
+                  .ClearFormatting
+                  .Replacement.ClearFormatting
+                  .Text = strFindWhat
+                  .Style = strStyle
+                  .Replacement.Text = strReplaceWith
+                  .MatchWildcards = True
+                  .Wrap = wdFindStop
+                  .Forward = True
+                  .Format = True
+                  .Execute Replace:=wdReplaceAll
+              End With
+            End If
+          Next strStyle
+        End If
+      End With
+    Next rngStory
+
 End Sub
 
 

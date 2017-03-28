@@ -89,8 +89,18 @@ Private Sub MakeReport(torDOTcom As Boolean)
     X = Int(UBound(funArray()) * Rnd()) + 1
     
     'Debug.Print x
+    ' If only creating an epub, just run style report since only difference now
+    ' is Bkmkr checks for non-Bookmaker styles.
     If torDOTcom = True Then
         strTitle = "Bookmaker Requirements Macro"
+        Dim strEpubMsg As String
+        strEpubMsg = "Hi there! Are you creating a PRINT PDF with Bookmaker?" & _
+          vbNewLine & vbNewLine & _
+          "If you are creating a PRINT PDF, click YES." & vbNewLine & _
+          "If you are ONLY creating an EPUB, click NO."
+        If MsgBox(strEpubMsg, vbYesNo) = vbNo Then
+          torDOTcom = False
+        End If
     Else
         strTitle = "Macmillan Style Report"
     End If
@@ -103,7 +113,6 @@ Private Sub MakeReport(torDOTcom As Boolean)
 
     oProgressBkmkr.Title = strTitle
     Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
     
     '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
     '-------because it should just be applied to the isbn numerals and hyphens-------------------
@@ -803,7 +812,7 @@ End Function
 
 Function CheckAfterPB() As String
     Dim arrSecStartStyles() As String
-    ReDim arrSecStartStyles(1 To 44)
+    ReDim arrSecStartStyles(1 To 47)
     Dim kString As String
     Dim kCount As Integer
     Dim pageNumK As Integer
@@ -858,6 +867,9 @@ Function CheckAfterPB() As String
     arrSecStartStyles(42) = "Design Note (dn)"
     arrSecStartStyles(43) = "Front Sales Quote Head (fsqh)"
     arrSecStartStyles(44) = "Section Break (sbr)"
+    arrSecStartStyles(45) = "FM Head Nonprinting (fmhnp)"
+    arrSecStartStyles(46) = "BM Head Nonprinting (bmhnp)"
+    arrSecStartStyles(47) = "Chap Title ALT (act)"
     
     kCount = 0
     kString = ""
@@ -1014,7 +1026,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     ' download the list of good Tor styles from Confluence
     Dim downloadStyles As GitBranch
     ' switch to develop for testing
-    downloadStyles = master
+    downloadStyles = releases
     
     If DownloadFromConfluence(DownloadSource:=downloadStyles, _
                                 FinalDir:=strLogDir, _
@@ -1681,15 +1693,15 @@ Private Sub ISBNcleanup()
     ' a character later, it won't return anything because the whole string needs to have the
     ' style applied for it to be found.
     
-    Dim G As Long
-    For G = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
+    Dim g As Long
+    For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
         
         'Move selection to start of document
         Selection.HomeKey Unit:=wdStory
 
         With Selection.Find
             .ClearFormatting
-            .Text = strISBNtextArray(G)
+            .Text = strISBNtextArray(g)
             .Replacement.ClearFormatting
             .Replacement.Text = ""
             .Forward = True
@@ -1706,7 +1718,7 @@ Private Sub ISBNcleanup()
         
         Selection.Find.Execute Replace:=wdReplaceAll
     
-    Next G
+    Next g
     
 Exit Sub
     

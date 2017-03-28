@@ -15,7 +15,7 @@ Option Base 1
 Sub AutoExec()
 
     ' ======= For testing / debugging ==============
-    ' MsgBox "I am NEW MacmillanGT AutoExec and I am running!"
+'     MsgBox "I am NEWEST MacmillanGT AutoExec and I am running!"s
     ' ==============================================
 
 
@@ -89,13 +89,17 @@ Sub AutoExec()
 '    Next Q
 
     'Installer = True if this is for a standalone installation file; False is for a daily update checker
+    ' CHECK/UPDATE STYLES TEMPLATES ONLY.
     Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
         TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
     
+    ' BLAH BLAH ONTIME NOT WORKING JUST DON'T CHECK ANY MORE WE'LL GET RID OF WITH CONFIG FILE.
     ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
     ' finish running (because this AutoExec is called from GtUpdater in Startup
-    Application.OnTime When:=Now + TimeValue("00:00:01"), _
-        Name:="ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)"
+'    Application.OnTime When:=Now + TimeValue("00:00:01"), _
+        Name:=ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
+
+'    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
 
     On Error GoTo 0
     Exit Sub
@@ -105,7 +109,9 @@ ErrHandler:
 End Sub
 
 
-Sub CheckGtUpdater(Branch As String, InstallerOrNot As Boolean)
+
+Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
+
     ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
     ' GtUpdater.dotm can't be running code when this launches.
 
@@ -118,12 +124,17 @@ Sub CheckGtUpdater(Branch As String, InstallerOrNot As Boolean)
     ' Requires FileInstaller and SharedMacros modules be installed in the same template.
 
     ' ======= For testing / debugging ==============
+
     ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
+
     ' ==============================================
     
     ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
     Dim strInstallMe() As String
     Dim strTemplateName As String
+
+    strTemplateName = "Macmillan Updater"
+
 
     ' get array of files to install
     strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
@@ -146,14 +157,18 @@ Sub CheckGtUpdater(Branch As String, InstallerOrNot As Boolean)
     End If
 
     On Error GoTo 0
-    Exit Sub
+
+    Exit Function
+
 
 ErrHandler:
     MsgBox Err.Number & ": " & Err.Description
     
     On Error GoTo 0
     
-End Sub
+
+End Function
+
 
 
 Private Sub CreateMacToolbar(PathToTemplate As String)
@@ -392,7 +407,4 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
-
-
-
 
