@@ -1736,7 +1736,7 @@ Private Function BookTypeCheck()
     Dim strBookTypes(1 To 7) As String
     Dim A As Long
     Dim blnMissing As Boolean
-    Dim strISBN As String
+    Dim strIsbn As String
     
     strBookTypes(1) = "trade paperback"
     strBookTypes(2) = "hardcover"
@@ -1768,7 +1768,7 @@ Private Function BookTypeCheck()
         
         Do While .Execute(Forward:=True) = True And intCount < 100   ' < 100 to precent infinite loop
             intCount = intCount + 1
-            strISBN = Selection.Text
+            strIsbn = Selection.Text
             'Record current selection because we need to return to it later
             ActiveDocument.Bookmarks.Add Name:="ISBN", Range:=Selection.Range
             
@@ -1785,7 +1785,7 @@ Private Function BookTypeCheck()
             
             If blnMissing = True Then
                 strErrors = strErrors & "** ERROR: Correct book type required in parentheses after" & vbNewLine & _
-                    "ISBN " & strISBN & " on copyright page." _
+                    "ISBN " & strIsbn & " on copyright page." _
                     & vbNewLine & vbNewLine
             End If
             
