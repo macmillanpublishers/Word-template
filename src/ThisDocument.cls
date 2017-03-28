@@ -12,166 +12,166 @@ Option Base 1
 
 
 
-Sub AutoExec()
-
-    ' ======= For testing / debugging ==============
-'     MsgBox "I am NEWEST MacmillanGT AutoExec and I am running!"s
-    ' ==============================================
-
-
-    '=======================================
-    ' By Erica Warren - erica.warren@macmillan.com
-    ' ==== PART 1 =======
-
-' CHECK IF FLAG FILE IS PRESENT IN SAME DIR, IF YES THEN QUIT
-' WILL BE ADDED WHEN WE'RE UNLOAD/LOADING ADDINS AS PART OF UPDATE/INSTALL STUFF
-' AND DON'T WANT THIS TO LAUNCH EVERY TIME
-  Dim blnDisableAutoMacroFileExists As Boolean
-  blnDisableAutoMacroFileExists = IsItThere(ThisDocument.Path & Application.PathSeparator & _
-        "DISABLE_AUTO_EXEC.txt")
-  If blnDisableAutoMacroFileExists = True Then
-    Exit Sub
-  End If
-
-    ' Check if toolbar is present if Mac, if not add it.
-    ' If PC, remove "Add-Ins" tab that gets added for some reason.
-    Dim Bar As CommandBar
-    #If Mac Then
-        Dim blnToolbar As Boolean
-        For Each Bar In CommandBars
-            If Bar.Name = "Macmillan Tools" Then
-                blnToolbar = True
-                Exit For
-            Else
-                blnToolbar = False
-            End If
-        Next
-
-        If blnToolbar = False Then
-            Application.StatusBar = "Updating Macmillan Tools toolbar"
-            Call CreateMacToolbar(PathToTemplate:=ThisDocument.Path)
-        End If
-    #Else
-        ' If opened read-only, can't save later
-        If IsReadOnly(Path:=ThisDocument.FullName) = False Then
-            For Each Bar In CommandBars
-                If Bar.Name = "Macmillan Tools" Then
-                    Bar.Delete
-                    Exit For
-                End If
-            Next
-            ' Need to save template or user is prompted to save when closing Word
-            ThisDocument.Save
-        End If
-    #End If
-
-
-'===== PART 2 ============================
-'===== USE ===============================
-' Calls SharedFileInstaller.Installer
-' Requires SharedFileInstaller and SharedMacros modules be installed in the same template.
-
-    Dim downloadBranch As GitBranch
-    Dim blnInstaller As Boolean
-    Dim strTemplateName As String
-    Dim strTemplatePaths() As String
-
-    ' Switch to "master" before going live!
-    downloadBranch = releases
-
-    'True = standalone installer file, False = daily update checker already installed
-    blnInstaller = False
-    'Makin' that true to test shit
-
-    'Plain English name of what you're installing/updating, should be singular
-    strTemplateName = "Macmillan Styles Template"
-
-    'Get array of paths to STYLE TEMPLATE files to install
-    strTemplatePaths = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
-
-'   ' DEBUG: check that paths are correct
-'    Dim Q AS Long
-'    For Q = LBound(strTemplatePaths) To UBound(strTemplatePaths)
-'        Debug.Print Q & ": " & strTemplatePaths(Q)
-'    Next Q
-
-    'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    ' CHECK/UPDATE STYLES TEMPLATES ONLY.
-    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
-        TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
-    
-    ' BLAH BLAH ONTIME NOT WORKING JUST DON'T CHECK ANY MORE WE'LL GET RID OF WITH CONFIG FILE.
-    ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
-    ' finish running (because this AutoExec is called from GtUpdater in Startup
-'    Application.OnTime When:=Now + TimeValue("00:00:01"), _
-        Name:=ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
-
-'    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
-
-    On Error GoTo 0
-    Exit Sub
-
-ErrHandler:
-    MsgBox Err.Number & ": " & Err.Description
-End Sub
-
-
-
-Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
-
-    ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
-    ' GtUpdater.dotm can't be running code when this launches.
-
-    '===== DEPENDENCIES ========================
-    ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
-    ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
-    ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
-    ' and be saved in the STARTUP directory.
-    '
-    ' Requires FileInstaller and SharedMacros modules be installed in the same template.
-
-    ' ======= For testing / debugging ==============
-
-    ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
-
-    ' ==============================================
-    
-    ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
-    Dim strInstallMe() As String
-    Dim strTemplateName As String
-    strTemplateName = "Macmillan Updater"
-	
-    ' get array of files to install
-    strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
-
-    'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(DownloadFrom:=Branch, Installer:=InstallerOrNot, _
-        TemplateName:=strTemplateName, TemplatesToInstall:=strInstallMe())
-
-    ' ====== PART 2: LOAD TEMPLATE AGAIN ==============
-    If IsItThere(strInstallMe(1)) = True Then
-        ' Have to add Template before loading if not in Startup
-        ' Could do Install:=True with Add method, but it somehow broke everything
-        AddIns.Add (strInstallMe(1))
-        AddIns(strInstallMe(1)).Installed = True
-    Else
-        Dim strMessage As String
-            strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Updater template. Please send an email to " & _
-            "workflows@macmillan.com and let them know that something is broken!"
-        MsgBox strMessage, vbOKOnly, "We're So Sorry"
-    End If
-
-    On Error GoTo 0
-    Exit Function
-
-
-ErrHandler:
-    MsgBox Err.Number & ": " & Err.Description
-    
-    On Error GoTo 0
-    
-
-End Function
+'Sub AutoExec()
+'
+'    ' ======= For testing / debugging ==============
+''     MsgBox "I am NEWEST MacmillanGT AutoExec and I am running!"s
+'    ' ==============================================
+'
+'
+'    '=======================================
+'    ' By Erica Warren - erica.warren@macmillan.com
+'    ' ==== PART 1 =======
+'
+'' CHECK IF FLAG FILE IS PRESENT IN SAME DIR, IF YES THEN QUIT
+'' WILL BE ADDED WHEN WE'RE UNLOAD/LOADING ADDINS AS PART OF UPDATE/INSTALL STUFF
+'' AND DON'T WANT THIS TO LAUNCH EVERY TIME
+'  Dim blnDisableAutoMacroFileExists As Boolean
+'  blnDisableAutoMacroFileExists = IsItThere(ThisDocument.Path & Application.PathSeparator & _
+'        "DISABLE_AUTO_EXEC.txt")
+'  If blnDisableAutoMacroFileExists = True Then
+'    Exit Sub
+'  End If
+'
+'    ' Check if toolbar is present if Mac, if not add it.
+'    ' If PC, remove "Add-Ins" tab that gets added for some reason.
+'    Dim Bar As CommandBar
+'    #If Mac Then
+'        Dim blnToolbar As Boolean
+'        For Each Bar In CommandBars
+'            If Bar.Name = "Macmillan Tools" Then
+'                blnToolbar = True
+'                Exit For
+'            Else
+'                blnToolbar = False
+'            End If
+'        Next
+'
+'        If blnToolbar = False Then
+'            Application.StatusBar = "Updating Macmillan Tools toolbar"
+'            Call CreateMacToolbar(PathToTemplate:=ThisDocument.Path)
+'        End If
+'    #Else
+'        ' If opened read-only, can't save later
+'        If IsReadOnly(Path:=ThisDocument.FullName) = False Then
+'            For Each Bar In CommandBars
+'                If Bar.Name = "Macmillan Tools" Then
+'                    Bar.Delete
+'                    Exit For
+'                End If
+'            Next
+'            ' Need to save template or user is prompted to save when closing Word
+'            ThisDocument.Save
+'        End If
+'    #End If
+'
+'
+''===== PART 2 ============================
+''===== USE ===============================
+'' Calls SharedFileInstaller.Installer
+'' Requires SharedFileInstaller and SharedMacros modules be installed in the same template.
+'
+'    Dim downloadBranch As GitBranch
+'    Dim blnInstaller As Boolean
+'    Dim strTemplateName As String
+'    Dim strTemplatePaths() As String
+'
+'    ' Switch to "master" before going live!
+'    downloadBranch = releases
+'
+'    'True = standalone installer file, False = daily update checker already installed
+'    blnInstaller = False
+'    'Makin' that true to test shit
+'
+'    'Plain English name of what you're installing/updating, should be singular
+'    strTemplateName = "Macmillan Styles Template"
+'
+'    'Get array of paths to STYLE TEMPLATE files to install
+'    strTemplatePaths = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
+'
+''   ' DEBUG: check that paths are correct
+''    Dim Q AS Long
+''    For Q = LBound(strTemplatePaths) To UBound(strTemplatePaths)
+''        Debug.Print Q & ": " & strTemplatePaths(Q)
+''    Next Q
+'
+'    'Installer = True if this is for a standalone installation file; False is for a daily update checker
+'    ' CHECK/UPDATE STYLES TEMPLATES ONLY.
+'    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
+'        TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
+'
+'    ' BLAH BLAH ONTIME NOT WORKING JUST DON'T CHECK ANY MORE WE'LL GET RID OF WITH CONFIG FILE.
+'    ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
+'    ' finish running (because this AutoExec is called from GtUpdater in Startup
+''    Application.OnTime When:=Now + TimeValue("00:00:01"), _
+'        Name:=ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
+'
+''    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
+'
+'    On Error GoTo 0
+'    Exit Sub
+'
+'ErrHandler:
+'    MsgBox Err.Number & ": " & Err.Description
+'End Sub
+'
+'
+'
+'Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
+'
+'    ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
+'    ' GtUpdater.dotm can't be running code when this launches.
+'
+'    '===== DEPENDENCIES ========================
+'    ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
+'    ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
+'    ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
+'    ' and be saved in the STARTUP directory.
+'    '
+'    ' Requires FileInstaller and SharedMacros modules be installed in the same template.
+'
+'    ' ======= For testing / debugging ==============
+'
+'    ' MsgBox "I am CheckGtUpdater (NEW MacmillanGT) and I am running!"
+'
+'    ' ==============================================
+'
+'    ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
+'    Dim strInstallMe() As String
+'    Dim strTemplateName As String
+'    strTemplateName = "Macmillan Updater"
+'
+'    ' get array of files to install
+'    strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
+'
+'    'Installer = True if this is for a standalone installation file; False is for a daily update checker
+'    Call SharedFileInstaller.Installer(DownloadFrom:=Branch, Installer:=InstallerOrNot, _
+'        TemplateName:=strTemplateName, TemplatesToInstall:=strInstallMe())
+'
+'    ' ====== PART 2: LOAD TEMPLATE AGAIN ==============
+'    If IsItThere(strInstallMe(1)) = True Then
+'        ' Have to add Template before loading if not in Startup
+'        ' Could do Install:=True with Add method, but it somehow broke everything
+'        AddIns.Add (strInstallMe(1))
+'        AddIns(strInstallMe(1)).Installed = True
+'    Else
+'        Dim strMessage As String
+'            strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Updater template. Please send an email to " & _
+'            "workflows@macmillan.com and let them know that something is broken!"
+'        MsgBox strMessage, vbOKOnly, "We're So Sorry"
+'    End If
+'
+'    On Error GoTo 0
+'    Exit Function
+'
+'
+'ErrHandler:
+'    MsgBox Err.Number & ": " & Err.Description
+'
+'    On Error GoTo 0
+'
+'
+'End Function
 
 
 
@@ -405,3 +405,4 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+

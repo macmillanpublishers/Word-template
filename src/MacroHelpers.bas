@@ -1,9 +1,9 @@
-Attribute VB_Name = "SharedMacros_"
+Attribute VB_Name = "MacroHelpers"
 
 ' All should be declared as Public for use from other modules
 
 Option Explicit
-Private Const strModule As String = ".SharedMacros_."
+Private Const strModule As String = ".MacroHelpers."
 
 Public Enum GitBranch
     master = 1
@@ -263,227 +263,7 @@ ErrorCheckerError:
     ErrorChecker = True
 End Function
 
-Public Function IsOldMac() As Boolean
-    ' Checks this is a Mac running Office 2011 or earlier. Good for things like
-    ' checking if we need to account for file paths > 3 char (which 2011 can't
-    ' handle but Mac 2016 can.
-    IsOldMac = False
-    #If Mac Then
-        If Application.Version < 16 Then
-            IsOldMac = True
-        End If
-    #End If
-End Function
 
-Public Function DocPropExists(objDoc As Document, PropName As String) As Boolean
-    ' Tests if a particular custom document property exists in the document. If
-    ' it's already a Document object we already know that it exists and is open
-    ' so we don't need to test for those here. Should be tested somewhere in
-    ' calling procedure though.
-    DocPropExists = False
-
-    Dim A As Long
-    Dim docProps As DocumentProperties
-    docProps = objDoc.CustomDocumentProperties
-
-    If docProps.Count > 0 Then
-        For A = 1 To docProps.Count
-            If dopProps.Name = PropName Then
-                DocPropExists = True
-                Exit Function
-            End If
-        Next A
-    Else
-        DocPropExists = False
-    End If
-End Function
-
-Public Function IsOpen(DocPath As String) As Boolean
-    ' Tests if the Word document is currently open.
-    On Error GoTo IsOpenError
-    Dim objDoc As Document
-    IsOpen = False
-    If IsItThere(DocPath) = True Then
-        If IsWordFormat(DocPath) = True Then
-            If Documents.Count > 0 Then
-                For Each objDoc In Documents
-                    If objDoc.fullPath = DocPath Then
-                        IsOpen = True
-                        Exit Function
-                    End If
-                Next objDoc
-            End If
-        Else
-            Err.Raise MacError.err_NotWordFormat
-        End If
-    Else
-        Err.Raise MacError.err_FileNotThere
-    End If
-IsOpenFinish:
-    On Error GoTo 0
-    Exit Function
-
-IsOpenError:
-    Err.Source = Err.Source & strModule & "IsOpen"
-    If ErrorChecker(Err, DocPath) = False Then
-        Resume
-    Else
-        IsOpen = False
-        Resume IsOpenFinish
-    End If
-End Function
-
-Public Function IsWordFormat(PathToFile As String) As Boolean
-    ' Checks extension to see if file is a Word document or template. Notably,
-    ' does not test if it's a file type that Word CAN open (e.g., .html), just
-    ' if it's a native Word file type.
-
-    ' Ignores final character for newer file types, just checks for .dot / .doc
-    Dim strExt As String
-    strExt = Left(Right(PathToFile, InStr(StrReverse(PathToFile), ".")), 4)
-    If strExt = ".dot" Or strExt = ".doc" Then
-        IsWordFormat = True
-    Else
-        IsWordFormat = False
-    End If
-    
-End Function
-
-Public Function IsLocked(FilePath As String) As Boolean
-    ' Tests if any file is locked by some kind of process.
-    On Error GoTo IsLockedError
-    IsLocked = False
-    If IsItThere(FilePath) = False Then
-        Err.Raise MacError.err_FileNotThere
-    Else
-        Dim FileNum As Long
-        FileNum = FreeFile()
-        ' If the file is already in use, next line will raise an error:
-        ' "70: Permission denied" (file is open, Word doc is loaded as add-in)
-        ' "75: Path/File access error" (File is read-only, etc.)
-        Open FilePath For Binary Access Read Write Lock Read Write As FileNum
-        Close FileNum
-    End If
-IsLockedFinish:
-    On Error GoTo 0
-    Exit Function
-    
-IsLockedError:
-    Err.Source = Err.Source & strModule & "IsLocked"
-    If Err.Number = 70 Or Err.Number = 75 Then
-        IsLocked = True
-        Resume IsLockedFinish
-    Else
-        If ErrorChecker(Err, FilePath) = False Then
-            Resume
-        Else
-            Resume IsLockedFinish
-        End If
-    End If
-End Function
-
-Public Function IsItThere(Path As String) As Boolean
-    ' Check if file or directory exists on PC or Mac.
-    ' Dir() doesn't work on Mac 2011 if file is longer than 32 char
-    'Debug.Print Path
-    
-    'Remove trailing path separator from dir if it's there
-    If Right(Path, 1) = Application.PathSeparator Then
-        Path = Left(Path, Len(Path) - 1)
-    End If
-
-    If IsOldMac = True Then
-        Dim strScript As String
-        strScript = "tell application " & Chr(34) & "System Events" & Chr(34) & _
-            "to return exists disk item (" & Chr(34) & Path & Chr(34) _
-            & " as string)"
-        IsItThere = SharedMacros_.ShellAndWaitMac(strScript)
-    Else
-        Dim strCheckDir As String
-        strCheckDir = Dir(Path, vbDirectory)
-        
-        If strCheckDir = vbNullString Then
-            IsItThere = False
-        Else
-            IsItThere = True
-        End If
-    End If
-End Function
-
-
-Public Function KillAll(Path As String) As Boolean
-    ' Deletes file (or folder?) on PC or Mac. Mac can't use Kill() if file name
-    ' is longer than 32 char. Returns true if successful.
-    On Error GoTo KillAllError
-    If IsItThere(Path) = True Then
-        ' Can't delete file if it's installed as an add-in
-        If IsInstalledAddIn(Path) = True Then
-            AddIns(Path).Installed = False
-        End If
-        ' Mac 2011 can't handle file paths > 32 char
-        #If Mac Then
-            If Application.Version < 16 Then
-                Dim strCommand As String
-                strCommand = MacScript("return quoted form of posix path of " & Path)
-                strCommand = "rm " & strCommand
-                SharedMacros_.ShellAndWaitMac (strCommand)
-            Else
-                Kill (Path)
-            End If
-        #Else
-            Kill (Path)
-        #End If
-
-        ' Make sure it worked
-        If IsItThere(Path) = False Then
-            KillAll = True
-        Else
-            KillAll = False
-        End If
-    Else
-        KillAll = True
-    End If
-KillAllFinish:
-    On Error GoTo 0
-    Exit Function
-    
-KillAllError:
-    Dim strErrMsg As String
-    Select Case Err.Number
-        Case 70     ' File is open
-            strErrMsg = "Please close all other Word documents and try again."
-            MsgBox strErrMsg, vbCritical, "Macmillan Tools Error"
-            KillAll = False
-            Resume KillAllFinish
-        Case Else
-            strErrMsg = "Unexpected error. Please contact " & _
-                Organization_.HelpEmail & " for assistance." & vbNewLine & _
-                vbNewLine & "Error deleting " & Path & vbNewLine & _
-                Err.Number & ": " & Err.Description
-    End Select
-    MsgBox strErrMsg, vbCritical, "Macmillan Tools Error"
-    KillAll = False
-    Resume KillAllFinish
-End Function
-
-Public Function IsInstalledAddIn(FileName As String) As Boolean
-    ' Check if the file is currently loaded as an AddIn. Because we can't delete
-    ' it if it is loaded (though we can delete it if it's just referenced but
-    ' not loaded).
-    Dim objAddIn As AddIn
-    For Each objAddIn In AddIns
-        ' Check if in collection first; throws error if try to check .Installed
-        ' but it's not even referenced.
-        If objAddIn.Name = FileName Then
-            If objAddIn.Installed = True Then
-                IsInstalledAddIn = True
-            Else
-                IsInstalledAddIn = False
-            End If
-            Exit For
-        End If
-    Next objAddIn
-End Function
 
 ' ===== WriteToLog ============================================================
 ' Writes line to log for the file. LogMessage only needs text, timestamp will
@@ -527,34 +307,6 @@ WriteToLogError:
         Resume WriteToLogFinish
     End If
 End Sub
-
-Public Function ShellAndWaitMac(Cmd As String) As String
-    Dim result As String
-    Dim scriptCmd As String ' Macscript command
-    #If Mac Then
-        scriptCmd = "do shell script " & Chr(34) & Cmd & Chr(34) & Chr(34)
-        result = MacScript(scriptCmd) ' result contains stdout, should you care
-        'Debug.Print result
-        ShellAndWaitMac = result
-    #End If
-End Function
-
-
-
-Public Sub OverwriteTextFile(TextFile As String, NewText As String)
-' TextFile should be full path
-    
-    Dim FileNum As Integer
-    
-    If IsItThere(TextFile) = True Then
-        FileNum = FreeFile ' next file number
-        Open TextFile For Output Access Write As #FileNum
-        Print #FileNum, NewText ' overwrite information in the text of the file
-        Close #FileNum ' close the file
-    End If
-
-End Sub
-
 
 
 Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
@@ -763,60 +515,6 @@ Function FootnotesExist() As Boolean
         End If
     Next StoryRange
     
-End Function
-
-
-Function IsArrayEmpty(Arr As Variant) As Boolean
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-' By Chip Pearson, http://www.cpearson.com/excel/vbaarrays.htm
-'
-' IsArrayEmpty
-' This function tests whether the array is empty (unallocated). Returns TRUE or FALSE.
-'
-' The VBA IsArray function indicates whether a variable is an array, but it does not
-' distinguish between allocated and unallocated arrays. It will return TRUE for both
-' allocated and unallocated arrays. This function tests whether the array has actually
-' been allocated.
-'
-' This function is really the reverse of IsArrayAllocated.
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-    Dim LB As Long
-    Dim UB As Long
-    
-    Err.Clear
-    On Error Resume Next
-    If IsArray(Arr) = False Then
-        ' we weren't passed an array, return True
-        IsArrayEmpty = True
-        Exit Function
-    End If
-    
-    ' Attempt to get the UBound of the array. If the array is
-    ' unallocated, an error will occur.
-    UB = UBound(Arr, 1)
-    If (Err.Number <> 0) Then
-        IsArrayEmpty = True
-    Else
-        ''''''''''''''''''''''''''''''''''''''''''
-        ' On rare occassion, under circumstances I
-        ' cannot reliably replictate, Err.Number
-        ' will be 0 for an unallocated, empty array.
-        ' On these occassions, LBound is 0 and
-        ' UBoung is -1.
-        ' To accomodate the weird behavior, test to
-        ' see if LB > UB. If so, the array is not
-        ' allocated.
-        ''''''''''''''''''''''''''''''''''''''''''
-        Err.Clear
-        LB = LBound(Arr)
-        If LB > UB Then
-            IsArrayEmpty = True
-        Else
-            IsArrayEmpty = False
-        End If
-    End If
-
 End Function
 
 
@@ -1033,46 +731,6 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
     LoadCSVtoArray = the_array
  
 End Function
-
-Sub CloseOpenDocs()
-
-    '-------------Check for/close open documents---------------------------------------------
-    Dim strInstallerName As String
-    Dim strSaveWarning As String
-    Dim objDocument As Document
-    Dim B As Long
-    Dim doc As Document
-    
-    strInstallerName = ThisDocument.Name
-
-        'MsgBox "Installer Name: " & strInstallerName
-        'MsgBox "Open docs: " & Documents.Count
-
-
-    If Documents.Count > 1 Then
-        strSaveWarning = "All other Word documents must be closed to run the macro." & vbNewLine & vbNewLine & _
-            "Click OK and I will save and close your documents." & vbNewLine & _
-            "Click Cancel to exit without running the macro and close the documents yourself."
-        If MsgBox(strSaveWarning, vbOKCancel, "Close documents?") = vbCancel Then
-            ActiveDocument.Close
-            Exit Sub
-        Else
-            For Each doc In Documents
-                On Error Resume Next        'To skip error if user is prompted to save new doc and clicks Cancel
-                    'Debug.Print doc.Name
-                    If doc.Name <> strInstallerName Then       'But don't close THIS document
-                        doc.Save   'separate step to trigger Save As prompt for previously unsaved docs
-                        doc.Close
-                    End If
-                On Error GoTo 0
-            Next doc
-        End If
-    End If
-    
-End Sub
-
-
-
 
 
 Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As Boolean = False) As Boolean
@@ -1316,76 +974,6 @@ Sub CleanUp()
     Application.ScreenRefresh
     
 End Sub
-
-Function IsReadOnly(Path As String) As Boolean
-    ' Tests if the file or directory is read-only -- does NOT test if file exists,
-    ' because sometimes you'll need to do that before this anyway to do something
-    ' different.
-    
-    ' Mac 2011 can't deal with file paths > 32 char
-    If IsOldMac() = True Then
-        Dim strScript As String
-        Dim blnWritable As Boolean
-        
-        strScript = _
-            "set p to POSIX path of " & Chr(34) & Path & Chr(34) & Chr(13) & _
-            "try" & Chr(13) & _
-            vbTab & "do shell script " & Chr(34) & "test -w \" & Chr(34) & _
-            "$(dirname " & Chr(34) & " & quoted form of p & " & Chr(34) & _
-            ")\" & Chr(34) & Chr(34) & Chr(13) & _
-            vbTab & "return true" & Chr(13) & _
-            "on error" & Chr(13) & _
-            vbTab & "return false" & Chr(13) & _
-            "end try"
-            
-        blnWritable = MacScript(strScript)
-        
-        If blnWritable = True Then
-            IsReadOnly = False
-        Else
-            IsReadOnly = True
-        End If
-    Else
-        If (GetAttr(Path) And vbReadOnly) <> 0 Then
-            IsReadOnly = True
-        Else
-            IsReadOnly = False
-        End If
-    End If
-
-IsReadOnlyFinish:
-    Exit Function
-
-IsReadOnlyError:
-    Err.Source = Err.Source & strModule & "IsReadOnly"
-    If SharedMacros_.ErrorChecker(Err) = False Then
-        Resume
-    Else
-        Resume IsReadOnly
-    End If
-End Function
-
-
-Public Function ReadTextFile(Path As String, Optional FirstLineOnly As Boolean = True) As String
-' load string from text file
-
-    Dim fnum As Long
-    Dim strTextWeWant As String
-    
-    fnum = FreeFile()
-    Open Path For Input As fnum
-    
-    If FirstLineOnly = False Then
-        strTextWeWant = Input$(LOF(fnum), #fnum)
-    Else
-        Line Input #fnum, strTextWeWant
-    End If
-    
-    Close fnum
-    
-    ReadTextFile = strTextWeWant
-End Function
-
 
 Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
 '    Debug.Print StoryType

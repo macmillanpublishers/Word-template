@@ -32,7 +32,7 @@ Sub EndnoteDeEmbed()
     Dim BookmarkNum As Integer
     Dim BookmarkName As String
     Dim strCurrentStyle As String
-	
+        
     BookmarkNum = 1
     lastRefSection = 0
     AddHeader = True
@@ -238,7 +238,7 @@ End Sub
 
 Function endnoteHeader(refSection As Integer) As String
 
-	Dim sectionRng As Range
+        Dim sectionRng As Range
     Dim searchStylesArray(7) As String                       ' number of items in array should be declared here
     Dim searchTest As Boolean
     Dim I As Long

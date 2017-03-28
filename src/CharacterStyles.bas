@@ -118,7 +118,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, Total
     ' Run after progress bar is displayed, since ContentControl cleanup can take time
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call Cleanup
+        Call CleanUp
         Exit Sub
     End If
     
@@ -583,7 +583,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
     Dim tagFindArray(1 To 28) As String              ' number of items in array should be declared here
     Dim tagReplaceArray(1 To 28) As String         'and here
-    Dim h As Long
+    Dim H As Long
     
     tagFindArray(1) = "`B|(*)|B`"
     tagFindArray(2) = "`I|(*)|I`"
@@ -643,7 +643,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     tagReplaceArray(27) = "span illustration holder (illi)"
     tagReplaceArray(28) = "span design note (dni)"
     
-    For h = LBound(tagFindArray()) To UBound(tagFindArray())
+    For H = LBound(tagFindArray()) To UBound(tagFindArray())
     
     ' ----------- bookmaker char styles ----------------------
         ' tag bookmaker line-ending character styles and
@@ -688,12 +688,12 @@ On Error GoTo BkmkrError
                 With Selection.Find
                     .ClearFormatting
                     .Replacement.ClearFormatting
-                    .Text = tagFindArray(h)
+                    .Text = tagFindArray(H)
                     .Replacement.Text = "\1"
                     .Wrap = wdFindStop
                     .Forward = True
                     .Style = BkmkrStyles(Q)
-                    .Replacement.Style = tagReplaceArray(h)
+                    .Replacement.Style = tagReplaceArray(H)
                     .Format = True
                     .MatchCase = False
                     .MatchWholeWord = False
@@ -708,7 +708,7 @@ On Error GoTo BkmkrError
                         ' always starts w/ "bookmaker ", but we want to include the space,
                         ' hence start at 10
                         strAction = Mid(BkmkrStyles(Q), 10, InStr(BkmkrStyles(Q), "(") - 11)
-                        strNewName = tagReplaceArray(h) & strAction
+                        strNewName = tagReplaceArray(H) & strAction
 '                        Debug.Print "current style is: " & Selection.Style
 '                        Debug.Print "new style is: " & strNewName
                         
@@ -728,11 +728,11 @@ On Error GoTo ErrorHandler
         With activeRng.Find
             .ClearFormatting
             .Replacement.ClearFormatting
-            .Text = tagFindArray(h)
+            .Text = tagFindArray(H)
             .Replacement.Text = "\1"
             .Wrap = wdFindContinue
             .Format = True
-            .Replacement.Style = tagReplaceArray(h)
+            .Replacement.Style = tagReplaceArray(H)
             .MatchCase = False
             .MatchWholeWord = False
             .MatchWildcards = True
@@ -755,11 +755,11 @@ ErrorHandler:
     Dim myStyle As Style
     
     If Err.Number = 5834 Or Err.Number = 5941 Then
-        Select Case tagReplaceArray(h)
+        Select Case tagReplaceArray(H)
             
             'If style from LocalStyleTag is not present, add style
             Case "span boldface characters (bf)":
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -768,7 +768,7 @@ ErrorHandler:
                 Resume
             
             Case "span italic characters (ital)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -777,7 +777,7 @@ ErrorHandler:
                 Resume
                 
             Case "span underscore characters (us)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -786,7 +786,7 @@ ErrorHandler:
                 Resume
             
             Case "span small caps characters (sc)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -797,7 +797,7 @@ ErrorHandler:
                 Resume
             
             Case "span subscript characters (sub)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -806,7 +806,7 @@ ErrorHandler:
                 Resume
                 
             Case "span superscript characters (sup)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -815,7 +815,7 @@ ErrorHandler:
                 Resume
 
             Case "span bold ital (bem)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -825,7 +825,7 @@ ErrorHandler:
                 Resume
                 
             Case "span smcap bold ital (scbi)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .Bold = True
@@ -837,7 +837,7 @@ ErrorHandler:
                 Resume
                 
             Case "span smcap bold (scbold)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -849,7 +849,7 @@ ErrorHandler:
                 Resume
 
             Case "span smcap ital (scital)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), _
                     Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -862,7 +862,7 @@ ErrorHandler:
                 
                 
             Case "span strikethrough characters (str)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .StrikeThrough = True
@@ -870,7 +870,7 @@ ErrorHandler:
                 Resume
             
             Case "span strikethrough characters (str)"
-                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(H), Type:=wdStyleTypeCharacter)
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .StrikeThrough = True
@@ -901,7 +901,7 @@ BkmkrError:
 On Error GoTo ErrorHandler
         ' If the original style did not exist yet, will error here
         ' but ErrorHandler will add the style
-        myStyle2.BaseStyle = tagReplaceArray(h)
+        myStyle2.BaseStyle = tagReplaceArray(H)
         ' Then go back to BkmkrError so further errors will route
         ' correctly
 On Error GoTo BkmkrError
