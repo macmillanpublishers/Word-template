@@ -20,8 +20,6 @@ Attribute VB_Exposed = False
 
 
 
-
-
 ' By Erica Warren - erica.warren@macmillan.com
 
 
@@ -111,8 +109,8 @@ End Sub
 ' Be sure to test this in a loop following each use in calling sub
 ' Since the useform is modeless, execution will continue and sometimes get funky if the
 ' userform is not finished updating each time
-Public Property Let Done(Value As Boolean)
-    cDone = Value
+Public Property Let Done(value As Boolean)
+    cDone = value
 End Property
 
 Public Property Get Done() As Boolean
@@ -120,8 +118,8 @@ Public Property Get Done() As Boolean
 End Property
 
 'This Procedure is Executed when the Title Property is Set
-Public Property Let Title(Value As String)
-cFormTitle = Value
+Public Property Let Title(value As String)
+cFormTitle = value
 Me.Caption = cFormTitle
 End Property
 
@@ -132,9 +130,9 @@ End Property
 
 '-----------------------------------------------------------------------
 'This Procedure is Executed when the StatusMessage Property is Set.
-Public Property Let StatusMessage(Value As String)
+Public Property Let StatusMessage(value As String)
 
-cStatusMessage = Value
+cStatusMessage = value
 Me.LabelCaption = cStatusMessage
 
 End Property
@@ -146,8 +144,8 @@ End Property
 
 '-------------------------------------------------------------------------
 'This Procedure is Executed when the Percent Property is Set.
-Public Property Let Percent(Value As Single)
-cPercentComplete = Format(Value * 100, "0")
+Public Property Let Percent(value As Single)
+cPercentComplete = Format(value * 100, "0")
 Me.FrameProgress.Caption = cPercentComplete & "%"
 End Property
 
@@ -158,8 +156,8 @@ End Property
 
 '-------------------------------------------------------------------------
 'This Procedure is Executed when the BarWidth Property is Set.
-Public Property Let BarWidth(Value As Single)
-cBarWidth = Value * (Me.FrameProgress.Width - 21)
+Public Property Let BarWidth(value As Single)
+cBarWidth = value * (Me.FrameProgress.Width - 21)
 Me.LabelProgress.Width = cBarWidth
 End Property
 

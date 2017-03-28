@@ -2,14 +2,17 @@ Attribute VB_Name = "MacroHelpers"
 
 ' All should be declared as Public for use from other modules
 
+' *****************************************************************************
+'           DECLARATIONS
+' *****************************************************************************
 Option Explicit
-Private Const strModule As String = ".MacroHelpers."
+Private Const strModule As String = "MacroHelpers."
+Public lngErrorCount As Long
 
-Public Enum GitBranch
-    master = 1
-    releases = 2
-    develop = 3
-End Enum
+
+' assign to actual document we're working on
+' to do: probably better managed via a class
+Public activeDoc As Document
 
 ' *****************************************************************************
 '           ERROR HANDLING STUFF
@@ -46,6 +49,11 @@ Public Enum MacError
     err_RootDirInvalid = 20019
     err_RootDirMissing = 20020
     err_LogReadOnly = 20021
+    err_DirectoryMissing = 20022
+    err_ParaIndexInvalid = 20023
+    err_BacktickCharFound = 20024
+    err_DocProtectionOn = 20025
+    err_NotArray = 20026
 End Enum
 
 ' ===== ErrorChecker ==========================================================
@@ -54,216 +62,286 @@ End Enum
 
 ' DO NOT use any other of our functions in this function, because those need to
 ' direct errors here and using them here as well could create an infinite loop.
-
 '
 ' USE: ErrorChecker() returns False if error is handled; procedure can continue
-' Each member procedure in the class should have the following:
-'''
-' On Error GoTo MemberName[Let | Set | Get]Error
-'   <...code...>
-' MemberName[Let | Set | Get]Finish:
-'   <...any cleanup code...>
-'   On Error GoTo 0
-'   Exit [Property | Sub | Function]
-' MemberName[Let | Set | Get]Error:
-'    If ErrorChecker(Err) = False Then
-'        Resume
-'    Else
-'        Resume MemberName[Let | Set | Get]Finish
-'    End If
-' End [Property | Sub | Function]
 
-'
-
-
-Public Function ErrorChecker(ByRef objError As Object, Optional strValue As _
+Public Function ErrorChecker(objError As Object, Optional strValue As _
     String) As Boolean
     ' strValue - varies based on type of error passed. use for things like
-    '   file name, path, whatever is being checked that errored.
+    ' file name, path, whatever is being checked by that errored.
+  lngErrorCount = lngErrorCount + 1
+  DebugPrint "ErrorChecker " & lngErrorCount & vbNewLine & _
+    "(" & objError.Source & ") " & objError.Number & ":" & vbNewLine _
+    & objError.Description
+  
+  If lngErrorCount > 15 Then
+    DebugPrint "ERROR LOOP STOPPED"
+    End
+  End If
+  
+  ' New On Error statement RESETS the Err object, so get our values out before
+  ' we set the ErrorChecker for this procedure.
+  Dim lngErrNumber As Long
+  Dim strErrDescription As String
+  Dim strErrSource As String
+  
+  lngErrNumber = objError.Number
+  strErrDescription = objError.Description  ' For system errors
+  strErrSource = objError.Source
+  
+'  On Error GoTo ErrorCheckerError
 
-    On Error GoTo ErrorCheckerError
-    Dim strErrMessage As String
-    Dim blnNotifyUser As Boolean
-    Dim strHelpContact As String
-    Dim strFileName As String
+  Dim strErrMessage As String
+  Dim blnNotifyUser As Boolean
+  Dim strHelpContact As String
 
-    ' ----- Set defaults ------------------------------------------------------
-    ' Only need to change in Select statement below if want to set either to
-    ' False.
-    blnNotifyUser = True
-    ErrorChecker = True
-    ' Eventually get this email from the config.json file, once we have error
-    ' handling that can handle an error in the error handler. At the moment, if
-    ' any procedure in the call stack to get the email errors, we end up in a
-    ' loop until it crashes.
-    strHelpContact = vbNewLine & vbNewLine & "Email workflows@macmillan.com" _
-        & " if you need help. Be sure to attach the MACRO_ERROR.txt file that" _
-        & " was just produced."
+  ' ----- Set defaults --------------------------------------------------------
+  ' Only need to change in Select statement below if want to set either to
+  ' False.
+  blnNotifyUser = True
+  ErrorChecker = True
+  ' Eventually get this email from the config.json file, once we have error
+  ' handling that can handle an error in the error handler. At the moment, if
+  ' any procedure in the call stack to get the email errors, we end up in a
+  ' loop until it crashes.
+  strHelpContact = vbNewLine & vbNewLine & "Email workflows@macmillan.com if" _
+    & " you need help. Be sure to attach the text file that was just produced."
 
-    ' ----- Check if FileName parameter was passed ----------------------------
-    If strValue = vbNullString Then
-        strValue = "UNKNOWN"
-    End If
+  ' ----- Check if parameter was passed ---------------------------------------
+  If strValue = vbNullString Then
+    strValue = "UNKNOWN"
+  End If
 
-    ' ----- Check for errors --------------------------------------------------
-    ' Make sure we actually have an error, cuz you never know.
-    If objError.Number <> 0 Then
+  ' ----- Check for errors ----------------------------------------------------
+  ' Make sure we actually have an error, cuz you never know.
+  If lngErrNumber <> 0 Then
 
-    ' ----- Handle specific errors --------------------------------------------
-    ' Each case should be a MacError enum. Even if we aren't doing anything
-    ' to fix the error, still enter the following:
-    '   Err.Source "MacFile_.<MethodName>"
-    '   Err.Description = "Description of the error for the log."
-    '   strErrMessage = "Message for the user if we're notifying them."
-        Select Case objError.Number
-            Case Is < 513
-                ' Errors 0 to 512 are system errors
-                strErrMessage = "Something unexpected happened. Please click" _
-                    & " OK to exit." & vbNewLine & "Value: " & strValue
-            Case MacError.err_GroupNameInvalid
-                Err.Description = "Invalid value for GroupName property: " & _
-                    strValue
-                strErrMessage = "The value you've entered for the GroupName " _
-                    & "property, is not valid. Make sure you only use file " & _
-                    "groups that are in the config.json file."
-            Case MacError.err_GroupNameNotSet
-                Err.Description = "GroupName property has not been Let."
-                strErrMessage = "You can't Get the GroupName property before" _
-                    & " it has been Let. Try the MacFile_.AssignFile method " _
-                    & "to create a new object in this class."
-            Case MacError.err_SpecificFileInvalid
-                Err.Description = "Invalid value for SpecificFile property: " _
-                    & strValue
-                strErrMessage = "The you've entered an invalid value for the" _
-                    & " SpecificFile property. Make sure you only use " & _
-                    "specific file types that are in the config.json file."
-            Case MacError.err_SpecificFileNotSet
-                Err.Description = "SpecificFile property has not been Let."
-                strErrMessage = "You can't Get the SpecificFile property " & _
-                    "before it has been Let. Try the MacFile_.AssignFile " & _
-                    "method to create a new object in this class."
-            Case MacError.err_DeleteThisDoc
-                Err.Description = "Can't delete file that is currently " & _
-                    "executing code: " & strValue
-                strErrMessage = "The file you are trying to delete is " & _
-                    "currently executing macro code."
-            Case MacError.err_TempDeleteFail
-                Err.Description = "Failed to delete the previous file in the " _
-                    & "temp directory: " & strValue
-                strErrMessage = "We can't download the file; a temp file " & _
-                    "is still there."
-            Case MacError.err_NoInternet
-                Err.Description = "No network connection. Download aborted."
-                strErrMessage = "We weren't able to download the file " & _
-                    "because we can't connect to the internet. Check your " & _
-                    "network connection and try again."
-            Case MacError.err_Http404
-                Err.Description = "File HTTP status 404. Check if DownloadURL" _
-                    & " is correct, and file is posted: " & strValue
-                strErrMessage = "Could not download file from the internet."
-            Case MacError.err_BadHttpStatus
-                Err.Description = "File HTTP status: " & strValue & _
-                    ". Download aborted."
-                strErrMessage = "There is some problem with the file you are" _
-                    & " trying to download."
-                ' Need to get Source as passed in object first, so do this last
-            Case MacError.err_DownloadFail
-                Err.Description = "File download failed: " & strValue
-                strErrMessage = "Download failed."
-            Case MacError.err_LocalDeleteFail
-                ' Utils.KillAll() will notify user if file is open
-                Err.Description = "File in final install location could not " _
-                    & "be deleted. If it was because the file was open, the " _
-                    & "user was notified: " & strValue
-                blnNotifyUser = False
-            Case MacError.err_LocalCopyFail
-                Err.Description = "File not saved to final directory: " & _
-                    strValue
-                strErrMessage = "There was an error installing the " & _
-                "Macmillan template."
-            Case MacError.err_LocalReadOnly
-                Err.Description = "Final dir for file is read-only: " & _
-                    strValue
-                strErrMessage = "The folder you are trying to access is " & _
-                 "read-only."
-            Case MacError.err_TempReadOnly
-                Err.Description = "Temp dir is read-only: " & strValue
-                strErrMessage = "Your temp folder is read-only."
-            Case MacError.err_TempMissing
-                Err.Description = "Temp directory is missing: " & strValue
-                strErrMessage = "There is an error with your temp folder."
-            Case MacError.err_FileNotThere
-                Err.Description = "File does not exist: " & strValue
-                strErrMessage = "The file " & strValue & " does " _
-                    & "not exist."
-            Case MacError.err_NotWordFormat
-                Err.Description = "File extension is not a native Word " & _
-                    "document or template: " & strValue
-                strErrMessage = "This file does not appear to be a Word " & _
-                    "file: " & strValue
-            Case MacError.err_ConfigPathNull
-                Err.Description = "FullConfigPath custom doc property is not " _
-                    & "set in the document."
-                strErrMessage = "We can't find the config.json file because " _
-                    & "the local path is not in the template properties."
-            Case MacError.err_RootDirInvalid
-                Err.Description = "Value for root directory in config.json is" _
-                    & " not an option in the RootDir property: " & strValue
-                strErrMessage = "The folder where we save the Tools template" _
-                    & " doesn't exist."
-            Case MacError.err_LogReadOnly
-                Err.Description = "Log file is read only: " & strValue
-                strErrMessage = "There is a problem with the logs."
-            Case Else
-                Err.Description = "Undocumented error - " & _
-                    objError.Description
-                strErrMessage = "Not sure what's going on here."
-        End Select
-
-    Else
-        Err.Description = "Everything's A-OK. Why are you even reading this?"
-        blnNotifyUser = False
+  ' ----- Handle specific errors ----------------------------------------------
+  ' Each case should be a MacError enum. Even if we aren't doing anything
+  ' to fix the error, still enter the following:
+  '   strErrDescription = "Description of the error for the log."
+  '   strErrMessage = "Message for the user if we're notifying them."
+  Select Case lngErrNumber
+  
+    Case 5941, 5834
+    ' 5941: Item not present in collection
+    ' 5834: Item with the specified name does not exist
+    ' Most common cause of these is referencing a style that doesn't exist.
+    
+    ' BUT: How can we be sure this means *style* is not present?
+    
+      'Anyway, If style is not present, add style
+      Dim myStyle As Style
+      Dim styleType As WdStyleType
+      If InStr(strValue, "span") > 0 Then
+        styleType = wdStyleTypeCharacter
+      Else
+        styleType = wdStyleTypeParagraphOnly
+      End If
+      Set myStyle = activeDoc.Styles.Add(strValue, styleType)
+      ErrorChecker = False
+      DebugPrint "ErrorChecker: False"
+      Exit Function
+    ' List all built-in errors we want to trap for before general sys error line
+    Case 91 ' Object variable or With block variable not set.
+      ' May be caused if `activeDoc` global var is not set
+      If activeDoc Is Nothing Then
+        Set activeDoc = ActiveDocument
         ErrorChecker = False
-    End If
+        DebugPrint "ErrorChecker: False"
+        Exit Function
+      End If
+      
+    Case Is < 513
+      ' Errors 0 to 512 are system errors
+      strErrMessage = "Something unexpected happened. Please click OK to exit." _
+        & vbNewLine & "Value: " & strValue
+    Case MacError.err_GroupNameInvalid
+      strErrDescription = "Invalid value for GroupName property: " & strValue
+      strErrMessage = "The value you've entered for the GroupName property, " _
+        & "is not valid. Make sure you only use file groups that are in the " _
+        & "config.json file."
+    Case MacError.err_GroupNameNotSet
+      strErrDescription = "GroupName property has not been Let."
+      strErrMessage = "You can't Get the GroupName property before it has " _
+        & "been Let. Try the MacFile_.AssignFile method to create a new object in this class."
+    Case MacError.err_SpecificFileInvalid
+      strErrDescription = "Invalid value for SpecificFile property: " _
+          & strValue
+      strErrMessage = "The you've entered an invalid value for the" _
+          & " SpecificFile property. Make sure you only use " & _
+          "specific file types that are in the config.json file."
+    Case MacError.err_SpecificFileNotSet
+      strErrDescription = "SpecificFile property has not been Let."
+      strErrMessage = "You can't Get the SpecificFile property " & _
+          "before it has been Let. Try the MacFile_.AssignFile " & _
+          "method to create a new object in this class."
+    Case MacError.err_DeleteThisDoc
+      strErrDescription = "Can't delete file that is currently " & _
+          "executing code: " & strValue
+      strErrMessage = "The file you are trying to delete is " & _
+          "currently executing macro code."
+    Case MacError.err_TempDeleteFail
+      strErrDescription = "Failed to delete the previous file in the " _
+          & "temp directory: " & strValue
+      strErrMessage = "We can't download the file; a temp file " & _
+          "is still there."
+    Case MacError.err_NoInternet
+      strErrDescription = "No network connection. Download aborted."
+      strErrMessage = "We weren't able to download the file " & _
+          "because we can't connect to the internet. Check your " & _
+          "network connection and try again."
+    Case MacError.err_Http404
+      strErrDescription = "File HTTP status 404. Check if DownloadURL" _
+          & " is correct, and file is posted: " & strValue
+      strErrMessage = "Could not download file from the internet."
+    Case MacError.err_BadHttpStatus
+      strErrDescription = "File HTTP status: " & strValue & _
+            ". Download aborted."
+      strErrMessage = "There is some problem with the file you are" _
+            & " trying to download."
+        ' Need to get Source as passed in object first, so do this last
+    Case MacError.err_DownloadFail
+      strErrDescription = "File download failed: " & strValue
+      strErrMessage = "Download failed."
+    Case MacError.err_LocalDeleteFail
+        ' genUtils.GeneralHelpers.KillAll() will notify user if file is open
+      strErrDescription = "File in final install location could not be " & _
+        "deleted. If the file was open, the user was notified: " & strValue
+      blnNotifyUser = False
+    Case MacError.err_LocalCopyFail
+      strErrDescription = "File not saved to final directory: " & strValue
+      strErrMessage = "There was an error installing the Macmillan template."
+    Case MacError.err_LocalReadOnly
+      strErrDescription = "Final dir for file is read-only: " & strValue
+      strErrMessage = "The folder you are trying to access is read-only."
+    Case MacError.err_TempReadOnly
+      strErrDescription = "Temp dir is read-only: " & strValue
+      strErrMessage = "Your temp folder is read-only."
+    Case MacError.err_TempMissing
+      strErrDescription = "Temp directory is missing: " & strValue
+       strErrMessage = "There is an error with your temp folder."
+    Case MacError.err_FileNotThere
+       strErrDescription = "File does not exist: " & strValue
+       strErrMessage = "The file " & strValue & " does " _
+            & "not exist."
+    Case MacError.err_NotWordFormat
+      strErrDescription = "File extension is not a native Word " & _
+            "document or template: " & strValue
+       strErrMessage = "This file does not appear to be a Word " & _
+            "file: " & strValue
+    Case MacError.err_ConfigPathNull
+       strErrDescription = "FullConfigPath custom doc property is not " _
+            & "set in the document."
+      strErrMessage = "We can't find the config.json file because " _
+            & "the local path is not in the template properties."
+    Case MacError.err_RootDirInvalid
+      strErrDescription = "Value for root directory in config.json is" _
+            & " not an option in the RootDir property: " & strValue
+      strErrMessage = "The folder where we save the Tools template" _
+          & " doesn't exist."
+    Case MacError.err_LogReadOnly
+      strErrDescription = "Log file is read only: " & strValue
+      strErrMessage = "There is a problem with the logs."
+    Case MacError.err_DirectoryMissing
+      strErrDescription = "The directory " & strValue & " is missing."
+      strErrMessage = strErrDescription
+    Case MacError.err_ParaIndexInvalid
+      strErrDescription = "The requested paragraph is out of range."
+      strErrMessage = strErrDescription
+    Case MacError.err_BacktickCharFound
+      strErrDescription = "Backtick (`) character found in manuscript. A " & _
+        "macro was probably run before and failed."
+      strErrMessage = strErrDescription
+    Case MacError.err_DocProtectionOn
+      strErrDescription = "Document protection is enabled. Ask original user" _
+        & " to unlock the file and try again."
+      strErrMessage = strErrDescription
+    Case MacError.err_NotArray
+      strErrDescription = "Variable is not an array."
+      strErrMessage = strErrDescription
+    Case Else
+      strErrDescription = "Undocumented error - " & strErrDescription
+      strErrMessage = "Not sure what's going on here."
+  End Select
 
-    ' ----- WRITE ERROR LOG ---------------------------------------------------
-    ' Output text file with error info, user could send via email.
-    ' Do not use WriteToLog function, because that sends errors here as well.
-    Dim strErrMsg As String
-    Dim LogFileNum As Long
-    Dim strTimeStamp As String
-    Dim strErrLog As Long
-    ' write error log to same location as current file
-    ' Format date so it can be part of file name. Only including date b/c users
-    ' will likely run things repeatedly before asking for help, and don't want
-    ' to generate a bunch of files.
-    strErrLog = ActiveDocument.Path & Application.PathSeparator & _
-        "MACRO_ERROR_" & Format(Date, "yyyy-mm-dd") & ".txt"
-    ' build error message, including timestamp
-    strErrMsg = Format(Time, "hh.mm.ss - ") & objError.Source & vbNewLine & _
-        objError.Number & ": " & objErr.Description & vbNewLine
-    LogFileNum = FreeFile ' next file number
-    Open strErrLog For Append As #LogFileNum ' creates the file if doesn't exist
-    Print #LogFileNum, strErrMsg ' write information to end of the text file
-    Close #LogFileNum ' close the file
+  Else
+      strErrDescription = "Everything's A-OK. Why are you even reading this?"
+      blnNotifyUser = False
+      ErrorChecker = False
+  End If
 
-    If blnNotifyUser = True Then
-        strErrMessage = strErrMessage & vbNewLine & vbNewLine & strHelpContact
-        MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
-            "Macmillan Tools Error"
-    End If
-ErrorCheckerFinish:
-    objError.Clear
-    Exit Function
+  ' ----- WRITE ERROR LOG ---------------------------------------------------
+  ' Output text file with error info, user could send via email.
+  ' Do not use WriteToLog function, because that sends errors here as well.
+
+  Dim strErrMsg As String
+  Dim LogFileNum As Long
+  Dim strTimeStamp As String
+  Dim strErrLog As String
+  Dim strFileName As String
+
+' Check activeDoc:
+  If activeDoc Is Nothing Then
+    Set activeDoc = ActiveDocument
+  End If
+
+  ' Write error log to same location as current file.
+  ' Format date so it can be part of file name. Only including date b/c users
+  ' will likely run things repeatedly before asking for help, and don't want
+  ' to generate a bunch of files if include time as well.
+  strFileName = Replace(Right(ActiveDocument.Name, InStrRev(activeDoc.Name, _
+    ".") - 1), " ", "")
+  strErrLog = ActiveDocument.Path & Application.PathSeparator & "ALERT_" & _
+    strFileName & "_" & Format(Date, "yyyy-mm-dd") & ".txt"
+'    DebugPrint strErrLog
+  ' build error message, including timestamp
+  strErrMsg = Format(Time, "hh:mm:ss - ") & strErrSource & vbNewLine & _
+      lngErrNumber & ": " & strErrDescription & vbNewLine
+  LogFileNum = FreeFile ' next file number
+  Open strErrLog For Append As #LogFileNum ' creates the file if doesn't exist
+  Print #LogFileNum, strErrMsg ' write information to end of the text file
+  Close #LogFileNum ' close the file
+  
+  ' Do not display alerts for Bookmaker project (automated)
+  If Left(Err.Source, InStr(Err.Source, ".") - 1) = "Bookmaker" Then
+    blnNotifyUser = False
+  End If
+  
+'  If blnNotifyUser = True Then
+'      strErrMessage = strErrMessage & vbNewLine & vbNewLine & strHelpContact
+'      MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
+'          "Macmillan Tools Error"
+'  End If
+  DebugPrint "ErrorChecker: " & ErrorChecker
+  Exit Function
 
 ErrorCheckerError:
-    ' Important note: Recursive error checking is perhaps a bad idea -- if the
-    ' same error gets triggered, procedure will get called too many times and
-    ' cause an "out of stack space" error and also crash.
-    ErrorChecker = True
+  ' Important note: Recursive error checking is perhaps a bad idea -- if the
+  ' same error gets triggered, procedure will get called too many times and
+  ' cause an "out of stack space" error and crash.
+  DebugPrint Err.Number & ": " & Err.Description
+  ErrorChecker = True
 End Function
 
+' ===== GlobalCleanup =========================================================
+' A variety of resetting/cleanup functions
 
+Sub GlobalCleanup()
+  On Error GoTo GlobalCleanupError
+  GeneralHelpers.zz_clearFind
+  If Not activeDoc Is Nothing Then
+    Set activeDoc = Nothing
+  End If
+  Application.DisplayAlerts = wdAlertsAll
+  Application.ScreenUpdating = True
+  Application.ScreenRefresh
+  On Error GoTo 0
+
+GlobalCleanupError:
+  ' Halts ALL execution, resets all variables, unloads all userforms, etc.
+  End
+End Sub
 
 ' ===== WriteToLog ============================================================
 ' Writes line to log for the file. LogMessage only needs text, timestamp will
@@ -296,18 +374,108 @@ Public Sub WriteToLog(LogMessage As String, Optional LogFilePath As String)
     Print #FileNum, strLogMessage ' write information to end of the text file
     Close #FileNum ' close the file
 WriteToLogFinish:
-    On Error GoTo 0
     Exit Sub
 
 WriteToLogError:
     Err.Source = Err.Source & strModule & "WriteToLog"
-    If MacroHelpers.ErrorChecker(Err, strLogFile) = False Then
+    If genUtils.GeneralHelpers.ErrorChecker(Err, strLogFile) = False Then
         Resume
     Else
-        Resume WriteToLogFinish
+        Call genUtils.GeneralHelpers.GlobalCleanup
     End If
 End Sub
 
+Public Function IsStyleInUse(StyleName As String) As Boolean
+  On Error GoTo IsStyleInUseError
+  
+' First confirm style is even in document to begin with
+  If GeneralHelpers.IsStyleInDoc(StyleName) = False Then
+    IsStyleInUse = False
+    Exit Function
+  End If
+
+'  ' If we need to do a Selection.Find use
+'  Selection.HomeKey Unit:=wdStory
+  Call genUtils.zz_clearFind
+  With activeDoc.Range.Find
+    .Text = ""
+    .Format = True
+    .Style = activeDoc.Styles(StyleName)
+    .Execute
+    
+    If .Found = True Then
+      IsStyleInUse = True
+    Else
+      IsStyleInUse = False
+    End If
+  End With
+  
+  Exit Function
+IsStyleInUseError:
+  Err.Source = strModule & "IsStyleInUse"
+  If ErrorChecker(Err, StyleName) = False Then
+    Resume
+  Else
+    Call genUtils.GlobalCleanup
+  End If
+End Function
+
+
+Public Function IsStyleInDoc(StyleName As String) As Boolean
+  On Error GoTo IsStyleInDocError
+  Dim blnResult As Boolean: blnResult = True
+  Dim TestStyle As Style
+  
+' Try to access this style. If not present in doc, will error
+  Set TestStyle = activeDoc.Styles.Item(StyleName)
+  IsStyleInDoc = blnResult
+  Exit Function
+  
+IsStyleInDocError:
+' 5941 = "The requested member of the collection does not exist."
+' Have to test here, ErrorChecker tries to create style if missing
+  If Err.Number = 5941 Then
+    blnResult = False
+    Resume Next
+  End If
+' Otherwise, usual error stuff:
+  Err.Source = strModule & "IsStyleInDoc"
+  If ErrorChecker(Err, StyleName) = False Then
+    Resume
+  Else
+    Call genUtils.GlobalCleanup
+  End If
+End Function
+
+Public Function SetPathSeparator(strOrigPath As String) As String
+' Must pass full path, throws error if no path separators found.
+  On Error GoTo SetPathSeparatorError
+  Dim strFinalPath As String
+  strFinalPath = strOrigPath
+  
+  Dim strCharacter(1 To 3) As String
+  strCharacter(1) = ":"
+  strCharacter(2) = "/"
+  strCharacter(3) = "\"
+  
+  Dim A As Long
+  For A = LBound(strCharacter) To UBound(strCharacter)
+    If InStr(strOrigPath, A) > 0 Then
+      strFinalPath = VBA.Replace(strFinalPath, A, Application.PathSeparator)
+    End If
+  Next A
+  
+  SetPathSeparator = strFinalPath
+  Exit Function
+  
+SetPathSeparatorError:
+  Err.Source = strModule & "SetPathSeparator"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
+End Function
 
 Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
 'LogPath is *full* path to log file, including file name. Created by CreateLogFileInfo sub, to be called before this one.
@@ -346,30 +514,100 @@ Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String
     
 End Function
 
+' ===== ParaIndex =============================================================
+' Returns the paragraph index of the current selection. Default is to return the
+' END paragraph index if selection is more than 1 paragraph. `UseEnd:=False`
+' would return the index of the START paragraph.
+Public Function ParaIndex(Optional UseEnd As Boolean = True) As Long
+  On Error GoTo ParaIndexError
+  If UseEnd = True Then
+    ParaIndex = activeDoc.Range(0, Selection.End).Paragraphs.Count
+  Else
+    ParaIndex = activeDoc.Range(0, Selection.Start).Paragraphs.Count
+  End If
+  Exit Function
+ParaIndexError:
+  Err.Source = strModule & "ParaIndex"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    genUtils.GlobalCleanup
+  End If
+End Function
+
+' ===== ParaInfo ==============================================================
+' In general: get a variety of info about a paragraph (or its document)
+' Most common usage: InfoType = wdActiveEndAdjustedPageNumber
+
+Public Function ParaInfo(paraInd As Long, InfoType As WdInformation) _
+  As Variant
+  On Error GoTo ParaInfoError
+  
+' Make sure we have an activeDoc
+  If activeDoc Is Nothing Then
+    Set activeDoc = ActiveDocument
+  End If
+  
+' Make sure our paragraph index is in range
+  If paraInd <= activeDoc.Paragraphs.Count Then
+  ' Set range for our paragraph
+    Dim rngPara As Range
+    Set rngPara = activeDoc.Paragraphs(paraInd).Range
+    ParaInfo = rngPara.Information(InfoType)
+  Else
+    Err.Raise MacError.err_ParaIndexInvalid
+  End If
+
+  Exit Function
+ParaInfoError:
+  Err.Source = strModule & "ParaInfo"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call GlobalCleanup
+  End If
+End Function
 
 Public Sub zz_clearFind()
-
+  On Error GoTo zz_clearFindError
+'  lngErrorCount = lngErrorCount + 1
+'  DebugPrint "zz_clearFind " & lngErrorCount
     Dim clearRng As Range
-    Set clearRng = ActiveDocument.Words.First
-
+    Set clearRng = activeDoc.Words.First
+'    DebugPrint activeDoc.FullName
+    
     With clearRng.Find
         .ClearFormatting
         .Replacement.ClearFormatting
-        .Text = ""
-        .Replacement.Text = ""
+        .Text = " "
+        .Replacement.Text = " "
         .Wrap = wdFindStop
         .Format = False
+        .Forward = True
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
-        .Execute
+        .Execute Replace:=wdReplaceOne
     End With
-    
+  Exit Sub
+zz_clearFindError:
+' Can't do any replace if doc is password protected, but this runs
+' as part of cleanup so need to handle that here:
+  If Err.Number = 9099 Then ' "Command is not available"
+    Exit Sub
+  End If
+  Err.Source = strModule & "zz_clearFind"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call GlobalCleanup
+  End If
 End Sub
 
 Public Function StoryArray() As Variant
+  On Error GoTo StoryArrayError
     '------------check for endnotes and footnotes--------------------------
     Dim strStories() As Variant
     
@@ -387,6 +625,14 @@ Public Function StoryArray() As Variant
     End If
     
     StoryArray = strStories
+  Exit Function
+StoryArrayError:
+  Err.Source = strModule & "StoryArray"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call GlobalCleanup
+  End If
 End Function
 
 Function PatternMatch(SearchPattern As String, SearchText As String, WholeString As Boolean) As Boolean
@@ -450,41 +696,41 @@ Function PatternMatch(SearchPattern As String, SearchText As String, WholeString
 End Function
 
 Function CheckSave()
-    ' Prompts user to save document before running the macro. If they click "Cancel" then CheckSave returns true and
-    ' you should exit your macro. also checks if document protection is on.
-    
-    Dim mainDoc As Document
-    Set mainDoc = ActiveDocument
-    Dim iReply As Integer
-    
-    '-----make sure document is saved
-    Dim docSaved As Boolean                                                                                                 'v. 3.1 update
-    docSaved = mainDoc.Saved
-    
-    If docSaved = False Then
-        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
-                vbOKCancel, "Error 1")
-        If iReply = vbOK Then
-            CheckSave = False
-            mainDoc.Save
-        Else
-            CheckSave = True
-            Exit Function
-        End If
-    End If
-    
-    '-----test protection
-    If ActiveDocument.ProtectionType <> wdNoProtection Then
-        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
-            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
-            "TIP: If you don't know the protection password, try pasting contents of this file into " & _
-            "a new file, and run the macro on that.", , "Error 2"
-        CheckSave = True
-        Exit Function
-    Else
-        CheckSave = False
-    End If
+'    ' Prompts user to save document before running the macro. If they click "Cancel" then CheckSave returns true and
+'    ' you should exit your macro. also checks if document protection is on.
+'
+'    Dim mainDoc As Document
+'    Set mainDoc = ActiveDocument
+'    Dim iReply As Integer
+'
+'    '-----make sure document is saved
+'    Dim docSaved As Boolean                                                                                                 'v. 3.1 update
+'    docSaved = mainDoc.Saved
+'
+'    If docSaved = False Then
+'        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+'            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
+'                vbOKCancel, "Error 1")
+'        If iReply = vbOK Then
+'            CheckSave = False
+'            mainDoc.Save
+'        Else
+'            CheckSave = True
+'            Exit Function
+'        End If
+'    End If
+'
+'    '-----test protection
+'    If ActiveDocument.ProtectionType <> wdNoProtection Then
+'        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
+'            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
+'            "TIP: If you don't know the protection password, try pasting contents of this file into " & _
+'            "a new file, and run the macro on that.", , "Error 2"
+'        CheckSave = True
+'        Exit Function
+'    Else
+'        CheckSave = False
+'    End If
 
 End Function
 
@@ -515,6 +761,45 @@ Function FootnotesExist() As Boolean
         End If
     Next StoryRange
     
+End Function
+
+
+Function IsArrayEmpty(Arr As Variant) As Boolean
+
+
+    Dim LB As Long
+    Dim UB As Long
+    
+    Err.Clear
+    On Error Resume Next
+    If IsArray(Arr) = False Then
+        ' we weren't passed an array, return True
+        IsArrayEmpty = True
+        Exit Function
+    End If
+
+    ' Attempt to get the UBound of the array. If the array is
+    ' unallocated, an error will occur.
+    UB = UBound(Arr, 1)
+    If (Err.Number <> 0) Then
+        IsArrayEmpty = True
+    Else
+  On Error GoTo IsArrayEmptyError
+        LB = LBound(Arr)
+        If LB > UB Then
+            IsArrayEmpty = True
+        Else
+            IsArrayEmpty = False
+        End If
+    End If
+  Exit Function
+IsArrayEmptyError:
+  Err.Source = strModule & "IsArrayEmpty"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call GlobalCleanup
+  End If
 End Function
 
 
@@ -584,67 +869,147 @@ Sub CreateTextFile(strText As String, suffix As String)
     End If
 End Sub
 
-Function GetText(styleName As String) As String
-    Dim fString As String
-    Dim fCount As Integer
-    
-    Application.ScreenUpdating = False
-    
-    fCount = 0
-    
-    'Move selection to start of document
-    Selection.HomeKey Unit:=wdStory
-    
-    On Error GoTo ErrHandler
-    
-        Selection.Find.ClearFormatting
-        With Selection.Find
-            .Text = ""
-            .Replacement.Text = ""
-            .Forward = True
-            .Wrap = wdFindStop
-            .Format = True
-            .Style = ActiveDocument.Styles(styleName)
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-        End With
-    
-    Do While Selection.Find.Execute = True And fCount < 100            'fCount < 100 so we don't get an infinite loop
-        fCount = fCount + 1
-        
-        'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
-        If InStr(Selection.Text, Chr(13)) > 0 Then
-            Selection.MoveEnd Unit:=wdCharacter, Count:=-1
-        End If
-        
-        'Assign selected text to variable
-        fString = fString & Selection.Text & vbNewLine
-        
-        'If the next character is a paragraph return, add that to the selection
-        'Otherwise the next Find will just select the same text with the paragraph return
-        If InStr(styleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
-            Selection.MoveEndWhile Cset:=Chr(13), Count:=1
-        End If
-    Loop
-        
-    If fCount = 0 Then
-        GetText = ""
+Function GetText(StyleName As String, Optional ReturnArray As Boolean = False) _
+  As Variant
+  On Error GoTo GetTextError
+  
+  Dim fCount As Integer
+  Dim styleArray() As Variant
+
+  fCount = 0
+  
+  'Move selection to start of document
+  Selection.HomeKey Unit:=wdStory
+
+      genUtils.zz_clearFind
+      With Selection.Find
+          .Text = ""
+          .Replacement.Text = ""
+          .Forward = True
+          .Wrap = wdFindStop
+          .Format = True
+          .Style = activeDoc.Styles(StyleName)
+          .MatchCase = False
+          .MatchWholeWord = False
+          .MatchWildcards = False
+          .MatchSoundsLike = False
+          .MatchAllWordForms = False
+      End With
+  
+  Do While Selection.Find.Execute = True And fCount < 100            'fCount < 100 so we don't get an infinite loop
+      fCount = fCount + 1
+      
+      'If paragraph return exists in selection, don't select last character (the last paragraph retunr)
+      If InStr(Selection.Text, Chr(13)) > 0 Then
+          Selection.MoveEnd Unit:=wdCharacter, Count:=-1
+      End If
+      
+      'Assign selected text to variable
+      ReDim Preserve styleArray(1 To fCount)
+      styleArray(fCount) = Selection.Text
+      
+      'If the next character is a paragraph return, add that to the selection
+      'Otherwise the next Find will just select the same text with the paragraph return
+      If InStr(StyleName, "span") = 0 Then        'Don't select terminal para mark if char style, sends into an infinite loop
+          Selection.MoveEndWhile Cset:=Chr(13), Count:=1
+      End If
+  Loop
+      
+  If fCount = 0 Then
+      ReDim styleArray(1 To 1)
+      styleArray(1) = ""
+  End If
+  
+  If ReturnArray = False Then
+    GetText = genUtils.GeneralHelpers.Reduce(styleArray)
+  Else
+    GetText = styleArray
+  End If
+  Exit Function
+  
+GetTextError:
+  Err.Source = strModule & "GetText"
+  If Err.Number = 5941 Or Err.Number = 5834 Then   ' The style is not present in the document
+      GetText = ""
+  Else
+    If ErrorChecker(Err) = False Then
+      Resume
     Else
-        GetText = fString
+      Call genUtils.GlobalCleanup
     End If
+  End If
+  
+End Function
+
+' ===== Reduce ================================================================
+' Iterates through item passed to it (currently only an Array, but in future
+' add support for Dictionary or Collection) and returns a string of all of the
+' elements. Add handling in future to return other summaries (add all numbers?)
+
+Public Function Reduce(StartGroup As Variant, Optional Delimiter As String = _
+  vbNewLine) As Variant
+  On Error GoTo ReduceError
+  If VBA.IsArray(StartGroup) = True Then
+    Dim strReturn As String
+    Dim A As Long
     
-    Application.ScreenUpdating = True
+    For A = LBound(StartGroup) To UBound(StartGroup)
+      strReturn = strReturn & StartGroup(A)
+      If A < UBound(StartGroup) Then
+        strReturn = strReturn & Delimiter
+      End If
+    Next A
     
-    Exit Function
+  Else
+    ' Error if not passed an array
+    Err.Raise MacError.err_NotArray
+  End If
+  Reduce = strReturn
+
+  Exit Function
+ReduceError:
+  Err.Source = strModule & "Reduce"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
+End Function
+
+
+' ===== StyleReplace ==========================================================
+' Replace all instances of a specific paragraph style with a different style.
+' If you want to "remove" the style, replace with "Normal" or whatever. Returns
+' False if no replacements were made.
+
+Public Function StyleReplace(SearchStyle As String, ReplaceStyle As String) As _
+  Boolean
+  On Error GoTo StyleReplaceError
+  
+  genUtils.zz_clearFind
+  With activeDoc.Range.Find
+    .Format = True
+    .Style = SearchStyle
+    .Replacement.Style = ReplaceStyle
+    .Execute Replace:=wdReplaceAll
     
-ErrHandler:
-    If Err.Number = 5941 Or Err.Number = 5834 Then   ' The style is not present in the document
-        GetText = ""
+    If .Found = True Then
+      StyleReplace = True
+    Else
+      StyleReplace = False
     End If
-        
+  
+  End With
+  genUtils.zz_clearFind
+  Exit Function
+  
+StyleReplaceError:
+  Err.Source = strModule & "StyleReplace"
+  If ErrorChecker(Err, ReplaceStyle) = False Then
+    Resume
+  Else
+    Call genUtils.GlobalCleanup
+  End If
 End Function
 
 Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeaderCol As Boolean) As Variant
@@ -665,7 +1030,7 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
             MsgBox "There was a problem with your Castoff.", vbCritical, "Error: CSV not available"
             Exit Function
         End If
-        'Debug.Print Path
+        'DebugPrint Path
         
         ' Do we need to remove a header row?
         Dim lngHeaderRow As Long
@@ -711,218 +1076,239 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
             If Len(lines(R)) > 0 Then
                 one_line = Split(lines(R), ",")
                 For C = lngHeaderCol To num_cols   ' start at 1 (not 0) if we are not using the header column
-                    'Debug.Print one_line(c)
+                    'DebugPrint one_line(c)
                     the_array((R - lngHeaderRow), (C - lngHeaderCol)) = one_line(C)   ' -1 because if are not using header row/column from CSV
                 Next C
             End If
         Next R
     
         ' Prove we have the data loaded.
-'         Debug.Print LBound(the_array)
-'         Debug.Print UBound(the_array)
+'         DebugPrint LBound(the_array)
+'         DebugPrint UBound(the_array)
 '         For R = 0 To (num_rows - 1)          ' -1 again if we removed the header row
 '             For c = 0 To num_cols      ' -1 again if we removed the header column
-'                 Debug.Print the_array(R, c) & " | ";
+'                 DebugPrint the_array(R, c) & " | ";
 '             Next c
-'             Debug.Print
+'             DebugPrint
 '         Next R
-'         Debug.Print "======="
+'         DebugPrint "======="
     
     LoadCSVtoArray = the_array
  
 End Function
 
-
 Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As Boolean = False) As Boolean
-    ' records/adjusts/checks settings and stuff before running the rest of the macro
-    ' returns TRUE if some check is bad and we can't run the macro
+  On Error GoTo StartupSettingsError
+' records/adjusts/checks settings and stuff before running the rest of the macro
+' returns TRUE if some check is bad and we can't run the macro
+  StartupSettings = False
+' mainDoc will only do stuff to main body text, not EN or FN stories. So
+' do all main-text-only stuff first, then loop through stories
+  Dim mainDoc As Document
+  Set mainDoc = activeDoc
+  
+' Section of registry/preferences file to store settings
+  Dim strSection As String
+  strSection = "MACMILLAN_MACROS"
+  
+' check if file has been saved
+  Dim iReply As Integer
+  
+'  Dim docSaved As Boolean
+'  docSaved = mainDoc.Saved
+
+' Commenting out MsgBox for now, return after writing wrapper function for
+' Bookmaker validator
+'  If docSaved = False Then
+'        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+'            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
+'                vbOKCancel, "Error 1")
+'        If iReply = vbOK Then
+'    mainDoc.Save
+'        Else
+'            StartupSettings = True
+'            Exit Function
+'        End If
+'  End If
     
-    ' mainDoc will only do stuff to main body text, not EN or FN stories. So
-    ' do all main-text-only stuff first, then loop through stories
-    Dim mainDoc As Document
-    Set mainDoc = ActiveDocument
     
-    ' Section of registry/preferences file to store settings
-    Dim strSection As String
-    strSection = "MACMILLAN_MACROS"
+' check if file has doc protection on, prompt user and quit function if it does
+' For now Err.Raise should divert the code from the MsgBox call, But I'll rm anyway
+  If mainDoc.ProtectionType <> wdNoProtection Then
+    Err.Raise MacError.err_DocProtectionOn
+'    MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
+'      "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
+'      "TIP: If you don't know the protection password, try pasting contents of this file into " & _
+'      "a new file, and run the macro on that.", , "Error 2"
+    StartupSettings = True
+    Exit Function
+  Else
+    StartupSettings = False
+  End If
+  
+  ' ========== Turn off screen updating ==========
+  Application.ScreenUpdating = False
+  
+  ' ========== STATUS BAR: store current setting and display ==========
+  System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
+  Application.DisplayStatusBar = True
     
-    ' ========== check if file has been saved, if not prompt user; if canceled, quit function ==========
-    Dim iReply As Integer
+  ' ========== Remove bookmarks ==========
+  Dim bkm As Bookmark
+  
+  For Each bkm In mainDoc.Bookmarks
+    bkm.Delete
+  Next bkm
     
-    Dim docSaved As Boolean
-    docSaved = mainDoc.Saved
+  ' ========== Save current cursor location in a bookmark ==========
+  ' Store current story, so we can return to it before selecting bookmark in Cleanup
+  System.ProfileString(strSection, "Current_Story") = Selection.StoryType
+  ' next line required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
+  Selection.Collapse Direction:=wdCollapseStart
+  mainDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
     
-    If docSaved = False Then
-        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
-                vbOKCancel, "Error 1")
-        If iReply = vbOK Then
-            StartupSettings = False
-            mainDoc.Save
-        Else
-            StartupSettings = True
-            Exit Function
-        End If
-    End If
-    
-    
-    ' ========== check if file has doc protection on, prompt user and quit function if it does ==========
-    If mainDoc.ProtectionType <> wdNoProtection Then
-        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
-            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
-            "TIP: If you don't know the protection password, try pasting contents of this file into " & _
-            "a new file, and run the macro on that.", , "Error 2"
+  ' ========== TRACK CHANGES: store current setting, turn off ==========
+  ' ==========   OPTIONAL: Check if changes present and offer to accept all ==========
+  System.ProfileString(strSection, "Current_Tracking") = mainDoc.TrackRevisions
+  mainDoc.TrackRevisions = False
+  
+'  If AcceptAll = True Then
+    If FixTrackChanges = False Then
         StartupSettings = True
-        Exit Function
-    Else
-        StartupSettings = False
     End If
+'  End If
     
     
-    ' ========== Turn off screen updating ==========
-    Application.ScreenUpdating = False
+' ========== Delete field codes ==========
+' Fields break cleanup and char styles, so we delete them (but retain their
+' result, if any). Furthermore, fields make no sense in a manuscript, so
+' even if they didn't break anything we don't want them.
+' Note, however, that even though linked endnotes and footnotes are
+' types of fields, this loop doesn't affect them.
     
-    
-    ' ========== STATUS BAR: store current setting and display ==========
-    System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
-    
-    
-    ' ========== Remove bookmarks ==========
-    Dim bkm As Bookmark
-    
-    For Each bkm In mainDoc.Bookmarks
-        bkm.Delete
-    Next bkm
-    
-    
-    ' ========== Save current cursor location in a bookmark ==========
-    ' Store current story, so we can return to it before selecting bookmark in Cleanup
-    System.ProfileString(strSection, "Current_Story") = Selection.StoryType
-    ' next line required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
-    Selection.Collapse Direction:=wdCollapseStart
-    mainDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    
-    ' ========== TRACK CHANGES: store current setting, turn off ==========
-    ' ==========   OPTIONAL: Check if changes present and offer to accept all ==========
-    System.ProfileString(strSection, "Current_Tracking") = mainDoc.TrackRevisions
-    mainDoc.TrackRevisions = False
-    
-    If AcceptAll = True Then
-        If FixTrackChanges = False Then
-            StartupSettings = True
-        End If
-    End If
-    
-    
-    ' ========== Delete field codes ==========
-    ' Fields break cleanup and char styles, so we delete them (but retain their
-    ' result, if any). Furthermore, fields make no sense in a manuscript, so
-    ' even if they didn't break anything we don't want them.
-    ' Note, however, that even though linked endnotes and footnotes are
-    ' types of fields, this loop doesn't affect them.
-    
-    Dim A As Long
-    Dim thisRange As Range
-    Dim objField As Field
-    Dim strContent As String
-    
-    ' StoriesUsed is optional; if an array of stories is not passed, just use the main text story here
-    If IsArrayEmpty(StoriesUsed) = True Then
-        ReDim StoriesUsed(1 To 1)
-        StoriesUsed(1) = wdMainTextStory
-    End If
+  Dim A As Long
+  Dim thisRange As Range
+  Dim objField As Field
+  Dim strContent As String
+  
+  ' StoriesUsed is optional; if an array of stories is not passed, just use the main text story here
+  If IsArrayEmpty(StoriesUsed) = True Then
+    ReDim StoriesUsed(1 To 1)
+    StoriesUsed(1) = wdMainTextStory
+  End If
 
-    For A = LBound(StoriesUsed) To UBound(StoriesUsed)
-        Set thisRange = ActiveDocument.StoryRanges(StoriesUsed(A))
-        For Each objField In thisRange.Fields
-'            Debug.Print thisRange.Fields.Count
-            If thisRange.Fields.Count > 0 Then
-                With objField
-'                    Debug.Print .Index & ": " & .Kind
-                    ' None or Cold means it has no result, so we just delete
-                    If .Kind = wdFieldKindNone Or .Kind = wdFieldKindCold Then
-                        .Delete
-                    Else ' It has a result, so we replace field w/ just its content
-                        strContent = .result
-                        .Select
-                        .Delete
-                        Selection.InsertAfter strContent
-                    End If
-                End With
-            End If
-        Next objField
+  For A = LBound(StoriesUsed) To UBound(StoriesUsed)
+    Set thisRange = activeDoc.StoryRanges(StoriesUsed(A))
+    For Each objField In thisRange.Fields
+'            DebugPrint thisRange.Fields.Count
+      If thisRange.Fields.Count > 0 Then
+        With objField
+'                    DebugPrint .Index & ": " & .Kind
+            ' None or Cold means it has no result, so we just delete
+          If .Kind = wdFieldKindNone Or .Kind = wdFieldKindCold Then
+            .Delete
+          Else ' It has a result, so we replace field w/ just its content
+            strContent = .result
+            .Select
+            .Delete
+            Selection.InsertAfter strContent
+          End If
+        End With
+      End If
+    Next objField
 
-    Next A
+  Next A
 
     
-    ' ========== Remove content controls ==========
-    ' Content controls also break character styles and cleanup
-    ' They are used by some imprints for frontmatter templates
-    ' for editorial, though.
-    ' Doesn't work at all for a Mac, so...
-    #If Win32 Then
-        ClearContentControls
-    #End If
-    
-    
+  ' ========== Remove content controls ==========
+  ' Content controls also break character styles and cleanup
+  ' They are used by some imprints for frontmatter templates
+  ' for editorial, though.
+  ' Doesn't work at all for a Mac, so...
+  #If Win32 Then
+      ClearContentControls
+  #End If
+  Exit Function
+  
+StartupSettingsError:
+  Err.Source = strModule & "StartupSettings"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
 End Function
 
 
 Private Function FixTrackChanges() As Boolean
+' returns True if changes were fixed or not present, False if changes remain in doc
+  On Error GoTo FixTrackChangesError
     Dim N As Long
     Dim oComments As Comments
     Set oComments = ActiveDocument.Comments
     
-    Application.ScreenUpdating = False
-    
     FixTrackChanges = True
-    
-    Application.DisplayAlerts = False
     
     'See if there are tracked changes or comments in document
     On Error Resume Next
     Selection.HomeKey Unit:=wdStory   'start search at beginning of doc
     WordBasic.NextChangeOrComment       'search for a tracked change or comment. error if none are found.
     
-    'If there are changes, ask user if they want macro to accept changes or cancel
-    If Err = 0 Then
-        If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
-            & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
-            & vbCr & vbCr & "Click CANCEL to stop the Bookmaker Requirements Check and deal with the tracked changes and comments on your own.", _
-            273, "Are those tracked changes I see?") = vbCancel Then           '273 = vbOkCancel(1) + vbCritical(16) + vbDefaultButton2(256)
-                FixTrackChanges = False
-                Exit Function
-        Else 'User clicked OK, so accept all tracked changes and delete all comments
-            ActiveDocument.AcceptAllRevisions
+    ' Commenting out MsgBox for Bookmaker Validator right now
+    ' When have MsgBox wrapper function, can turn it back on.
+'    'If there are changes, ask user if they want macro to accept changes or cancel
+    If Err.Number = 0 Then
+'        If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
+'            & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
+'            & vbCr & vbCr & "Click CANCEL to stop the Bookmaker Requirements Check and deal with the tracked changes and comments on your own.", _
+'            273, "Are those tracked changes I see?") = vbCancel Then           '273 = vbOkCancel(1) + vbCritical(16) + vbDefaultButton2(256)
+'                FixTrackChanges = False
+'                Exit Function
+'        Else 'User clicked OK, so accept all tracked changes and delete all comments
+            activeDoc.AcceptAllRevisions
             For N = oComments.Count To 1 Step -1
                 oComments(N).Delete
             Next N
             Set oComments = Nothing
-        End If
+'        End If
+    Else
+      FixTrackChanges = True
     End If
+    Exit Function
     
-    On Error GoTo 0
-    Application.DisplayAlerts = True
+FixTrackChangesError:
+  Err.Source = strModule & "FixTrackChanges"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
     
 End Function
 
 
 Private Sub ClearContentControls()
+  On Error GoTo ClearContentControlsError
     'This is it's own sub because doesn't exist in Mac Word, breaks whole sub if included
     Dim cc As ContentControl
     
     For Each cc In ActiveDocument.ContentControls
         cc.Delete
     Next
-
+  Exit Sub
+ClearContentControlsError:
+  Err.Source = strModule & "ClearContentControls"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
 End Sub
 
 
 
-
-Sub CleanUp()
+Sub Cleanup()
+  On Error GoTo CleanUpError
     ' resets everything from StartupSettings sub.
     Dim cleanupDoc As Document
     Set cleanupDoc = ActiveDocument
@@ -972,11 +1358,20 @@ Sub CleanUp()
     ' Turn Screen Updating on and refresh screen
     Application.ScreenUpdating = True
     Application.ScreenRefresh
-    
+    Exit Sub
+CleanUpError:
+  Err.Source = strModule & "CleanUp"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
 End Sub
 
-Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                                             'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
-'    Debug.Print StoryType
+Function HiddenTextSucks(StoryType As WdStoryType) As Boolean
+'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
+  On Error GoTo HiddenTextSucksError
+'    DebugPrint StoryType
     Dim activeRng As Range
     Set activeRng = ActiveDocument.StoryRanges(StoryType)
     ' No, really, it does. Why is that even an option?
@@ -1021,12 +1416,21 @@ Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                   
     Loop
     
     ' Now restore Hidden Text view settings
-    ActiveDocument.ActiveWindow.View.ShowAll = blnCurrentHiddenView
+    activeDoc.ActiveWindow.View.ShowAll = blnCurrentHiddenView
+    Exit Function
+HiddenTextSucksError:
+    Err.Source = strModule & "HiddenTextSucks"
+    If ErrorChecker(Err) = False Then
+        Resume
+    Else
+        genUtils.GeneralHelpers.GlobalCleanup
+    End If
     
 End Function
 
 
 Sub ClearPilcrowFormat(StoryType As WdStoryType)
+ On Error GoTo ClearPilcrowFormatError
 ' A pilcrow is the paragraph mark symbol. This clears all formatting and styles from
 ' pilcrows as found via ^p
     ' Change to story ranges?
@@ -1057,10 +1461,18 @@ Sub ClearPilcrowFormat(StoryType As WdStoryType)
         .MatchAllWordForms = False
         .Execute Replace:=wdReplaceAll
     End With
-
+  Exit Sub
+ClearPilcrowFormatError:
+  Err.Source = strModule & "ClearPilcrowFormat"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    genUtils.GeneralHelpers.GlobalCleanup
+  End If
 End Sub
 
-Sub StyleAllHyperlinks(StoriesInUse As Variant)
+Sub StyleAllHyperlinks(Optional StoriesInUse As Variant)
+  On Error GoTo StyleAllHyperlinksError
     ' StoriesInUse is an array of wdStoryTypes in use
     ' Clears active links and adds macmillan URL char styles
     ' to any proper URLs.
@@ -1071,20 +1483,28 @@ Sub StyleAllHyperlinks(StoriesInUse As Variant)
     
     Call zz_clearFind
     
-    For S = 1 To UBound(StoriesInUse)
+    For S = LBound(StoriesInUse) To UBound(StoriesInUse)
         'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
         Call StyleHyperlinksA(StoryType:=(StoriesInUse(S)))
     Next S
     
     Call AutoFormatHyperlinks
     
-    For S = 1 To UBound(StoriesInUse)
+    For S = LBound(StoriesInUse) To UBound(StoriesInUse)
         Call StyleHyperlinksB(StoryType:=(StoriesInUse(S)))
     Next S
-    
+ Exit Sub
+StyleAllHyperlinksError:
+  Err.Source = strModule & "StyleAllHyperlinks"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    genUtils.GeneralHelpers.GlobalCleanup
+  End If
 End Sub
 
 Private Sub StyleHyperlinksA(StoryType As WdStoryType)
+ On Error GoTo StyleHyperlinksAError
     ' PRIVATE, if you want to style hyperlinks from another module,
     ' call StyleAllHyperlinks sub above.
     ' added by Erica 2014-10-07, v. 3.4
@@ -1094,19 +1514,32 @@ Private Sub StyleHyperlinksA(StoryType As WdStoryType)
     ' this first bit removes all live hyperlinks from document
     ' we want to remove these from urls AND text; will add back to just urls later
     Dim activeRng As Range
-    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+
+    Set activeRng = activeDoc.StoryRanges(StoryType)
     ' remove all embedded hyperlinks regardless of character style
-    With activeRng
-        While .Hyperlinks.Count > 0
-            .Hyperlinks(1).Delete
-        Wend
-    End With
+    ' Must use Fields obj not Hyperlink obj because if "empty" hyperlink is in
+    ' doc, it will return as part of the Hyperlinks collection but will error
+    ' when try to delete or access any properties.
+    Dim fld As Field
+    If activeRng.Fields.Count > 0 Then
+      For Each fld In activeRng.Fields
+      ' wdFieldKindNone = invalid field
+        If fld.Kind <> wdFieldKindNone And fld.Type = wdFieldHyperlink Then
+        ' If field is a link but no text appears in the document for it,
+        ' just delete the whole thing (otherwise replace link w/ display text)
+          If Len(fld.result.Text) = 0 Then
+            fld.Delete
+          Else
+            fld.Unlink
+          End If
+        End If
+      Next fld
+    End If
+
     '------------------------------------------
     'removes all hyperlink styles
     Dim HyperlinkStyleArray(3) As String
     Dim P As Long
-    
-On Error GoTo LinksErrorHandler:
     
     HyperlinkStyleArray(1) = "Hyperlink"        'built-in style applied automatically to links
     HyperlinkStyleArray(2) = "FollowedHyperlink"    'built-in style applied automatically
@@ -1132,11 +1565,9 @@ On Error GoTo LinksErrorHandler:
         End With
     Next
     
-On Error GoTo 0
-    
     Exit Sub
     
-LinksErrorHandler:
+StyleHyperlinksAError:
         '5834 means item does not exist
         '5941 means style not present in collection
         If Err.Number = 5834 Or Err.Number = 5941 Then
@@ -1152,14 +1583,18 @@ LinksErrorHandler:
 '                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
 '            End If
         Else
-            MsgBox "Error " & Err.Number & ": " & Err.Description
-            On Error GoTo 0
-            Exit Sub
+          Err.Source = strModule & "StyleHyperlinksA"
+          If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+            Resume
+          Else
+            Call genUtils.GeneralHelpers.GlobalCleanup
+          End If
         End If
 
 End Sub
 
 Private Sub AutoFormatHyperlinks()
+  On Error GoTo AutoFormatHyperlinksError
     ' PRIVATE, if you want to style hyperlinks from another module,
     ' call StyleAllHyperlinks sub above.
     '--------------------------------------------------
@@ -1199,7 +1634,7 @@ Private Sub AutoFormatHyperlinks()
         .AutoFormatReplacePlainTextEmphasis = False
         .AutoFormatReplaceHyperlinks = True
         ' Perform AutoFormat
-        ActiveDocument.Content.AutoFormat
+        activeDoc.Content.AutoFormat
         ' Restore original AutoFormat settings
         .AutoFormatApplyHeadings = f1
         .AutoFormatApplyLists = f2
@@ -1215,22 +1650,19 @@ Private Sub AutoFormatHyperlinks()
     
     'This bit autoformats hyperlinks in endnotes and footnotes
     ' from http://www.vbaexpress.com/forum/showthread.php?52466-applying-hyperlink-styles-in-footnotes-and-endnotes
-    Dim oDoc As Document
     Dim oTemp As Document
     Dim oNote As Range
     Dim oRng As Range
+
+    Set oTemp = Documents.Add(Visible:=False)
     
-    'oDoc.Save      ' Already saved active doc?
-    Set oDoc = ActiveDocument
-    Set oTemp = Documents.Add(Template:=oDoc.FullName, Visible:=False)
-    
-    If oDoc.Footnotes.Count >= 1 Then
+    If activeDoc.Footnotes.Count >= 1 Then
         Dim oFN As Footnote
-        For Each oFN In oDoc.Footnotes
+        For Each oFN In activeDoc.Footnotes
             Set oNote = oFN.Range
             Set oRng = oTemp.Range
             oRng.FormattedText = oNote.FormattedText
-            'oRng.Style = "Footnote Text"
+            'oRng.Style= "Footnote Text"
             Options.AutoFormatReplaceHyperlinks = True
             oRng.AutoFormat
             oRng.End = oRng.End - 1
@@ -1239,13 +1671,13 @@ Private Sub AutoFormatHyperlinks()
         Set oFN = Nothing
     End If
     
-    If oDoc.Endnotes.Count >= 1 Then
+    If activeDoc.Endnotes.Count >= 1 Then
         Dim oEN As Endnote
-        For Each oEN In oDoc.Endnotes
+        For Each oEN In activeDoc.Endnotes
             Set oNote = oEN.Range
             Set oRng = oTemp.Range
             oRng.FormattedText = oNote.FormattedText
-            'oRng.Style = "Endnote Text"
+            'oRng.Style= "Endnote Text"
             Options.AutoFormatReplaceHyperlinks = True
             oRng.AutoFormat
             oRng.End = oRng.End - 1
@@ -1258,16 +1690,25 @@ Private Sub AutoFormatHyperlinks()
     Set oTemp = Nothing
     Set oRng = Nothing
     Set oNote = Nothing
-    
+  Exit Sub
+  
+AutoFormatHyperlinksError:
+  Err.Source = strModule & "AutoFormatHyperlinks"
+  If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
 End Sub
 
 Private Sub StyleHyperlinksB(StoryType As WdStoryType)
+  On Error GoTo StyleHyperlinksBError
     ' PRIVATE, if you want to style hyperlinks from another module,
     ' call StyleAllHyperlinks sub above.
     '--------------------------------------------------
     ' apply macmillan URL style to hyperlinks we just tagged in Autoformat
     Dim activeRng As Range
-    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    Set activeRng = activeDoc.StoryRanges(StoryType)
     With activeRng.Find
         .ClearFormatting
         .Replacement.ClearFormatting
@@ -1294,6 +1735,35 @@ Private Sub StyleHyperlinksB(StoryType As WdStoryType)
             .Hyperlinks(1).Delete
         Wend
     End With
-    
+  Exit Sub
+StyleHyperlinksBError:
+  Err.Source = strModule & "StyleHyperlinksB"
+  If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
 End Sub
 
+
+' ===== IsNewLine =============================================================
+' Returns True if the string parameter contains a new line and ONLY a new line.
+' Making a separate function to test all kinds of new lines, since sometimes
+' files contain mixed line ending characters. Also note that vbNewLine constant
+' returns different on Win vs. Mac 2011 vs. Mac 2016
+
+Public Function IsNewLine(strValue As String) As Boolean
+  On Error GoTo IsNewLineError
+  If strValue = vbCr Or strValue = vbLf Or strValue = vbCr & vbLf Then
+    IsNewLine = True
+  End If
+  Exit Function
+  
+IsNewLineError:
+  Err.Source = strModule & "IsNewLine"
+  If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call genUtils.GeneralHelpers.GlobalCleanup
+  End If
+End Function
