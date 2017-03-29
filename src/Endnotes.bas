@@ -24,7 +24,7 @@ Dim activeRng As Range
 ' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 '    GLOBAL VARIABLES and CONSTANTS
 ' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Private Const c_strEndnotes As String = "genUtils.Endnotes."
+Private Const c_strEndnotes As String = "MacroHelpers.Endnotes."
 
 ' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 '    PUBLIC PROCEDURES
@@ -32,11 +32,11 @@ Private Const c_strEndnotes As String = "genUtils.Endnotes."
 ' ===== EndnoteCheck ==========================================================
 ' Call this function to run automated endnote cleanup for validator.
 
-Public Function EndnoteCheck() As genUtils.Dictionary
+Public Function EndnoteCheck() As Dictionary
   On Error GoTo EndnoteCheckError
   
-  Dim dictReturn As genUtils.Dictionary
-  Set dictReturn = New genUtils.Dictionary
+  Dim dictReturn As Dictionary
+  Set dictReturn = New Dictionary
   
   Dim blnNotesExist As Boolean
   blnNotesExist = NotesExist()
@@ -56,7 +56,7 @@ EndnoteCheckError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -72,7 +72,7 @@ Public Sub EndnoteDeEmbed()
   blnNotesExist = NotesExist()
   
   If blnNotesExist = True Then
-    Dim dictStep As genUtils.Dictionary
+    Dim dictStep As Dictionary
     Set dictStep = EndnoteUnlink(p_blnAutomated:=False)
   Else
     MsgBox "Sorry, no linked endnotes found in document. Click OK to exit" _
@@ -104,12 +104,12 @@ End Function
 ' the document, with headings for each chapter. Note numbers restart at 1 for
 ' each chapter.
 
-Private Function EndnoteUnlink(p_blnAutomated As Boolean) As genUtils.Dictionary
+Private Function EndnoteUnlink(p_blnAutomated As Boolean) As Dictionary
   On Error GoTo EndnoteUnlinkError
   
   ' --------- Declare and set variables ---------------
-  Dim dictReturn As genUtils.Dictionary
-  Set dictReturn = New genUtils.Dictionary
+  Dim dictReturn As Dictionary
+  Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
 
   Dim palgraveTag As Boolean
@@ -175,7 +175,7 @@ Private Function EndnoteUnlink(p_blnAutomated As Boolean) As genUtils.Dictionary
     Set objProgressNotes = New ProgressBar
     
     objProgressNotes.Title = strTitle
-    Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=objProgressNotes, _
+    Call ClassHelpers.UpdateBarAndWait(Bar:=objProgressNotes, _
       Status:=strStatus, Percent:=sglPercentComplete)
   End If
 ' -----------------------------------------------------------------------
@@ -285,7 +285,7 @@ Private Function EndnoteUnlink(p_blnAutomated As Boolean) As genUtils.Dictionary
             sglPercentComplete = (((lngNoteCount / lngTotalNotes) * 0.95) + 0.04)
             strCountMsg = "* Unlinking endnote " & lngNoteCount & " of " & _
               lngTotalNotes & vbNewLine & strStatus
-            Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=objProgressNotes, _
+            Call ClassHelpers.UpdateBarAndWait(Bar:=objProgressNotes, _
               Status:=strCountMsg, Percent:=sglPercentComplete)
           End If
         End If
@@ -322,7 +322,7 @@ Private Function EndnoteUnlink(p_blnAutomated As Boolean) As genUtils.Dictionary
 ' ----- Delete section breaks -------------------------------------------------
 ' Since we don't need them for endnotes any more. Before rolling this out to
 ' users though, need to deal with other uses for section breaks (like page numbers)
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   With activeDoc.Range.Find
     .Text = "^b"  ' Section break character
     .Replacement.Text = vbNullString
@@ -346,7 +346,7 @@ EndnoteUnlinkError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -461,6 +461,6 @@ AddNoteTextError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function

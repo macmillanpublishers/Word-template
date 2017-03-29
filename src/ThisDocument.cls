@@ -279,7 +279,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
         Dim A As Long
         Dim B As Long
         Dim C As Long
-        Dim H As Long
+        Dim h As Long
         Dim NewToolbar As CommandBar
 
         Dim strImageName As String
@@ -405,5 +405,6 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
     #End If
 
 End Sub
+
 
 
