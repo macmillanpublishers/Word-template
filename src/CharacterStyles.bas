@@ -565,7 +565,7 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
 ' ------------tag key styles---------------------------------------------------
   Dim tagStyleFindArray(11) As Boolean
   Dim tagStyleReplaceArray(11) As String
-  Dim G As Long
+  Dim g As Long
   
   tagStyleFindArray(1) = False        'Bold
   tagStyleFindArray(2) = False        'Italic
@@ -589,9 +589,9 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
   tagStyleReplaceArray(11) = "`a|^&|a`"
 
   Call MacroHelpers.zz_clearFind
-  For G = 1 To UBound(tagStyleFindArray())
+  For g = 1 To UBound(tagStyleFindArray())
   
-    tagStyleFindArray(G) = True
+    tagStyleFindArray(g) = True
     
     If tagStyleFindArray(8) = True Then
       tagStyleFindArray(1) = True
@@ -615,7 +615,7 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
       tagStyleFindArray(4) = False ' reset tags for strikethrough
     End If
     With activeRng.Find
-      .Replacement.Text = tagStyleReplaceArray(G)
+      .Replacement.Text = tagStyleReplaceArray(g)
       .Wrap = wdFindContinue
       .Format = True
       .Font.Bold = tagStyleFindArray(1)
@@ -631,7 +631,7 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
       .Execute Replace:=wdReplaceAll
     End With
   
-    tagStyleFindArray(G) = False
+    tagStyleFindArray(g) = False
 
   Next
   Exit Sub

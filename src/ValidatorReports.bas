@@ -1505,17 +1505,17 @@ Private Function SectionRange(ParaIndexArray() As Variant) As Variant
   ReDim Preserve rangeArray(lngLBound To lngUBound)
   
 ' G is array index number
-  Dim G As Long
+  Dim g As Long
   Dim lngStart As Long
   Dim lngEnd As Long
 
 ' Loop through passed array
-  For G = lngLBound To lngUBound
+  For g = lngLBound To lngUBound
   ' Determine start and end section index numbers
-    lngStart = ParaIndexArray(G)
+    lngStart = ParaIndexArray(g)
 '    DebugPrint lngStart
-    If G < lngUBound Then
-      lngEnd = ParaIndexArray(G + 1) - 1
+    If g < lngUBound Then
+      lngEnd = ParaIndexArray(g + 1) - 1
     Else
       lngEnd = lngParaCount
     End If
@@ -1538,8 +1538,8 @@ Private Function SectionRange(ParaIndexArray() As Variant) As Variant
     
     End With
   ' Add range to array
-    Set rangeArray(G) = rngSection
-  Next G
+    Set rangeArray(g) = rngSection
+  Next g
   
   SectionRange = rangeArray()
   Exit Function
@@ -3302,15 +3302,15 @@ Private Sub ISBNcleanup()
     ' a character later, it won't return anything because the whole string needs to have the
     ' style applied for it to be found.
 
-    Dim G As Long
-    For G = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
+    Dim g As Long
+    For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
 
         'Move selection to start of document
         Selection.HomeKey Unit:=wdStory
 
         With Selection.Find
             .ClearFormatting
-            .Text = strISBNtextArray(G)
+            .Text = strISBNtextArray(g)
             .Replacement.ClearFormatting
             .Replacement.Text = ""
             .Forward = True
@@ -3327,7 +3327,7 @@ Private Sub ISBNcleanup()
 
         Selection.Find.Execute Replace:=wdReplaceAll
 
-    Next G
+    Next g
 
 Exit Sub
 
