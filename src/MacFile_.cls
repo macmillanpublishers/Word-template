@@ -670,7 +670,7 @@ Public Function Download() As Boolean
         Set oStream = CreateObject("ADODB.Stream")
         oStream.Open
         oStream.Type = 1
-        oStream.Write httpRequest.ResponseBody
+        oStream.Write httpRequest.responseBody
         oStream.SaveToFile FullTempPath, 2 ' 1 = no overwrite, 2 = overwrite
         oStream.Close
         Set oStream = Nothing

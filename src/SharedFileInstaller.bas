@@ -93,7 +93,7 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
         ' functions to create directories if they don't exist yet
         
         ' If last mod date less than 1 day ago, CheckLog = True
-        blnLogUpToDate(B) = CheckLog(strStyleDir(B), strLogDir(B), strFullLogPath(B))
+        blnLogUpToDate(B) = MacroHelpers.CheckLog(strStyleDir(B), strLogDir(B), strFullLogPath(B))
         'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
         
         ' Check if template exists, if not create any missing directories
@@ -396,4 +396,40 @@ Private Function ImportVariable(strFile As String) As String
 End Function
 
 
+Private Sub CloseOpenDocs()
+
+    '-------------Check for/close open documents---------------------------------------------
+    Dim strInstallerName As String
+    Dim strSaveWarning As String
+    Dim objDocument As Document
+    Dim B As Long
+    Dim doc As Document
+    
+    strInstallerName = ThisDocument.Name
+
+        'MsgBox "Installer Name: " & strInstallerName
+        'MsgBox "Open docs: " & Documents.Count
+
+
+    If Documents.Count > 1 Then
+        strSaveWarning = "All other Word documents must be closed to run the macro." & vbNewLine & vbNewLine & _
+            "Click OK and I will save and close your documents." & vbNewLine & _
+            "Click Cancel to exit without running the macro and close the documents yourself."
+        If MsgBox(strSaveWarning, vbOKCancel, "Close documents?") = vbCancel Then
+            ActiveDocument.Close
+            Exit Sub
+        Else
+            For Each doc In Documents
+                On Error Resume Next        'To skip error if user is prompted to save new doc and clicks Cancel
+                    'Debug.Print doc.Name
+                    If doc.Name <> strInstallerName Then       'But don't close THIS document
+                        doc.Save   'separate step to trigger Save As prompt for previously unsaved docs
+                        doc.Close
+                    End If
+                On Error GoTo 0
+            Next doc
+        End If
+    End If
+    
+End Sub
 

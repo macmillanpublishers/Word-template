@@ -11,7 +11,7 @@ Option Explicit
 Option Base 1
 
 Private activeRng As Range
-Private Const strCleanup As String = "MacroHelpers.CleanupMacro."
+Private Const strCleanup As String = "CleanupMacro."
 
 Public Function MacmillanManuscriptCleanup() As Dictionary
   On Error GoTo MacmillanManuscriptCleanupError
@@ -107,7 +107,7 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   
   For S = 1 To UBound(stStories())
     Call MacroHelpers.ClearPilcrowFormat(StoryType:=(stStories(S)))
-    Call MacroHelpers.CleanupMacro.CleanSomeSymbols(StoryTypes:=(stStories(S)))
+    Call CleanSomeSymbols(StoryTypes:=(stStories(S)))
   Next S
   
   '-----------Find/Replace with Wildcards = False------------------------------
@@ -122,7 +122,7 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   For S = 1 To UBound(stStories())
   ' has to be alone b/c Match Wildcards has to be disabled: Smart Quotes,
   ' Unicode (ellipse), section break
-    Call MacroHelpers.CleanupMacro.RmNonWildcardItems(StoryType:=(stStories(S)))
+    Call RmNonWildcardItems(StoryType:=(stStories(S)))
   Next S
   
   Call MacroHelpers.zz_clearFind
@@ -136,7 +136,7 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   
   For S = 1 To UBound(stStories())
 ' tags styled page breaks, tabs
-    Call MacroHelpers.CleanupMacro.PreserveStyledCharactersA(StoryType:= _
+    Call PreserveStyledCharactersA(StoryType:= _
       (stStories(S)))
   Next S
   Call MacroHelpers.zz_clearFind
@@ -151,7 +151,7 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   
   For S = 1 To UBound(stStories())
 ' v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
-    Call MacroHelpers.CleanupMacro.RmWhiteSpaceB(StoryType:=(stStories(S)))
+    Call RmWhiteSpaceB(StoryType:=(stStories(S)))
   Next S
   
   Call MacroHelpers.zz_clearFind
@@ -165,7 +165,7 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   
   For S = 1 To UBound(stStories())
 ' replaces character tags with actual character
-    Call MacroHelpers.CleanupMacro.PreserveStyledCharactersB(StoryType:= _
+    Call PreserveStyledCharactersB(StoryType:= _
       (stStories(S)))
   Next S
   
@@ -179,14 +179,14 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
-    Call MacroHelpers.CleanupMacro.FixUnderlines(StoryType:=(stStories(S)))
+    Call FixUnderlines(StoryType:=(stStories(S)))
   Next S
   
   Call MacroHelpers.zz_clearFind
 
   ' ----------- remove Shape objects
   For S = 1 To UBound(stStories())
-    Call MacroHelpers.CleanupMacro.ShapeDelete
+    Call ShapeDelete
   Next S
   
   Call MacroHelpers.zz_clearFind
@@ -198,7 +198,7 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
 
-  Call MacroHelpers.CleanUp
+  Call MacroHelpers.Cleanup
   Unload oProgressCleanup
     
 '    MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun

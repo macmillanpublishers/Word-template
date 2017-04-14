@@ -2562,36 +2562,7 @@ End Function
 '    End If
 '
 'End Function
-'
-'
-'Private Function FixTrackChanges() As Boolean
-'    Dim N As Long
-'    Dim oComments As Comments
-'    Set oComments = ActiveDocument.Comments
-'
-'    'See if there are tracked changes or comments in document
-'    On Error Resume Next
-'    Selection.HomeKey Unit:=wdStory   'start search at beginning of doc
-'    WordBasic.NextChangeOrComment       'search for a tracked change or comment. error if none are found.
-'
-'    'If there are changes, ask user if they want macro to accept changes or cancel
-'    If Err = 0 Then
-'        If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
-'            & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
-'            & vbCr & vbCr & "Click CANCEL to stop the Bookmaker Requirements Check and deal with the tracked changes and comments on your own.", _
-'            273, "Are those tracked changes I see?") = vbCancel Then           '273 = vbOkCancel(1) + vbCritical(16) + vbDefaultButton2(256)
-'                FixTrackChanges = False
-'                Exit Function
-'        Else 'User clicked OK, so accept all tracked changes and delete all comments
-'            ActiveDocument.AcceptAllRevisions
-'            For N = oComments.Count To 1 Step -1
-'                oComments(N).Delete
-'            Next N
-'            Set oComments = Nothing
-'        End If
-'    End If
-'
-'End Function
+
 '
 'Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String, Stories() As Variant) As String
 '    'Called from GoodBadStyles sub if torDOTcom parameter is set to True.

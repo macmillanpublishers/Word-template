@@ -21,7 +21,7 @@ Sub UniversalCastoff()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call CleanUp
+        Call MacroHelpers.Cleanup
         Exit Sub
     End If
     
@@ -159,9 +159,9 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
     strCastoffs
     
     '-------------Report castoff info to user----------------------------------------------------------------
-    Call CreateTextFile(strText:=strReportText, suffix:="Castoff")
+    Call MacroHelpers.CreateTextFile(strText:=strReportText, suffix:="Castoff")
     
-    Call CleanUp
+    Call MacroHelpers.Cleanup
     Unload FormInputs
             
 End Sub
@@ -188,14 +188,14 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     Dim lngFootnotesPages As Long
     Dim lngNotesPages As Long
     
-    If EndnotesExist = True Then
+    If MacroHelpers.EndnotesExist = True Then
         ActiveDocument.Repaginate
         lngEndnotesPages = ActiveDocument.StoryRanges(wdEndnotesStory).Information(wdNumberOfPagesInDocument)
     Else
         lngEndnotesPages = 0
     End If
     
-    If FootnotesExist = True Then
+    If MacroHelpers.FootnotesExist = True Then
         ActiveDocument.Repaginate
         lngFootnotesPages = ActiveDocument.StoryRanges(wdFootnotesStory).Information(wdNumberOfPagesInDocument)
     Else

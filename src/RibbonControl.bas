@@ -11,7 +11,7 @@ Sub LaunchMacros(Optional control As IRibbonControl, Optional buttonID As String
     ' Calls macro named as "id" attribute in customUI.xml code
     ' Could also be "tag" attribute if necessary
     Dim strMacroName As String
-    strMacroName = control.Id
+    strMacroName = control.ID
     Application.Run strMacroName
         
 '        ' If you're just using this for PC, this can work

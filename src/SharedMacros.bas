@@ -428,12 +428,12 @@ Public Function DownloadFromConfluence(FinalDir As String, LogFile As String, Fi
 
 End Function
  
-Public Function ShellAndWaitMac(cmd As String) As String
+Public Function ShellAndWaitMac(Cmd As String) As String
 
     Dim result As String
     Dim scriptCmd As String ' Macscript command
     
-    scriptCmd = "do shell script """ & cmd & """"
+    scriptCmd = "do shell script """ & Cmd & """"
     result = MacScript(scriptCmd) ' result contains stdout, should you care
     'Debug.Print result
     ShellAndWaitMac = result
@@ -493,42 +493,6 @@ Public Function CreateLogFileInfo(ByRef FileName As String) As Variant
 
 End Function
 
-Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
-'LogPath is *full* path to log file, including file name. Created by CreateLogFileInfo sub, to be called before this one.
-
-    Dim logString As String
-    
-    '------------------ Check log file --------------------------------------------
-    'Check if logfile/directory exists
-    If IsItThere(LogPath) = False Then
-        CheckLog = False
-        logString = Now & " -- Creating logfile."
-        If IsItThere(LogDir) = False Then
-            If IsItThere(StyleDir) = False Then
-                MkDir (StyleDir)
-                MkDir (LogDir)
-                logString = Now & " -- Creating MacmillanStyleTemplate directory."
-            Else
-                MkDir (LogDir)
-                logString = Now & " -- Creating log directory."
-            End If
-        End If
-    Else    'logfile exists, so check last modified date
-        Dim lastModDate As Date
-        lastModDate = FileDateTime(LogPath)
-        If DateDiff("d", lastModDate, Date) < 1 Then       'i.e. 1 day
-            CheckLog = True
-            logString = Now & " -- Already checked less than 1 day ago."
-        Else
-            CheckLog = False
-            logString = Now & " -- >= 1 day since last update check."
-        End If
-    End If
-    
-    'Log that info!
-    LogInformation LogPath, logString
-    
-End Function
 
 'Public Function NotesExist(StoryType As WdStoryType) As Boolean
 '    On Error GoTo ErrHandler
@@ -685,34 +649,6 @@ Function CheckSave()
 
 End Function
 
-Function EndnotesExist() As Boolean
-' Started from http://vbarevisited.blogspot.com/2014/03/how-to-detect-footnote-and-endnote.html
-    Dim StoryRange As Range
-    
-    EndnotesExist = False
-    
-    For Each StoryRange In ActiveDocument.StoryRanges
-        If StoryRange.StoryType = wdEndnotesStory Then
-            EndnotesExist = True
-            Exit For
-        End If
-    Next StoryRange
-End Function
-
-Function FootnotesExist() As Boolean
-' Started from http://vbarevisited.blogspot.com/2014/03/how-to-detect-footnote-and-endnote.html
-    Dim StoryRange As Range
-    
-    FootnotesExist = False
-    
-    For Each StoryRange In ActiveDocument.StoryRanges
-        If StoryRange.StoryType = wdFootnotesStory Then
-            FootnotesExist = True
-            Exit For
-        End If
-    Next StoryRange
-    
-End Function
 
 Public Function IsStyleInDoc(StyleName As Variant) As Boolean
   On Error GoTo IsStyleInDocError
@@ -790,72 +726,6 @@ Function IsArrayEmpty(Arr As Variant) As Boolean
 
 End Function
 
-
-Sub CreateTextFile(strText As String, suffix As String)
-
-    Application.ScreenUpdating = False
-    
-    'Create report file
-    Dim activeRng As Range
-    Dim activeDoc As Document
-    Set activeDoc = ActiveDocument
-    Set activeRng = ActiveDocument.Range
-    Dim activeDocName As String
-    Dim activeDocPath As String
-    Dim reqReportDoc As String
-    Dim reqReportDocAlt As String
-    Dim fnum As Integer
-    Dim TheOS As String
-    Dim strMacTmp As String
-    TheOS = System.OperatingSystem
-    
-    'activeDocName below works for .doc and .docx
-    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
-    activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
-    
-    'create text file
-    reqReportDoc = activeDocPath & activeDocName & "_" & suffix & ".txt"
-    
-    ''''for 32 char Mc OS bug- could check if this is Mac OS too < PART 1
-    If Not TheOS Like "*Mac*" Then                      'If Len(activeDocName) > 18 Then        (legacy, does not take path into account)
-        reqReportDoc = activeDocPath & "\" & activeDocName & "_" & suffix & ".txt"
-    Else
-        Dim placeholdDocName As String
-        placeholdDocName = "filenamePlacehold_Report.txt"
-        reqReportDocAlt = reqReportDoc
-        strMacTmp = MacScript("path to temporary items as string")
-        reqReportDoc = strMacTmp & placeholdDocName
-    End If
-    '''end ''''for 32 char Mc OS bug part 1
-    
-    'set and open file for output
-    Dim E As Integer
-    fnum = FreeFile()
-    Open reqReportDoc For Output As fnum
-    
-        Print #fnum, strText
-
-    Close #fnum
-    
-    ''''for 32 char Mc OS bug-<PART 2
-    If reqReportDocAlt <> "" Then
-    Name reqReportDoc As reqReportDocAlt
-    End If
-    ''''END for 32 char Mac OS bug-<PART 2
-    
-    '----------------open Report for user once it is complete--------------------------.
-    Dim Shex As Object
-    
-    If Not TheOS Like "*Mac*" Then
-       Set Shex = CreateObject("Shell.Application")
-       Shex.Open (reqReportDoc)
-    Else
-        MacScript ("tell application ""TextEdit"" " & vbCr & _
-        "open " & """" & reqReportDocAlt & """" & " as alias" & vbCr & _
-        "activate" & vbCr & _
-        "end tell" & vbCr)
-    End If
-End Sub
 
 Function GetText(StyleName As String) As String
     Dim fString As String
@@ -1005,42 +875,6 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
  
 End Function
 
-Sub CloseOpenDocs()
-
-    '-------------Check for/close open documents---------------------------------------------
-    Dim strInstallerName As String
-    Dim strSaveWarning As String
-    Dim objDocument As Document
-    Dim B As Long
-    Dim doc As Document
-    
-    strInstallerName = ThisDocument.Name
-
-        'MsgBox "Installer Name: " & strInstallerName
-        'MsgBox "Open docs: " & Documents.Count
-
-
-    If Documents.Count > 1 Then
-        strSaveWarning = "All other Word documents must be closed to run the macro." & vbNewLine & vbNewLine & _
-            "Click OK and I will save and close your documents." & vbNewLine & _
-            "Click Cancel to exit without running the macro and close the documents yourself."
-        If MsgBox(strSaveWarning, vbOKCancel, "Close documents?") = vbCancel Then
-            ActiveDocument.Close
-            Exit Sub
-        Else
-            For Each doc In Documents
-                On Error Resume Next        'To skip error if user is prompted to save new doc and clicks Cancel
-                    'Debug.Print doc.Name
-                    If doc.Name <> strInstallerName Then       'But don't close THIS document
-                        doc.Save   'separate step to trigger Save As prompt for previously unsaved docs
-                        doc.Close
-                    End If
-                On Error GoTo 0
-            Next doc
-        End If
-    End If
-    
-End Sub
 
 
 
@@ -1402,60 +1236,6 @@ Private Function FixTrackChanges() As Boolean
     
 End Function
 
-
-Sub Cleanup()
-    ' resets everything from StartupSettings sub.
-    Dim cleanupDoc As Document
-    Set cleanupDoc = ActiveDocument
-    
-    ' Section of registry/preferences file to get settings from
-    Dim strSection As String
-    strSection = "MACMILLAN_MACROS"
-    
-    ' restore Status Bar to original setting
-    ' If key doesn't exist, set to True as default
-    Dim currentStatus As String
-    currentStatus = System.ProfileString(strSection, "Current_Status_Bar")
-    
-    If currentStatus <> vbNullString Then
-        Application.StatusBar = currentStatus
-    Else
-        Application.StatusBar = True
-    End If
-    
-    ' reset original Track Changes setting
-    ' If key doesn't exist, set to false as default
-    Dim currentTracking As String
-    currentTracking = System.ProfileString(strSection, "Current_Tracking")
-    
-    If currentTracking <> vbNullString Then
-        cleanupDoc.TrackRevisions = currentTracking
-    Else
-        cleanupDoc.TrackRevisions = False
-    End If
-    
-    ' return to original cursor position
-    ' If key doesn't exist, search in main doc
-    Dim currentStory As WdStoryType
-    currentStory = System.ProfileString(strSection, "Current_Story")
-    
-    If cleanupDoc.Bookmarks.Exists("OriginalInsertionPoint") = True Then
-        If currentStory = 0 Then
-            cleanupDoc.StoryRanges(currentStory).Select
-        Else
-            cleanupDoc.StoryRanges(wdMainTextStory).Select
-        End If
-        
-        Selection.GoTo what:=wdGoToBookmark, Name:="OriginalInsertionPoint"
-        cleanupDoc.Bookmarks("OriginalInsertionPoint").Delete
-    End If
-    
-    ' Turn Screen Updating on and refresh screen
-    Application.ScreenUpdating = True
-    Application.ScreenRefresh
-    
-End Sub
-
 Function IsReadOnly(Path As String) As Boolean
     ' Tests if the file or directory is read-only
     
@@ -1562,41 +1342,6 @@ Function HiddenTextSucks(StoryType As WdStoryType) As Boolean                   
     
 End Function
 
-
-Sub ClearPilcrowFormat(StoryType As WdStoryType)
-' A pilcrow is the paragraph mark symbol. This clears all formatting and styles from
-' pilcrows as found via ^p
-    ' Change to story ranges?
-    Dim activeRange As Range
-    Set activeRange = ActiveDocument.StoryRanges(StoryType)
-
-    With activeRange.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = "^13"       ' need to use ^13 if using wildcards
-        .Replacement.Text = "^p"    ' DON'T replace with ^13, removes para style
-        .Forward = True
-        .Wrap = wdFindStop
-        .Format = True
-        .Replacement.Style = "Default Paragraph Font"
-        .Replacement.Font.Italic = False
-        .Replacement.Font.Bold = False
-        .Replacement.Font.Underline = wdUnderlineNone
-        .Replacement.Font.AllCaps = False
-        .Replacement.Font.SmallCaps = False
-        .Replacement.Font.StrikeThrough = False
-        .Replacement.Font.Subscript = False
-        .Replacement.Font.Superscript = False
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = True
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-        .Execute Replace:=wdReplaceAll
-    End With
-
-End Sub
-
 Sub StyleAllHyperlinks(StoriesInUse As Variant)
     ' StoriesInUse is an array of wdStoryTypes in use
     ' Clears active links and adds macmillan URL char styles
@@ -1610,13 +1355,13 @@ Sub StyleAllHyperlinks(StoriesInUse As Variant)
     
     For S = 1 To UBound(StoriesInUse)
         'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
-        Call StyleHyperlinksA(StoryType:=(StoriesInUse(S)))
+        Call SharedMacros.StyleHyperlinksA(StoryType:=(StoriesInUse(S)))
     Next S
     
-    Call AutoFormatHyperlinks
+    Call SharedMacros.AutoFormatHyperlinks
     
     For S = 1 To UBound(StoriesInUse)
-        Call StyleHyperlinksB(StoryType:=(StoriesInUse(S)))
+        Call SharedMacros.StyleHyperlinksB(StoryType:=(StoriesInUse(S)))
     Next S
     
 End Sub

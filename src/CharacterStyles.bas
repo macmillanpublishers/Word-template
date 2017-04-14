@@ -67,10 +67,16 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
     
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
-  If MacroHelpers.StartupSettings(StoriesUsed:=stStories) = True Then
-        
-    Call MacroHelpers.CleanUp
-    Exit Sub
+  If WT_Settings.InstallType = "user" Then
+    If SharedMacros.StartupSettings(StoriesUsed:=stStories) = True Then
+      Call MacroHelpers.Cleanup
+      Exit Sub
+    End If
+  Else
+    If MacroHelpers.StartupSettings(StoriesUsed:=stStories) = True Then
+      Call MacroHelpers.Cleanup
+      Exit Sub
+    End If
   End If
   
 ' --------Progress Bar---------------------------------------------------------
@@ -254,7 +260,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   
 ' If this is the whole macro, close out; otherwise calling macro will close it all down
   If TotalPercent = 1 Then
-    Call MacroHelpers.CleanUp
+    Call MacroHelpers.Cleanup
     Unload oProgressChar
 '        MsgBox "Macmillan character styles have been applied throughout your manuscript."
   End If

@@ -231,14 +231,14 @@ Private Sub PrintStylesMac()
     
     Dialogs(wdDialogFilePrint).Show
     
-    ' Cleanup
+    ' MacroHelpers.Cleanup
     sglPercentComplete = 1
     strStatus = strStatus & "* Finishing up..." & vbNewLine
     
     Application.StatusBar = strTitle & " " & (100 * sglPercentComplete) & "% complete | " & strStatus
     DoEvents
     
-CleanUp:
+Cleanup:
         ' reset Normal style because I'm not sure if it's sticky or not
         With tempDoc.Styles("Normal")
             .Font.Size = currentSize
@@ -295,7 +295,7 @@ Private Sub PrintStylesPC()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings = True Then
-        Call CleanUp
+        Call Cleanup
         Exit Sub
     End If
     
@@ -505,7 +505,7 @@ FinishUp:
         .Options.PasteFormatBetweenDocuments = lngPasteFormat
     End With
     
-    Call CleanUp
+    Call Cleanup
     Unload objProgressPrint
 
 End Sub

@@ -34,7 +34,7 @@ Sub LibraryOfCongressTags()
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
     If StartupSettings(StoriesUsed:=stStories) = True Then
-        Call CleanUp
+        Call Cleanup
         Exit Sub
     End If
     
@@ -44,7 +44,7 @@ Sub LibraryOfCongressTags()
     
     If zz_errorChecksB <> False Then
         Call zz_clearFindB
-        Call CleanUp
+        Call Cleanup
         Exit Sub
     End If
     
@@ -189,7 +189,7 @@ Sub LibraryOfCongressTags()
     Call UpdateBarAndWait(Bar:=oProgressCIP, Status:=strStatus, Percent:=sglPercentComplete)
    
 Finish:
-    Call CleanUp
+    Call Cleanup
     Unload oProgressCIP
     
     'If skipChapterTags = True Then
@@ -1469,7 +1469,7 @@ Private Function zz_TagReport()
         strTagReportText = strTagReportText & LOCtagCount(9) & "  End of last chapter tag(s) found </ch>" & vbNewLine
         
     ' Print to text file
-    Call CreateTextFile(strText:=strTagReportText, suffix:="CIPtagReport")
+    Call MacroHelpers.CreateTextFile(strText:=strTagReportText, suffix:="CIPtagReport")
 
 End Function
 
