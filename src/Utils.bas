@@ -194,7 +194,7 @@ Public Sub DebugPrint(Optional StringExpression As Variant)
   
   ' Second, write to file
   ' Create file name
-  ' !!! ActiveDocument.Path sometimes writes to STARTUP dir. Also if running
+  ' !!! activeDoc.Path sometimes writes to STARTUP dir. Also if running
   ' with Folder Actions (like Validator), new file in dir will error
   ' How to write to a static location?
     Dim strOutputFile As String

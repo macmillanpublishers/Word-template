@@ -108,7 +108,7 @@ Private Sub PrintStylesMac()
     ' the new document later, or won't copy any styles
     Dim currentTemplate As String
     Dim CurrentDoc As Document
-    Set CurrentDoc = ActiveDocument
+    Set CurrentDoc = activeDoc
     ' Record current template
     currentTemplate = CurrentDoc.AttachedTemplate
     
@@ -360,7 +360,7 @@ Private Sub PrintStylesPC()
     ' the new document later, or it won't copy any styles
     Dim currentTemplate As String
     Dim CurrentDoc As Document
-    Set CurrentDoc = ActiveDocument
+    Set CurrentDoc = activeDoc
     ' Record current template
     currentTemplate = CurrentDoc.AttachedTemplate
     

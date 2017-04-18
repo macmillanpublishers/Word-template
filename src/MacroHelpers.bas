@@ -290,9 +290,9 @@ Public Function ErrorChecker(objError As Object, Optional strValue As _
   ' Format date so it can be part of file name. Only including date b/c users
   ' will likely run things repeatedly before asking for help, and don't want
   ' to generate a bunch of files if include time as well.
-  strFileName = Replace(Right(ActiveDocument.Name, InStrRev(activeDoc.Name, _
+  strFileName = Replace(Right(activeDoc.Name, InStrRev(activeDoc.Name, _
     ".") - 1), " ", "")
-  strErrLog = ActiveDocument.Path & Application.PathSeparator & "ALERT_" & _
+  strErrLog = activeDoc.Path & Application.PathSeparator & "ALERT_" & _
     strFileName & "_" & Format(Date, "yyyy-mm-dd") & ".txt"
 '    DebugPrint strErrLog
   ' build error message, including timestamp
@@ -547,11 +547,7 @@ Public Function ParaInfo(paraInd As Long, InfoType As WdInformation) _
   As Variant
   On Error GoTo ParaInfoError
   
-' Make sure we have an activeDoc
-  If activeDoc Is Nothing Then
-    Set activeDoc = ActiveDocument
-  End If
-  
+ 
 ' Make sure our paragraph index is in range
   If paraInd <= activeDoc.Paragraphs.Count Then
   ' Set range for our paragraph
@@ -618,12 +614,12 @@ Public Function StoryArray() As Variant
     ReDim strStories(1 To 1)
     strStories(1) = wdMainTextStory
     
-    If ActiveDocument.Endnotes.Count > 0 Then
+    If activeDoc.Endnotes.Count > 0 Then
         ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
         strStories(UBound(strStories())) = wdEndnotesStory
     End If
     
-    If ActiveDocument.Footnotes.Count > 0 Then
+    If activeDoc.Footnotes.Count > 0 Then
         ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
         strStories(UBound(strStories())) = wdFootnotesStory
     End If
@@ -681,7 +677,7 @@ Function PatternMatch(SearchPattern As String, SearchText As String, WholeString
             ' strips out the Lf when content is pasted in. CrLf counts as 2 characters but Cr is only
             ' 1, so to get these to match we need to add 1 character to the selection for each line.
             Dim lngLines As Long
-            lngLines = ActiveDocument.ComputeStatistics(wdStatisticLines)
+            lngLines = activeDoc.ComputeStatistics(wdStatisticLines)
             
             If Len(Selection.Text) + lngLines = Len(SearchText) Then
                 PatternMatch = True
@@ -705,7 +701,7 @@ Public Function EndnotesExist() As Boolean
     
     EndnotesExist = False
     
-    For Each StoryRange In ActiveDocument.StoryRanges
+    For Each StoryRange In activeDoc.StoryRanges
         If StoryRange.StoryType = wdEndnotesStory Then
             EndnotesExist = True
             Exit For
@@ -718,7 +714,7 @@ Public Function FootnotesExist() As Boolean
     
     FootnotesExist = False
     
-    For Each StoryRange In ActiveDocument.StoryRanges
+    For Each StoryRange In activeDoc.StoryRanges
         If StoryRange.StoryType = wdFootnotesStory Then
             FootnotesExist = True
             Exit For
@@ -773,9 +769,7 @@ Public Sub CreateTextFile(strText As String, suffix As String)
     
     'Create report file
     Dim activeRng As Range
-    Dim activeDoc As Document
-    Set activeDoc = ActiveDocument
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     Dim activeDocName As String
     Dim activeDocPath As String
     Dim reqReportDoc As String
@@ -1169,7 +1163,7 @@ StartupSettingsError:
 End Function
 
 ' ===== UpdateUnlinkFieldCodes ================================================
-' Cycles through all Fields in ActiveDocument. Updates, unlocks, and unlinks
+' Cycles through all Fields in activeDoc. Updates, unlocks, and unlinks
 ' each field. If this is our cookbook template with the automatic TOC, that
 ' will be unlinked as well.
 
@@ -1191,7 +1185,7 @@ Public Sub UpdateUnlinkFieldCodes(Optional p_stories As Variant)
   End If
   
   For A = LBound(p_stories) To UBound(p_stories)
-      Set thisRange = ActiveDocument.StoryRanges(p_stories(A))
+      Set thisRange = activeDoc.StoryRanges(p_stories(A))
       If thisRange.Fields.Count > 0 Then
         For Each objField In thisRange.Fields
   '            Debug.Print thisRange.Fields.Count
@@ -1294,7 +1288,7 @@ Private Function FixTrackChanges() As Boolean
   On Error GoTo FixTrackChangesError
     Dim N As Long
     Dim oComments As Comments
-    Set oComments = ActiveDocument.Comments
+    Set oComments = activeDoc.Comments
     
     FixTrackChanges = True
     
@@ -1422,7 +1416,7 @@ Private Sub ClearContentControls()
     ' breaks whole sub if included
     Dim cc As ContentControl
     
-    For Each cc In ActiveDocument.ContentControls
+    For Each cc In activeDoc.ContentControls
         cc.Delete
     Next
   Exit Sub
@@ -1441,7 +1435,7 @@ Sub Cleanup()
   On Error GoTo CleanUpError
     ' resets everything from StartupSettings sub.
     Dim cleanupDoc As Document
-    Set cleanupDoc = ActiveDocument
+    Set cleanupDoc = activeDoc
     
     ' Section of registry/preferences file to get settings from
     Dim strSection As String
@@ -1505,7 +1499,7 @@ Function HiddenTextSucks(StoryType As WdStoryType) As Boolean
   On Error GoTo HiddenTextSucksError
 '    DebugPrint StoryType
     Dim activeRng As Range
-    Set activeRng = ActiveDocument.StoryRanges(StoryType)
+    Set activeRng = activeDoc.StoryRanges(StoryType)
     ' No, really, it does. Why is that even an option?
     ' Seriously, this just deletes all hidden text, based on the
     ' assumption that if it's hidden, you don't want it.
@@ -1516,8 +1510,8 @@ Function HiddenTextSucks(StoryType As WdStoryType) As Boolean
     ' If Hidden text isn't shown, it won't be deleted, which
     ' defeats the purpose of doing this at all.
     Dim blnCurrentHiddenView As Boolean
-    blnCurrentHiddenView = ActiveDocument.ActiveWindow.View.ShowAll
-    ActiveDocument.ActiveWindow.View.ShowAll = True
+    blnCurrentHiddenView = activeDoc.ActiveWindow.View.ShowAll
+    activeDoc.ActiveWindow.View.ShowAll = True
 
     
     Dim aCounter As Long
@@ -1567,7 +1561,7 @@ Sub ClearPilcrowFormat(StoryType As WdStoryType)
 ' pilcrows as found via ^p
     ' Change to story ranges?
     Dim activeRange As Range
-    Set activeRange = ActiveDocument.StoryRanges(StoryType)
+    Set activeRange = activeDoc.StoryRanges(StoryType)
 
     With activeRange.Find
         .ClearFormatting
@@ -1684,7 +1678,7 @@ Private Sub StyleHyperlinksA(StoryType As WdStoryType)
             .ClearFormatting
             .Replacement.ClearFormatting
             .Style = HyperlinkStyleArray(P)
-            .Replacement.Style = ActiveDocument.Styles("Default Paragraph Font")
+            .Replacement.Style = activeDoc.Styles("Default Paragraph Font")
             .Text = ""
             .Replacement.Text = ""
             .Forward = True
@@ -1708,13 +1702,13 @@ StyleHyperlinksAError:
             
             'If style is not present, add style
             Dim myStyle As Style
-            Set myStyle = ActiveDocument.Styles.Add(Name:="span hyperlink (url)", Type:=wdStyleTypeCharacter)
+            Set myStyle = activeDoc.Styles.Add(Name:="span hyperlink (url)", Type:=wdStyleTypeCharacter)
             Resume
 '            ' Used to add highlight color, but actually if style is missing, it's
 '            ' probably a MS w/o Macmillan's styles and the highlight will be annoying.
 '            'If missing style was Macmillan built-in style, add character highlighting
 '            If myStyle = "span hyperlink (url)" Then
-'                ActiveDocument.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
+'                activeDoc.Styles("span hyperlink (url)").Font.Shading.BackgroundPatternColor = wdColorPaleBlue
 '            End If
         Else
           Err.Source = strModule & "StyleHyperlinksA"
@@ -1847,7 +1841,7 @@ Private Sub StyleHyperlinksB(StoryType As WdStoryType)
         .ClearFormatting
         .Replacement.ClearFormatting
         .Style = "Hyperlink"
-        .Replacement.Style = ActiveDocument.Styles("span hyperlink (url)")
+        .Replacement.Style = activeDoc.Styles("span hyperlink (url)")
         .Text = ""
         .Replacement.Text = ""
         .Forward = True

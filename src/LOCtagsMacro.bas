@@ -199,7 +199,7 @@ Finish:
 End Sub
 
 Private Sub tagChapterHeads()
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     Dim CHstylesArray(3) As String                                   ' number of items in array should be declared here
     Dim I As Long
     Dim chTag As Integer
@@ -287,9 +287,9 @@ On Error GoTo 0
     'chapNumString = "<ch" & chapNum & ">"
     '
     ''this is borrowed form here:  http://stackoverflow.com/questions/11234358/word-2007-macro-to-automatically-number-items-in-a-document
-    'Do While InStr(ActiveDocument.Content, "<ch>") > 0
+    'Do While InStr(activeDoc.Content, "<ch>") > 0
     '    chapNumString = "<ch" & chapNum & ">"
-    '    With ActiveDocument.Content.Find
+    '    With activeDoc.Content.Find
     '        .ClearFormatting
     '        .Text = "<ch>"
     '        .Execute Replace:=wdReplaceOne, ReplaceWith:=chapNumString, Forward:=True
@@ -311,7 +311,7 @@ Private Sub tagTitlePage()
     'update the LOC tags to match LOC:  http://www.loc.gov/publish/cip/techinfo/formattingecip.html#tags
     ''' NOTE:  if you are tagging something only at the beginning or end (eg chapter heads), obviously you need to touch up the second loop
     
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     Dim TPstylesArray(10) As String                                   ' number of items in array should be declared here
     Dim I As Long
     
@@ -446,7 +446,7 @@ Private Sub tagCopyrightPage()
     'to update this for a different tag, replace all in procedure two char code, eg: TP->CP
     'update styles array manually, and Dim'd stylesarray length, & that's it
     
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     Dim CPstylesArray(2) As String                                   ' number of items in array should be declared here
     Dim I As Long
     
@@ -575,7 +575,7 @@ Private Sub tagTOC()
     'to update this for a different tag, replace all in procedure two char code, eg: TP->TOC
     'update styles array manually, and Dim'd stylesarray length, & that's it
     
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     Dim TOCstylesArray(10) As String                                   ' number of items in array should be declared here
     Dim I As Long
     
@@ -709,7 +709,7 @@ Private Sub tagSeriesPage()
     'to update this for a different tag, replace all in procedure two char code, eg: TP->SP
     'update styles array manually, and Dim'd stylesarray length, & that's it
     
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     Dim SPstylesArray(8) As String                                   ' number of items in array should be declared here
     Dim I As Long
     
@@ -840,7 +840,7 @@ End Sub
 
 Private Sub tagEndLastChapter()
 
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     Dim ELCstylesArray(9) As String                                   ' number of items in array should be declared here
     Dim I As Long
     
@@ -884,7 +884,7 @@ On Error GoTo 0
     Dim bookmarkRng As Range
     Dim dontTag As Boolean
     Dim activeRngB As Range
-    Set activeRngB = ActiveDocument.Range
+    Set activeRngB = activeDoc.Range
     dontTag = False
     testvar = False
     testtag = "\<ch[0-9]{1,}\>"
@@ -923,7 +923,7 @@ On Error GoTo 0
     'start loop
     Do While testvar = False
     Dim activeRngC As Range
-    Set activeRngC = ActiveDocument.Range
+    Set activeRngC = activeDoc.Range
     
         With activeRngC.Find
             .Text = "``````"
@@ -938,13 +938,13 @@ On Error GoTo 0
         End With
         ''set range with bookmarks, only search after init tag
         If activeRngC.Find.Execute = True Then
-            ActiveDocument.Bookmarks.Add Name:="elcBookmark", Range:=activeRngC
-            Set bookmarkRng = ActiveDocument.Range(Start:=ActiveDocument.Bookmarks("elcBookmark").Range.Start, End:=ActiveDocument.Bookmarks("\EndOfDoc").Range.End)
+            activeDoc.Bookmarks.Add Name:="elcBookmark", Range:=activeRngC
+            Set bookmarkRng = activeDoc.Range(Start:=activeDoc.Bookmarks("elcBookmark").Range.Start, End:=activeDoc.Bookmarks("\EndOfDoc").Range.End)
         Else
             Exit Do
         End If
         
-        Set activeRng = ActiveDocument.Range
+        Set activeRng = activeDoc.Range
         
         Call zz_clearFindB
         
@@ -1008,8 +1008,8 @@ On Error GoTo 0
                 testvar = True
         End If
             
-        If ActiveDocument.Bookmarks.Exists("elcBookmark") = True Then
-            ActiveDocument.Bookmarks("elcBookmark").Delete
+        If activeDoc.Bookmarks.Exists("elcBookmark") = True Then
+            activeDoc.Bookmarks("elcBookmark").Delete
         End If
         
         If Q = 20 Then      'prevent endless loops
@@ -1054,7 +1054,7 @@ On Error GoTo 0
           .MatchAllWordForms = False
         End With
         If activeRng.Find.Execute = False Then
-            Set activeRng = ActiveDocument.Range
+            Set activeRng = activeDoc.Range
             activeRng.InsertAfter "</ch>"
         End If
     End If
@@ -1078,14 +1078,14 @@ Private Sub SaveAsTextFile()
 
     Application.ScreenUpdating = False
     
-    'Separate code by OS because ActiveDocument.Path returns file name too
+    'Separate code by OS because activeDoc.Path returns file name too
     ' on Mac but doesn't for PC
     
     #If Mac Then        'For Mac
         If Val(Application.Version) > 14 Then
             
             'Find position of extension in filename
-            strDocName = ActiveDocument.Path
+            strDocName = activeDoc.Path
             intPos = InStrRev(strDocName, ".")
             
                 'Strip off extension and add ".txt" extension
@@ -1097,8 +1097,8 @@ Private Sub SaveAsTextFile()
     #Else                           'For Windows
     
         'Find position of extension in filename
-        strDocName = ActiveDocument.Name
-        DocPath = ActiveDocument.Path
+        strDocName = activeDoc.Name
+        DocPath = activeDoc.Path
         intPos = InStrRev(strDocName, ".")
         
                 'Strip off extension and add ".txt" extension
@@ -1110,7 +1110,7 @@ Private Sub SaveAsTextFile()
         'Copy text of active document and paste into a new document
         'Because otherwise open document is converted to .txt, and we want it to stay .doc*
 
-        ActiveDocument.Select
+        activeDoc.Select
         Selection.Copy
 
         'Debug.Print Len(Selection)
@@ -1140,7 +1140,7 @@ Private Sub SaveAsTextFile()
     Application.DisplayAlerts = wdAlertsNone
     
         'Save new document as a text file. Encoding/Line Breaks/Substitutions per LOC info
-        ActiveDocument.SaveAs FileName:=strDocName, _
+        activeDoc.SaveAs FileName:=strDocName, _
             FileFormat:=wdFormatEncodedText, _
             Encoding:=encodingFmt, _
             InsertLineBreaks:=lineBreak, _
@@ -1154,7 +1154,7 @@ Private Sub SaveAsTextFile()
 End Sub
 
 Private Sub cleanFile()
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     Dim tagsFind(10) As String         ' number of items in arrays should be declared here
     Dim A As Long
     
@@ -1191,12 +1191,12 @@ End Sub
 
 Private Function volumestylecheck()
 
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     volumestylecheck = False
     Dim VOLstylesArray(2) As String                                   ' number of items in array should be declared here
     Dim I As Long
     Dim mainDoc As Document
-    Set mainDoc = ActiveDocument
+    Set mainDoc = activeDoc
     Dim iReply As Integer
     
     VOLstylesArray(1) = "Volume Number (voln)"
@@ -1251,7 +1251,7 @@ End Function
 Private Sub zz_clearFindB()
 
     Dim clearRng As Range
-    Set clearRng = ActiveDocument.Words.First
+    Set clearRng = activeDoc.Words.First
     
     With clearRng.Find
       .ClearFormatting
@@ -1274,7 +1274,7 @@ Private Function zz_errorChecksB()                       'kidnapped this whole f
                                                                 'adding tag checking to include LOC stuff
     zz_errorChecksB = False
     Dim mainDoc As Document
-    Set mainDoc = ActiveDocument
+    Set mainDoc = activeDoc
     Dim iReply As Integer
     
     '-----test if backtick style tag already exists
@@ -1367,14 +1367,14 @@ End Function
 
 Private Function zz_TagReport()
     
-    Set activeRng = ActiveDocument.Range
+    Set activeRng = activeDoc.Range
     
     'count occurences of all but Chapter Heads
     Dim MyDoc As String, txt As String, t As String
     Dim LOCtagArray(9) As String
     Dim LOCtagCount(9) As Integer
     Dim D As Long
-    MyDoc = ActiveDocument.Range.Text
+    MyDoc = activeDoc.Range.Text
     
     LOCtagArray(1) = "<tp>"
     LOCtagArray(2) = "</tp>"
@@ -1442,13 +1442,13 @@ Private Function zz_TagReport()
 
     If errorList = "" Then
         strTagReportText = strTagReportText & "Congratulations!" & vbNewLine
-        strTagReportText = strTagReportText & "LOC Tags look good for " & ActiveDocument.Name & vbNewLine
+        strTagReportText = strTagReportText & "LOC Tags look good for " & activeDoc.Name & vbNewLine
         strTagReportText = strTagReportText & "See summary below:" & vbNewLine
         strTagReportText = strTagReportText & vbNewLine
     Else
         strTagReportText = strTagReportText & "BAD NEWS:" & vbNewLine
         strTagReportText = strTagReportText & vbNewLine
-        strTagReportText = strTagReportText & "Problems were found with LOC tags in your document '" & ActiveDocument.Name & "':" & vbNewLine
+        strTagReportText = strTagReportText & "Problems were found with LOC tags in your document '" & activeDoc.Name & "':" & vbNewLine
         strTagReportText = strTagReportText & vbNewLine
         strTagReportText = strTagReportText & vbNewLine
         strTagReportText = strTagReportText & "------------------------- ERRORS -------------------------" & vbNewLine

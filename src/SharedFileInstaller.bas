@@ -154,7 +154,7 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
     If IsArrayEmpty(strInstallFile()) = True Then       ' No files need to be installed
         If Installer = True Then  ' Though this option (no files to install on installer) shouldn't actually occur
             #If Mac Then    ' because application.quit generates error on Mac
-                ActiveDocument.Close (wdDoNotSaveChanges)
+                activeDoc.Close (wdDoNotSaveChanges)
             #Else
                 Application.Quit (wdDoNotSaveChanges)
             #End If
@@ -176,7 +176,7 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
             MsgBox "Please try to install the files at a later time."
             
             If Installer = True Then
-                ActiveDocument.Close (wdDoNotSaveChanges)
+                activeDoc.Close (wdDoNotSaveChanges)
             End If
             
             Exit Sub
@@ -206,7 +206,7 @@ Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As S
                 LogFile:=strFullLogPath(D), FileName:=strInstallFile(D)) = False Then
                 If Installer = True Then
                     #If Mac Then    ' because application.quit generates error on Mac
-                        ActiveDocument.Close (wdDoNotSaveChanges)
+                        activeDoc.Close (wdDoNotSaveChanges)
                     #Else
                         Application.Quit (wdDoNotSaveChanges)
                     #End If
@@ -416,7 +416,7 @@ Private Sub CloseOpenDocs()
             "Click OK and I will save and close your documents." & vbNewLine & _
             "Click Cancel to exit without running the macro and close the documents yourself."
         If MsgBox(strSaveWarning, vbOKCancel, "Close documents?") = vbCancel Then
-            ActiveDocument.Close
+            activeDoc.Close
             Exit Sub
         Else
             For Each doc In Documents

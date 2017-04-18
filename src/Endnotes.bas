@@ -119,10 +119,23 @@ Private Function EndnoteUnlink(p_blnAutomated As Boolean) As Dictionary
   Dim strTitle As String
   palgraveTag = False
 
-  '-----------Turn off track changes--------
-  Dim currentTracking As Boolean
-  currentTracking = activeDoc.TrackRevisions
-  activeDoc.TrackRevisions = False
+' ------------check for endnotes and footnotes---------------------------------
+  Dim stStories() As Variant
+  stStories = MacroHelpers.StoryArray
+    
+' ======= Run startup checks ========
+' True means a check failed (e.g., doc protection on)
+  If WT_Settings.InstallType = "user" Then
+    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=False) = True Then
+      Call MacroHelpers.Cleanup
+      Exit Sub
+    End If
+  Else
+    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=True) = True Then
+      Call MacroHelpers.Cleanup
+      Exit Sub
+    End If
+  End If
   
 ' -----------------------------------------------------------------------------
 ' -----------------------------------------------------------------------------

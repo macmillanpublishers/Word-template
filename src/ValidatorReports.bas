@@ -187,7 +187,7 @@ Public Sub ReportsTerminate()
     If Not activeDoc Is Nothing Then
       strAlertFile = activeDoc.Path
     Else
-      strAlertFile = ActiveDocument.Path
+      strAlertFile = activeDoc.Path
     End If
     strAlertFile = strAlertFile & Application.PathSeparator & "ALERT_" & _
         Format(Now, "yyyy-mm-dd_hh:mm") & ".txt"
@@ -1920,7 +1920,7 @@ End Function
 '    Dim strStatus As String
 '
 '    Dim activeDoc As Document
-'    Set activeDoc = ActiveDocument
+'    Set activeDoc = activeDoc
 '    Dim stylesGood() As String
 '    Dim stylesGoodLong As Long
 '    stylesGoodLong = 400                                    'could maybe reduce this number
@@ -1961,7 +1961,7 @@ End Function
 '        End If
 '
 '        For A = LBound(Stories()) To UBound(Stories())
-'            If J <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
+'            If J <= activeDoc.StoryRanges(Stories(A)).Paragraphs.Count Then
 '                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range.Style
 '                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
 '                pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
@@ -2012,7 +2012,7 @@ End Function
 '    Status = "* Checking paragraphs for Macmillan styles..." & vbCr & Status
 '
 '    'Change Normal (Web) back (if you want to)
-'    ActiveDocument.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
+'    activeDoc.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
 '
 '    ' DON'T sort styles alphabetically, per request from PE
 ''    'Sort good styles
@@ -2094,7 +2094,7 @@ End Function
 '        'We only need to find a style once to add it to the list
 '        'Search through the main text story here
 '        With Selection.Find
-'            .Style = ActiveDocument.Styles(styleNameM(M))
+'            .Style = activeDoc.Styles(styleNameM(M))
 '            .Wrap = wdFindContinue
 '            .Format = True
 '            .Execute
@@ -2105,12 +2105,12 @@ End Function
 '        'Else not present in main text story
 '        Else
 '            ' So check if there are footnotes
-'            If ActiveDocument.Footnotes.Count > 0 Then
+'            If activeDoc.Footnotes.Count > 0 Then
 '                'If there are footnotes, select the footnote text
-'                ActiveDocument.StoryRanges(wdFootnotesStory).Select
+'                activeDoc.StoryRanges(wdFootnotesStory).Select
 '                'Search the new selection for the style
 '                With Selection.Find
-'                    .Style = ActiveDocument.Styles(styleNameM(M))
+'                    .Style = activeDoc.Styles(styleNameM(M))
 '                    .Wrap = wdFindContinue
 '                    .Format = True
 '                    .Execute
@@ -2125,12 +2125,12 @@ End Function
 '            Else
 'CheckEndnotes:
 '                ' Check if there are endnotes in the document
-'                If ActiveDocument.Endnotes.Count > 0 Then
+'                If activeDoc.Endnotes.Count > 0 Then
 '                    ' If there are endnotes, select them
-'                    ActiveDocument.StoryRanges(wdEndnotesStory).Select
+'                    activeDoc.StoryRanges(wdEndnotesStory).Select
 '                    'Search the new selection for the style
 '                    With Selection.Find
-'                         .Style = ActiveDocument.Styles(styleNameM(M))
+'                         .Style = activeDoc.Styles(styleNameM(M))
 '                         .Wrap = wdFindContinue
 '                         .Format = True
 '                         .Execute
@@ -2353,8 +2353,8 @@ End Function
 '        On Error GoTo ErrHandler:
 '        Dim keyStyle As Word.Style
 '
-'        Set keyStyle = ActiveDocument.Styles(findStyle)
-'        Set keyStyle = ActiveDocument.Styles(prevStyle)
+'        Set keyStyle = activeDoc.Styles(findStyle)
+'        Set keyStyle = activeDoc.Styles(prevStyle)
 '
 '    jCount = 0
 '    jString = ""
@@ -2370,7 +2370,7 @@ End Function
 '            .Forward = True
 '            .Wrap = wdFindStop
 '            .Format = True
-'            .Style = ActiveDocument.Styles(findStyle)
+'            .Style = activeDoc.Styles(findStyle)
 '            .MatchCase = False
 '            .MatchWholeWord = False
 '            .MatchWildcards = False
@@ -2386,8 +2386,8 @@ End Function
 '        Dim CurPos As Long
 '
 '        Selection.Range.Select  'select current ran
-'        CurPos = ActiveDocument.Bookmarks("\startOfSel").Start
-'        Set rParagraphs = ActiveDocument.Range(Start:=0, End:=CurPos)
+'        CurPos = activeDoc.Bookmarks("\startOfSel").Start
+'        Set rParagraphs = activeDoc.Range(Start:=0, End:=CurPos)
 '        intCurrentPara = rParagraphs.Paragraphs.Count
 '
 '        'DebugPrint intCurrentPara
@@ -2506,7 +2506,7 @@ End Function
 '            .Forward = True
 '            .Wrap = wdFindStop
 '            .Format = True
-'            .Style = ActiveDocument.Styles("Page Break (pb)")
+'            .Style = activeDoc.Styles("Page Break (pb)")
 '            .MatchCase = False
 '            .MatchWholeWord = False
 '            .MatchWildcards = False
@@ -2630,7 +2630,7 @@ End Function
 '    'returned array is dimensioned with 1 column, need to specify row and column (base 0)
 '    arrTorStyles = LoadCSVtoArray(Path:=strFullPathToCsv, RemoveHeaderRow:=True, RemoveHeaderCol:=False)
 '
-'    activeParaCount = ActiveDocument.Paragraphs.Count
+'    activeParaCount = activeDoc.Paragraphs.Count
 '
 '    For N = 1 To activeParaCount
 '
@@ -2644,8 +2644,8 @@ End Function
 '        End If
 '
 '        For A = LBound(Stories()) To UBound(Stories())
-'            If N <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
-'                paraStyle = ActiveDocument.StoryRanges(Stories(A)).Paragraphs(N).Range.ParagraphStyle
+'            If N <= activeDoc.StoryRanges(Stories(A)).Paragraphs.Count Then
+'                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(N).Range.ParagraphStyle
 '                'DebugPrint paraStyle
 '
 '                If Right(paraStyle, 1) = ")" Then
@@ -2666,7 +2666,7 @@ End Function
 '
 '                    'DebugPrint intBadCount
 '                    If intBadCount = UBound(arrTorStyles()) Then
-'                        Set activeParaRange = ActiveDocument.StoryRanges(A).Paragraphs(N).Range
+'                        Set activeParaRange = activeDoc.StoryRanges(A).Paragraphs(N).Range
 '                        pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
 '                        strBadStyles = strBadStyles & "** ERROR: Non-Bookmaker style on page " & pageNumber _
 '                            & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
@@ -2724,14 +2724,14 @@ End Function
 '    For A = 1 To UBound(arrStyleName())
 '        On Error GoTo ErrHandler
 '        intStyleCount(A) = 0
-'        With ActiveDocument.Range.Find
+'        With activeDoc.Range.Find
 '            .ClearFormatting
 '            .Text = ""
 '            .Replacement.Text = ""
 '            .Forward = True
 '            .Wrap = wdFindStop
 '            .Format = True
-'            .Style = ActiveDocument.Styles(arrStyleName(A))
+'            .Style = activeDoc.Styles(arrStyleName(A))
 '            .MatchCase = False
 '            .MatchWholeWord = False
 '            .MatchWildcards = False
@@ -2777,17 +2777,17 @@ End Function
 '    On Error GoTo ErrHandler:
 '    Dim keyStyle As Word.Style
 '
-'    Set keyStyle = ActiveDocument.Styles(oldStyle)
-'    Set keyStyle = ActiveDocument.Styles(newStyle)
+'    Set keyStyle = activeDoc.Styles(oldStyle)
+'    Set keyStyle = activeDoc.Styles(newStyle)
 '
 '    'Move selection to start of document
 '    Selection.HomeKey Unit:=wdStory
 '
 '        'Find paras styles as CN and change to CT style
 '        Selection.Find.ClearFormatting
-'        Selection.Find.Style = ActiveDocument.Styles(oldStyle)
+'        Selection.Find.Style = activeDoc.Styles(oldStyle)
 '        Selection.Find.Replacement.ClearFormatting
-'        Selection.Find.Replacement.Style = ActiveDocument.Styles(newStyle)
+'        Selection.Find.Replacement.Style = activeDoc.Styles(newStyle)
 '        With Selection.Find
 '            .Text = ""
 '            .Replacement.Text = ""
@@ -2860,7 +2860,7 @@ End Function
 '        On Error GoTo ErrHandler
 '        Dim keyStyle As Style
 '
-'        Set keyStyle = ActiveDocument.Styles(strSearchStyle)
+'        Set keyStyle = activeDoc.Styles(strSearchStyle)
 '
 '        Selection.Find.ClearFormatting
 '        With Selection.Find
@@ -2869,7 +2869,7 @@ End Function
 '            .Forward = True
 '            .Wrap = wdFindStop
 '            .Format = True
-'            .Style = ActiveDocument.Styles(strSearchStyle)
+'            .Style = activeDoc.Styles(strSearchStyle)
 '            .MatchCase = False
 '            .MatchWholeWord = False
 '            .MatchWildcards = False
@@ -2940,9 +2940,9 @@ End Function
 '        On Error GoTo ErrHandler:
 '        Dim keyStyle As Word.Style
 '
-'        Set keyStyle = ActiveDocument.Styles(StyleA)
-'        Set keyStyle = ActiveDocument.Styles(StyleB)
-'        Set keyStyle = ActiveDocument.Styles(StyleC)
+'        Set keyStyle = activeDoc.Styles(StyleA)
+'        Set keyStyle = activeDoc.Styles(StyleB)
+'        Set keyStyle = activeDoc.Styles(StyleC)
 '
 '
 '    strErrors = ""
@@ -2958,7 +2958,7 @@ End Function
 '            .Forward = True
 '            .Wrap = wdFindStop
 '            .Format = True
-'            .Style = ActiveDocument.Styles(StyleC)
+'            .Style = activeDoc.Styles(StyleC)
 '            .MatchCase = False
 '            .MatchWholeWord = False
 '            .MatchWildcards = False
@@ -2973,13 +2973,13 @@ End Function
 '
 '        'Get number of current pagaraph, because we get an error if try to select before 1st para
 '
-'        intCurrentPara = ActiveDocument.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
+'        intCurrentPara = activeDoc.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
 '
 '        'DebugPrint intCurrentPara
 '
 '        'Also determine if selection is the LAST paragraph of the document, for later
 '        Dim SelectionIncludesFinalParagraphMark As Boolean
-'        If Selection.Type = wdSelectionNormal And Selection.End = ActiveDocument.Content.End Then
+'        If Selection.Type = wdSelectionNormal And Selection.End = activeDoc.Content.End Then
 '            SelectionIncludesFinalParagraphMark = True
 '        Else
 '            SelectionIncludesFinalParagraphMark = False
@@ -3069,7 +3069,7 @@ End Function
 '            .Forward = True
 '            .Wrap = wdFindStop
 '            .Format = True
-'            .Style = ActiveDocument.Styles(StyleA)
+'            .Style = activeDoc.Styles(StyleA)
 '            .MatchCase = False
 '            .MatchWholeWord = False
 '            .MatchWildcards = False
@@ -3083,7 +3083,7 @@ End Function
 '        intCount = intCount + 1
 '
 '        'Get number of current pagaraph, because we get an error if try to select before 1st para
-'        intCurrentPara = ActiveDocument.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
+'        intCurrentPara = activeDoc.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
 '
 '        If intCurrentPara > 1 Then      'NOT first paragraph of document
 '            'select preceding paragraph
@@ -3184,7 +3184,7 @@ End Function
 '    Dim strStatus As String
 '
 '    Dim activeDoc As Document
-'    Set activeDoc = ActiveDocument
+'    Set activeDoc = activeDoc
 '    Dim stylesGood() As String
 '    Dim stylesGoodLong As Long
 '    stylesGoodLong = 400                                    'could maybe reduce this number
@@ -3215,7 +3215,7 @@ End Function
 '        End If
 '
 '        For A = LBound(Stories()) To UBound(Stories())
-'            If J <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
+'            If J <= activeDoc.StoryRanges(Stories(A)).Paragraphs.Count Then
 '                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range.ParagraphStyle
 '                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
 '                pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
@@ -3259,7 +3259,7 @@ Private Sub ISBNcleanup()
     'check if that style exists, if not then exit sub
     On Error GoTo ErrHandler:
         Dim keyStyle As Word.Style
-        Set keyStyle = ActiveDocument.Styles("span ISBN (isbn)")
+        Set keyStyle = activeDoc.Styles("span ISBN (isbn)")
 
     Dim strISBNtextArray()
     ReDim strISBNtextArray(1 To 3)
@@ -3347,7 +3347,7 @@ End Sub
 '        .Forward = True
 '        .Wrap = wdFindStop
 '        .Format = True
-'        .Style = ActiveDocument.Styles("span ISBN (isbn)")
+'        .Style = activeDoc.Styles("span ISBN (isbn)")
 '        .MatchCase = False
 '        .MatchWholeWord = False
 '        .MatchWildcards = False
@@ -3358,7 +3358,7 @@ End Sub
 '            intCount = intCount + 1
 '            strISBN = Selection.Text
 '            'Record current selection because we need to return to it later
-'            ActiveDocument.Bookmarks.Add Name:="ISBN", Range:=Selection.Range
+'            activeDoc.Bookmarks.Add Name:="ISBN", Range:=Selection.Range
 '
 '            Selection.Collapse Direction:=wdCollapseEnd
 '            Selection.EndOf Unit:=wdLine, Extend:=wdExtend
@@ -3378,9 +3378,9 @@ End Sub
 '            End If
 '
 '            'Now we need to return the selection to where it was above, or else we can't loop through selection.find
-'            If ActiveDocument.Bookmarks.Exists("ISBN") = True Then
+'            If activeDoc.Bookmarks.Exists("ISBN") = True Then
 '                Selection.GoTo what:=wdGoToBookmark, Name:="ISBN"
-'                ActiveDocument.Bookmarks("ISBN").Delete
+'                activeDoc.Bookmarks("ISBN").Delete
 '            End If
 '
 '        Loop
@@ -3422,7 +3422,7 @@ End Sub
 '        .Forward = True
 '        .Wrap = wdFindStop
 '        .Format = True
-'        .Style = ActiveDocument.Styles("Chap Title Nonprinting (ctnp)")
+'        .Style = activeDoc.Styles("Chap Title Nonprinting (ctnp)")
 '        .MatchCase = False
 '        .MatchWholeWord = False
 '        .MatchWildcards = False
@@ -3436,7 +3436,7 @@ End Sub
 '            pageNum = Selection.Information(wdActiveEndPageNumber)
 '
 ''            'Record current selection because we need to return to it later
-''            ActiveDocument.Bookmarks.Add Name:="CTNP", Range:=Selection.Range
+''            activeDoc.Bookmarks.Add Name:="CTNP", Range:=Selection.Range
 ''
 ''            Selection.Collapse Direction:=wdCollapseEnd
 ''            Selection.EndOf Unit:=wdLine, Extend:=wdExtend
@@ -3449,9 +3449,9 @@ End Sub
 '
 '
 ''            'Now we need to return the selection to where it was above, or else we can't loop through selection.find
-''            If ActiveDocument.Bookmarks.Exists("ISBN") = True Then
+''            If activeDoc.Bookmarks.Exists("ISBN") = True Then
 ''                Selection.GoTo what:=wdGoToBookmark, Name:="ISBN"
-''                ActiveDocument.Bookmarks("ISBN").Delete
+''                activeDoc.Bookmarks("ISBN").Delete
 ''            End If
 '
 '        Loop
@@ -3542,7 +3542,7 @@ End Function
 '    strAllGoodChars = "ABCDEFGHIJKLMNOPQRSTUVWZYX1234567890_-"
 '
 '    ' Get file name w/o extension
-'    strDocName = ActiveDocument.Name
+'    strDocName = activeDoc.Name
 '    strDocName = Left(strDocName, InStrRev(strDocName, ".") - 1)
 '
 '    lngNameLength = Len(strDocName)

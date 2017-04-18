@@ -18,6 +18,8 @@ End If
 End Sub
 
 Sub Triceratops()
+  Set activeDoc = ActiveDocument
+  
     Dim strMessage As String
     Dim strTriceratops As String
     Dim strFindTrike As String
@@ -78,7 +80,7 @@ Sub Triceratops()
             Exit Sub
         Else
             'Turn off nonprinting characters so spaces don't show
-            ActiveDocument.ActiveWindow.View.ShowAll = False
+            activeDoc.ActiveWindow.View.ShowAll = False
             
             With Selection
                 ' move to end of document (so we don't mess up anyone's text

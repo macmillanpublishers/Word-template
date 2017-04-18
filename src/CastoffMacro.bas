@@ -170,18 +170,18 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     
     ' Get total CHARACTER count (incl. notes and spaces) from document
     Dim lngTotalCharCount As Long
-    lngTotalCharCount = ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+    lngTotalCharCount = activeDoc.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
                         IncludeFootnotesAndEndnotes:=True)
                         
     ' Get CHARACTER count for text without embedded endnotes and footnotes
     Dim lngNotesCharCount As Long
-    lngNotesCharCount = lngTotalCharCount - ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+    lngNotesCharCount = lngTotalCharCount - activeDoc.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
                         IncludeFootnotesAndEndnotes:=False)
           
     ' Get PAGE count of main text
     Dim lngMainTextPages As Long
-    ActiveDocument.Repaginate
-    lngMainTextPages = ActiveDocument.StoryRanges(wdMainTextStory).Information(wdNumberOfPagesInDocument)
+    activeDoc.Repaginate
+    lngMainTextPages = activeDoc.StoryRanges(wdMainTextStory).Information(wdNumberOfPagesInDocument)
         
     ' Get PAGE count of endnotes and footnotes
     Dim lngEndnotesPages As Long
@@ -189,15 +189,15 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     Dim lngNotesPages As Long
     
     If MacroHelpers.EndnotesExist = True Then
-        ActiveDocument.Repaginate
-        lngEndnotesPages = ActiveDocument.StoryRanges(wdEndnotesStory).Information(wdNumberOfPagesInDocument)
+        activeDoc.Repaginate
+        lngEndnotesPages = activeDoc.StoryRanges(wdEndnotesStory).Information(wdNumberOfPagesInDocument)
     Else
         lngEndnotesPages = 0
     End If
     
     If MacroHelpers.FootnotesExist = True Then
-        ActiveDocument.Repaginate
-        lngFootnotesPages = ActiveDocument.StoryRanges(wdFootnotesStory).Information(wdNumberOfPagesInDocument)
+        activeDoc.Repaginate
+        lngFootnotesPages = activeDoc.StoryRanges(wdFootnotesStory).Information(wdNumberOfPagesInDocument)
     Else
         lngFootnotesPages = 0
     End If
@@ -366,7 +366,7 @@ Private Function PickupDesign(objCastoffForm As CastoffForm) As Long
     ' get total character count of current ms from document
     ' this includes EN/FN, but at some point could calculate those differently like we do in Castoff
     Dim lngCurrentMsCharCount As Long
-    lngCurrentMsCharCount = ActiveDocument.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
+    lngCurrentMsCharCount = activeDoc.ComputeStatistics(Statistic:=wdStatisticCharactersWithSpaces, _
                         IncludeFootnotesAndEndnotes:=True)
     
     ' divide total prev character count by page count to get avg characters per page in prev book
