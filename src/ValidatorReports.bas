@@ -796,7 +796,7 @@ End Function
 '' If ISBNs were found, they will be in the "list" element
 '  If dictIsbn.Exists("list") = True Then
 '  ' Reduce array elements to a comma-delimited string
-'    IsbnSearch = MacroHelpers.Reduce(dictIsbn.Item("list"), ",")
+'    IsbnSearch = Join(dictIsbn.Item("list"), ",")
 '  Else
 '    IsbnSearch = vbNullString
 '  End If

@@ -429,7 +429,7 @@ Private Function IsbnMain(FilePath As String) As String
   ' If ISBNs were found, they will be in the "list" element
     If dictIsbn.Exists("list") = True Then
     ' Reduce array elements to a comma-delimited string
-      IsbnMain = Reduce(dictIsbn.Item("list"), ",")
+      IsbnMain = Join(SourceArray:=dictIsbn.Item("list"), Delimiter:=",")
     Else
       IsbnMain = vbNullString
     End If

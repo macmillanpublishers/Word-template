@@ -447,23 +447,27 @@ IsStyleInDocError:
   End If
 End Function
 
+' ===== SetPathSeparator ======================================================
+' Replaces original path separators in string with current file system separators
+
 Public Function SetPathSeparator(strOrigPath As String) As String
 ' Must pass full path, throws error if no path separators found.
   On Error GoTo SetPathSeparatorError
   Dim strFinalPath As String
   strFinalPath = strOrigPath
   
-  Dim strCharacter(1 To 3) As String
-  strCharacter(1) = ":"
-  strCharacter(2) = "/"
-  strCharacter(3) = "\"
+  Dim strCharactersCollection As Collection
+  Dim strCharacter As String
+  strCharactersCollection.Add = ":"
+  strCharactersCollection.Add = "/"
+  strCharactersCollection.Add = "\"
   
-  Dim A As Long
-  For A = LBound(strCharacter) To UBound(strCharacter)
-    If InStr(strOrigPath, A) > 0 Then
-      strFinalPath = VBA.Replace(strFinalPath, A, Application.PathSeparator)
+  For Each strCharacter In strCharactersCollection
+    If InStr(strOrigPath, strCharacter) > 0 Then
+      strFinalPath = VBA.Replace(strOrigPath, strOrigPath, _
+        Application.PathSeparator)
     End If
-  Next A
+  Next strCharacter
   
   SetPathSeparator = strFinalPath
   Exit Function
@@ -589,7 +593,7 @@ Public Sub zz_clearFind()
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
-        .Execute Replace:=wdReplaceOne
+        .Execute
     End With
   Exit Sub
 zz_clearFindError:
@@ -881,7 +885,7 @@ Function GetText(StyleName As String, Optional ReturnArray As Boolean = False) _
   End If
   
   If ReturnArray = False Then
-    GetText = MacroHelpers.Reduce(styleArray)
+    GetText = Join(SourceArray:=styleArray, Delimiter:=vbNewLine)
   Else
     GetText = styleArray
   End If
@@ -899,41 +903,6 @@ GetTextError:
     End If
   End If
   
-End Function
-
-' ===== Reduce ================================================================
-' Iterates through item passed to it (currently only an Array, but in future
-' add support for Dictionary or Collection) and returns a string of all of the
-' elements. Add handling in future to return other summaries (add all numbers?)
-
-Public Function Reduce(StartGroup As Variant, Optional Delimiter As String = _
-  vbNewLine) As Variant
-  On Error GoTo ReduceError
-  If VBA.IsArray(StartGroup) = True Then
-    Dim strReturn As String
-    Dim A As Long
-    
-    For A = LBound(StartGroup) To UBound(StartGroup)
-      strReturn = strReturn & StartGroup(A)
-      If A < UBound(StartGroup) Then
-        strReturn = strReturn & Delimiter
-      End If
-    Next A
-    
-  Else
-    ' Error if not passed an array
-    Err.Raise MacError.err_NotArray
-  End If
-  Reduce = strReturn
-
-  Exit Function
-ReduceError:
-  Err.Source = strModule & "Reduce"
-  If ErrorChecker(Err) = False Then
-    Resume
-  Else
-    Call MacroHelpers.GlobalCleanup
-  End If
 End Function
 
 

@@ -1205,7 +1205,7 @@ Private Function GetMetadata() As String
     styleNameB(3) = "span ISBN (isbn)"
     
     For B = 1 To UBound(styleNameB())
-        bString(B) = GetText(styleNameB(B))
+        bString(B) = MacroHelpers.GetText(styleNameB(B))
         If bString(B) <> vbNullString Then
             bString(B) = "** " & styleNameB(B) & " **" & vbNewLine & _
                         bString(B) & vbNewLine

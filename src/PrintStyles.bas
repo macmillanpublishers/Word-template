@@ -45,9 +45,22 @@ Private Sub PrintStylesMac()
     ' Doesn't work for endnotes/footnotes (can't add a drawing object to EN/FNs)
     ' Doesn't work on tables -- breaks the whole macro
     
-    ' ====== Check if doc is saved/protected ================
-    If CheckSave = True Then
+
+    Dim stStories() As Variant
+    stStories = MacroHelpers.StoryArray
+      
+  ' ======= Run startup checks ========
+  ' True means a check failed (e.g., doc protection on)
+    If WT_Settings.InstallType = "user" Then
+      If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=False) = True Then
+        Call MacroHelpers.Cleanup
         Exit Sub
+      End If
+    Else
+      If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=True) = True Then
+        Call MacroHelpers.Cleanup
+        Exit Sub
+      End If
     End If
     
     Application.ScreenUpdating = False

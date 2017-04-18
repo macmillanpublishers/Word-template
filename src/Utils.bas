@@ -586,27 +586,6 @@ Public Sub AppendTextFile(TextFile As String, Contents As String)
   End If
 End Sub
 
-' ===== SetPathSeparator ======================================================
-' Replaces original path separators in string with current file system separators
-
-Public Function SetPathSeparator(strOrigPath As String) As String
-
-  Dim strCharactersCollection As Collection
-  Dim strCharacter As String
-  strCharactersCollection.Add = ":"
-  strCharactersCollection.Add = "/"
-  strCharactersCollection.Add = "\"
-  
-  For Each strCharacter In strCharactersCollection
-    If InStr(strOrigPath, strCharacter) > 0 Then
-      strFinalPath = VBA.Replace(strOrigPath, strOrigPath, _
-        Application.PathSeparator)
-    End If
-  Next strCharacter
-  
-  SetPathSeparator = strFinalPath
-
-End Function
 
 ' ===== IsReadOnly ============================================================
 ' Tests if the file or directory is read-only -- does NOT test if file exists,
@@ -615,7 +594,7 @@ End Function
 
 ' Mac 2011 can't deal with file paths > 32 char
     
-Function IsReadOnly(Path As String) As Boolean
+Public Function IsReadOnly(Path As String) As Boolean
 
     If IsOldMac() = True Then
         Dim strScript As String
