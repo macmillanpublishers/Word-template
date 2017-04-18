@@ -32,10 +32,18 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   Dim stStories() As Variant
   stStories = MacroHelpers.StoryArray
   
-  ' ======= Run startup checks ========
-  ' True means a check failed (e.g., doc protection on)
-  If StartupSettings(StoriesUsed:=stStories) = True Then
-    Err.Raise MacError.err_MacErrGeneral
+' ======= Run startup checks ========
+' True means a check failed (e.g., doc protection on)
+  If WT_Settings.InstallType = "user" Then
+    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=False) = True Then
+      Call MacroHelpers.Cleanup
+      Exit Sub
+    End If
+  Else
+    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=True) = True Then
+      Call MacroHelpers.Cleanup
+      Exit Sub
+    End If
   End If
   
   ' Change to just check for backtick characters

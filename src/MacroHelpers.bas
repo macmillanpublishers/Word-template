@@ -1057,7 +1057,8 @@ Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeader
  
 End Function
 
-Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As Boolean = False) As Boolean
+Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll _
+As Boolean = False) As Boolean
   On Error GoTo StartupSettingsError
 ' records/adjusts/checks settings and stuff before running the rest of the macro
 ' returns TRUE if some check is bad and we can't run the macro
@@ -1126,18 +1127,47 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
   End If
     
   ' ========== TRACK CHANGES: store current setting, turn off ==========
-  ' ==========   OPTIONAL: Check if changes present and offer to accept all ==========
   System.ProfileString(strSection, "Current_Tracking") = activeDoc.TrackRevisions
   activeDoc.TrackRevisions = False
-  
-'  If AcceptAll = True Then
-    If FixTrackChanges = False Then
-        StartupSettings = True
-    End If
-'  End If
-    
 
+  ' ========== Check if changes present and offer to accept all ==========
+  ' AcceptAll is a parameter passed from the calling procedure. If calling
+  ' from Validator, be sure to set it to True.
+
+  If AcceptAll = True Then
+      If FixTrackChanges = False Then
+          StartupSettings = True
+      End If
+  End If
   
+  ' ========== Remove content controls ==========
+  ' Content controls also break character styles and cleanup
+  ' They are used by some imprints for frontmatter templates
+  ' for editorial, though.
+  ' Doesn't work at all for a Mac, so...
+  ' NOTE: New version cleans up Cookbook template. Mac way of checking only works
+  ' with template version 3+
+  Dim strOrigTemplate As String
+  Dim strCookbookMsg As String
+  #If Mac Then
+      Dim objDocProp As DocumentProperty
+      For Each objDocProp In activeDoc.CustomDocumentProperties
+        If objDocProp.Name = "OriginalTemplate" Then
+          If InStr(objDocProp.Value, "CookbookTemplate_v") > 0 Then
+            strCookbookMsg = "It looks like you are cleaning up a cookbook manuscript. " & _
+              "Note that cleanup specific to Macmillan's Cookbook template only works " & _
+              "on Windows PCs. Please ask your PE or another friendly coworker to run " & _
+              "this macro for you."
+            MsgBox strCookbookMsg
+            Exit For
+          End If
+        End If
+      Next objDocProp
+  #Else
+      ' Run both, 2nd one clears non-recipe content controls
+      CleanUpRecipeContentControls
+      ClearContentControls
+  #End If
   
 ' ========== Delete field codes ==========
 ' Fields break cleanup and char styles, so we delete them (but retain their
@@ -1145,49 +1175,11 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
 ' even if they didn't break anything we don't want them.
 ' Note, however, that even though linked endnotes and footnotes are
 ' types of fields, this loop doesn't affect them.
-    
-  Dim A As Long
-  Dim thisRange As Range
-  Dim objField As Field
-  Dim strContent As String
+' NOTE: Moved this to separate procedure to use Matt's code.
+' Must run AFTER content control cleanup.
   
-  ' StoriesUsed is optional; if an array of stories is not passed, just use the main text story here
-  If IsArrayEmpty(StoriesUsed) = True Then
-    ReDim StoriesUsed(1 To 1)
-    StoriesUsed(1) = wdMainTextStory
-  End If
+  Call UpdateUnlinkFieldCodes(StoriesUsed)
 
-  For A = LBound(StoriesUsed) To UBound(StoriesUsed)
-    Set thisRange = activeDoc.StoryRanges(StoriesUsed(A))
-    For Each objField In thisRange.Fields
-'            DebugPrint thisRange.Fields.Count
-      If thisRange.Fields.Count > 0 Then
-        With objField
-'                    DebugPrint .Index & ": " & .Kind
-            ' None or Cold means it has no result, so we just delete
-          If .Kind = wdFieldKindNone Or .Kind = wdFieldKindCold Then
-            .Delete
-          Else ' It has a result, so we replace field w/ just its content
-            strContent = .result
-            .Select
-            .Delete
-            Selection.InsertAfter strContent
-          End If
-        End With
-      End If
-    Next objField
-
-  Next A
-
-    
-  ' ========== Remove content controls ==========
-  ' Content controls also break character styles and cleanup
-  ' They are used by some imprints for frontmatter templates
-  ' for editorial, though.
-  ' Doesn't work at all for a Mac, so...
-  #If Win32 Then
-      ClearContentControls
-  #End If
 
   ' ========== STATUS BAR: store current setting and display ==========
   ' Run after Content control cleanup
@@ -1207,6 +1199,126 @@ StartupSettingsError:
   End If
 End Function
 
+' ===== UpdateUnlinkFieldCodes ================================================
+' Cycles through all Fields in ActiveDocument. Updates, unlocks, and unlinks
+' each field. If this is our cookbook template with the automatic TOC, that
+' will be unlinked as well.
+
+Public Sub UpdateUnlinkFieldCodes(Optional p_stories As Variant)
+  Dim objField As Field
+  Dim A As Long
+  Dim thisRange As Range
+  Dim strContent As String
+  Dim blnTOCpresent As Boolean
+  
+  ' Test if we need to run ReMapTOCStyles later
+  blnTOCpresent = False
+  
+  ' p_stories is optional; if an array of stories is not passed,
+  ' just use the main text story here
+  If IsArrayEmpty(p_stories) = True Then
+      ReDim p_stories(1 To 1)
+      p_stories(1) = wdMainTextStory
+  End If
+  
+  For A = LBound(p_stories) To UBound(p_stories)
+      Set thisRange = ActiveDocument.StoryRanges(p_stories(A))
+      If thisRange.Fields.Count > 0 Then
+        For Each objField In thisRange.Fields
+  '            Debug.Print thisRange.Fields.Count
+            With objField
+              If .Type = wdFieldTOC Then
+                blnTOCpresent = True
+              End If
+              
+              .Update
+              .Locked = False
+              .Unlink
+            
+            End With
+          Next objField
+      End If
+  Next A
+  
+  ' If automatic TOC was unlinked above, need to map built-in TOC styles to ours
+  If blnTOCpresent = True Then
+    Call ReMapTOCStyles
+  End If
+
+End Sub
+
+
+' ===== ReMapTOCStyles =========================================================
+' Replaces built-in TOC styles with Macmillan equivalents (based on Dict)
+
+Private Sub ReMapTOCStyles()
+  On Error GoTo ReMapTOCStylesError
+  
+  Dim objStyleMapDict As Dictionary
+  Dim objDictKey As Variant
+  Dim objDictValue As Variant
+  Dim rngActiveDoc As Range
+  Dim myStyle As Style  ' for error handling
+  
+  Set objStyleMapDict = CookbookTOCStyleMap
+  Set rngActiveDoc = activeDoc.Range
+   
+  For Each objDictKey In objStyleMapDict.Keys()
+  
+    'Need to add a check if style is present in Document &/or in use
+    objDictValue = objStyleMapDict(objDictKey)
+    
+    Call zz_clearFind
+    With rngActiveDoc.Find
+      .Text = ""
+      .Replacement.Text = ""
+      .Wrap = wdFindContinue
+      .Format = True
+      .Style = objDictKey
+      .Replacement.Style = objDictValue
+      .Execute Replace:=wdReplaceAll
+    End With
+  Next
+  
+  Exit Sub
+
+ReMapTOCStylesError:
+  If Err.Number = 5834 Or Err.Number = 5941 Then  ' style not present
+    Set myStyle = activeDoc.Styles.Add(Name:=objDictKey, _
+      Type:=wdStyleTypeParagraph)
+    Resume
+  Else
+    If WT_Settings.InstallType = "user" Then
+      MsgBox "Oops, something happened! Email workflows@macmillan.com and " & _
+        "let them know that something's wrong." & vbNewLine & vbNewLine & _
+        "Error " & Err.Number & ": " & Err.Description
+    Else
+      ErrorChecker Err
+    End If
+  End If
+End Sub
+
+
+
+' ===== CookbookTOCStyleMap ====================================================
+'
+' Hardcoded style-map for TOC styles (for cookbook template)
+
+Private Function CookbookTOCStyleMap()
+  Dim objStyleMapDict As New Dictionary
+
+  objStyleMapDict.Add "TOC 1", "TOC Frontmatter Head (cfmh)"
+  objStyleMapDict.Add "TOC 2", "TOC Backmatter Head (cbmh)"
+  objStyleMapDict.Add "TOC 3", "TOC Part Number  (cpn)"
+  objStyleMapDict.Add "TOC 4", "TOC Part Title (cpt)"
+  objStyleMapDict.Add "TOC 5", "TOC Chapter Number (ccn)"
+  objStyleMapDict.Add "TOC 6", "TOC Chapter Title (cct)"
+  objStyleMapDict.Add "TOC 7", "TOC Author (cau)"
+  objStyleMapDict.Add "TOC 8", "TOC Level-1 Chapter Head (ch1)"
+  objStyleMapDict.Add "TOC 9", "TOC Chapter Subtitle (ccst)"
+  
+  Set CookbookTOCStyleMap = objStyleMapDict
+End Function
 
 Private Function FixTrackChanges() As Boolean
 ' returns True if changes were fixed or not present, False if changes remain in doc
@@ -1220,25 +1332,26 @@ Private Function FixTrackChanges() As Boolean
     'See if there are tracked changes or comments in document
     On Error Resume Next
     Selection.HomeKey Unit:=wdStory   'start search at beginning of doc
-    WordBasic.NextChangeOrComment       'search for a tracked change or comment. error if none are found.
+    'search for a tracked change or comment. error if none are found.
+    WordBasic.NextChangeOrComment
     
-    ' Commenting out MsgBox for Bookmaker Validator right now
-    ' When have MsgBox wrapper function, can turn it back on.
-'    'If there are changes, ask user if they want macro to accept changes or cancel
+' If there are changes, ask user if they want macro to accept changes or cancel
     If Err.Number = 0 Then
-'        If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
-'            & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
-'            & vbCr & vbCr & "Click CANCEL to stop the Bookmaker Requirements Check and deal with the tracked changes and comments on your own.", _
-'            273, "Are those tracked changes I see?") = vbCancel Then           '273 = vbOkCancel(1) + vbCritical(16) + vbDefaultButton2(256)
-'                FixTrackChanges = False
-'                Exit Function
-'        Else 'User clicked OK, so accept all tracked changes and delete all comments
-            activeDoc.AcceptAllRevisions
-            For N = oComments.Count To 1 Step -1
-                oComments(N).Delete
-            Next N
-            Set oComments = Nothing
-'        End If
+      If WT_Settings.InstallType = "user" Then
+        If MsgBox("Bookmaker doesn't like comments or tracked changes, but it appears that you have some in your document." _
+          & vbCr & vbCr & "Click OK to ACCEPT ALL CHANGES and DELETE ALL COMMENTS right now and continue with the Bookmaker Requirements Check." _
+          & vbCr & vbCr & "Click CANCEL to stop the Bookmaker Requirements Check and deal with the tracked changes and comments on your own.", _
+          273, "Are those tracked changes I see?") = vbCancel Then           '273 = vbOkCancel(1) + vbCritical(16) + vbDefaultButton2(256)
+              FixTrackChanges = False
+              Exit Function
+        Else 'User clicked OK, so accept all tracked changes and delete all comments
+          activeDoc.AcceptAllRevisions
+          For N = oComments.Count To 1 Step -1
+              oComments(N).Delete
+          Next N
+          Set oComments = Nothing
+        End If
+      End If
     Else
       FixTrackChanges = True
     End If
@@ -1254,10 +1367,90 @@ FixTrackChangesError:
     
 End Function
 
+' ===== CleanUpRecipeContentControls ===========================================
+'
+' For cleaning up Cookstr Cookbook templates:
+'   1. Calls "UpdateUnlinkTOC" sub to update, unlock, and unlink TOC fields
+'   2. Cycles through all Content Controls in doc, Unlocks each CC.
+'   3. For all CCs of type 'group', if nested CCs are empty + have tag cookbook
+'       it deletes the group & all contents. If not, it deletes the group CC
+'       preserving contents)
+'   4. For all non-Group CC's, if CC is in paragraphs styled as Design Note:
+'       if CC is the last/only Content Control in the DN para, the para is deleted
+'   5. For any "Edirotial" CC's with placeholder content, the CC range text is
+'       set to match placeholder content (and persists when CC is deleted).
+'   6. All other ContentControls, CC is deleted, preserving non-placeholder content
+
+Private Sub CleanUpRecipeContentControls()
+  Dim objCC As ContentControl
+  Dim objCCs As ContentControls
+  Dim objGroupCC As ContentControl
+  Dim rngCC As Range
+  Dim rngGroupCC As Range
+  Dim rngIndexPara As Range
+  Dim lngCCsInPara As Long
+  Dim lngEmptyCCinGroup As Long
+  Dim lngParaIndex As Long
+  Dim objStyleMapDict As Dictionary
+  Set objCCs = activeDoc.ContentControls
+  Set objStyleMapDict = CookbookTOCStyleMap
+  
+  For Each objCC In objCCs
+    If objCC.LockContentControl = True Then
+        objCC.LockContentControl = False
+    End If
+    If objCC.Type = 7 Then            'check for grouped CC's
+        Set rngGroupCC = objCC.Range
+        lngEmptyCCinGroup = 0
+        For Each objGroupCC In rngGroupCC.ContentControls
+            If objGroupCC.PlaceholderText.Value = objGroupCC.Range.Text And _
+                objGroupCC.Tag = "cookbook" Then
+                lngEmptyCCinGroup = lngEmptyCCinGroup + 1
+            End If
+        Next
+        If lngEmptyCCinGroup = rngGroupCC.ContentControls.Count Then
+            Debug.Print "Deleting a blank '" & _
+                rngGroupCC.ContentControls(1).Title & "' CC group"
+            objCC.Delete True
+        Else
+            objCC.Delete False
+        End If
+    ElseIf objCC.Tag = "cookbook" Or objCC.Tag = "cookbooks" Or _
+        objCC.Title = "Pub Year" Then
+        Set rngCC = objCC.Range
+        If rngCC.ParagraphStyle = "Design Note (dn)" Then
+            Debug.Print "Deleting a Design Note para with ContentControl: " _
+                & objCC.Title
+            lngParaIndex = activeDoc.Range(0, rngCC.End).Paragraphs.Count
+            Set rngIndexPara = activeDoc.Paragraphs(lngParaIndex).Range
+            lngCCsInPara = rngIndexPara.ContentControls.Count
+            Debug.Print lngCCsInPara & "is the lngpcount"
+            If rngIndexPara.ContentControls(lngCCsInPara).ID = objCC.ID Then
+                'to verify this is the last Content Control in this para
+                activeDoc.Paragraphs(lngParaIndex).Range.Delete
+            End If
+        Else
+            If objCC.Title = "Editorial" And objCC.Range.Text = _
+                objCC.PlaceholderText.Value Then
+                objCC.Range.Text = objCC.PlaceholderText.Value
+                Debug.Print "Setting blank 'Editorial' CCs to placeholder txt"
+            End If
+            objCC.Delete False
+            Debug.Print "Deleting CC (preserving content) from para: " & _
+                rngCC.ParagraphStyle
+        End If
+    Else ' It's not a cookbook control and we want to remove but leave content
+      objCC.Delete False
+    End If
+  Next
+
+End Sub
 
 Private Sub ClearContentControls()
+' Run CleanupRecipeContentControls first.
   On Error GoTo ClearContentControlsError
-    'This is it's own sub because doesn't exist in Mac Word, breaks whole sub if included
+    'This is it's own sub because doesn't exist in Mac Word,
+    ' breaks whole sub if included
     Dim cc As ContentControl
     
     For Each cc In ActiveDocument.ContentControls

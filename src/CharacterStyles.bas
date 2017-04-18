@@ -68,12 +68,12 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
   If WT_Settings.InstallType = "user" Then
-    If SharedMacros.StartupSettings(StoriesUsed:=stStories) = True Then
+    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=False) = True Then
       Call MacroHelpers.Cleanup
       Exit Sub
     End If
   Else
-    If MacroHelpers.StartupSettings(StoriesUsed:=stStories) = True Then
+    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=True) = True Then
       Call MacroHelpers.Cleanup
       Exit Sub
     End If
