@@ -881,128 +881,62 @@ End Function
 
 
 Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As Boolean = False) As Boolean
-    ' records/adjusts/checks settings and stuff before running the rest of the macro
-    ' returns TRUE if some check is bad and we can't run the macro
-    
-    ' mainDoc will only do stuff to main body text, not EN or FN stories. So
-    ' do all main-text-only stuff first, then loop through stories
-    Dim mainDoc As Document
-    Set mainDoc = ActiveDocument
-    
-    ' Section of registry/preferences file to store settings
-    Dim strSection As String
-    strSection = "MACMILLAN_MACROS"
-    
-    ' ========== check if file has been saved, if not prompt user; if canceled, quit function ==========
-    Dim iReply As Integer
-    
-    Dim docSaved As Boolean
-    docSaved = mainDoc.Saved
-    
-    If docSaved = False Then
-        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
-                vbOKCancel, "Error 1")
-        If iReply = vbOK Then
-            StartupSettings = False
-            mainDoc.Save
-        Else
-            StartupSettings = True
-            Exit Function
-        End If
-    End If
-    
-    
-    ' ========== check if file has doc protection on, prompt user and quit function if it does ==========
-    If mainDoc.ProtectionType <> wdNoProtection Then
-        MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
-            "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
-            "TIP: If you don't know the protection password, try pasting contents of this file into " & _
-            "a new file, and run the macro on that.", , "Error 2"
-        StartupSettings = True
-        Exit Function
-    Else
-        StartupSettings = False
-    End If
-    
-    
-    ' ========== Turn off screen updating ==========
-    Application.ScreenUpdating = False
-    
-    
-    ' ========== Save current cursor location in a bookmark ==========
-    ' Store current story, so we can return to it before selecting bookmark in Cleanup
-    System.ProfileString(strSection, "Current_Story") = Selection.StoryType
-    ' next line required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
-    Selection.Collapse Direction:=wdCollapseStart
-    mainDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
-    
-    
-    ' ========== TRACK CHANGES: store current setting, turn off ==========
-    ' ==========   OPTIONAL: Check if changes present and offer to accept all ==========
-    System.ProfileString(strSection, "Current_Tracking") = mainDoc.TrackRevisions
-    mainDoc.TrackRevisions = False
-    
-    If AcceptAll = True Then
-        If FixTrackChanges = False Then
-            StartupSettings = True
-        End If
-    End If
 
-    ' ========== Remove content controls ==========
-    ' Content controls also break character styles and cleanup
-    ' They are used by some imprints for frontmatter templates
-    ' for editorial, though.
-    ' Doesn't work at all for a Mac, so...
-    ' NOTE: New version cleans up Cookbook template. Mac way of checking only works
-    ' with template version 3+
-    Dim strOrigTemplate As String
-    Dim strCookbookMsg As String
-    #If Mac Then
-        Dim objDocProp As DocumentProperty
-        For Each objDocProp In mainDoc.CustomDocumentProperties
-          If objDocProp.Name = "OriginalTemplate" Then
-            If InStr(objDocProp.Value, "CookbookTemplate_v") > 0 Then
-              strCookbookMsg = "It looks like you are cleaning up a cookbook manuscript. " & _
-                "Note that cleanup specific to Macmillan's Cookbook template only works " & _
-                "on Windows PCs. Please ask your PE or another friendly coworker to run " & _
-                "this macro for you."
-              MsgBox strCookbookMsg
-              Exit For
-            End If
-            
+
+  ' ========== TRACK CHANGES: store current setting, turn off ==========
+  ' ==========   OPTIONAL: Check if changes present and offer to accept all ==========
+  System.ProfileString(strSection, "Current_Tracking") = mainDoc.TrackRevisions
+  mainDoc.TrackRevisions = False
+  
+  If AcceptAll = True Then
+      If FixTrackChanges = False Then
+          StartupSettings = True
+      End If
+  End If
+
+  ' ========== Remove content controls ==========
+  ' Content controls also break character styles and cleanup
+  ' They are used by some imprints for frontmatter templates
+  ' for editorial, though.
+  ' Doesn't work at all for a Mac, so...
+  ' NOTE: New version cleans up Cookbook template. Mac way of checking only works
+  ' with template version 3+
+  Dim strOrigTemplate As String
+  Dim strCookbookMsg As String
+  #If Mac Then
+      Dim objDocProp As DocumentProperty
+      For Each objDocProp In activeDoc.CustomDocumentProperties
+        If objDocProp.Name = "OriginalTemplate" Then
+          If InStr(objDocProp.Value, "CookbookTemplate_v") > 0 Then
+            strCookbookMsg = "It looks like you are cleaning up a cookbook manuscript. " & _
+              "Note that cleanup specific to Macmillan's Cookbook template only works " & _
+              "on Windows PCs. Please ask your PE or another friendly coworker to run " & _
+              "this macro for you."
+            MsgBox strCookbookMsg
+            Exit For
           End If
-        Next objDocProp
-    #Else
-        CleanUpRecipeContentControls
-    #End If
+        End If
+      Next objDocProp
+  #Else
+      CleanUpRecipeContentControls
+  #End If
 
-    
-    ' ========== Delete field codes ==========
-    ' Fields break cleanup and char styles, so we delete them (but retain their
-    ' result, if any). Furthermore, fields make no sense in a manuscript, so
-    ' even if they didn't break anything we don't want them.
-    ' Note, however, that even though linked endnotes and footnotes are
-    ' types of fields, this loop doesn't affect them.
-    ' NOTE: Moved this to separate procedure to use Matt's code.
-    ' Must run AFTER content control cleanup.
-    
-    Call UpdateUnlinkFieldCodes(StoriesUsed)
-    
-    
-    ' ========== STATUS BAR: store current setting and display ==========
-    ' Run after Content control cleanup
-    System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
-    Application.DisplayStatusBar = True
-    
-    
-    ' ========== Remove bookmarks ==========
-    Dim bkm As Bookmark
-    
-    For Each bkm In mainDoc.Bookmarks
-        bkm.Delete
-    Next bkm
-    
+  
+' ========== Delete field codes ==========
+' Fields break cleanup and char styles, so we delete them (but retain their
+' result, if any). Furthermore, fields make no sense in a manuscript, so
+' even if they didn't break anything we don't want them.
+' Note, however, that even though linked endnotes and footnotes are
+' types of fields, this loop doesn't affect them.
+' NOTE: Moved this to separate procedure to use Matt's code.
+' Must run AFTER content control cleanup.
+  
+  Call UpdateUnlinkFieldCodes(StoriesUsed)
+  
+  
+
+
+  
 End Function
 
 

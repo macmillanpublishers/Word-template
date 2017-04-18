@@ -1061,76 +1061,74 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
   On Error GoTo StartupSettingsError
 ' records/adjusts/checks settings and stuff before running the rest of the macro
 ' returns TRUE if some check is bad and we can't run the macro
-  StartupSettings = False
-' mainDoc will only do stuff to main body text, not EN or FN stories. So
-' do all main-text-only stuff first, then loop through stories
-  Dim mainDoc As Document
-  Set mainDoc = activeDoc
+
+' activeDoc is global variable to hold our document, so if user clicks a different
+' document during execution, won't switch to that doc.
+
+  If activeDoc Is Nothing Then
+    Set activeDoc = ActiveDocument
+  End If
+
+' check if file has doc protection on, quit function if it does
+  If activeDoc.ProtectionType <> wdNoProtection Then
+    If WT_Settings.InstallType = "server" Then
+      Err.Raise MacError.err_DocProtectionOn
+    Else
+      MsgBox "Uh oh ... protection is enabled on document '" & activeDoc & "'." & vbNewLine & _
+        "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
+        "TIP: If you don't know the protection password, try pasting contents of this file into " & _
+        "a new file, and run the macro on that.", , "Error 2"
+      StartupSettings = True
+      Exit Function
+    End If
+  End If
   
+' check if file has been saved (we can assume it was for Validator)
+  If WT_Settings.InstallType = "user" Then
+    Dim iReply As Integer
+    Dim docSaved As Boolean
+    docSaved = activeDoc.Saved
+  
+    If docSaved = False Then
+      iReply = MsgBox("Your document '" & activeDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
+          "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
+              vbOKCancel, "Error 1")
+      If iReply = vbOK Then
+        activeDoc.Save
+      Else
+        StartupSettings = True
+        Exit Function
+      End If
+    End If
+  End If
+
+  ' ========== Turn off screen updating ==========
+  Application.ScreenUpdating = False
+
 ' Section of registry/preferences file to store settings
   Dim strSection As String
   strSection = "MACMILLAN_MACROS"
-  
-' check if file has been saved
-  Dim iReply As Integer
-  
-'  Dim docSaved As Boolean
-'  docSaved = mainDoc.Saved
-
-' Commenting out MsgBox for now, return after writing wrapper function for
-' Bookmaker validator
-'  If docSaved = False Then
-'        iReply = MsgBox("Your document '" & mainDoc & "' contains unsaved changes." & vbNewLine & vbNewLine & _
-'            "Click OK to save your document and run the macro." & vbNewLine & vbNewLine & "Click 'Cancel' to exit.", _
-'                vbOKCancel, "Error 1")
-'        If iReply = vbOK Then
-'    mainDoc.Save
-'        Else
-'            StartupSettings = True
-'            Exit Function
-'        End If
-'  End If
-    
-    
-' check if file has doc protection on, prompt user and quit function if it does
-' For now Err.Raise should divert the code from the MsgBox call, But I'll rm anyway
-  If mainDoc.ProtectionType <> wdNoProtection Then
-    Err.Raise MacError.err_DocProtectionOn
-'    MsgBox "Uh oh ... protection is enabled on document '" & mainDoc & "'." & vbNewLine & _
-'      "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
-'      "TIP: If you don't know the protection password, try pasting contents of this file into " & _
-'      "a new file, and run the macro on that.", , "Error 2"
-    StartupSettings = True
-    Exit Function
-  Else
-    StartupSettings = False
-  End If
-  
-  ' ========== Turn off screen updating ==========
-  Application.ScreenUpdating = False
-  
-  ' ========== STATUS BAR: store current setting and display ==========
-  System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
-  Application.DisplayStatusBar = True
     
   ' ========== Remove bookmarks ==========
   Dim bkm As Bookmark
   
-  For Each bkm In mainDoc.Bookmarks
+  For Each bkm In activeDoc.Bookmarks
     bkm.Delete
   Next bkm
     
   ' ========== Save current cursor location in a bookmark ==========
-  ' Store current story, so we can return to it before selecting bookmark in Cleanup
-  System.ProfileString(strSection, "Current_Story") = Selection.StoryType
-  ' next line required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
-  Selection.Collapse Direction:=wdCollapseStart
-  mainDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+  If WT_Settings.InstallType = "user" Then
+    ' Store current story, so we can return to it before selecting bookmark in Cleanup
+    System.ProfileString(strSection, "Current_Story") = Selection.StoryType
+    ' next line required for Mac to prevent problem where original selection blinked repeatedly when reselected at end
+    Selection.Collapse Direction:=wdCollapseStart
+    activeDoc.Bookmarks.Add Name:="OriginalInsertionPoint", Range:=Selection.Range
+  End If
     
   ' ========== TRACK CHANGES: store current setting, turn off ==========
   ' ==========   OPTIONAL: Check if changes present and offer to accept all ==========
-  System.ProfileString(strSection, "Current_Tracking") = mainDoc.TrackRevisions
-  mainDoc.TrackRevisions = False
+  System.ProfileString(strSection, "Current_Tracking") = activeDoc.TrackRevisions
+  activeDoc.TrackRevisions = False
   
 '  If AcceptAll = True Then
     If FixTrackChanges = False Then
@@ -1138,7 +1136,9 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
     End If
 '  End If
     
-    
+
+  
+  
 ' ========== Delete field codes ==========
 ' Fields break cleanup and char styles, so we delete them (but retain their
 ' result, if any). Furthermore, fields make no sense in a manuscript, so
@@ -1188,6 +1188,14 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
   #If Win32 Then
       ClearContentControls
   #End If
+
+  ' ========== STATUS BAR: store current setting and display ==========
+  ' Run after Content control cleanup
+  If WT_Settings.InstallType = "user" Then
+    System.ProfileString(strSection, "Current_Status_Bar") = Application.DisplayStatusBar
+    Application.DisplayStatusBar = True
+  End If
+  
   Exit Function
   
 StartupSettingsError:
