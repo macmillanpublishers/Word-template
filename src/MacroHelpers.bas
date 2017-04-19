@@ -481,42 +481,6 @@ SetPathSeparatorError:
   End If
 End Function
 
-Public Function CheckLog(StyleDir As String, LogDir As String, LogPath As String) As Boolean
-'LogPath is *full* path to log file, including file name. Created by CreateLogFileInfo sub, to be called before this one.
-
-    Dim logString As String
-    
-    '------------------ Check log file --------------------------------------------
-    'Check if logfile/directory exists
-    If IsItThere(LogPath) = False Then
-        CheckLog = False
-        logString = Now & " -- Creating logfile."
-        If IsItThere(LogDir) = False Then
-            If IsItThere(StyleDir) = False Then
-                MkDir (StyleDir)
-                MkDir (LogDir)
-                logString = Now & " -- Creating MacmillanStyleTemplate directory."
-            Else
-                MkDir (LogDir)
-                logString = Now & " -- Creating log directory."
-            End If
-        End If
-    Else    'logfile exists, so check last modified date
-        Dim lastModDate As Date
-        lastModDate = FileDateTime(LogPath)
-        If DateDiff("d", lastModDate, Date) < 1 Then       'i.e. 1 day
-            CheckLog = True
-            logString = Now & " -- Already checked less than 1 day ago."
-        Else
-            CheckLog = False
-            logString = Now & " -- >= 1 day since last update check."
-        End If
-    End If
-    
-    'Log that info!
-    LogInformation LogPath, logString
-    
-End Function
 
 ' ===== ParaIndex =============================================================
 ' Returns the paragraph index of the current selection. Default is to return the
@@ -935,90 +899,6 @@ StyleReplaceError:
   End If
 End Function
 
-Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeaderCol As Boolean) As Variant
-
-'------Load CSV into 2d array, NOTE!!: base 0---------
-' But also note that this now removes the header row and column too
-    Dim fnum As Integer
-    Dim whole_file As String
-    Dim lines As Variant
-    Dim one_line As Variant
-    Dim num_rows As Long
-    Dim num_cols As Long
-    Dim the_array() As Variant
-    Dim R As Long
-    Dim C As Long
-    
-        If IsItThere(Path) = False Then
-            MsgBox "There was a problem with your Castoff.", vbCritical, "Error: CSV not available"
-            Exit Function
-        End If
-        'DebugPrint Path
-        
-        ' Do we need to remove a header row?
-        Dim lngHeaderRow As Long
-        If RemoveHeaderRow = True Then
-            lngHeaderRow = 1
-        Else
-            lngHeaderRow = 0
-        End If
-        
-        ' Do we need to remove a header column?
-        Dim lngHeaderCol As Long
-        If RemoveHeaderCol = True Then
-            lngHeaderCol = 1
-        Else
-            lngHeaderCol = 0
-        End If
-        
-        ' Load the csv file.
-        fnum = FreeFile
-        Open Path For Input As fnum
-        whole_file = Input$(LOF(fnum), #fnum)
-        Close fnum
-
-        ' Break the file into lines (trying to capture whichever line break is used)
-        If InStr(1, whole_file, vbCrLf) <> 0 Then
-            lines = Split(whole_file, vbCrLf)
-        ElseIf InStr(1, whole_file, vbCr) <> 0 Then
-            lines = Split(whole_file, vbCr)
-        ElseIf InStr(1, whole_file, vbLf) <> 0 Then
-            lines = Split(whole_file, vbLf)
-        Else
-            MsgBox "There was an error with your castoff.", vbCritical, "Error parsing CSV file"
-        End If
-
-        ' Dimension the array.
-        num_rows = UBound(lines)
-        one_line = Split(lines(0), ",")
-        num_cols = UBound(one_line)
-        ReDim the_array(num_rows - lngHeaderRow, num_cols - lngHeaderCol) ' -1 if we are not using header row/col
-        
-        ' Copy the data into the array.
-        For R = lngHeaderRow To num_rows           ' start at 1 (not 0) if we are not using the header row
-            If Len(lines(R)) > 0 Then
-                one_line = Split(lines(R), ",")
-                For C = lngHeaderCol To num_cols   ' start at 1 (not 0) if we are not using the header column
-                    'DebugPrint one_line(c)
-                    the_array((R - lngHeaderRow), (C - lngHeaderCol)) = one_line(C)   ' -1 because if are not using header row/column from CSV
-                Next C
-            End If
-        Next R
-    
-        ' Prove we have the data loaded.
-'         DebugPrint LBound(the_array)
-'         DebugPrint UBound(the_array)
-'         For R = 0 To (num_rows - 1)          ' -1 again if we removed the header row
-'             For c = 0 To num_cols      ' -1 again if we removed the header column
-'                 DebugPrint the_array(R, c) & " | ";
-'             Next c
-'             DebugPrint
-'         Next R
-'         DebugPrint "======="
-    
-    LoadCSVtoArray = the_array
- 
-End Function
 
 Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll _
 As Boolean = False) As Boolean

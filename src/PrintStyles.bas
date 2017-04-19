@@ -438,7 +438,7 @@ Private Sub PrintStylesPC()
     Dim A As Long
     
     ' This is the template where the building block is saved
-    strPath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\MacmillanGT.dotm"
+    strPath = SharedFileInstaller.StyleDir & Application.PathSeparator & "MacmillanGT.dotm"
     If IsItThere(strPath) = True Then
         Set objTemplate = Templates(strPath)
     Else

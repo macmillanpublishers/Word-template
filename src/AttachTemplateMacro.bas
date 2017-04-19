@@ -31,7 +31,7 @@ Sub AttachMe(TemplateName As String)
     Dim strStyleDir As String
         
     ' Get local style directory
-    strStyleDir = MacroHelpers.StyleDir
+    strStyleDir = SharedFileInstaller.StyleDir()
     myFile = strStyleDir & Application.PathSeparator & TemplateName
    
         

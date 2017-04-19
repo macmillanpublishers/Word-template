@@ -11,6 +11,13 @@ Option Explicit
 Option Base 1
 
 
+Public Enum TemplatesList
+    updaterTemplates = 1
+    toolsTemplates = 2
+    stylesTemplates = 3
+    installTemplates = 4
+    allTemplates = 5
+End Enum
 
 'Sub AutoExec()
 '
@@ -114,8 +121,77 @@ Option Base 1
 'ErrHandler:
 '    MsgBox Err.Number & ": " & Err.Description
 'End Sub
-'
-'
+
+
+Private Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional PathToRepo As String) As Variant
+    ' returns an array of paths to template files in their final installation locations
+    ' if you want to use "allTemplates" (i.e., for updating code in templates), must include PathToRepo
+    
+    Dim strStartupDir As String
+    Dim strStyleDir As String
+    
+    strStartupDir = Application.StartupPath
+    strStyleDir = SharedFileInstaller.StyleDir()
+
+    Dim strPathsToTemplates() As String
+    Dim K As Long
+    K = 0
+    
+    ' get the updater file for these requests
+    If TemplatesYouWant = updaterTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStartupDir & Application.PathSeparator & "GtUpdater.dotm"
+    End If
+    
+    ' get the tools file for these requests
+    If TemplatesYouWant = toolsTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "MacmillanGT.dotm"
+    End If
+    
+    ' get the styles files for these requests
+    If TemplatesYouWant = stylesTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan.dotm"
+        
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan_NoColor.dotm"
+
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan_CoverCopy.dotm"
+    End If
+    
+    ' also get the installer file
+    If TemplatesYouWant = allTemplates And PathToRepo <> vbNullString Then
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller" _
+            & Application.PathSeparator & "MacmillanTemplateInstaller.docm"
+        
+        ' Could also add paths to open _BETA and _DEVELOP installer files?
+    End If
+    
+    ' DEBUGGING: check tha list!
+'    Dim H As Long
+'    For H = LBound(strPathsToTemplates) To (UBound(strPathsToTemplates))
+'        Debug.Print H & ": " & strPathsToTemplates(H)
+'    Next H
+    
+    
+    GetTemplatesList = strPathsToTemplates
+    
+End Function
 '
 'Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
 '

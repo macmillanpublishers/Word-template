@@ -13,15 +13,8 @@ Sub CheckMacmillanGT()
 
     
     templateFile = "MacmillanGT.dotm"  'the template file you are checking
-    
-    #If Mac Then
-        strMacDocs = MacScript("return (path to documents folder) as string")
-        strTemplatePath = strMacDocs & "MacmillanStyleTemplate:" & templateFile
-    #Else
-        strTemplatePath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & templateFile
-    #End If
+    strTemplatePath = SharedFileInstaller.StyleDir()
 
-    
     Call VersionCheck(strTemplatePath, templateFile)
 
 

@@ -972,46 +972,21 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     
     Application.ScreenUpdating = False
     
-    
     ' This is the file we want to download
     strCsvFileName = "Styles_Bookmaker.csv"
-    
-    ' We need the info about the log file for any download
-    strLogInfo() = CreateLogFileInfo(FileName:=strCsvFileName)
-    strLogDir = strLogInfo(2)
-    strPathToLogFile = strLogInfo(3)
-    strFullPathToCsv = strLogDir & Application.PathSeparator & strCsvFileName
-    
+
     ' download the list of good Tor styles from Confluence
     Dim downloadStyles As GitBranch
     ' switch to develop for testing
     downloadStyles = releases
     
-    If DownloadFromConfluence(DownloadSource:=downloadStyles, _
-                                FinalDir:=strLogDir, _
-                                LogFile:=strPathToLogFile, _
-                                FileName:=strCsvFileName) = False Then
-        ' If it's False, DL failed. Is a previous version there?
-        If IsItThere(strFullPathToCsv) = False Then
-            ' Sorry can't DL right now, no previous file in directory
-            MsgBox "Sorry, I can't download the Bookmaker style info right now."
-            Exit Function
-        Else
-            ' Can't DL new file but old one exists, let's use that
-            MsgBox "I can't download the Bookmaker style info right now, so I'll just use the old info I have on file."
-        End If
-    End If
-    
-    
     'List of styles approved for use in Bookmaker
     'Organized by approximate frequency in manuscripts (most freq at top)
-    'returned array is dimensioned with 1 column, need to specify row and column (base 0)
-    arrTorStyles = LoadCSVtoArray(Path:=strFullPathToCsv, RemoveHeaderRow:=True, RemoveHeaderCol:=False)
+    arrTorStyles = SharedFileInstaller.DownloadCSV(FileName:=strCsvFileName, DownloadFrom:=releases)
     
     activeParaCount = activeDoc.Paragraphs.Count
     
     For N = 1 To activeParaCount
-        
  
         If N Mod 100 = 0 Then
             'Percent complete and status for progress bar (PC) and status bar (Mac)

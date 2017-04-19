@@ -416,7 +416,7 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
         
         strFile = "Castoff_" & objCastForm.PublisherCode & ".csv"
         
-        arrCastoff = DownloadCSV(FileName:=strFile)
+        arrCastoff = SharedFileInstaller.DownloadCSV(FileName:=strFile)
         
         Dim lngOverflow As Long
         lngOverflow = arrCastoff(5, objCastForm.TrimIndex)    ' 5 is index of overflow info in CSV
@@ -433,72 +433,3 @@ Private Function FinalSig(RawEstPages As Long, objCastForm As CastoffForm) As Lo
     
 End Function
 
-
-Private Function DownloadCSV(FileName As String, Optional DownloadFrom As GitBranch = master) As Variant
-    '---------Download CSV with design specs from Confluence site-------
-
-    'Create log file name
-    Dim arrLogInfo() As Variant
-    ReDim arrLogInfo(1 To 3)
-    
-    arrLogInfo() = CreateLogFileInfo(FileName)
-      
-    'Create final path for downloaded CSV file (in log directory)
-    'not in temp dir because that is where DownloadFromConfluence downloads it to, and it cleans that file up when done
-    Dim strStyleDir As String
-    Dim strPath As String
-    Dim strLogFile As String
-    Dim strMessage As String
-    Dim strDir As String
-    
-    strStyleDir = arrLogInfo(1)
-    strDir = arrLogInfo(2)
-    strLogFile = arrLogInfo(3)
-    strPath = strDir & Application.PathSeparator & FileName
-        
-    'Check if log file already exists; if not, create it
-    CheckLog strStyleDir, strDir, strLogFile
-    
-    'Download CSV file from Confluence
-    If DownloadFromConfluence(FinalDir:=strDir, LogFile:=strLogFile, FileName:=FileName, DownloadSource:=DownloadFrom) = False Then
-        ' If download fails, check if we have an older version of the CSV to work with
-        If IsItThere(strPath) = False Then
-            strMessage = "Looks like we can't download the design info from the internet right now. " & _
-                "Please check your internet connection, or contact workflows@macmillan.com."
-            MsgBox strMessage, vbCritical, "Error 5: Download failed, no previous design file available"
-            Exit Function
-        Else
-            strMessage = "Looks like we can't download the most up-to-date design info from the internet right now, " & _
-                "so we'll just use the info we have on file for your castoff."
-            MsgBox strMessage, vbInformation, "Let's do this thing!"
-        End If
-    End If
-    
-    ' Heading row/col different based on different InfoTypes
-    Dim blnRemoveHeaderRow As Boolean
-    Dim blnRemoveHeaderCol As Boolean
-    
-    ' Because the castoff CSV has header row and col, but Spine CSV only has a header row
-    If InStr(1, FileName, "Castoff") <> 0 Then
-        blnRemoveHeaderRow = True
-        blnRemoveHeaderCol = True
-    ElseIf InStr(1, FileName, "Spine") <> 0 Then
-        blnRemoveHeaderRow = True
-        blnRemoveHeaderCol = False
-    End If
-    
-    'Double check that CSV is there
-    Dim arrFinal() As Variant
-    If IsItThere(strPath) = False Then
-        strMessage = "The Castoff macro is unable to access the design count file right now. Please check your internet " & _
-                    "connection and try again, or contact workflows@macmillan.com."
-        MsgBox strMessage, vbCritical, "Error 3: Design CSV doesn't exist"
-        Exit Function
-    Else
-        ' Load CSV into an array
-        arrFinal = LoadCSVtoArray(Path:=strPath, RemoveHeaderRow:=blnRemoveHeaderRow, RemoveHeaderCol:=blnRemoveHeaderCol)
-    End If
-    
-    DownloadCSV = arrFinal
-    
-End Function
