@@ -1,62 +1,88 @@
 Attribute VB_Name = "SStart_Rules"
 Option Explicit
 
-Sub SSRulesBoss()
-Dim strJsonFilepath As String
-Dim strJsonFilename As String
-Dim strJson As String
-Dim dictParsedJSON As Dictionary
-Dim dictSingleSS As Dictionary
-Dim dictSectionTypes As Dictionary
-Dim i As Long
-Dim strSSname As String
-Dim objNewSSrule As SSRule
+' ===== CreateSectionStartRules ========================================================
+' This Sub passes the json filepath to the SSRuleCollection class' factory,
+' That class returns a collection of SSRule objects
+' Then this sub loops through the returned RuleCollection, in order of increasing
+' "priority" value, passing them to the ProcessRule Sub to be processed.
 
-strJsonFilename = "ss_rules.json"
-strJsonFilepath = CreateObject("Scripting.FileSystemObject").Getfile(ThisDocument.FullName).ParentFolder.Path _
-& Application.PathSeparator & "bookmaker_validator" & Application.PathSeparator & strJsonFilename
-
-strJson = Utils.ReadTextFile(Path:=strJsonFilepath, FirstLineOnly:=False)
-Set dictParsedJSON = JsonConverter.ParseJson(strJson)
-
-Set dictSectionTypes = getSectionTypes(dictParsedJSON)
-
-For i = 0 To dictParsedJSON.Count - 1
-    Set dictSingleSS = New Dictionary
-    strSSname = dictParsedJSON.Keys(i)
-    Set dictSingleSS = dictParsedJSON(strSSname)
-    Set objNewSSrule = Factory.CreateSSrule(strSSname, dictSingleSS, 1, dictSectionTypes)
-Next
+Sub CreateSectionStartRules()
+    Dim strJsonFilepath As String
+    Dim strJsonFilename As String
+    Dim objNewSSruleCollection As SSRuleCollection
+    Dim lngRuleCount As Long
+    Dim strRuleName As String
+    Dim lngRulePriority As Long
+    Dim lngPriorityCount As Long
+    Dim lngPriorityCheck As Long
+    
+    strJsonFilename = "section_start_rules.json"
+    
+    '' TEST PATH (just make a folder in the .docm's path called 'bookmaker_validator' with json file in it)
+    'strJsonFilepath = CreateObject("Scripting.FileSystemObject").Getfile(ThisDocument.FullName).ParentFolder.Path _
+    '& Application.PathSeparator & "bookmaker_validator" & Application.PathSeparator & strJsonFilename
+    
+    '' PRODUCTION PATH (not yet tested :)
+    strJsonFilepath = "S:" & Application.PathSeparator & "resources" & Application.PathSeparator & "bookmaker_scripts" & Application.PathSeparator & "bookmaker_validator"
+    
+    ' create collection object (which creates a collection of Rule objects)
+    Set objNewSSruleCollection = Factory.CreateSSRuleCollection(strJsonFilepath)
+    
+    ' Loop through Rules by "priority" values (set in SSRule.cls)
+    lngPriorityCount = 1
+    lngPriorityCheck = 1
+    Do Until lngPriorityCheck = 0
+        lngPriorityCheck = 0
+            For lngRuleCount = 1 To objNewSSruleCollection.Rules.Count
+                If objNewSSruleCollection.Rules(lngRuleCount).Priority = lngPriorityCount Then
+                    Call ProcessRule(objNewSSruleCollection.Rules(lngRuleCount), objNewSSruleCollection.SectionLists)
+                    lngPriorityCheck = lngPriorityCheck + 1
+                End If
+            Next
+        lngPriorityCount = lngPriorityCount + 1
+    Loop
 
 End Sub
-Function getSectionTypes(p_dictParsedJSON As Dictionary) As Dictionary
 
-Dim dictSectionTypes As Dictionary
-Dim collFrontmatter As Collection
-Dim collMain As Collection
-Dim collBackmatter As Collection
-Dim j As Long
-Dim strSSname As String
+' ===== ProcessRule ========================================================
+' This would be where the rules would be processed.
+' For now I just have debug output here
 
-Set collFrontmatter = New Collection
-Set collMain = New Collection
-Set collBackmatter = New Collection
-Set dictSectionTypes = New Dictionary
+Sub ProcessRule(p_rule As SSRule, p_sectionLists As Dictionary)
 
-For j = 0 To p_dictParsedJSON.Count - 1
-    strSSname = p_dictParsedJSON.Keys(j)
-    If p_dictParsedJSON(strSSname).Item("section_type") = "frontmatter" Then
-        collFrontmatter.Add (strSSname)
-    ElseIf p_dictParsedJSON(strSSname).Item("section_type") = "main" Then
-        collMain.Add (strSSname)
-    ElseIf p_dictParsedJSON(strSSname).Item("section_type") = "backmatter" Then
-        collBackmatter.Add (strSSname)
+    ' Make sure info from SSRule looks right
+    ' Call CheckCollection(p_sectionLists("all"))
+    Debug.Print p_rule.Priority & " " & p_rule.RuleName
+    'Debug.Print p_rule.SectionName
+    'Debug.Print p_rule.SectionRequired
+    'Debug.Print p_rule.Position
+    'Debug.Print p_rule.Multiple
+    'Call CheckCollection(p_rule.Styles)
+    'Call CheckCollection(p_rule.OptionalHeadingStyles)
+    'Debug.Print p_rule.FirstChild
+    'Call CheckCollection(p_rule.FirstChildText)
+    'Debug.Print p_rule.FirstChildMatch
+    'Call CheckCollection(p_rule.RequiredStyles)
+    'Call CheckCollection(p_rule.PreviousUntil)
+    'Debug.Print p_rule.LastCriteria
+
+End Sub
+
+' ===== CheckCollection ========================================================
+' assisting in output test in ProcessRule!
+
+Private Sub CheckCollection(C As Collection)
+    Dim c_item As Variant
+
+    If C.Count > 0 Then
+    For Each c_item In C
+    Debug.Print "   " & c_item
+    Next
+    Debug.Print "total item count: " & C.Count
+    Else
+    Debug.Print "empty collection"
     End If
-Next
+    
+End Sub
 
-dictSectionTypes.Add "frontmatter", collFrontmatter
-dictSectionTypes.Add "main", collMain
-dictSectionTypes.Add "backmatter", collBackmatter
-
-Set getSectionTypes = dictSectionTypes
-End Function

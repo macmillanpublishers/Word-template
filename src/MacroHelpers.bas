@@ -329,7 +329,7 @@ End Function
 
 Sub GlobalCleanup()
   On Error GoTo GlobalCleanupError
-  GeneralHelpers.zz_clearFind
+  zz_clearFind
   If Not activeDoc Is Nothing Then
     Set activeDoc = Nothing
   End If
@@ -1307,7 +1307,7 @@ End Sub
 
 
 
-Sub Cleanup()
+Sub CleanUp()
   On Error GoTo CleanUpError
     ' resets everything from StartupSettings sub.
     Dim cleanupDoc As Document
