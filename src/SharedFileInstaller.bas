@@ -386,8 +386,11 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, F
     If InStr(1, FileName, "gt", vbTextCompare) Then
       strDownloadRepo = "Word-template/"
       strSubfolder = Left(FileName, InStr(FileName, ".") - 1) & "/"
-    Else
+    ElseIf InStr(1, FileName, "macmillan", vbTextCompare) Then
       strDownloadRepo = "Word-template_assets/"
+      strSubfolder = "StyleTemplate_auto-generate/"
+    Else
+      strDownloadRepo = "bookmaker_validator/"
       strSubfolder = vbNullString
     End If
     

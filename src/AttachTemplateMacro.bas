@@ -12,11 +12,11 @@ Option Explicit
 ''' CHECK IT OUT
 
 Sub zz_AttachStyleTemplate()
-    Call AttachMe("macmillan.dotm")
+    Call AttachMe("macmillan.dotx")
 End Sub
 
 Sub zz_AttachBoundMSTemplate()
-    Call AttachMe("macmillan_NoColor.dotm")
+    Call AttachMe("macmillan_NoColor.dotx")
 End Sub
 
 Sub zz_AttachCoverTemplate()
@@ -33,6 +33,13 @@ Sub AttachMe(TemplateName As String)
     ' Get local style directory
     strStyleDir = SharedFileInstaller.StyleDir()
     myFile = strStyleDir & Application.PathSeparator & TemplateName
+    
+    ' Get version file name
+    Dim strVersionPath As String
+    Dim strVersionNumber As String
+    
+    strVersionPath = Left(myFile, Len(myFile - 4)) & "txt"
+    strVersionNumber = Utils.ReadTextFile(strVersionPath)
    
         
     ' Can't attach template to another template, so
@@ -45,6 +52,7 @@ Sub AttachMe(TemplateName As String)
                 .UpdateStylesOnOpen = True
                 .AttachedTemplate = myFile
             End With
+            SetStyleVersion VersionNumber:=strVersionNumber
         Else
             MsgBox "That style template doesn't seem to exist." & vbNewLine & vbNewLine & _
                     "Install the Macmillan Style Template and try again, or contact workflows@macmillan.com for assistance.", _
@@ -52,6 +60,19 @@ Sub AttachMe(TemplateName As String)
         End If
     End If
     
+End Sub
+
+Private Sub SetStyleVersion(VersionNumber As String)
+  Dim strPropName As String
+  strPropName = "Version"
+  
+    If Utils.DocPropExists(objDoc:=ActiveDocument, PropName:=strPropName) Then
+        ActiveDocument.CustomDocumentProperties(strPropName).Value = VersionNumber
+    Else
+        ActiveDocument.CustomDocumentProperties.Add Name:=strPropName, LinkToContent:=False, _
+            Type:=msoPropertyTypeString, Value:=VersionNumber
+    End If
+
 End Sub
 
 Private Function IsTemplate(ByVal objDoc As Document) As Boolean

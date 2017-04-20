@@ -12,6 +12,8 @@ Attribute VB_Name = "Reports"
 Option Explicit
 Option Base 1
 
+Private strVersion As String
+
 Sub BookmakerReqs()
     Call MakeReport(torDOTcom:=True)
 End Sub
@@ -21,6 +23,17 @@ Sub MacmillanStyleReport()
     Call MakeReport(torDOTcom:=False)
 End Sub
 
+
+Public Function GetStyleVersion() As String
+
+  Dim strStyleVersion As String
+  If Utils.DocPropExists(objDoc:=activeDoc, PropName:="Version") = True Then
+    strStyleVersion = activeDoc.CustomDocumentProperties("Version").Value
+  Else
+    strStyleVersion = vbNullString
+  End If
+
+End Function
 
 Private Sub MakeReport(torDOTcom As Boolean)
     '-----------------------------------------------------------
@@ -45,6 +58,14 @@ Private Sub MakeReport(torDOTcom As Boolean)
     If StartupSettings(StoriesUsed:=arrStories) = True Then
         Call Cleanup
         Exit Sub
+    End If
+    
+    Dim blnOldStartStyles As Boolean
+    strVersion = GetStyleVersion()
+    If strVersion = vbNullString Then
+      blnOldStartStyles = True
+    Else
+      blnOldStartStyles = False
     End If
     
     '--------Progress Bar------------------------------
@@ -1902,3 +1923,5 @@ Private Function CheckFileName() As Boolean
     Next R
 
 End Function
+
+

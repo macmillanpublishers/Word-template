@@ -34,6 +34,8 @@ Private dictSections As Dictionary
 ' also path to write alerts to
 Private strAlertFile As String
 
+Private strVersion As String
+
 ' A bunch of styles we'll need. Public so ErrorChecker can create if missing.
 ' But how will ErrorChecker know which style is needed?
 Public Const strPageBreak As String = "Page Break (pb)"
@@ -152,6 +154,8 @@ Public Function ReportsStartup(DocPath As String, AlertPath As String, Optional 
     dictReturn.Item("pass") = True
   End If
   
+  OldStartStyles
+  
   Set ReportsStartup = dictReturn
   
   Exit Function
@@ -164,6 +168,26 @@ ReportsStartupError:
   End If
 End Function
 
+
+' ===== StyleVersion ==========================================================
+' Checks if we have a style version and if so, adds it as a processing instruction
+
+Private Function OldStartStyles() As Boolean
+' private module-level variable
+  strVersion = Reports.GetStyleVersion()
+  If strVersion = vbNullString Then
+    OldStartStyles = True
+  Else
+    OldStartStyles = False
+    ' add as Processing instruction
+    Dim rngEnd As Range
+    Set rngEnd = activeDoc.Range
+    rngEnd.InsertAfter vbNewLine & "VERSION: " & strVersion
+    rngEnd.Collapse wdCollapseEnd
+    rngEnd.Style = "Bookmaker Processing Instruction (bpi)"
+  End If
+
+End Function
 
 ' ===== ReportsTerminate ======================================================
 ' Things to do if we have to terminate the macro early due to an error. To be
