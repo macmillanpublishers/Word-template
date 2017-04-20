@@ -24,7 +24,8 @@ Sub CreateSectionStartRules()
     '& Application.PathSeparator & "bookmaker_validator" & Application.PathSeparator & strJsonFilename
     
     '' PRODUCTION PATH (not yet tested :)
-    strJsonFilepath = "S:" & Application.PathSeparator & "resources" & Application.PathSeparator & "bookmaker_scripts" & Application.PathSeparator & "bookmaker_validator"
+    strJsonFilepath = "S:" & Application.PathSeparator & "resources" & Application.PathSeparator & _
+    "bookmaker_scripts" & Application.PathSeparator & "bookmaker_validator" & strJsonFilename
     
     ' create collection object (which creates a collection of Rule objects)
     Set objNewSSruleCollection = Factory.CreateSSRuleCollection(strJsonFilepath)
