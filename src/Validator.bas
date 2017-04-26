@@ -390,7 +390,7 @@ Private Function IsbnMain(FilePath As String) As String
   On Error GoTo IsbnMainError
   
 ' ----- START JSON FILE -------------------------------------------------------
-  Call JsonHelpers.AddToJson(strJsonPath, "completed", False)
+  Call ClassHelpers.AddToJson(strJsonPath, "completed", False)
   
 ' Make sure relevant file exists, is open
   If Utils.IsOpen(FilePath) = False Then
@@ -422,9 +422,9 @@ Private Function IsbnMain(FilePath As String) As String
   If Not dictIsbn Is Nothing Then
 '  ' JsonToLog function expects this format
 '    Dim dictOutput As Dictionary
-'    Set dictOutput = JsonHelpers.NewDictionary
+'    Set dictOutput = ClassHelpers.NewDictionary
 '    dictOutput.Add "isbn", dictIsbn
-'    Call JsonHelpers.WriteJson(strJsonPath, dictOutput)
+'    Call ClassHelpers.WriteJson(strJsonPath, dictOutput)
 
   ' If ISBNs were found, they will be in the "list" element
     If dictIsbn.Exists("list") = True Then
@@ -463,7 +463,7 @@ Private Function ValidatorMain(DocPath As String) As Boolean
   Dim dictTests As Dictionary
 
 ' ----- START JSON FILE -------------------------------------------------------
-  Call JsonHelpers.AddToJson(strJsonPath, "completed", False)
+  Call ClassHelpers.AddToJson(strJsonPath, "completed", False)
   
 ' NOTE! Each procedure called returns a dictionary with results of various
 ' tests. Each will include a "pass" key--a value of "False" means that the
@@ -571,7 +571,7 @@ Private Function ValidatorCleanup(CompleteSuccess As Boolean) As Boolean
   
 ' Read style_check.json into dictionary in order to access styled info
   Dim dictJson As Dictionary
-  Set dictJson = JsonHelpers.ReadJson(strJsonPath)
+  Set dictJson = ClassHelpers.ReadJson(strJsonPath)
 
 ' Check if all subsections passed
   Dim key1 As Variant
@@ -622,7 +622,7 @@ Public Sub JsonToLog()
   If Utils.IsItThere(strJsonPath) = True Then
 
   Dim jsonDict As Dictionary
-    Set jsonDict = JsonHelpers.ReadJson(strJsonPath)
+    Set jsonDict = ClassHelpers.ReadJson(strJsonPath)
     
     Dim strLog As String  ' string to write to log
   ' Following Matt's formatting for other scripts
@@ -710,7 +710,7 @@ Private Sub ReturnDict(SectionKey As String, TestDict As Dictionary, _
   Else
     If TestDict.Exists("pass") = True Then
       ' write tests to JSON file
-      Call JsonHelpers.AddToJson(strJsonPath, SectionKey, TestDict)
+      Call ClassHelpers.AddToJson(strJsonPath, SectionKey, TestDict)
       If TestDict("pass") = False Then
         If QuitIfFailed = True Then
           SecondsElapsed = Round(Timer - StartTime, 2)

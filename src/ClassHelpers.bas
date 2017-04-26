@@ -34,7 +34,7 @@ Public Function ReadJson(JsonPath As String) As Dictionary
     
     strJson = Utils.ReadTextFile(JsonPath, False)
     If strJson <> vbNullString Then
-      Set dictJson = MacroHelpers.JsonConverter.ParseJson(strJson)
+      Set dictJson = JsonConverter.ParseJson(strJson)
     Else
       ' If file exists but has no content, return empty dictionary
       Set dictJson = ClassHelpers.NewDictionary
