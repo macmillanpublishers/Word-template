@@ -26,8 +26,8 @@ Sub AutoExec()
 ' WILL BE ADDED WHEN WE'RE UNLOAD/LOADING ADDINS AS PART OF UPDATE/INSTALL STUFF
 ' AND DON'T WANT THIS TO LAUNCH EVERY TIME
   Dim blnDisableAutoMacroFileExists As Boolean
-  blnDisableAutoMacroFileExists = IsItThere(ThisDocument.Path & Application.PathSeparator & _
-        "DISABLE_AUTO_EXEC.txt")
+  blnDisableAutoMacroFileExists = IsItThere(ThisDocument.Path & _
+    Application.PathSeparator & "DISABLE_AUTO_EXEC.txt")
   If blnDisableAutoMacroFileExists = True Then
     Exit Sub
   End If
@@ -66,109 +66,90 @@ Sub AutoExec()
 
 
 '===== PART 2 ============================
-'===== USE ===============================
-' Calls SharedFileInstaller.Installer
-' Requires SharedFileInstaller and MacroHelpers modules be installed in the same template.
+  Dim blnInstaller As Boolean
+  Dim strTemplateName As String
+  Dim strTemplatePaths() As String
 
-    Dim downloadBranch As GitBranch
-    Dim blnInstaller As Boolean
-    Dim strTemplateName As String
-    Dim strTemplatePaths() As String
+' True = standalone installer file
+' False = daily update checker already installed
+  blnInstaller = False
 
-    ' Switch to "master" before going live!
-    downloadBranch = releases
+  'Plain English name of what you're installing/updating, should be singular
+  strTemplateName = "Macmillan Styles Template"
 
-    'True = standalone installer file, False = daily update checker already installed
-    blnInstaller = False
-    'Makin' that true to test shit
+  'Get array of paths to STYLE TEMPLATE files to install
+  strTemplatePaths = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
 
-    'Plain English name of what you're installing/updating, should be singular
-    strTemplateName = "Macmillan Styles Template"
+' CHECK/UPDATE STYLES TEMPLATES ONLY.
+  Call SharedFileInstaller.Installer(Installer:=blnInstaller, _
+      TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
 
-    'Get array of paths to STYLE TEMPLATE files to install
-    strTemplatePaths = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
-
-'   ' DEBUG: check that paths are correct
-'    Dim Q AS Long
-'    For Q = LBound(strTemplatePaths) To UBound(strTemplatePaths)
-'        Debug.Print Q & ": " & strTemplatePaths(Q)
-'    Next Q
-
-    'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    ' CHECK/UPDATE STYLES TEMPLATES ONLY.
-    Call SharedFileInstaller.Installer(DownloadFrom:=downloadBranch, Installer:=blnInstaller, _
-        TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
-
-    ' BLAH BLAH ONTIME NOT WORKING JUST DON'T CHECK ANY MORE WE'LL GET RID OF WITH CONFIG FILE.
-    ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
-    ' finish running (because this AutoExec is called from GtUpdater in Startup
+  ' BLAH BLAH ONTIME NOT WORKING JUST DON'T CHECK ANY MORE WE'LL GET RID OF WITH CONFIG FILE.
+  ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
+  ' finish running (because this AutoExec is called from GtUpdater in Startup
 '    Application.OnTime When:=Now + TimeValue("00:00:01"), _
-        Name:=ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
+      Name:=ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
 
-'    Call ThisDocument.CheckGtUpdater(Branch:=downloadBranch, InstallerOrNot:=blnInstaller)
+'    Call ThisDocument.CheckGtUpdater(InstallerOrNot:=blnInstaller)
 
-    On Error GoTo 0
-    Exit Sub
+  On Error GoTo 0
+  Exit Sub
 
 ErrHandler:
     MsgBox Err.Number & ": " & Err.Description
 End Sub
 
 
-Function CheckGtUpdater(Branch As GitBranch, InstallerOrNot As Boolean)
+Function CheckGtUpdater(InstallerOrNot As Boolean)
 
-    ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
-    ' GtUpdater.dotm can't be running code when this launches.
+  ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
+  ' GtUpdater.dotm can't be running code when this launches.
 
-    '===== DEPENDENCIES ========================
-    ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
-    ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
-    ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
-    ' and be saved in the STARTUP directory.
-    '
-    ' Requires FileInstaller and MacroHelpers modules be installed in the same template.
+  '===== DEPENDENCIES ========================
+  ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
+  ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
+  ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
+  ' and be saved in the STARTUP directory.
+  '
+  ' Requires FileInstaller and MacroHelpers modules be installed in the same template.
 
-    ' ======= For testing / debugging ==============
+  ' ======= For testing / debugging ==============
 
-    ' MsgBox "I am CheckGtUpdater (NEW Word-template) and I am running!"
+  DebugPrint "CheckGtUpdater is running."
 
-    ' ==============================================
+  ' ==============================================
 
-    ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
-    Dim strInstallMe() As String
-    Dim strTemplateName As String
-    strTemplateName = "Macmillan Updater"
+  ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
+  Dim strInstallMe() As String
+  Dim strTemplateName As String
+  strTemplateName = "Macmillan Updater"
 
-    ' get array of files to install
-    strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
+  ' get array of files to install
+  strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
 
-    'Installer = True if this is for a standalone installation file; False is for a daily update checker
-    Call SharedFileInstaller.Installer(DownloadFrom:=Branch, Installer:=InstallerOrNot, _
-        TemplateName:=strTemplateName, TemplatesToInstall:=strInstallMe())
+  ' Installer = True if this is for a standalone installation file;
+  ' False is for a daily update checker
+  Call SharedFileInstaller.Installer(Installer:=InstallerOrNot, _
+      TemplateName:=strTemplateName, TemplatesToInstall:=strInstallMe())
 
-    ' ====== PART 2: LOAD TEMPLATE AGAIN ==============
-    If IsItThere(strInstallMe(1)) = True Then
-        ' Have to add Template before loading if not in Startup
-        ' Could do Install:=True with Add method, but it somehow broke everything
-        AddIns.Add (strInstallMe(1))
-        AddIns(strInstallMe(1)).Installed = True
-    Else
-        Dim strMessage As String
-            strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Updater template. Please send an email to " & _
-            "workflows@macmillan.com and let them know that something is broken!"
-        MsgBox strMessage, vbOKOnly, "We're So Sorry"
-    End If
+  ' ====== PART 2: LOAD TEMPLATE AGAIN ==============
+  If IsItThere(strInstallMe(1)) = True Then
+  ' Have to add Template before loading if not in Startup
+  ' Could do Install:=True with Add method, but it somehow broke everything
+    AddIns.Add (strInstallMe(1))
+    AddIns(strInstallMe(1)).Installed = True
+  Else
+    Dim strMessage As String
+      strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Updater template. Please send an email to " & _
+      "workflows@macmillan.com and let them know that something is broken!"
+    MsgBox strMessage, vbOKOnly, "We're So Sorry"
+  End If
 
-    On Error GoTo 0
-    Exit Function
-
+  On Error GoTo 0
+  Exit Function
 
 ErrHandler:
-    MsgBox Err.Number & ": " & Err.Description
-
-    On Error GoTo 0
-
-
+  MsgBox Err.Number & ": " & Err.Description
 End Function
 
 
