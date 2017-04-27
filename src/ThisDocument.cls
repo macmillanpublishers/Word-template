@@ -13,15 +13,13 @@ Option Base 1
 
 
 Sub AutoExec()
+  DebugPrint "Word-template AutoExec is running"
 
-    ' ======= For testing / debugging ==============
-'     MsgBox "I am NEWEST Word-template AutoExec and I am running!"s
-    ' ==============================================
-
-
-    '=======================================
-    ' By Erica Warren - erica.warren@macmillan.com
-    ' ==== PART 1 =======
+' Check if we're on the server; if so, don't run this check
+  If WT_Settings.InstallType <> "user" Then
+    DebugPrint "On server, quitting AutoExec"
+    End
+  End If
 
 ' CHECK IF FLAG FILE IS PRESENT IN SAME DIR, IF YES THEN QUIT
 ' WILL BE ADDED WHEN WE'RE UNLOAD/LOADING ADDINS AS PART OF UPDATE/INSTALL STUFF
