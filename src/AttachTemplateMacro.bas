@@ -7,7 +7,7 @@ Option Explicit
 ' ======== DEPENDENCIES ============
 ' 1. Requires MacroHelpers module be installed in the same template
 ' 2. Requires the macmillan style templates be saved in the correct directories
-'    that were nstalled on user's computer with Installer file or updated from MacmillanGT.dotm
+'    that were nstalled on user's computer with Installer file or updated from Word-template.dotm
 
 ''' CHECK IT OUT
 

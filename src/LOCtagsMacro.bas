@@ -1270,7 +1270,7 @@ Private Sub zz_clearFindB()
 End Sub
 
 
-Private Function zz_errorChecksB()                       'kidnapped this whole function from macmillan.dotm
+Private Function zz_errorChecksB()                       'kidnapped this whole function from macmillan.dotx
                                                                 'adding tag checking to include LOC stuff
     zz_errorChecksB = False
     Dim mainDoc As Document

@@ -1,7 +1,8 @@
 Attribute VB_Name = "VersionCheck"
 Option Explicit
 Sub CheckMacmillanGT()
-
+' can't change name to Word-template because "CheckMacmillanGT" is in customUI.xml
+' and I don't want to muck with it right now.
 '----------------------------------
     'created by Erica Warren 2014-04-08     erica.warren@macmillan.com
     'Creates a toolbar button that tells the user the current version of the installed template when pressed.
@@ -12,7 +13,7 @@ Sub CheckMacmillanGT()
     Dim strTemplatePath As String
 
     
-    templateFile = "MacmillanGT.dotm"  'the template file you are checking
+    templateFile = "Word-template.dotm"  'the template file you are checking
     strTemplatePath = SharedFileInstaller.StyleDir()
 
     Call VersionCheck(strTemplatePath, templateFile)
@@ -27,19 +28,10 @@ Sub CheckMacmillan()
     '----------------------------------
     
     Dim templateFile As String
-    Dim strMacDocs As String
     Dim strTemplatePath As String
-
     
-    templateFile = "macmillan.dotm"  'the template file you are checking
-    
-    #If Mac Then
-        strMacDocs = MacScript("return (path to documents folder) as string")
-        strTemplatePath = strMacDocs & "MacmillanStyleTemplate:" & templateFile
-    #Else
-        strTemplatePath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & templateFile
-    #End If
-
+    templateFile = "macmillan.dotx"  'the template file you are checking
+    strTemplatePath = SharedFileInstaller.StyleDir()
     
     Call VersionCheck(strTemplatePath, templateFile)
 

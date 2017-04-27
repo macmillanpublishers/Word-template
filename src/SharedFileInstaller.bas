@@ -20,6 +20,13 @@ Public Enum GitBranch
     develop = 3
 End Enum
 
+Public Enum TemplatesList
+    updaterTemplates = 1
+    toolsTemplates = 2
+    stylesTemplates = 3
+    installTemplates = 4
+    allTemplates = 5
+End Enum
 
 Public Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As String, ByRef TemplatesToInstall() As String)
 
@@ -224,10 +231,10 @@ Public Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateNa
         End If
         
         ' If we just updated the main template, delete the old toolbar
-        ' Will be added again by MacmillanGT AutoExec when it's launched, to capture updates
+        ' Will be added again by Word-template AutoExec when it's launched, to capture updates
         #If Mac Then
             Dim Bar As CommandBar
-            If strInstallFile(D) = "MacmillanGT.dotm" Then
+            If strInstallFile(D) = "Word-template.dotm" Then
                 For Each Bar In CommandBars
                     If Bar.Name = "Macmillan Tools" Then
                         Bar.Delete
@@ -988,4 +995,76 @@ Private Sub CloseOpenDocs()
     End If
     
 End Sub
+
+
+
+Private Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional PathToRepo As String) As Variant
+    ' returns an array of paths to template files in their final installation locations
+    ' if you want to use "allTemplates" (i.e., for updating code in templates), must include PathToRepo
+    
+    Dim strStartupDir As String
+    Dim strStyleDir As String
+    
+    strStartupDir = Application.StartupPath
+    strStyleDir = SharedFileInstaller.StyleDir()
+
+    Dim strPathsToTemplates() As String
+    Dim K As Long
+    K = 0
+    
+    ' get the updater file for these requests
+    If TemplatesYouWant = updaterTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStartupDir & Application.PathSeparator & "GtUpdater.dotm"
+    End If
+    
+    ' get the tools file for these requests
+    If TemplatesYouWant = toolsTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "Word-template.dotm"
+    End If
+    
+    ' get the styles files for these requests
+    If TemplatesYouWant = stylesTemplates Or _
+        TemplatesYouWant = installTemplates Or _
+        TemplatesYouWant = allTemplates Then
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan.dotx"
+        
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan_NoColor.dotx"
+
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = strStyleDir & Application.PathSeparator & "macmillan_CoverCopy.dotm"
+    End If
+    
+    ' also get the installer file
+    If TemplatesYouWant = allTemplates And PathToRepo <> vbNullString Then
+        K = K + 1
+        ReDim Preserve strPathsToTemplates(1 To K)
+        strPathsToTemplates(K) = PathToRepo & Application.PathSeparator & "MacmillanTemplateInstaller" _
+            & Application.PathSeparator & "MacmillanTemplateInstaller.docm"
+        
+        ' Could also add paths to open _BETA and _DEVELOP installer files?
+    End If
+    
+    ' DEBUGGING: check tha list!
+'    Dim H As Long
+'    For H = LBound(strPathsToTemplates) To (UBound(strPathsToTemplates))
+'        Debug.Print H & ": " & strPathsToTemplates(H)
+'    Next H
+    
+    
+    GetTemplatesList = strPathsToTemplates
+    
+End Function
 
