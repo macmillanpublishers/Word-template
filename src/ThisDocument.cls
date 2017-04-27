@@ -18,6 +18,7 @@ Sub AutoExec()
 ' Check if we're on the server; if so, don't run this check
   If WT_Settings.InstallType <> "user" Then
     DebugPrint "On server, quitting AutoExec"
+  ' NOTE! Must use 'End' here because 'Exit' won't clear static variable (WT_Settings)
     End
   End If
 
