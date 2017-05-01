@@ -186,11 +186,11 @@ End Function
 Public Sub DebugPrint(Optional StringExpression As Variant)
 
   If Environ("VbaDebug") = True Then
-  ' First just DebugPrint:
+  ' First just standard Debug.Print:
   ' Get the string we'll write
     Dim strMessage As String
     strMessage = Now & ": " & StringExpression
-    DebugPrint strMessage
+    Debug.Print strMessage
   
   ' Second, write to file
   ' Create file name
