@@ -12,7 +12,7 @@ Attribute VB_Name = "Reports"
 Option Explicit
 Option Base 1
 
-Private strVersion As String
+Private m_strVersion As String
 
 Sub BookmakerReqs()
     Call MakeReport(torDOTcom:=True)
@@ -38,7 +38,6 @@ End Function
 Private Sub MakeReport(torDOTcom As Boolean)
     '-----------------------------------------------------------
     
-    'Created by Erica Warren - erica.warren@macmillan.com
     
     '=================================================
     '''''              Timer Start                  '|
@@ -49,184 +48,134 @@ Private Sub MakeReport(torDOTcom As Boolean)
     'StartTime = Timer                               '|
     '=================================================
     
-    '------------check for endnotes and footnotes--------------------------
-    Dim arrStories() As Variant
-    arrStories = StoryArray
+  '------------check for endnotes and footnotes--------------------------
+  Dim arrStories() As Variant
+  arrStories = StoryArray
+  
+  ' ======= Run startup checks ========
+  ' True means a check failed (e.g., doc protection on)
+  If MacroHelpers.StartupSettings(StoriesUsed:=arrStories) = True Then
+    Call Cleanup
+    Exit Sub
+  End If
+  
+  Dim blnOldStartStyles As Boolean
+  m_strVersion = GetStyleVersion()
+  If m_strVersion = vbNullString Then
+    blnOldStartStyles = True
+  Else
+    blnOldStartStyles = False
+  End If
     
-    ' ======= Run startup checks ========
-    ' True means a check failed (e.g., doc protection on)
-    If StartupSettings(StoriesUsed:=arrStories) = True Then
-        Call Cleanup
-        Exit Sub
+  '--------Progress Bar------------------------------
+  'Percent complete and status for progress bar (PC) and status bar (Mac)
+  'Requires ProgressBar custom UserForm and Class
+  Dim sglPercentComplete As Single
+  Dim strStatus As String
+  Dim strTitle As String
+  
+  'First status shown will be randomly pulled from array, for funzies
+  Dim funArray() As String
+  ReDim funArray(1 To 10)      'Declare bounds of array here
+  
+  If torDOTcom = True Then
+    funArray(1) = "* Is this thing on?..."
+    funArray(2) = "* Are we there yet?..."
+    funArray(3) = "* Zapping space invaders..."
+    funArray(4) = "* Leaping over tall buildings in a single bound..."
+    funArray(5) = "* Taking a quick nap..."
+    funArray(6) = "* Taking the stairs..."
+    funArray(7) = "* Partying like it's 1999..."
+    funArray(8) = "* Waiting in line at Shake Shack..."
+    funArray(9) = "* Revving engines..."
+    funArray(10) = "* Thanks for running the Bookmaker Macro!"
+  Else
+    funArray(1) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
+    funArray(2) = "* What's in a name? Word Styles by any name would smell as sweet..."
+    funArray(3) = "* A horse! A horse! My Word Styles for a horse!"
+    funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em..."
+    funArray(5) = "* All the world's a stage, and all the Word Styles merely players..."
+    funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man..."
+    funArray(7) = "* To Style, or not to Style: that is the question..."
+    funArray(8) = "* Word Styles, Word Styles! Wherefore art thou Word Styles?..."
+    funArray(9) = "* Some Cupid kills with arrows, some with Word Styles..."
+    funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun..."
+  End If
+  
+  Dim X As Integer
+    
+  'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
+  Randomize           'Sets seed for Rnd below to value of system timer
+  X = Int(UBound(funArray()) * Rnd()) + 1
+  
+  'Debug.Print x
+  ' If only creating an epub, just run style report since only difference now
+  ' is Bkmkr checks for non-Bookmaker styles.
+  If torDOTcom = True Then
+    strTitle = "Bookmaker Requirements Macro"
+    Dim strEpubMsg As String
+    strEpubMsg = "Hi there! Are you creating a PRINT PDF with Bookmaker?" & _
+      vbNewLine & vbNewLine & _
+      "If you are creating a PRINT PDF, click YES." & vbNewLine & _
+      "If you are ONLY creating an EPUB, click NO."
+    If MsgBox(strEpubMsg, vbYesNo) = vbNo Then
+      torDOTcom = False
     End If
+  Else
+    strTitle = "Macmillan Style Report"
+  End If
     
-    Dim blnOldStartStyles As Boolean
-    strVersion = GetStyleVersion()
-    If strVersion = vbNullString Then
-      blnOldStartStyles = True
-    Else
-      blnOldStartStyles = False
-    End If
-    
-    '--------Progress Bar------------------------------
-    'Percent complete and status for progress bar (PC) and status bar (Mac)
-    'Requires ProgressBar custom UserForm and Class
-    Dim sglPercentComplete As Single
-    Dim strStatus As String
-    Dim strTitle As String
-    
-    'First status shown will be randomly pulled from array, for funzies
-    Dim funArray() As String
-    ReDim funArray(1 To 10)      'Declare bounds of array here
-    
-    If torDOTcom = True Then
-        funArray(1) = "* Is this thing on?..."
-        funArray(2) = "* Are we there yet?..."
-        funArray(3) = "* Zapping space invaders..."
-        funArray(4) = "* Leaping over tall buildings in a single bound..."
-        funArray(5) = "* Taking a quick nap..."
-        funArray(6) = "* Taking the stairs..."
-        funArray(7) = "* Partying like it's 1999..."
-        funArray(8) = "* Waiting in line at Shake Shack..."
-        funArray(9) = "* Revving engines..."
-        funArray(10) = "* Thanks for running the Bookmaker Macro!"
-    Else
-        funArray(1) = "* Now is the winter of our discontent, made glorious summer by these Word Styles..."
-        funArray(2) = "* What's in a name? Word Styles by any name would smell as sweet..."
-        funArray(3) = "* A horse! A horse! My Word Styles for a horse!"
-        funArray(4) = "* Be not afraid of Word Styles. Some are born with Styles, some achieve Styles, and some have Styles thrust upon 'em..."
-        funArray(5) = "* All the world's a stage, and all the Word Styles merely players..."
-        funArray(6) = "* To thine own Word Styles be true, and it must follow, as the night the day, thou canst not then be false to any man..."
-        funArray(7) = "* To Style, or not to Style: that is the question..."
-        funArray(8) = "* Word Styles, Word Styles! Wherefore art thou Word Styles?..."
-        funArray(9) = "* Some Cupid kills with arrows, some with Word Styles..."
-        funArray(10) = "* What light through yonder window breaks? It is the east, and Word Styles are the sun..."
-    End If
-    
-    Dim X As Integer
-    
-    'Rnd returns random number between (0,1], rest of expression is to return an integer (1,10)
-    Randomize           'Sets seed for Rnd below to value of system timer
-    X = Int(UBound(funArray()) * Rnd()) + 1
-    
-    'Debug.Print x
-    ' If only creating an epub, just run style report since only difference now
-    ' is Bkmkr checks for non-Bookmaker styles.
-    If torDOTcom = True Then
-        strTitle = "Bookmaker Requirements Macro"
-        Dim strEpubMsg As String
-        strEpubMsg = "Hi there! Are you creating a PRINT PDF with Bookmaker?" & _
-          vbNewLine & vbNewLine & _
-          "If you are creating a PRINT PDF, click YES." & vbNewLine & _
-          "If you are ONLY creating an EPUB, click NO."
-        If MsgBox(strEpubMsg, vbYesNo) = vbNo Then
-          torDOTcom = False
-        End If
-    Else
-        strTitle = "Macmillan Style Report"
-    End If
-    
-    sglPercentComplete = 0.02
-    strStatus = funArray(X)
-    
-    Dim oProgressBkmkr As ProgressBar
-    Set oProgressBkmkr = New ProgressBar    ' Triggers Initialize
+  sglPercentComplete = 0.02
+  strStatus = funArray(X)
+  
+  Dim oProgressBkmkr As ProgressBar
+  Set oProgressBkmkr = New ProgressBar    ' Triggers Initialize
 
-    oProgressBkmkr.Title = strTitle
-    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
-    '-------because it should just be applied to the isbn numerals and hyphens-------------------
-    Call ISBNcleanup
-    
-    '-------Count number of occurences of each required style----
-    sglPercentComplete = 0.03
-    strStatus = "* Counting required styles..." & vbCr & strStatus
-    
-    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    Dim styleCount() As Variant
-    
-    styleCount = CountReqdStyles()
-    
-    If styleCount(1) = 100 Then     'Then count got stuck in a loop, gave message to user in last function
-        Application.ScreenUpdating = True
-        Exit Sub
-    End If
-    
-    ' ------- Clear character formatting from Chapter Numbers ---------
-    sglPercentComplete = 0.07
-    strStatus = "* Cleaning up Chapter Numbers..." & vbCr & strStatus
-    
-    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    If styleCount(4) > 0 Then
-        Call ChapNumCleanUp
-    End If
-    
-    
-    '------------Convert unapproved headings to correct heading-------
-    sglPercentComplete = 0.09
-    strStatus = "* Correcting heading styles..." & vbCr & strStatus
-    
-    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    ' If certain styles (oldStyle) appear by themselves, converts to
-    ' the approved solo style (newStyle)
-    
-    If styleCount(4) > 0 And styleCount(5) = 0 Then
-        Call FixSectionHeadings(oldStyle:="Chap Number (cn)", newStyle:="Chap Title (ct)")
-    End If
-    
-    If styleCount(9) > 0 And styleCount(8) = 0 Then
-        Call FixSectionHeadings(oldStyle:="Part Number (pn)", newStyle:="Part Title (pt)")
-    End If
-    
-    If styleCount(11) > 0 And styleCount(10) = 0 Then
-        Call FixSectionHeadings(oldStyle:="FM Title (fmt)", newStyle:="FM Head (fmh)")
-    End If
-    
-    If styleCount(13) > 0 And styleCount(12) = 0 Then
-        Call FixSectionHeadings(oldStyle:="BM Title (bmt)", newStyle:="BM Head (bmh)")
-    End If
-    
+  oProgressBkmkr.Title = strTitle
+  Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
 
+' -------- validate section-start styles --------------------------------------
+
+
+  '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
+  '-------because it should just be applied to the isbn numerals and hyphens-------------------
+  Call ISBNcleanup
     
-    '--------Get title/author/isbn/imprint text from document-----------
-    sglPercentComplete = 0.11
-    Application.ScreenUpdating = True
-    strStatus = "* Getting book metadata from manuscript..." & vbCr & strStatus
+  '--------Get title/author/isbn/imprint text from document-----------
+  sglPercentComplete = 0.11
+  Application.ScreenUpdating = True
+  strStatus = "* Getting book metadata from manuscript..." & vbCr & strStatus
+  
+  Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
+  
+  Dim strMetadata As String
+  strMetadata = GetMetadata
     
-    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    Dim strMetadata As String
-    strMetadata = GetMetadata
-    
-    '-------------------Get Illustrations List from Document-----------
-    sglPercentComplete = 0.15
-    strStatus = "* Getting list of illustrations..." & vbCr & strStatus
-    
-    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    Dim strIllustrationsList As String
-    strIllustrationsList = IllustrationsList
-        
-    '-------------------Get list of good and bad styles from document---------
-    sglPercentComplete = 0.18
-    strStatus = "* Getting list of styles in use..." & vbCr & strStatus
-    
-    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
-    
-    Dim arrGoodBadStyles() As Variant
-    Dim strGoodStylesList As String
-    Dim strBadStylesList As String
-                
-    'returns array with 2 elements, 1: good styles list, 2: bad styles list
-    arrGoodBadStyles = GoodBadStyles(Tor:=torDOTcom, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle, _
-        Stories:=arrStories)
-    strGoodStylesList = arrGoodBadStyles(1)
-    'Debug.Print strGoodStylesList
-    strBadStylesList = arrGoodBadStyles(2)
+  '-------------------Get Illustrations List from Document-----------
+  sglPercentComplete = 0.15
+  strStatus = "* Getting list of illustrations..." & vbCr & strStatus
+  
+  Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
+  
+  Dim strIllustrationsList As String
+  strIllustrationsList = IllustrationsList
+      
+  '-------------------Get list of good and bad styles from document---------
+  sglPercentComplete = 0.18
+  strStatus = "* Getting list of styles in use..." & vbCr & strStatus
+  
+  Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
+  
+  Dim arrGoodBadStyles() As Variant
+  Dim strGoodStylesList As String
+  Dim strBadStylesList As String
+              
+  'returns array with 2 elements, 1: good styles list, 2: bad styles list
+  arrGoodBadStyles = GoodBadStyles(Tor:=torDOTcom, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle, _
+      Stories:=arrStories)
+  strGoodStylesList = arrGoodBadStyles(1)
+  'Debug.Print strGoodStylesList
+  strBadStylesList = arrGoodBadStyles(2)
         
     'Error checking: if no good styles are in use, just return list of all styles in use, not other checks
     Dim blnTemplateUsed As Boolean
@@ -634,34 +583,7 @@ Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant
         End If
     End If
     
-    'If CN > 0 and CT = 0 (already fixed in FixSectionHeadings sub)
-    If arrStyleCount(4) > 0 And arrStyleCount(5) = 0 Then errorList = errorList & _
-        "** WARNING: Chap Number (cn) cannot be the main heading for" & vbNewLine _
-        & vbTab & "a chapter. Every chapter must include Chapter Title (ct)" & vbNewLine _
-        & vbTab & "style. Chap Number (cn) paragraphs have been converted to the" & vbNewLine _
-        & vbTab & "Chap Title (ct) style." & vbNewLine & vbNewLine
-    
-    'If PN > 0 and PT = 0 (already fixed in FixSectionHeadings sub)
-    If arrStyleCount(9) > 0 And arrStyleCount(8) = 0 Then errorList = errorList & _
-        "** WARNING: Part Number (pn) cannot be the main heading for" & vbNewLine _
-        & vbTab & "a section. Every part must include Part Title (pt)" & vbNewLine _
-        & vbTab & "style. Part Number (pn) paragraphs have been converted" & vbNewLine _
-        & vbTab & "to the Part Title (pt) style." & vbNewLine & vbNewLine
-    
-    'If FMT > 0 and FMH = 0 (already fixed in FixSectionHeadings sub)
-    If arrStyleCount(11) > 0 And arrStyleCount(10) = 0 Then errorList = errorList & _
-        "** WARNING: FM Title (fmt) cannot be the main heading for" & vbNewLine _
-        & vbTab & "a section. Every front matter section must include" & vbNewLine _
-        & vbTab & "the FM Head (fmh) style. FM Title (fmt) paragraphs" & vbNewLine _
-        & vbTab & "have been converted to the FM Head (fmh) style." & vbNewLine & vbNewLine
-    
-    'If BMT > 0 and BMH = 0 (already fixed in FixSectionHeadings sub)
-    If arrStyleCount(13) > 0 And arrStyleCount(12) = 0 Then errorList = errorList & _
-        "** WARNING: BM Title (bmt) cannot be the main heading for" & vbNewLine _
-        & vbTab & "a section. Every back matter section must incldue" & vbNewLine _
-        & vbTab & "the BM Head (bmh) style. BM Title (bmt) paragraphs" & vbNewLine _
-        & vbTab & "have been converted to the BM Head (bmh) style." & vbNewLine & vbNewLine
-            
+           
     'If no chapter opening paragraphs (CN, CT, or CTNP)
     If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) = 0 Then errorList = errorList _
         & "** ERROR: No tagged chapter openers detected. If your book does" & vbNewLine _
@@ -1138,47 +1060,6 @@ ErrHandler:
         
 End Function
 
-Private Sub FixSectionHeadings(oldStyle As String, newStyle As String)
-
-    Application.ScreenUpdating = False
-
-    'check if styles exist, else exit sub
-    On Error GoTo ErrHandler:
-    Dim keyStyle As Word.Style
-
-    Set keyStyle = activeDoc.Styles(oldStyle)
-    Set keyStyle = activeDoc.Styles(newStyle)
-
-    'Move selection to start of document
-    Selection.HomeKey Unit:=wdStory
-
-        'Find paras styles as CN and change to CT style
-        Selection.Find.ClearFormatting
-        Selection.Find.Style = activeDoc.Styles(oldStyle)
-        Selection.Find.Replacement.ClearFormatting
-        Selection.Find.Replacement.Style = activeDoc.Styles(newStyle)
-        With Selection.Find
-            .Text = ""
-            .Replacement.Text = ""
-            .Forward = True
-            .Wrap = wdFindContinue
-            .Format = True
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-        End With
-        Selection.Find.Execute Replace:=wdReplaceAll
-
-Exit Sub
-    
-ErrHandler:
-    If Err.Number = 5941 Or Err.Number = 5834 Then 'the requested member of the collection does not exist (i.e., style doesn't exist)
-        Exit Sub
-    End If
-    
-End Sub
 
 Private Function GetMetadata() As String
     Dim styleNameB(3) As String         ' must declare number of items in array here
