@@ -995,15 +995,10 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     
     ' This is the file we want to download
     strCsvFileName = "Styles_Bookmaker.csv"
-
-    ' download the list of good Tor styles from Confluence
-    Dim downloadStyles As GitBranch
-    ' switch to develop for testing
-    downloadStyles = releases
     
     'List of styles approved for use in Bookmaker
     'Organized by approximate frequency in manuscripts (most freq at top)
-    arrTorStyles = SharedFileInstaller.DownloadCSV(FileName:=strCsvFileName, DownloadFrom:=releases)
+    arrTorStyles = SharedFileInstaller.DownloadCSV(FileName:=strCsvFileName)
     
     activeParaCount = activeDoc.Paragraphs.Count
     

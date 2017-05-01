@@ -28,7 +28,7 @@ Public Enum TemplatesList
     allTemplates = 5
 End Enum
 
-Public Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateName As String, ByRef TemplatesToInstall() As String)
+Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef TemplatesToInstall() As String)
 
 '"Installer" argument = True if this is for a standalone installtion file.
 '"Installer" argument = False is this is part of a daily check of the current file and only updates if out of date.
@@ -134,7 +134,7 @@ Public Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateNa
                 installCheck(B) = False
             ElseIf blnLogUpToDate(B) = False And blnTemplateExists(B) = True Then 'Log is new or not checked today, already exists
                 'check version number
-                installCheck(B) = NeedUpdate(DownloadFrom, FinalDir(B), FileName(B), strFullLogPath(B))
+                installCheck(B) = NeedUpdate(FinalDir(B), FileName(B), strFullLogPath(B))
             Else ' blnTemplateExists = False, just download new template
                  installCheck(B) = True
             End If
@@ -216,7 +216,7 @@ Public Sub Installer(DownloadFrom As GitBranch, Installer As Boolean, TemplateNa
                 Exit Sub
         Else
             'If False, error in download; user was notified in DownloadFromConfluence function
-            If DownloadFromConfluence(DownloadSource:=DownloadFrom, FinalDir:=strInstallDir(D), _
+            If DownloadFromConfluence(FinalDir:=strInstallDir(D), _
                 LogFile:=strFullLogPath(D), FileName:=strInstallFile(D)) = False Then
                 If Installer = True Then
                     #If Mac Then    ' because application.quit generates error on Mac
@@ -281,7 +281,7 @@ Public Function StyleDir() As String
 End Function
 
 
-Public Function DownloadCSV(FileName As String, Optional DownloadFrom As GitBranch = master) As Variant
+Public Function DownloadCSV(FileName As String) As Variant
     '---------Download CSV with design specs from Confluence site-------
 
     'Create log file name
@@ -307,7 +307,7 @@ Public Function DownloadCSV(FileName As String, Optional DownloadFrom As GitBran
     CheckLog strStyleDir, strDir, strLogFile
     
     'Download CSV file from Confluence
-    If DownloadFromConfluence(FinalDir:=strDir, LogFile:=strLogFile, FileName:=FileName, DownloadSource:=DownloadFrom) = False Then
+    If DownloadFromConfluence(FinalDir:=strDir, LogFile:=strLogFile, FileName:=FileName) = False Then
         ' If download fails, check if we have an older version of the CSV to work with
         If IsItThere(strPath) = False Then
             strMessage = "Looks like we can't download the design info from the internet right now. " & _
@@ -429,290 +429,262 @@ End Function
 ' ===== DownloadFromConfluence ================================================
 ' Actually now it downloads from Github but don't want to mess with things, we're
 ' going to be totally refacroting soon.
-Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, FileName As String, _
-    Optional DownloadSource As GitBranch = master) As Boolean
-'FinalDir is directory w/o file name
 
-    Dim logString As String
-    Dim strMacTmpDir As String
-    Dim strTmpPath As String
-    Dim strBashTmp As String
-    Dim strFinalPath As String
-    Dim strErrMsg As String
-    Dim myURL As String
-    Dim strBranch As String
-    Dim strDownloadRepo As String
-    Dim strBaseUrl As String
-    Dim strSubfolder As String
-    
-    strFinalPath = FinalDir & Application.PathSeparator & FileName
+Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, _
+  FileName As String) As Boolean
 
-'Get URL to download from. Hard coded for now since will be replaced with config refactor
-    ' Base URL everything is available from
-    strBaseUrl = "https://raw.githubusercontent.com/macmillanpublishers/"
-    
-    ' Branch to download from
-    Select Case DownloadSource
-      Case develop
-        strBranch = "develop/"
-      Case master
-        strBranch = "master/"
-      Case releases
-        strBranch = "releases/"
-    End Select
-    
-    ' Determine repo and file path from file name. Will be handled better in config.
-    If InStr(1, FileName, "gt", vbTextCompare) Then
-      strDownloadRepo = "Word-template/"
-      strSubfolder = Left(FileName, InStr(FileName, ".") - 1) & "/"
-    ElseIf InStr(1, FileName, "macmillan", vbTextCompare) Then
-      strDownloadRepo = "Word-template_assets/"
-      strSubfolder = "StyleTemplate_auto-generate/"
-    Else
-      strDownloadRepo = "bookmaker_validator/"
-      strSubfolder = vbNullString
-    End If
-    
-    ' put it all together
-    myURL = strBaseUrl & strDownloadRepo & strBranch & strSubfolder & FileName
-    Debug.Print "Attempting to download: " & myURL
-    
-    'Get temp dir based on OS, then download file.
-    #If Mac Then
-        'set tmp dir
-        strMacTmpDir = MacScript("path to temporary items as string")
-        strTmpPath = strMacTmpDir & FileName
-        'Debug.Print strTmpPath
-        strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr(strTmpPath, ":") - 1)), ":", "/")
-        'Debug.Print strBashTmp
-        
-        'check for network
-        If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then   'can't connect to internet
-            logString = Now & " -- Tried update; unable to connect to network."
-            LogInformation LogFile, logString
-            strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
-                        "Please check your internet connection or contact workflows@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FileName & ")"
-            DownloadFromConfluence = False
-            Exit Function
-        Else 'internet is working, download file
-            'Make sure file is there
-            Dim httpStatus As Long
-            httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_code}' " & myURL)
-            
-            If httpStatus = 200 Then                    ' File is there
-                'Now delete file if already there, then download new file
-                ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
-            ElseIf httpStatus = 404 Then            ' 404 = page not found
-                logString = Now & " -- 404 File not found. Cannot download file."
-                LogInformation LogFile, logString
-                strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
-                    "Please contact workflows@macmillan.com for help."
-                MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
-                DownloadFromConfluence = False
-                Exit Function
-            Else
-                logString = Now & " -- Http status is " & httpStatus & ". Cannot download file."
-                LogInformation LogFile, logString
-                strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
-                    "Please check your internet connection or contact workflows@macmillan.com for help."
-                MsgBox strErrMsg, vbCritical, "Error 2: Http status " & httpStatus & " (" & FileName & ")"
-                DownloadFromConfluence = False
-                Exit Function
-            End If
+' FinalDir is directory w/o file name
 
-        End If
-    #Else
-        'set tmp dir
-        strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too? NOPE
-        
-        'Check if file is already in tmp dir, delete if yes
-        If IsItThere(strTmpPath) = True Then
-            Kill strTmpPath
-        End If
-        
-        'try to download the file from Public Confluence page
-        Dim WinHttpReq As Object
-        Dim oStream As Object
-        
-        'Attempt to download file
-        On Error Resume Next
-            Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-            WinHttpReq.Open "GET", myURL, False
-            WinHttpReq.Send
-    
-                ' Exit sub if error in connecting to website
-                If Err.Number <> 0 Then 'HTTP request is not OK
-                    'Debug.Print WinHttpReq.Status
-                    logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
-                    LogInformation LogFile, logString
-                    strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
-                        "Please check your internet connection or contact workflows@macmillan.com for help."
-                    MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FileName & ")"
-                    DownloadFromConfluence = False
-                    On Error GoTo 0
-                    Exit Function
-                End If
-        On Error GoTo 0
-        
-        'Debug.Print "Http status for " & FileName & ": " & WinHttpReq.Status
-        If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
-        
-            'if connection OK, download file to temp dir
-            myURL = WinHttpReq.responseBody
-            Set oStream = CreateObject("ADODB.Stream")
-            oStream.Open
-            oStream.Type = 1
-            oStream.Write WinHttpReq.responseBody
-            oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
-            oStream.Close
-            Set oStream = Nothing
-            Set WinHttpReq = Nothing
-        ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
-            logString = Now & " -- 404 File not found. Cannot download file."
-            LogInformation LogFile, logString
-            strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
-                "Please contact workflows@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
-            DownloadFromConfluence = False
-            Exit Function
-        Else
-            logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
-            LogInformation LogFile, logString
-            strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
-                "Please check your internet connection or contact workflows@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FileName & ")"
-            DownloadFromConfluence = False
-            Exit Function
-        End If
-    #End If
-        
-    'Error if download was not successful
-    If IsItThere(strTmpPath) = False Then
-        logString = Now & " -- " & FileName & " file download to Temp was not successful."
-        LogInformation LogFile, logString
-        strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
-            "Please contact workflows@macmillan.com for assitance."
-        MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FileName & ")"
-        DownloadFromConfluence = False
-        On Error GoTo 0
-        Exit Function
-    Else
-        logString = Now & " -- " & FileName & " file download to Temp was successful."
-        LogInformation LogFile, logString
-    End If
-
-
-    
-    'If file exists already, log it and delete it
-    If IsItThere(strFinalPath) = True Then
-
-        logString = Now & " -- Previous version file in final directory."
-        LogInformation LogFile, logString
-        
-        ' get file extension
-        Dim strExt As String
-        strExt = Right(strFinalPath, InStrRev(StrReverse(strFinalPath), "."))
-        
-        ' can't delete template if it's installed as an add-in
-        If InStr(strExt, "dot") > 0 Then
-            On Error Resume Next        'Error = add-in not available, don't need to uninstall
-                AddIns(strFinalPath).Installed = False
-            On Error GoTo 0
-        End If
+  Dim logString As String
+  Dim strMacTmpDir As String
+  Dim strTmpPath As String
+  Dim strBashTmp As String
+  Dim strFinalPath As String
+  Dim strErrMsg As String
+  Dim myURL As String
+  Dim strBranch As String
+  Dim strDownloadRepo As String
+  Dim strBaseUrl As String
+  Dim strSubfolder As String
   
-        ' Test if dir is read only
-        If IsReadOnly(FinalDir) = True Then ' Dir is read only
-            logString = Now & " -- old " & FileName & " file is read only, can't delete/replace. " _
-                & "Alerting user."
-            LogInformation LogFile, logString
-            strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
-                "@macmillan.com for help."
-            MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FileName & ")"
-            DownloadFromConfluence = False
-            On Error GoTo 0
-            Exit Function
-        Else
-            On Error Resume Next
-                Kill strFinalPath
-                
-                If Err.Number = 70 Then         'File is open and can't be replaced
-                    logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user."
-                    LogInformation LogFile, logString
-                    strErrMsg = "Please close all other Word documents and try again."
-                    MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
-                    DownloadFromConfluence = False
-                    On Error GoTo 0
-                    Exit Function
-                End If
-            On Error GoTo 0
-        End If
-    Else
-        logString = Now & " -- No previous version file in final directory."
-        LogInformation LogFile, logString
-    End If
-        
-    'If delete was successful, move downloaded file to final directory
-    If IsItThere(strFinalPath) = False Then
-        logString = Now & " -- Final directory clear of " & FileName & " file."
-        LogInformation LogFile, logString
-        
-        ' move template to final directory
-        Name strTmpPath As strFinalPath
-        
-        'Mac won't load macros from a template downloaded from the internet to Startup.
-        'Need to send these commands for it to work, see Confluence
-        ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
-        #If Mac Then
-            If InStr(1, FileName, ".dotm") Then
-            Dim strCommand As String
-            strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
-                "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
-                Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
-                'Debug.Print strCommand
-                MacScript (strCommand)
-            End If
-        #End If
+  strFinalPath = FinalDir & Application.PathSeparator & FileName
+
+'Get URL to download from.
+  myURL = FullURL(FileName:=FileName)
+
+  'Get temp dir based on OS, then download file.
+  #If Mac Then
+    'set tmp dir
+    strMacTmpDir = MacScript("path to temporary items as string")
+    strTmpPath = strMacTmpDir & FileName
+    'Debug.Print strTmpPath
+    strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr(strTmpPath, ":") - 1)), ":", "/")
+    'Debug.Print strBashTmp
     
-    Else
-        logString = Now & " -- old " & FileName & " file not cleared from Final directory."
+    'check for network
+    If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then   'can't connect to internet
+      logString = Now & " -- Tried update; unable to connect to network."
+      LogInformation LogFile, logString
+      strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
+                  "Please check your internet connection or contact workflows@macmillan.com for help."
+      MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FileName & ")"
+      DownloadFromConfluence = False
+      Exit Function
+    Else 'internet is working, download file
+      'Make sure file is there
+      Dim httpStatus As Long
+      httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_code}' " & myURL)
+      
+      If httpStatus = 200 Then                    ' File is there
+        'Now delete file if already there, then download new file
+        ShellAndWaitMac ("rm -f " & strBashTmp & " ; curl -o " & strBashTmp & " " & myURL)
+      ElseIf httpStatus = 404 Then            ' 404 = page not found
+        logString = Now & " -- 404 File not found. Cannot download file."
         LogInformation LogFile, logString
-        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
-            "Please close all other Word documents and try again, or contact workflows@macmillan.com."
-        MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FileName & ")"
+        strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
+                    "Please contact workflows@macmillan.com for help."
+        MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
         DownloadFromConfluence = False
-        On Error GoTo 0
         Exit Function
-    End If
-    
-    'If move was successful, yay! Else, :(
-    If IsItThere(strFinalPath) = True Then
-        logString = Now & " -- " & FileName & " file successfully saved to final directory."
+      Else
+        logString = Now & " -- Http status is " & httpStatus & ". Cannot download file."
         LogInformation LogFile, logString
-    Else
-        logString = Now & " -- " & FileName & " file not saved to final directory."
-        LogInformation LogFile, logString
-        strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
-            "Please cotact workflows@macmillan.com for assistance."
-        MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FileName & ")"
+        strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
+            "Please check your internet connection or contact workflows@macmillan.com for help."
+        MsgBox strErrMsg, vbCritical, "Error 2: Http status " & httpStatus & " (" & FileName & ")"
         DownloadFromConfluence = False
-        On Error GoTo 0
         Exit Function
+      End If
     End If
+  #Else
+    'set tmp dir
+    strTmpPath = Environ("TEMP") & Application.PathSeparator & FileName 'Environ gives temp dir for Mac too? NOPE
     
-    'Cleanup: Get rid of temp file if downloaded correctly
+    'Check if file is already in tmp dir, delete if yes
     If IsItThere(strTmpPath) = True Then
         Kill strTmpPath
     End If
     
-    ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
-    If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
-        On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
-            AddIns(strFinalPath).Installed = False
-        On Error GoTo 0
-    End If
+    'try to download the file from Public Confluence page
+    Dim WinHttpReq As Object
+    Dim oStream As Object
     
-    DownloadFromConfluence = True
+    'Attempt to download file
+    On Error Resume Next
+      Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
+      WinHttpReq.Open "GET", myURL, False
+      WinHttpReq.Send
+
+      ' Exit sub if error in connecting to website
+      If Err.Number <> 0 Then 'HTTP request is not OK
+        'Debug.Print WinHttpReq.Status
+        logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
+        LogInformation LogFile, logString
+        strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
+            "Please check your internet connection or contact workflows@macmillan.com for help."
+        MsgBox strErrMsg, vbCritical, "Error 1: Connection error (" & FileName & ")"
+        DownloadFromConfluence = False
+        On Error GoTo 0
+        Exit Function
+      End If
+    On Error GoTo 0
+        
+    'Debug.Print "Http status for " & FileName & ": " & WinHttpReq.Status
+    If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
+  
+      'if connection OK, download file to temp dir
+      myURL = WinHttpReq.responseBody
+      Set oStream = CreateObject("ADODB.Stream")
+      oStream.Open
+      oStream.Type = 1
+      oStream.Write WinHttpReq.responseBody
+      oStream.SaveToFile strTmpPath, 2 ' 1 = no overwrite, 2 = overwrite
+      oStream.Close
+      Set oStream = Nothing
+      Set WinHttpReq = Nothing
+    ElseIf WinHttpReq.Status = 404 Then ' 404 = file not found
+      logString = Now & " -- 404 File not found. Cannot download file."
+      LogInformation LogFile, logString
+      strErrMsg = "It looks like that file isn't available for download." & vbNewLine & vbNewLine & _
+          "Please contact workflows@macmillan.com for help."
+      MsgBox strErrMsg, vbCritical, "Error 7: File not found (" & FileName & ")"
+      DownloadFromConfluence = False
+      Exit Function
+    Else
+      logString = Now & " -- Http status is " & WinHttpReq.Status & ". Cannot download file."
+      LogInformation LogFile, logString
+      strErrMsg = "There was an error trying to download the Macmillan templates." & vbNewLine & vbNewLine & _
+          "Please check your internet connection or contact workflows@macmillan.com for help."
+      MsgBox strErrMsg, vbCritical, "Error 2: Http status " & WinHttpReq.Status & " (" & FileName & ")"
+      DownloadFromConfluence = False
+      Exit Function
+    End If
+  #End If
+        
+  'Error if download was not successful
+  If IsItThere(strTmpPath) = False Then
+    logString = Now & " -- " & FileName & " file download to Temp was not successful."
+    LogInformation LogFile, logString
+    strErrMsg = "There was an error downloading the Macmillan template." & vbNewLine & _
+        "Please contact workflows@macmillan.com for assitance."
+    MsgBox strErrMsg, vbCritical, "Error 3: Download failed (" & FileName & ")"
+    DownloadFromConfluence = False
+    On Error GoTo 0
+    Exit Function
+  Else
+    logString = Now & " -- " & FileName & " file download to Temp was successful."
+    LogInformation LogFile, logString
+  End If
+  
+  'If file exists already, log it and delete it
+  If IsItThere(strFinalPath) = True Then
+
+    logString = Now & " -- Previous version file in final directory."
+    LogInformation LogFile, logString
+    
+    ' get file extension
+    Dim strExt As String
+    strExt = Right(strFinalPath, InStrRev(StrReverse(strFinalPath), "."))
+    
+    ' can't delete template if it's installed as an add-in
+    If InStr(strExt, "dot") > 0 Then
+      On Error Resume Next        'Error = add-in not available, don't need to uninstall
+        AddIns(strFinalPath).Installed = False
+      On Error GoTo 0
+    End If
+
+    ' Test if dir is read only
+    If IsReadOnly(FinalDir) = True Then ' Dir is read only
+      logString = Now & " -- old " & FileName & " file is read only, can't delete/replace. " _
+          & "Alerting user."
+      LogInformation LogFile, logString
+      strErrMsg = "The installer doesn't have permission. Please conatct workflows" & _
+          "@macmillan.com for help."
+      MsgBox strErrMsg, vbCritical, "Error 8: Permission denied (" & FileName & ")"
+      DownloadFromConfluence = False
+      On Error GoTo 0
+      Exit Function
+    Else
+      On Error Resume Next
+        Kill strFinalPath
+        
+        If Err.Number = 70 Then         'File is open and can't be replaced
+          logString = Now & " -- old " & FileName & " file is open, can't delete/replace. Alerting user."
+          LogInformation LogFile, logString
+          strErrMsg = "Please close all other Word documents and try again."
+          MsgBox strErrMsg, vbCritical, "Error 4: Previous version removal failed (" & FileName & ")"
+          DownloadFromConfluence = False
+          On Error GoTo 0
+          Exit Function
+        End If
+      On Error GoTo 0
+    End If
+  Else
+    logString = Now & " -- No previous version file in final directory."
+    LogInformation LogFile, logString
+  End If
+      
+  'If delete was successful, move downloaded file to final directory
+  If IsItThere(strFinalPath) = False Then
+    logString = Now & " -- Final directory clear of " & FileName & " file."
+    LogInformation LogFile, logString
+    
+    ' move template to final directory
+    Name strTmpPath As strFinalPath
+    
+    'Mac won't load macros from a template downloaded from the internet to Startup.
+    'Need to send these commands for it to work, see Confluence
+    ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
+    #If Mac Then
+      If InStr(1, FileName, ".dotm") Then
+        Dim strCommand As String
+        strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
+            "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
+            Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
+            'Debug.Print strCommand
+            MacScript (strCommand)
+      End If
+    #End If
+  
+  Else
+    logString = Now & " -- old " & FileName & " file not cleared from Final directory."
+    LogInformation LogFile, logString
+    strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
+        "Please close all other Word documents and try again, or contact workflows@macmillan.com."
+    MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FileName & ")"
+    DownloadFromConfluence = False
+    On Error GoTo 0
+    Exit Function
+  End If
+  
+  'If move was successful, yay! Else, :(
+  If IsItThere(strFinalPath) = True Then
+    logString = Now & " -- " & FileName & " file successfully saved to final directory."
+    LogInformation LogFile, logString
+  Else
+    logString = Now & " -- " & FileName & " file not saved to final directory."
+    LogInformation LogFile, logString
+    strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & vbNewLine & _
+        "Please cotact workflows@macmillan.com for assistance."
+    MsgBox strErrMsg, vbCritical, "Error 6: Installation failed (" & FileName & ")"
+    DownloadFromConfluence = False
+    On Error GoTo 0
+    Exit Function
+  End If
+  
+  'Cleanup: Get rid of temp file if downloaded correctly
+  If IsItThere(strTmpPath) = True Then
+    Kill strTmpPath
+  End If
+  
+  ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
+  If InStr(1, LCase(strFinalPath), LCase("startup"), vbTextCompare) > 0 Then         'LCase because "startup" was staying in all caps for some reason, UCase wasn't working
+    On Error Resume Next                                        'Error = add-in not available, don't need to uninstall
+      AddIns(strFinalPath).Installed = False
+    On Error GoTo 0
+  End If
+  
+  DownloadFromConfluence = True
 
 End Function
 
@@ -909,7 +881,7 @@ Private Function IsTemplateThere(Directory As String, FileName As String, Log As
     LogInformation Log, logString
 End Function
 
-Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileName As String, Log As String) As Boolean
+Private Function NeedUpdate(Directory As String, FileName As String, Log As String) As Boolean
 'Directory argument should be the final directory the template should go in.
 'File should be the template file name
 'Log argument should be full path to log file
@@ -961,10 +933,10 @@ Private Function NeedUpdate(DownloadURL As GitBranch, Directory As String, FileN
     'Debug.Print strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
-    If DownloadFromConfluence(DownloadSource:=DownloadURL, FinalDir:=strStyleDir, LogFile:=Log, _
-        FileName:=strVersion) = False Then
-            NeedUpdate = False
-            Exit Function
+    If DownloadFromConfluence(FinalDir:=strStyleDir, LogFile:=Log, _
+      FileName:=strVersion) = False Then
+        NeedUpdate = False
+        Exit Function
     End If
         
     '-------------------- Get version number of current template ---------------------
@@ -1020,6 +992,48 @@ Private Sub OpenDocPC(FilePath As String)
         Documents.Open FileName:=FilePath, ReadOnly:=True, Visible:=False      'Win Word DOES allow Visible as an argument :)
 End Sub
 
+Private Function FullURL(FileName As String) As String
+' Takes a file name as an argument and returns the URL to that file ON GITHUB
+' TODO: Create from config file
+  Dim strBaseUrl As String
+  Dim strBranch As String
+  Dim strNameOnly As String
+  Dim strRepo As String
+  Dim strSubfolder As String
+  
+' DO include trailing slash at end of each, because some variables will be null
+  strBaseUrl = "https://raw.githubusercontent.com/macmillanpublishers/"
+  strBranch = WT_Settings.DownloadBranch & "/"
+' Strip extension, bc some files have related version file w/ same name, diff ext
+  strNameOnly = Utils.GetFileNameOnly(FileName)
+
+  Select Case strNameOnly
+    Case "macmillan"
+      strRepo = "Word-template_assets/"
+      strSubfolder = "StyleTemplate_auto-generate/"
+    Case "macmillan_NoColor"
+      strRepo = "Word-template_assets/"
+      strSubfolder = "StyleTemplate_auto-generate/"
+    Case "macmillan_CoverCopy"
+      strRepo = "Word-template_assets/"
+      strSubfolder = vbNullString
+    Case "Styles_Bookmaker"
+      strRepo = "Word-template_assets/"
+      strSubfolder = vbNullString
+    Case "Word-template"
+      strRepo = "Word-template/"
+      strSubfolder = vbNullString
+    Case "GtUpdater"
+      strRepo = "Word-template/"
+      strSubfolder = vbNullString
+    Case "section_start_rules"
+      strRepo = "bookmaker_validator/"
+      strSubfolder = vbNullString
+  End Select
+
+  ' put it all together
+  FullURL = strBaseUrl & strRepo & strBranch & strSubfolder & FileName
+End Function
 
 
 Private Function ImportVariable(strFile As String) As String
