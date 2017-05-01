@@ -262,7 +262,7 @@ FullConfigPathGetFinish:
 
 FullConfigPathGetError:
     Err.Source = Err.Source & strPaths & "FullConfigPath.Get"
-    Debug.Print Err.Number & ": " & Err.Description
+    DebugPrint Err.Number & ": " & Err.Description
     If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
     Else

@@ -43,7 +43,7 @@ Private Sub VersionCheck(fullPath As String, FileName As String)
     'Alerts user to the version number of the template file
     
     Dim installedVersion As String
-    'Debug.Print fullPath
+    'DebugPrint fullPath
     
     If IsItThere(fullPath) = False Then           ' the template file is not installed, or is not in the correct place
         installedVersion = "none"

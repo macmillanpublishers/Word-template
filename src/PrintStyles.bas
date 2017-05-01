@@ -27,7 +27,7 @@ Sub PrintStyles()
     'SecondsElapsed = Round(Timer - StartTime, 2)
     
     ''''Notify user in seconds
-    'Debug.Print "This code ran successfully in " & SecondsElapsed & " seconds"
+    'DebugPrint "This code ran successfully in " & SecondsElapsed & " seconds"
     '============================================================================
     
 End Sub
@@ -197,7 +197,7 @@ Private Sub PrintStylesMac()
             DoEvents
          
             'SecondsElapsed = Round(Timer - StartTime, 2)
-            'Debug.Print "Paragraph " & a & " in " & SecondsElapsed & " seconds"
+            'DebugPrint "Paragraph " & a & " in " & SecondsElapsed & " seconds"
         End If
     
         tempDoc.Paragraphs(A).Range.Select
@@ -465,7 +465,7 @@ Private Sub PrintStylesPC()
             Call UpdateBarAndWait(Bar:=objProgressPrint, Status:=strStatus, Percent:=sglPercentComplete)
             
             'SecondsElapsed = Round(Timer - StartTime, 2)
-            'Debug.Print "Paragraph " & a & " in " & SecondsElapsed & " seconds"
+            'DebugPrint "Paragraph " & a & " in " & SecondsElapsed & " seconds"
         End If
     
         tempDoc.Paragraphs(A).Range.Select

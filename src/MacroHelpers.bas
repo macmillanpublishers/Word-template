@@ -1068,7 +1068,7 @@ Public Sub UpdateUnlinkFieldCodes(Optional p_stories As Variant)
       Set thisRange = activeDoc.StoryRanges(p_stories(A))
       If thisRange.Fields.Count > 0 Then
         For Each objField In thisRange.Fields
-  '            Debug.Print thisRange.Fields.Count
+  '            DebugPrint thisRange.Fields.Count
             With objField
               If .Type = wdFieldTOC Then
                 blnTOCpresent = True
@@ -1252,7 +1252,7 @@ Private Sub CleanUpRecipeContentControls()
             End If
         Next
         If lngEmptyCCinGroup = rngGroupCC.ContentControls.Count Then
-            Debug.Print "Deleting a blank '" & _
+            DebugPrint "Deleting a blank '" & _
                 rngGroupCC.ContentControls(1).Title & "' CC group"
             objCC.Delete True
         Else
@@ -1262,12 +1262,12 @@ Private Sub CleanUpRecipeContentControls()
         objCC.Title = "Pub Year" Then
         Set rngCC = objCC.Range
         If rngCC.ParagraphStyle = "Design Note (dn)" Then
-            Debug.Print "Deleting a Design Note para with ContentControl: " _
+            DebugPrint "Deleting a Design Note para with ContentControl: " _
                 & objCC.Title
             lngParaIndex = activeDoc.Range(0, rngCC.End).Paragraphs.Count
             Set rngIndexPara = activeDoc.Paragraphs(lngParaIndex).Range
             lngCCsInPara = rngIndexPara.ContentControls.Count
-            Debug.Print lngCCsInPara & "is the lngpcount"
+            DebugPrint lngCCsInPara & "is the lngpcount"
             If rngIndexPara.ContentControls(lngCCsInPara).ID = objCC.ID Then
                 'to verify this is the last Content Control in this para
                 activeDoc.Paragraphs(lngParaIndex).Range.Delete
@@ -1276,10 +1276,10 @@ Private Sub CleanUpRecipeContentControls()
             If objCC.Title = "Editorial" And objCC.Range.Text = _
                 objCC.PlaceholderText.Value Then
                 objCC.Range.Text = objCC.PlaceholderText.Value
-                Debug.Print "Setting blank 'Editorial' CCs to placeholder txt"
+                DebugPrint "Setting blank 'Editorial' CCs to placeholder txt"
             End If
             objCC.Delete False
-            Debug.Print "Deleting CC (preserving content) from para: " & _
+            DebugPrint "Deleting CC (preserving content) from para: " & _
                 rngCC.ParagraphStyle
         End If
     Else ' It's not a cookbook control and we want to remove but leave content

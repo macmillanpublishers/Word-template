@@ -40,10 +40,10 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef Templat
     Dim Z As Long
     
     For Z = LBound(TemplatesToInstall()) To UBound(TemplatesToInstall())
-'        Debug.Print "Path: " & TemplatesToInstall(z)
+'        DebugPrint "Path: " & TemplatesToInstall(z)
         
         lngBreak = InStrRev(TemplatesToInstall(Z), Application.PathSeparator)
-'        Debug.Print "Final sep at: " & lngBreak
+'        DebugPrint "Final sep at: " & lngBreak
         
         If lngBreak >= 1 Then
             ReDim Preserve FileName(1 To Z)
@@ -52,8 +52,8 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef Templat
             ReDim Preserve FinalDir(1 To Z)
             FinalDir(Z) = Left(TemplatesToInstall(Z), lngBreak - 1)
             
-'            Debug.Print "File Name #" & z & ": " & FileName(z)
-'            Debug.Print "Directory #" & z & ": " & FinalDir(z)
+'            DebugPrint "File Name #" & z & ": " & FileName(z)
+'            DebugPrint "Directory #" & z & ": " & FinalDir(z)
         Else
             ' No path separator in full path specification
             MsgBox "You need to specify the full path to your templates!"
@@ -83,7 +83,7 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef Templat
         strFullLogPath(A) = arrLogInfo(3)
     Next A
     
-    'Debug.Print "Style Dir is: " & strStyleDir(1) & vbNewLine & _
+    'DebugPrint "Style Dir is: " & strStyleDir(1) & vbNewLine & _
                 "Log dir is: " & strLogDir(1) & vbNewLine & _
                 "Full path to log is: " & strFullLogPath(1)
                 
@@ -108,11 +108,11 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef Templat
         
         ' If last mod date less than 1 day ago, CheckLog = True
         blnLogUpToDate(B) = CheckLog(strStyleDir(B), strLogDir(B), strFullLogPath(B))
-        'Debug.Print FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
+        'DebugPrint FileName(b) & " log exists and was checked today: " & blnLogUpToDate(b)
         
         ' Check if template exists, if not create any missing directories
         blnTemplateExists(B) = IsTemplateThere(FinalDir(B), FileName(B), strFullLogPath(B))
-        ' Debug.Print FileName(b) & " exists: " & blnTemplateExists(b)
+        ' DebugPrint FileName(b) & " exists: " & blnTemplateExists(b)
         
         ' ===============================
         ' FOR DEBUGGING: SET TO TRUE,    |
@@ -162,7 +162,7 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef Templat
         End If
     Next C
     
-    'Debug.Print strInstallFile(1) & vbNewLine & strInstallDir(1)
+    'DebugPrint strInstallFile(1) & vbNewLine & strInstallDir(1)
     
     ' ---------------- Check if new array is allocated -----------------------------------
     If IsArrayEmpty(strInstallFile()) = True Then       ' No files need to be installed
@@ -275,7 +275,7 @@ Public Function StyleDir() As String
         strFullPath = Environ("APPDATA") & Application.PathSeparator & strStylesName
     #End If
     
-'    Debug.Print strFullPath
+'    DebugPrint strFullPath
     StyleDir = strFullPath
     
 End Function
@@ -417,7 +417,7 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList, Optional Pat
     ' DEBUGGING: check tha list!
 '    Dim H As Long
 '    For H = LBound(strPathsToTemplates) To (UBound(strPathsToTemplates))
-'        Debug.Print H & ": " & strPathsToTemplates(H)
+'        DebugPrint H & ": " & strPathsToTemplates(H)
 '    Next H
     
     
@@ -457,9 +457,9 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, _
     'set tmp dir
     strMacTmpDir = MacScript("path to temporary items as string")
     strTmpPath = strMacTmpDir & FileName
-    'Debug.Print strTmpPath
+    'DebugPrint strTmpPath
     strBashTmp = Replace(Right(strTmpPath, Len(strTmpPath) - (InStr(strTmpPath, ":") - 1)), ":", "/")
-    'Debug.Print strBashTmp
+    'DebugPrint strBashTmp
     
     'check for network
     If ShellAndWaitMac("ping -o google.com &> /dev/null ; echo $?") <> 0 Then   'can't connect to internet
@@ -517,7 +517,7 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, _
 
       ' Exit sub if error in connecting to website
       If Err.Number <> 0 Then 'HTTP request is not OK
-        'Debug.Print WinHttpReq.Status
+        'DebugPrint WinHttpReq.Status
         logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
         LogInformation LogFile, logString
         strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
@@ -529,7 +529,7 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, _
       End If
     On Error GoTo 0
         
-    'Debug.Print "Http status for " & FileName & ": " & WinHttpReq.Status
+    'DebugPrint "Http status for " & FileName & ": " & WinHttpReq.Status
     If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
   
       'if connection OK, download file to temp dir
@@ -641,7 +641,7 @@ Private Function DownloadFromConfluence(FinalDir As String, LogFile As String, _
         strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
             "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
             Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & strFinalPath & Chr(34)
-            'Debug.Print strCommand
+            'DebugPrint strCommand
             MacScript (strCommand)
       End If
     #End If
@@ -718,7 +718,7 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
             MsgBox "There was a problem with your Castoff.", vbCritical, "Error: CSV not available"
             Exit Function
         End If
-        'Debug.Print Path
+        'DebugPrint Path
         
         ' Do we need to remove a header row?
         Dim lngHeaderRow As Long
@@ -764,22 +764,22 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
             If Len(lines(R)) > 0 Then
                 one_line = Split(lines(R), ",")
                 For C = lngHeaderCol To num_cols   ' start at 1 (not 0) if we are not using the header column
-                    'Debug.Print one_line(c)
+                    'DebugPrint one_line(c)
                     the_array((R - lngHeaderRow), (C - lngHeaderCol)) = one_line(C)   ' -1 because if are not using header row/column from CSV
                 Next C
             End If
         Next R
     
         ' Prove we have the data loaded.
-'         Debug.Print LBound(the_array)
-'         Debug.Print UBound(the_array)
+'         DebugPrint LBound(the_array)
+'         DebugPrint UBound(the_array)
 '         For R = 0 To (num_rows - 1)          ' -1 again if we removed the header row
 '             For c = 0 To num_cols      ' -1 again if we removed the header column
-'                 Debug.Print the_array(R, c) & " | ";
+'                 DebugPrint the_array(R, c) & " | ";
 '             Next c
-'             Debug.Print
+'             DebugPrint
 '         Next R
-'         Debug.Print "======="
+'         DebugPrint "======="
     
     LoadCSVtoArray = the_array
  
@@ -841,7 +841,7 @@ Private Function CreateLogFileInfo(ByRef FileName As String) As Variant
     strLogFolder = strStyle & Application.PathSeparator & "log"
     strLogPath = strLogFolder & Application.PathSeparator & strLogFile
 
-    'Debug.Print strLogPath
+    'DebugPrint strLogPath
 
     Dim arrFinalDirs() As Variant
     ReDim arrFinalDirs(1 To 3)
@@ -891,7 +891,7 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
     Dim strFullTemplatePath As String
     
     strFullTemplatePath = Directory & Application.PathSeparator & FileName
-    'Debug.Print "NeedUpdate Path: " & strFullTemplatePath
+    'DebugPrint "NeedUpdate Path: " & strFullTemplatePath
     
     'Get version number of installed template
     Dim strInstalledVersion As String
@@ -907,7 +907,7 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
         strInstalledVersion = Documents(strFullTemplatePath).CustomDocumentProperties("Version")
         Documents(strFullTemplatePath).Close SaveChanges:=wdDoNotSaveChanges
         logString = Now & " -- installed version is " & strInstalledVersion
-'        Debug.Print "InstalledVersion : |" & strInstalledVersion; "|"
+'        DebugPrint "InstalledVersion : |" & strInstalledVersion; "|"
     Else
         strInstalledVersion = "0"     ' Template is not installed
         logString = Now & " -- No template installed, version number is 0."
@@ -921,8 +921,8 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
     Dim strStyleDir As String
     Dim strFullVersionPath As String
     
-    'Debug.Print FileName
-    'Debug.Print InStrRev(FileName, ".do")
+    'DebugPrint FileName
+    'DebugPrint InStrRev(FileName, ".do")
     strVersion = Left(FileName, InStrRev(FileName, ".do") - 1)
     strVersion = strVersion & ".txt"
     
@@ -930,7 +930,7 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
     strStyleDir = StyleDir()
     
     strFullVersionPath = strStyleDir & Application.PathSeparator & strVersion
-    'Debug.Print strVersion
+    'DebugPrint strVersion
     
     'If False, error in download; user was notified in DownloadFromConfluence function
     If DownloadFromConfluence(FinalDir:=strStyleDir, LogFile:=Log, _
@@ -956,7 +956,7 @@ Private Function NeedUpdate(Directory As String, FileName As String, Log As Stri
             strCurrentVersion = Replace(strCurrentVersion, vbCr, "")
         End If
         
-'        Debug.Print "Text File: |" & strCurrentVersion & "|"
+'        DebugPrint "Text File: |" & strCurrentVersion & "|"
 
         logString = Now & " -- Current version is " & strCurrentVersion
     Else
@@ -1070,7 +1070,7 @@ Private Sub CloseOpenDocs()
         Else
             For Each doc In Documents
                 On Error Resume Next        'To skip error if user is prompted to save new doc and clicks Cancel
-                    'Debug.Print doc.Name
+                    'DebugPrint doc.Name
                     If doc.Name <> strInstallerName Then       'But don't close THIS document
                         doc.Save   'separate step to trigger Save As prompt for previously unsaved docs
                         doc.Close

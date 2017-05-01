@@ -117,7 +117,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
 '
 '        If FormInputs.PrintType = FormInputs.optPrintPOD.Caption Then
 '            strSpineSize = SpineSize(FormInputs.Staging, lngCastoffResult(0))
-'            'Debug.Print "spine size = " & strSpineSize
+'            'DebugPrint "spine size = " & strSpineSize
 '        End If
 
     End If
@@ -255,7 +255,7 @@ Private Function Castoff(lngDesignIndex As Long, arrCSV() As Variant, objForm As
     '---------Get design character count from CSV-------------------------------
     Dim lngDesignCount As Long
     lngDesignCount = arrCSV(lngDesignIndex, objForm.TrimIndex)
-    'Debug.Print lngDesignCount
+    'DebugPrint lngDesignCount
     
     '---------Get notes character count from CSV--------------------------------
     Dim lngNotesDesign As Long
@@ -335,7 +335,7 @@ Private Function SpineSize(PageCount As Long)
         Dim C As Long
         
         For C = LBound(arrSpine, 1) To UBound(arrSpine, 1)
-            'Debug.Print arrDesign(c, 0) & " = " & PageCount
+            'DebugPrint arrDesign(c, 0) & " = " & PageCount
             If arrSpine(C, 0) = PageCount Then
                 strSpine = arrSpine(C, 1)
                 Exit For
@@ -355,7 +355,7 @@ Private Function SpineSize(PageCount As Long)
                             "at this page count."
     End If
 
-    'Debug.Print strSpine
+    'DebugPrint strSpine
     SpineSize = strSpine
 
 End Function

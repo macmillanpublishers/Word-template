@@ -210,26 +210,26 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
 
         ' location we're going to copy the template to as a zip file
         strMacTmp = MacScript("path to temporary items as string")
-        'Debug.Print "strMacTmp: " & strMacTmp
+        'DebugPrint "strMacTmp: " & strMacTmp
         strMacUnzip = strMacTmp & strFile
-        'Debug.Print "strMacUnzip: " & strMacUnzip
+        'DebugPrint "strMacUnzip: " & strMacUnzip
         strMacZip = strMacUnzip & ".zip"
-        'Debug.Print "strMacZip: " & strMacZip
+        'DebugPrint "strMacZip: " & strMacZip
         strMacXML = strMacUnzip & ":customUI:"
-        'Debug.Print "strMacXML: " & strMacXML
+        'DebugPrint "strMacXML: " & strMacXML
         strMacImagePath = strMacXML & "images:"
-        'Debug.Print "strMacImagePath: " & strMacImagePath
+        'DebugPrint "strMacImagePath: " & strMacImagePath
         ' convert formats of above for command line
 
         strBashUnzip = Replace(Right(strMacUnzip, Len(strMacUnzip) - (InStr(strMacUnzip, ":") - 1)), ":", "/")
-        'Debug.Print "strBashUnzip: " & strBashUnzip
+        'DebugPrint "strBashUnzip: " & strBashUnzip
         strBashZip = Replace(Right(strMacZip, Len(strMacZip) - (InStr(strMacZip, ":") - 1)), ":", "/")
-        'Debug.Print "strBashZip: " & strBashZip
+        'DebugPrint "strBashZip: " & strBashZip
         strXmlPath = Replace(Right(strMacXML, Len(strMacXML) - (InStr(strMacXML, ":") - 1)), ":", "/")
-        'Debug.Print "strXmlPath: " & strXmlPath
+        'DebugPrint "strXmlPath: " & strXmlPath
         ' path to button images
         strImagePath = Replace(Right(strMacImagePath, Len(strMacImagePath) - (InStr(strMacImagePath, ":") - 1)), ":", "/")
-        'Debug.Print "strImagePath: " & strImagePath
+        'DebugPrint "strImagePath: " & strImagePath
 
         ' ===== First we copy the template to tmp as a .zip and then unzip it ====='
         ' Copy this template to tmp as a zip file
@@ -331,7 +331,7 @@ Private Sub CreateMacToolbar(PathToTemplate As String)
                                     ' 199 is << and 200 is >> (but as a single character)
                                     strCommand = "set buttonPic to read file " & Chr(34) & strImageName & Chr(34) & " as " & Chr(199) & _
                                         "class PNGf" & Chr(200) & Chr(13) & "set the clipboard to buttonPic"
-                                    'Debug.Print strCommand
+                                    'DebugPrint strCommand
                                     MacScript (strCommand)
 
                                     ' Create button

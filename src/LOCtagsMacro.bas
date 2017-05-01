@@ -77,7 +77,7 @@ Sub LibraryOfCongressTags()
     Randomize           'Sets seed for Rnd below to value of system timer
     X = Int(UBound(funArray()) * Rnd()) + 1
     
-    'Debug.Print x
+    'DebugPrint x
     
     strTitle = "CIP Application Tagging Macro"
     sglPercentComplete = 0.1
@@ -1113,7 +1113,7 @@ Private Sub SaveAsTextFile()
         activeDoc.Select
         Selection.Copy
 
-        'Debug.Print Len(Selection)
+        'DebugPrint Len(Selection)
         'Because if Len = 1, then no text in doc (only a paragraph return) and causes an error
         If Len(Selection) > 1 Then
         'PasteSpecial because otherwise gives a warning about too many styles being pasted

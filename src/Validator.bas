@@ -2029,7 +2029,7 @@ Private Function AddHeading(paraInd As Long) As Boolean
   
 ' Add correct style (inserted paragraph now part of `rngPara` object)
 ' ErrorChecker will add style if it doesn't exist
-'  Debug.Print strHeadingStyle
+'  DebugPrint strHeadingStyle
   rngPara.Paragraphs(1).Style = strHeadingStyle
 
 ' Verify we added a paragraph
