@@ -205,7 +205,7 @@ Public Function ErrorChecker(objError As Object, Optional strValue As _
       strErrDescription = "File download failed: " & strValue
       strErrMessage = "Download failed."
     Case MacError.err_LocalDeleteFail
-        ' genUtils.GeneralHelpers.KillAll() will notify user if file is open
+        ' Utils.KillAll() will notify user if file is open
       strErrDescription = "File in final install location could not be " & _
         "deleted. If the file was open, the user was notified: " & strValue
       blnNotifyUser = False
@@ -378,10 +378,10 @@ WriteToLogFinish:
 
 WriteToLogError:
     Err.Source = Err.Source & strModule & "WriteToLog"
-    If genUtils.GeneralHelpers.ErrorChecker(Err, strLogFile) = False Then
+    If MacroHelpers.ErrorChecker(Err, strLogFile) = False Then
         Resume
     Else
-        Call genUtils.GeneralHelpers.GlobalCleanup
+        Call MacroHelpers.GlobalCleanup
     End If
 End Sub
 
@@ -389,14 +389,14 @@ Public Function IsStyleInUse(StyleName As String) As Boolean
   On Error GoTo IsStyleInUseError
   
 ' First confirm style is even in document to begin with
-  If GeneralHelpers.IsStyleInDoc(StyleName) = False Then
+  If MacroHelpers.IsStyleInDoc(StyleName) = False Then
     IsStyleInUse = False
     Exit Function
   End If
 
 '  ' If we need to do a Selection.Find use
 '  Selection.HomeKey Unit:=wdStory
-  Call genUtils.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   With activeDoc.Range.Find
     .Text = ""
     .Format = True
@@ -416,7 +416,7 @@ IsStyleInUseError:
   If ErrorChecker(Err, StyleName) = False Then
     Resume
   Else
-    Call genUtils.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -443,7 +443,7 @@ IsStyleInDocError:
   If ErrorChecker(Err, StyleName) = False Then
     Resume
   Else
-    Call genUtils.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -473,7 +473,7 @@ SetPathSeparatorError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -531,7 +531,7 @@ ParaIndexError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    genUtils.GlobalCleanup
+    MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -881,7 +881,7 @@ Function GetText(StyleName As String, Optional ReturnArray As Boolean = False) _
   'Move selection to start of document
   Selection.HomeKey Unit:=wdStory
 
-      genUtils.zz_clearFind
+      MacroHelpers.zz_clearFind
       With Selection.Find
           .Text = ""
           .Replacement.Text = ""
@@ -921,7 +921,7 @@ Function GetText(StyleName As String, Optional ReturnArray As Boolean = False) _
   End If
   
   If ReturnArray = False Then
-    GetText = genUtils.GeneralHelpers.Reduce(styleArray)
+    GetText = MacroHelpers.Reduce(styleArray)
   Else
     GetText = styleArray
   End If
@@ -935,7 +935,7 @@ GetTextError:
     If ErrorChecker(Err) = False Then
       Resume
     Else
-      Call genUtils.GlobalCleanup
+      Call MacroHelpers.GlobalCleanup
     End If
   End If
   
@@ -972,7 +972,7 @@ ReduceError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -986,7 +986,7 @@ Public Function StyleReplace(SearchStyle As String, ReplaceStyle As String) As _
   Boolean
   On Error GoTo StyleReplaceError
   
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   With activeDoc.Range.Find
     .Format = True
     .Style = SearchStyle
@@ -1000,7 +1000,7 @@ Public Function StyleReplace(SearchStyle As String, ReplaceStyle As String) As _
     End If
   
   End With
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   Exit Function
   
 StyleReplaceError:
@@ -1008,7 +1008,7 @@ StyleReplaceError:
   If ErrorChecker(Err, ReplaceStyle) = False Then
     Resume
   Else
-    Call genUtils.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -1235,7 +1235,7 @@ StartupSettingsError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -1281,7 +1281,7 @@ FixTrackChangesError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
     
 End Function
@@ -1301,7 +1301,7 @@ ClearContentControlsError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -1364,7 +1364,7 @@ CleanUpError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -1423,7 +1423,7 @@ HiddenTextSucksError:
     If ErrorChecker(Err) = False Then
         Resume
     Else
-        genUtils.GeneralHelpers.GlobalCleanup
+        MacroHelpers.GlobalCleanup
     End If
     
 End Function
@@ -1467,7 +1467,7 @@ ClearPilcrowFormatError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    genUtils.GeneralHelpers.GlobalCleanup
+    MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -1499,7 +1499,7 @@ StyleAllHyperlinksError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    genUtils.GeneralHelpers.GlobalCleanup
+    MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -1584,10 +1584,10 @@ StyleHyperlinksAError:
 '            End If
         Else
           Err.Source = strModule & "StyleHyperlinksA"
-          If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+          If MacroHelpers.ErrorChecker(Err) = False Then
             Resume
           Else
-            Call genUtils.GeneralHelpers.GlobalCleanup
+            Call MacroHelpers.GlobalCleanup
           End If
         End If
 
@@ -1694,10 +1694,10 @@ Private Sub AutoFormatHyperlinks()
   
 AutoFormatHyperlinksError:
   Err.Source = strModule & "AutoFormatHyperlinks"
-  If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+  If MacroHelpers.ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -1738,10 +1738,10 @@ Private Sub StyleHyperlinksB(StoryType As WdStoryType)
   Exit Sub
 StyleHyperlinksBError:
   Err.Source = strModule & "StyleHyperlinksB"
-  If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+  If MacroHelpers.ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -1761,9 +1761,9 @@ Public Function IsNewLine(strValue As String) As Boolean
   
 IsNewLineError:
   Err.Source = strModule & "IsNewLine"
-  If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+  If MacroHelpers.ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function

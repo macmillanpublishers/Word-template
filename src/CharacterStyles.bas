@@ -8,7 +8,7 @@ Attribute VB_Name = "CharacterStyles"
 
 ' ======== DEPENDENCIES =======================
 ' 1. Requires ProgressBar userform module
-' 2. Requires GeneralHelpers module
+' 2. Requires MacroHelpers module
 
 ' Note: have already used all numerals and capital letters for tagging,
 ' starting with lowercase letters. through a.
@@ -16,12 +16,12 @@ Attribute VB_Name = "CharacterStyles"
 Option Explicit
 Option Base 1
 
-Private Const strCharStyles As String = "genUtils.CharacterStyles."
+Private Const strCharStyles As String = "CharacterStyles."
 Private activeRng As Range
 
-Public Function MacmillanCharStyles() As genUtils.Dictionary
+Public Function MacmillanCharStyles() As Dictionary
   On Error GoTo MacmillanCharStylesError
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
   
@@ -31,7 +31,7 @@ Public Function MacmillanCharStyles() As genUtils.Dictionary
   CharacterProgress.Title = "Macmillan Character Styles Macro"
   DebugPrint "Starting Character Styles macro"
   
-  Call genUtils.CharacterStyles.ActualCharStyles(oProgressChar:= _
+  Call CharacterStyles.ActualCharStyles(oProgressChar:= _
     CharacterProgress, StartPercent:=0, TotalPercent:=1)
   
   dictReturn.Item("pass") = True
@@ -43,7 +43,7 @@ MacmillanCharStylesError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -63,13 +63,13 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
 
 ' ------------check for endnotes and footnotes---------------------------------
   Dim stStories() As Variant
-  stStories = genUtils.GeneralHelpers.StoryArray
+  stStories = MacroHelpers.StoryArray
     
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
-  If genUtils.GeneralHelpers.StartupSettings(StoriesUsed:=stStories) = True Then
+  If MacroHelpers.StartupSettings(StoriesUsed:=stStories) = True Then
         
-    Call genUtils.GeneralHelpers.Cleanup
+    Call MacroHelpers.CleanUp
     Exit Sub
   End If
   
@@ -106,7 +106,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   strStatus = funArray(X)
   
 ' Calls ProgressBar.Increment mathod and waits for it to complete
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
 ' -----------Delete hidden text ------------------------------------------------
@@ -114,81 +114,81 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   
   ' Note, if you don't delete hidden text, this macro turns it into reg. text.
   For S = 1 To UBound(stStories())
-  If genUtils.GeneralHelpers.HiddenTextSucks(StoryType:=(stStories(S))) = _
+  If MacroHelpers.HiddenTextSucks(StoryType:=(stStories(S))) = _
     True Then
     ' Notify user maybe?
     End If
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
 
 ' -------------- Clear formatting from paragraph marks ------------------------
 ' can cause errors
   
   For S = 1 To UBound(stStories())
-    Call genUtils.GeneralHelpers.ClearPilcrowFormat(StoryType:=(stStories(S)))
+    Call MacroHelpers.ClearPilcrowFormat(StoryType:=(stStories(S)))
   Next S
 
 
 ' ===================== Replace Local Styles Start ============================
 
 ' -----------------------Tag space break styles--------------------------------
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
   sglPercentComplete = (0.18 * TotalPercent) + StartPercent
   strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
     Call PreserveWhiteSpaceinBrkStylesA(StoryType:=(stStories(S)))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
 ' ----------------------------Fix hyperlinks-----------------------------------
   sglPercentComplete = (0.28 * TotalPercent) + StartPercent
   strStatus = "* Applying styles to hyperlinks..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  Call genUtils.GeneralHelpers.StyleAllHyperlinks(StoriesInUse:=stStories)
+  Call MacroHelpers.StyleAllHyperlinks(StoriesInUse:=stStories)
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
 
 ' --------------------------Remove unstyled space breaks-----------------------
   sglPercentComplete = (0.39 * TotalPercent) + StartPercent
   strStatus = "* Removing unstyled breaks..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
     Call RemoveBreaks(StoryType:=(stStories(S)))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
 ' --------------------------Tag existing character styles----------------------
   sglPercentComplete = (0.52 * TotalPercent) + StartPercent
   strStatus = "* Tagging character styles..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
     Call TagExistingCharStyles(StoryType:=(stStories(S)))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
 ' -------------------------Tag direct formatting-------------------------------
   sglPercentComplete = (0.65 * TotalPercent) + StartPercent
   strStatus = "* Tagging direct formatting..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   ' allBkmkrStyles is a jagged array (array of arrays) to hold in-use Bookmaker styles.
@@ -202,13 +202,13 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
     allBkmkrStyles(S) = TagBkmkrCharStyles(StoryType:=stStories(S))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
 
 ' ----------------------------Apply Macmillan character styles to tagged text--
   sglPercentComplete = (0.81 * TotalPercent) + StartPercent
   strStatus = "* Applying Macmillan character styles..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
@@ -216,20 +216,20 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
       BkmkrStyles:=allBkmkrStyles(S))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
 ' ---------------------------Remove tags from styled space breaks--------------
   sglPercentComplete = (0.95 * TotalPercent) + StartPercent
   strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
     Call PreserveWhiteSpaceinBrkStylesB(StoryType:=(stStories(S)))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
     
 ' -------------- Tag un-styled paragraphs as TX / TX1 / COTX1 -----------------
 ' NOTE: must be done AFTER character styles, because if whole para has direct
@@ -249,12 +249,12 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   sglPercentComplete = TotalPercent + StartPercent
   strStatus = "* Finishing up..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
 ' If this is the whole macro, close out; otherwise calling macro will close it all down
   If TotalPercent = 1 Then
-    Call genUtils.GeneralHelpers.Cleanup
+    Call MacroHelpers.CleanUp
     Unload oProgressChar
 '        MsgBox "Macmillan character styles have been applied throughout your manuscript."
   End If
@@ -273,7 +273,7 @@ ActualCharStylesError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -326,7 +326,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
   tagArray(12) = "`R`^&"
   tagArray(13) = "`N`^&"
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   For E = 1 To UBound(StylePreserveArray())
     With activeRng.Find
       .Text = "^13"
@@ -354,7 +354,7 @@ PreserveWhiteSpaceinBrkStylesAError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -377,7 +377,7 @@ Private Sub RemoveBreaks(StoryType As WdStoryType)
   wsReplaceArray(2) = "^p"
 
 
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   For Q = 1 To UBound(wsFindArray())
     With activeRng.Find
       .Text = wsFindArray(Q)
@@ -394,7 +394,7 @@ RemoveBreaksError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -421,7 +421,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
       strTag = Left(strText, 5)
       strEnd = Right(strText, Len(strText) - 5)
     ' To be our added para, needs our tag AND new line char and nothing else
-      If strTag = "``0``" And GeneralHelpers.IsNewLine(strEnd) = True Then
+      If strTag = "``0``" And MacroHelpers.IsNewLine(strEnd) = True Then
         myRange(A).Delete
       End If
     End If
@@ -444,7 +444,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
   tagArrayB(12) = "`R`(^13)"
   tagArrayB(13) = "`N`(^13)"
 
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   For F = 1 To UBound(tagArrayB())
     With activeRng.Find
       .Text = tagArrayB(F)
@@ -465,7 +465,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
     ' counter to prevent runaway loops
     lngCount = lngCount + 1
     Set rngLast = activeDoc.Paragraphs.Last.Range
-    If GeneralHelpers.IsNewLine(rngLast.Text) = True Then
+    If MacroHelpers.IsNewLine(rngLast.Text) = True Then
       rngLast.Delete
     Else
       Exit Do
@@ -478,18 +478,18 @@ PreserveWhiteSpaceinBrkStylesBError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
 Private Sub TagExistingCharStyles(StoryType As WdStoryType)
   On Error GoTo TagExistingCharStylesError
   Set activeRng = activeDoc.StoryRanges(StoryType)                        'this whole sub (except last stanza) is basically a v. 3.1 patch.  correspondingly updated sub name, call in main, and replacements go along with bold and common replacements
-    
-  Dim tagCharStylesArray(12) As String                                   ' number of items in array should be declared here
-  Dim CharStylePreserveArray(12) As String              ' number of items in array should be declared here
+
+  Dim tagCharStylesArray(16) As String                                   ' number of items in array should be declared here
+  Dim CharStylePreserveArray(16) As String              ' number of items in array should be declared here
   Dim D As Long
-    
+  
   CharStylePreserveArray(1) = "span hyperlink (url)"
   CharStylePreserveArray(2) = "span symbols (sym)"
   CharStylePreserveArray(3) = "span accent characters (acc)"
@@ -498,12 +498,15 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
   CharStylePreserveArray(6) = "span carry query (cq)"
   CharStylePreserveArray(7) = "span key phrase (kp)"
   CharStylePreserveArray(8) = "span preserve characters (pre)"  'added v. 3.2
-
   CharStylePreserveArray(9) = "span ISBN (isbn)"  'added v. 3.7
   CharStylePreserveArray(10) = "span symbols ital (symi)"     'added v. 3.8
   CharStylePreserveArray(11) = "span symbols bold (symb)"
   CharStylePreserveArray(12) = "span run-in computer type (comp)"
-  
+  CharStylePreserveArray(13) = "span alt font 1 (span1)"
+  CharStylePreserveArray(14) = "span alt font 2 (span2)"
+  CharStylePreserveArray(15) = "span illustration holder (illi)"
+  CharStylePreserveArray(16) = "span design note (dni)"
+      
   
   tagCharStylesArray(1) = "`H|^&|H`"
   tagCharStylesArray(2) = "`Z|^&|Z`"
@@ -517,8 +520,12 @@ Private Sub TagExistingCharStyles(StoryType As WdStoryType)
   tagCharStylesArray(10) = "`E|^&|E`"
   tagCharStylesArray(11) = "`G|^&|G`"
   tagCharStylesArray(12) = "`J|^&|J`"
+  tagCharStylesArray(13) = "`CC|^&|CC`"
+  tagCharStylesArray(14) = "`DD|^&|DD`"
+  tagCharStylesArray(15) = "`EE|^&|EE`"
+  tagCharStylesArray(16) = "`FF|^&|FF`"
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   For D = 1 To UBound(CharStylePreserveArray())
     With activeRng.Find
       .Replacement.Text = tagCharStylesArray(D)
@@ -546,7 +553,7 @@ TagExistingCharStylesError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -558,7 +565,7 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
 ' ------------tag key styles---------------------------------------------------
   Dim tagStyleFindArray(11) As Boolean
   Dim tagStyleReplaceArray(11) As String
-  Dim G As Long
+  Dim g As Long
   
   tagStyleFindArray(1) = False        'Bold
   tagStyleFindArray(2) = False        'Italic
@@ -581,10 +588,10 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
   tagStyleReplaceArray(10) = "`D|^&|D`"
   tagStyleReplaceArray(11) = "`a|^&|a`"
 
-  Call genUtils.GeneralHelpers.zz_clearFind
-  For G = 1 To UBound(tagStyleFindArray())
+  Call MacroHelpers.zz_clearFind
+  For g = 1 To UBound(tagStyleFindArray())
   
-    tagStyleFindArray(G) = True
+    tagStyleFindArray(g) = True
     
     If tagStyleFindArray(8) = True Then
       tagStyleFindArray(1) = True
@@ -608,7 +615,7 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
       tagStyleFindArray(4) = False ' reset tags for strikethrough
     End If
     With activeRng.Find
-      .Replacement.Text = tagStyleReplaceArray(G)
+      .Replacement.Text = tagStyleReplaceArray(g)
       .Wrap = wdFindContinue
       .Format = True
       .Font.Bold = tagStyleFindArray(1)
@@ -624,7 +631,7 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
       .Execute Replace:=wdReplaceAll
     End With
   
-    tagStyleFindArray(G) = False
+    tagStyleFindArray(g) = False
 
   Next
   Exit Sub
@@ -634,7 +641,7 @@ LocalStyleTagError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -654,12 +661,12 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
   Else
       blnCheckBkmkr = False
   End If
-  
+
   '-------------apply styles to tags
   'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-  Dim tagFindArray(22) As String              ' number of items in array should be declared here
-  Dim tagReplaceArray(22) As String         'and here
-  Dim H As Long
+  Dim tagFindArray(1 To 28) As String              ' number of items in array should be declared here
+  Dim tagReplaceArray(1 To 28) As String         'and here
+  Dim h As Long
   
   tagFindArray(1) = "`B|(*)|B`"
   tagFindArray(2) = "`I|(*)|I`"
@@ -678,12 +685,18 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
   tagFindArray(15) = "`C|(*)|C`"                 'v. 3.1 patch
   tagFindArray(16) = "`D|(*)|D`"                       'v. 3.1 patch
   tagFindArray(17) = "`F|(*)|F`"
-  tagFindArray(18) = "`Q|(*)|Q`"          'v. 3.7 added
-  tagFindArray(19) = "`E|(*)|E`"
-  tagFindArray(20) = "`G|(*)|G`"          'v. 3.8 added
-  tagFindArray(21) = "`J|(*)|J`"
-  tagFindArray(22) = "`a|(*)|a`"
-
+  tagFindArray(18) = "`K|(*)|K`"          'v. 3.7 added
+  tagFindArray(19) = "`Q|(*)|Q`"          'v. 3.7 added
+  tagFindArray(20) = "`E|(*)|E`"
+  tagFindArray(21) = "`G|(*)|G`"          'v. 3.8 added
+  tagFindArray(22) = "`J|(*)|J`"
+  tagFindArray(23) = "`AA|(*)|AA`"
+  tagFindArray(24) = "`BB|(*)|BB`"
+  tagFindArray(25) = "`CC|(*)|CC`"
+  tagFindArray(26) = "`DD|(*)|DD`"
+  tagFindArray(27) = "`EE|(*)|EE`"
+  tagFindArray(28) = "`FF|(*)|FF`"
+  
   tagReplaceArray(1) = "span boldface characters (bf)"
   tagReplaceArray(2) = "span italic characters (ital)"
   tagReplaceArray(3) = "span underscore characters (us)"
@@ -701,13 +714,19 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
   tagReplaceArray(15) = "span smcap bold (scbold)"
   tagReplaceArray(16) = "span smcap ital (scital)"
   tagReplaceArray(17) = "span preserve characters (pre)"
-  tagReplaceArray(18) = "span ISBN (isbn)"                        'v. 3.7 added
-  tagReplaceArray(19) = "span symbols ital (symi)"                ' v. 3.8 added
-  tagReplaceArray(20) = "span symbols bold (symb)"                ' v. 3.8 added
-  tagReplaceArray(21) = "span run-in computer type (comp)"
-  tagReplaceArray(22) = "span strikethrough characters (str)"
-  
-  For H = LBound(tagFindArray()) To UBound(tagFindArray())
+  tagReplaceArray(18) = "bookmaker keep together (kt)"            'v. 3.7 added
+  tagReplaceArray(19) = "span ISBN (isbn)"                        'v. 3.7 added
+  tagReplaceArray(20) = "span symbols ital (symi)"                ' v. 3.8 added
+  tagReplaceArray(21) = "span symbols bold (symb)"                ' v. 3.8 added
+  tagReplaceArray(22) = "span run-in computer type (comp)"
+  tagReplaceArray(23) = "span strikethrough characters (str)"
+  tagReplaceArray(24) = "span smcap bold ital (scbi)"
+  tagReplaceArray(25) = "span alt font 1 (span1)"
+  tagReplaceArray(26) = "span alt font 2 (span2)"
+  tagReplaceArray(27) = "span illustration holder (illi)"
+  tagReplaceArray(28) = "span design note (dni)"
+
+  For h = LBound(tagFindArray()) To UBound(tagFindArray())
   
   ' ----------- bookmaker char styles ----------------------
     ' tag bookmaker line-ending character styles and
@@ -749,12 +768,12 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
         With Selection.Find
           .ClearFormatting
           .Replacement.ClearFormatting
-          .Text = tagFindArray(H)
+          .Text = tagFindArray(h)
           .Replacement.Text = "\1"
           .Wrap = wdFindStop
           .Forward = True
           .Style = BkmkrStyles(Q)
-          .Replacement.Style = tagReplaceArray(H)
+          .Replacement.Style = tagReplaceArray(h)
           .Format = True
           .MatchCase = False
           .MatchWholeWord = False
@@ -769,7 +788,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
             ' always starts w/ "bookmaker ", but we want to include the space,
             ' hence start at 10
             strAction = Mid(BkmkrStyles(Q), 10, InStr(BkmkrStyles(Q), "(") - 11)
-            strNewName = tagReplaceArray(H) & strAction
+            strNewName = tagReplaceArray(h) & strAction
             
             ' Note these hybrid styles aren't in std template, so if they
             ' haven't been created in this doc yet, will error.
@@ -784,11 +803,11 @@ On Error GoTo ErrorHandler
     With activeRng.Find
         .ClearFormatting
         .Replacement.ClearFormatting
-        .Text = tagFindArray(H)
+        .Text = tagFindArray(h)
         .Replacement.Text = "\1"
         .Wrap = wdFindContinue
         .Format = True
-        .Replacement.Style = tagReplaceArray(H)
+        .Replacement.Style = tagReplaceArray(h)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = True
@@ -809,11 +828,11 @@ ErrorHandler:
   Dim myStyle As Style
   
   If Err.Number = 5834 Or Err.Number = 5941 Then
-    Select Case tagReplaceArray(H)
+    Select Case tagReplaceArray(h)
       
       'If style from LocalStyleTag is not present, add style
       Case "span boldface characters (bf)":
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -822,7 +841,7 @@ ErrorHandler:
         Resume
       
       Case "span italic characters (ital)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -831,7 +850,7 @@ ErrorHandler:
         Resume
           
       Case "span underscore characters (us)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -840,7 +859,7 @@ ErrorHandler:
         Resume
       
       Case "span small caps characters (sc)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -851,7 +870,7 @@ ErrorHandler:
         Resume
       
       Case "span subscript characters (sub)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -860,7 +879,7 @@ ErrorHandler:
         Resume
           
       Case "span superscript characters (sup)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -869,7 +888,7 @@ ErrorHandler:
         Resume
 
       Case "span bold ital (bem)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -879,7 +898,7 @@ ErrorHandler:
         Resume
           
       Case "span smcap bold (scbold)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -891,7 +910,7 @@ ErrorHandler:
         Resume
 
       Case "span smcap ital (scital)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), _
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), _
           Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
@@ -903,7 +922,7 @@ ErrorHandler:
         Resume
                 
       Case "span strikethrough characters (str)"
-        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(H), Type:=wdStyleTypeCharacter)
+        Set myStyle = activeDoc.Styles.Add(Name:=tagReplaceArray(h), Type:=wdStyleTypeCharacter)
         With myStyle.Font
           .Shading.BackgroundPatternColor = wdColorLightTurquoise
           .StrikeThrough = True
@@ -934,7 +953,7 @@ LocalStyleReplaceError:
 On Error GoTo ErrorHandler
     ' If the original style did not exist yet, will error here
     ' but ErrorHandler will add the style
-    myStyle2.BaseStyle = tagReplaceArray(H)
+    myStyle2.BaseStyle = tagReplaceArray(h)
     ' Then go back to BkmkrError so further errors will route
     ' correctly
 On Error GoTo LocalStyleReplaceError
@@ -944,7 +963,7 @@ On Error GoTo LocalStyleReplaceError
     If ErrorChecker(Err) = False Then
       Resume
     Else
-      Call genUtils.GeneralHelpers.GlobalCleanup
+      Call MacroHelpers.GlobalCleanup
     End If
   End If
     
@@ -1044,7 +1063,7 @@ TagBkmkrCharStylesError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -1091,7 +1110,7 @@ Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent _
       sglPercentComplete = (((A / lngParaCount) * TotalPercent) + StartingPercent)
       strParaStatus = "* Tagging non-Macmillan paragraphs with Text - " & _
           "Standard (tx): " & A & " of " & lngParaCount & vbNewLine & Status
-      Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, _
+      Call ClassHelpers.UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, _
           Percent:=sglPercentComplete)
     End If
 
@@ -1157,7 +1176,7 @@ TagUnstyledTextError:
   If ErrorChecker(Err, strNewStyle) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 

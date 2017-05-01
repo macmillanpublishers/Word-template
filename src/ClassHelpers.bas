@@ -25,14 +25,15 @@ Private Const strClassHelpers As String = "ClassHelpers."
 ' To get from JSON file to Dictionary object, must read file to string, then
 ' convert string to Dictionary. This does all of that (and some error handling)
 
-Public Function ReadJson(JSONpath As String) As Dictionary
+
+Public Function ReadJson(JsonPath As String) As Dictionary
   On Error GoTo ReadJsonError
   Dim dictJson As Dictionary
   
-  If IsItThere(JSONpath) = True Then
+  If IsItThere(JsonPath) = True Then
     Dim strJson As String
     
-    strJson = ReadTextFile(JSONpath, False)
+    strJson = ReadTextFile(JsonPath, False)
     If strJson <> vbNullString Then
       Set dictJson = JsonConverter.ParseJson(strJson)
     Else
@@ -54,7 +55,7 @@ Public Function ReadJson(JSONpath As String) As Dictionary
   
 ReadJsonError:
   Err.Source = strClassHelpers & "ReadJson"
-  If ErrorChecker(Err, JSONpath) = False Then
+  If ErrorChecker(Err, JsonPath) = False Then
     Resume
   Else
     Call GlobalCleanup
@@ -67,21 +68,22 @@ End Function
 ' a text file if we want the output. This combines those. Will overwrite the
 ' original file if already exists, will create file if it does not.
 
-Public Sub WriteJson(JSONpath As String, JsonData As Dictionary)
+
+Public Sub WriteJson(JsonPath As String, JsonData As Dictionary)
   On Error GoTo WriteJsonError:
 
   Dim strJson As String
   strJson = JsonConverter.ConvertToJson(JsonData, Whitespace:=2)
   ' `OverwriteTextFile` validates directory
-  GeneralHelpers.OverwriteTextFile JSONpath, strJson
+  Utils.OverwriteTextFile JsonPath, strJson
   Exit Sub
   
 WriteJsonError:
   Err.Source = strClassHelpers & "WriteJson"
-  If ErrorChecker(Err, JSONpath) = False Then
+  If ErrorChecker(Err, JsonPath) = False Then
     Resume
   Else
-    Call GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -97,15 +99,15 @@ End Sub
 
 Public Sub AddToJson(JsonFile As String, NewKey As String, NewValue As Variant)
   On Error GoTo AddToJsonError
-  Dim dictJson As genUtils.Dictionary
+  Dim dictJson As Dictionary
   
   ' READ JSON FILE IF IT EXISTS
   ' Does the file exist yet?
-  If GeneralHelpers.IsItThere(JsonFile) = True Then
+  If Utils.IsItThere(JsonFile) = True Then
     Set dictJson = ReadJson(JsonFile)
   Else
     ' File doesn't exist yet, we'll be creating it
-    Set dictJson = New genUtils.Dictionary
+    Set dictJson = New Dictionary
   End If
   
   ' ADD NEW ITEM TO DICTIONARY
@@ -127,7 +129,7 @@ AddToJsonError:
   If ErrorChecker(Err, JsonFile) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -175,7 +177,7 @@ MergeDictionaryError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -205,7 +207,7 @@ UpdateBarAndWaitError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 

@@ -19,9 +19,9 @@ Sub CreateSectionStartRules()
     
     strJsonFilename = "section_start_rules.json"
     
-    '' TEST PATH (just make a folder in the .docm's path called 'bookmaker_validator' with json file in it)
-    'strJsonFilepath = CreateObject("Scripting.FileSystemObject").Getfile(ThisDocument.FullName).ParentFolder.Path _
-    '& Application.PathSeparator & "bookmaker_validator" & Application.PathSeparator & strJsonFilename
+'    ' TEST PATH (just make a folder in the .docm's path called 'bookmaker_validator' with json file in it)
+'    strJsonFilepath = CreateObject("Scripting.FileSystemObject").Getfile(ThisDocument.FullName).ParentFolder.Path _
+'    & Application.PathSeparator & "bookmaker_validator" & Application.PathSeparator & strJsonFilename
     
     '' PRODUCTION PATH (not yet tested :)
     strJsonFilepath = "S:" & Application.PathSeparator & "resources" & Application.PathSeparator & _

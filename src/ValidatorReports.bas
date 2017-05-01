@@ -19,18 +19,18 @@ Attribute VB_Name = "ValidatorReports"
 Option Explicit
 Option Base 1
 
-Private Const strReports As String = "genUtils.Reports."
+Private Const strReports As String = "Reports."
 
 ' store info from `book_info.json` file
-Private dictBookInfo As genUtils.Dictionary
+Private dictBookInfo As Dictionary
 ' store initial paragraph loop info
-Private dictStyles As genUtils.Dictionary
+Private dictStyles As Dictionary
 ' store acceptable heading styles
-Private dictHeadings As genUtils.Dictionary
+Private dictHeadings As Dictionary
 ' store macmillan styles based on other mac styles
-Private c_dictBaseStyle As genUtils.Dictionary
+Private c_dictBaseStyle As Dictionary
 ' store style-to-section conversion
-Private dictSections As genUtils.Dictionary
+Private dictSections As Dictionary
 ' also path to write alerts to
 Private strAlertFile As String
 
@@ -89,12 +89,12 @@ End Enum
 ' event at some point?
 
 Public Function ReportsStartup(DocPath As String, AlertPath As String, Optional _
-  BookInfoReqd As Boolean = True) As genUtils.Dictionary
+  BookInfoReqd As Boolean = True) As Dictionary
   On Error GoTo ReportsStartupError
   
 ' Store test data
-  Dim dictReturn As genUtils.Dictionary
-  Set dictReturn = New genUtils.Dictionary
+  Dim dictReturn As Dictionary
+  Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
 
 ' Get this first, in case we have an error early:
@@ -102,7 +102,7 @@ Public Function ReportsStartup(DocPath As String, AlertPath As String, Optional 
 
 ' The .ps1 that calls this macro also opens the file, so should already be
 ' part of the Documents collection, but we'll check anyway.
-  If genUtils.GeneralHelpers.IsOpen(DocPath) = False Then
+  If Utils.IsOpen(DocPath) = False Then
     Documents.Open (DocPath)
   End If
 
@@ -113,13 +113,13 @@ Public Function ReportsStartup(DocPath As String, AlertPath As String, Optional 
   If BookInfoReqd = True Then
     Dim strInfoPath As String
     strInfoPath = activeDoc.Path & Application.PathSeparator & "book_info.json"
-    If GeneralHelpers.IsItThere(strInfoPath) = True Then
-      Set dictBookInfo = genUtils.ClassHelpers.ReadJson(strInfoPath)
+    If Utils.IsItThere(strInfoPath) = True Then
+      Set dictBookInfo = ClassHelpers.ReadJson(strInfoPath)
     Else
       Err.Raise MacError.err_FileNotThere
     End If
   Else
-    Set dictBookInfo = New genUtils.Dictionary
+    Set dictBookInfo = New Dictionary
   End If
 
 ' Check that doc is not password protected, if so exit
@@ -138,7 +138,7 @@ Public Function ReportsStartup(DocPath As String, AlertPath As String, Optional 
 ' Check for placeholders (from failed macros), remove if found
   Dim blnPlaceholders As Boolean
   With activeDoc.Range.Find
-    genUtils.zz_clearFind
+    MacroHelpers.zz_clearFind
     .MatchWildcards = True
     .Text = "([`|]{1,2}[0-9A-Z][`|]{1,2}){1,}"
     .Replacement.Text = ""
@@ -160,7 +160,7 @@ ReportsStartupError:
   If ErrorChecker(Err, strInfoPath) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -201,7 +201,7 @@ Public Sub ReportsTerminate()
   
   
 ' if we can write a file there, write alert message
-  If genUtils.GeneralHelpers.ParentDirExists(strAlertFile) = True Then
+  If Utils.ParentDirExists(strAlertFile) = True Then
     Dim FileNum As Long
     FileNum = FreeFile()
     Open strAlertFile For Append As #FileNum
@@ -256,21 +256,21 @@ End Sub
 ' procedures.
 
 Public Function StyleCheck(Optional FixUnstyled As Boolean = True) As _
-  genUtils.Dictionary
+  Dictionary
 
   On Error GoTo StyleCheckError
   
 ' At some point will also have to loop through active stories (EN. FN)
 ' Also `dictStyles` must be declared as global var.
-  Set dictStyles = New genUtils.Dictionary
-  Dim dictReturn As genUtils.Dictionary  ' the full dictionary object we'll return
-  Dim dictInfo As genUtils.Dictionary   ' sub-sub dict for indiv. style info
+  Set dictStyles = New Dictionary
+  Dim dictReturn As Dictionary  ' the full dictionary object we'll return
+  Dim dictInfo As Dictionary   ' sub-sub dict for indiv. style info
   
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
 
 ' First test if our body style is even available in the doc (if not, not styled)
-  If genUtils.GeneralHelpers.IsStyleInUse(strBodyStyle) = False Then
+  If MacroHelpers.IsStyleInUse(strBodyStyle) = False Then
     dictReturn.Add "body_style_present", False
     Set StyleCheck = dictReturn
     Exit Function
@@ -326,7 +326,7 @@ Public Function StyleCheck(Optional FixUnstyled As Boolean = True) As _
     ' If style does not exist in dict yet...
       If Not dictStyles.Exists(strStyle) Then
       ' ...create sub-dictionary
-        Set dictInfo = New genUtils.Dictionary
+        Set dictInfo = New Dictionary
         dictInfo.Add "count", 0
         dictInfo.Add "start_paragraph", 0
         dictStyles.Add strStyle, dictInfo
@@ -376,7 +376,7 @@ StyleCheckError:
   If ErrorChecker(Err, strBodyStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -387,12 +387,12 @@ End Function
 ' found.
 
 Public Function IsbnCheck(Optional AddFromJson As Boolean = True) As _
-  genUtils.Dictionary
+  Dictionary
   On Error GoTo IsbnCheckError
    
  ' reset Error checker counter, so we can loop a few files
   lngErrorCount = 0
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
   
@@ -416,19 +416,19 @@ Public Function IsbnCheck(Optional AddFromJson As Boolean = True) As _
   End If
 
 ' Cleanup what ISBN tag is covering (should only be numerals, hyphens)
-  Call genUtils.Reports.ISBNcleanup
+  Call Reports.ISBNcleanup
   
 ' Tag all URLs (to remove ISBN tag from ISBNs in URLs)
   Dim stStories(1 To 1) As WdStoryType
   stStories(1) = wdMainTextStory
-  Call genUtils.GeneralHelpers.StyleAllHyperlinks(stStories)
+  Call MacroHelpers.StyleAllHyperlinks(stStories)
   
 ' Read tagged isbns
   Dim isbnArray() As Variant
-  isbnArray = genUtils.GeneralHelpers.GetText(strIsbnStyle, True)
+  isbnArray = MacroHelpers.GetText(strIsbnStyle, True)
 
 ' Add that this completed successfully
-  If genUtils.GeneralHelpers.IsArrayEmpty(isbnArray) = False Then
+  If MacroHelpers.IsArrayEmpty(isbnArray) = False Then
     dictReturn.Item("pass") = True
     dictReturn.Add "list", isbnArray
   Else
@@ -450,7 +450,7 @@ Public Function IsbnCheck(Optional AddFromJson As Boolean = True) As _
     
   ' Update `pass` key in test dictionary
     Dim blnPassed As Boolean
-    blnPassed = genUtils.GeneralHelpers.IsStyleInUse(strIsbnStyle)
+    blnPassed = MacroHelpers.IsStyleInUse(strIsbnStyle)
     dictReturn.Item("pass") = blnPassed
   End If
 
@@ -463,7 +463,7 @@ IsbnCheckError:
   If ErrorChecker(Err, strIsbnStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -482,7 +482,7 @@ Private Function FindIsbn(Optional StyledOnly As Boolean = False) As Boolean
 
 ' If looking for styled only, check that it's in use first (else not found)
   If StyledOnly = True Then
-    If genUtils.GeneralHelpers.IsStyleInUse(strIsbnStyle) = False Then Exit Function
+    If MacroHelpers.IsStyleInUse(strIsbnStyle) = False Then Exit Function
   End If
   
   activeDoc.Range.Select
@@ -502,7 +502,7 @@ Private Function FindIsbn(Optional StyledOnly As Boolean = False) As Boolean
   ' which we want to start at 0 because may pass back to powershell
   lngCounter = -1
   
-  genUtils.GeneralHelpers.zz_clearFind
+  MacroHelpers.zz_clearFind
   
   ' Start search at beginning of doc
   Selection.HomeKey Unit:=wdStory
@@ -542,7 +542,7 @@ FindIsbnError:
   If ErrorChecker(Err, strIsbnStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -554,7 +554,7 @@ End Function
 Private Function DeleteIsbns() As Boolean
   On Error GoTo DeleteIsbnsError
 ' Find all text with this style, replace with nothing
-  genUtils.GeneralHelpers.zz_clearFind
+  MacroHelpers.zz_clearFind
   
   With activeDoc.Range.Find
     .Format = True
@@ -566,7 +566,7 @@ Private Function DeleteIsbns() As Boolean
   End With
   
   Dim blnSuccess As Boolean
-  blnSuccess = genUtils.GeneralHelpers.IsStyleInUse(strIsbnStyle)
+  blnSuccess = MacroHelpers.IsStyleInUse(strIsbnStyle)
   DeleteIsbns = Not blnSuccess
 
   Exit Function
@@ -576,7 +576,7 @@ DeleteIsbnsError:
   If ErrorChecker(Err, strIsbnStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -649,7 +649,7 @@ Private Function AddBookInfo(InfoType As BookInfo) As Boolean
   
   If colSectionStyles.Count > 0 Then
     For Each varStyle In colSectionStyles
-      genUtils.zz_clearFind
+      MacroHelpers.zz_clearFind
       activeDoc.Select
       With Selection
         .Collapse enumDocDirection
@@ -660,7 +660,7 @@ Private Function AddBookInfo(InfoType As BookInfo) As Boolean
           .Execute
         End With
       ' Get paragraph index of that paragraph
-        lngCurrentStart = GeneralHelpers.ParaIndex
+        lngCurrentStart = MacroHelpers.ParaIndex
       ' If we're looking for the LAST paragraph though, keep
       ' looping through the dictionary
         If blnSearchFwd = True Then
@@ -704,7 +704,7 @@ Private Function AddBookInfo(InfoType As BookInfo) As Boolean
   End With
   
   ' Test if it was successful
-  If genUtils.GeneralHelpers.IsStyleInUse(strInfoStyle) = True Then
+  If MacroHelpers.IsStyleInUse(strInfoStyle) = True Then
     AddBookInfo = True
   Else
     AddBookInfo = False
@@ -713,7 +713,7 @@ Private Function AddBookInfo(InfoType As BookInfo) As Boolean
   ' ISBN also needs character style
   ' Search pattern copied from FindIsbn function. Maybe combine at some point.
   If InfoType = bk_ISBN Then
-    GeneralHelpers.zz_clearFind
+    MacroHelpers.zz_clearFind
     With rngNew.Find
       .MatchWildcards = True
       .Format = True
@@ -730,7 +730,7 @@ AddBookInfoError:
   If ErrorChecker(Err, strInfoStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -744,7 +744,7 @@ Private Function AddIsbnTags() As Boolean
   Dim bkName As Bookmark
   AddIsbnTags = False
 
-  If genUtils.GeneralHelpers.IsStyleInDoc(strIsbnStyle) = False Then
+  If MacroHelpers.IsStyleInDoc(strIsbnStyle) = False Then
     Dim myStyle As Style
     Set myStyle = activeDoc.Styles.Add(strIsbnStyle, wdStyleTypeCharacter)
   End If
@@ -762,7 +762,7 @@ AddIsbnTagsError:
   If ErrorChecker(Err, strIsbnStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -781,7 +781,7 @@ End Function
 '  On Error GoTo IsbnSearchError
 '
 '' Make sure relevant file exists, is open
-'  If genUtils.GeneralHelpers.IsOpen(FilePath) = False Then
+'  If Utils.IsOpen(FilePath) = False Then
 '    Documents.Open FilePath
 '  End If
 '
@@ -789,14 +789,14 @@ End Function
 '  Set activeDoc = Documents(FilePath)
 '
 '' Create dictionary object to receive from IsbnCheck function
-'  Dim dictIsbn As genUtils.Dictionary
+'  Dim dictIsbn As Dictionary
 '  Set dictIsbn = New Dictionary
 '  Set dictIsbn = IsbnCheck(AddFromJson:=False)
 '
 '' If ISBNs were found, they will be in the "list" element
 '  If dictIsbn.Exists("list") = True Then
 '  ' Reduce array elements to a comma-delimited string
-'    IsbnSearch = genUtils.Reduce(dictIsbn.Item("list"), ",")
+'    IsbnSearch = MacroHelpers.Reduce(dictIsbn.Item("list"), ",")
 '  Else
 '    IsbnSearch = vbNullString
 '  End If
@@ -811,7 +811,7 @@ End Function
 '  If ErrorChecker(Err, FilePath) = False Then
 '    Resume
 '  Else
-'    Call genUtils.Reports.ReportsTerminate
+'    Call Reports.ReportsTerminate
 '  End If
 'End Function
 
@@ -819,11 +819,11 @@ End Function
 ' ===== TitlepageCheck ========================================================
 ' Test that titlepage exists, Book Title exists, Author Name exists
 
-Public Function TitlepageCheck() As genUtils.Dictionary
+Public Function TitlepageCheck() As Dictionary
   On Error GoTo TitlepageCheckError
 ' set up return info
-  Dim dictReturn As genUtils.Dictionary
-  Set dictReturn = New genUtils.Dictionary
+  Dim dictReturn As Dictionary
+  Set dictReturn = New Dictionary
   With dictReturn
     .Add "pass", False
     .Add "book_title_exists", False
@@ -837,7 +837,7 @@ Public Function TitlepageCheck() As genUtils.Dictionary
   Dim blnAuthor As Boolean
 
 ' Does Book Title exist?
-  blnTitle = genUtils.IsStyleInUse(strBookTitle)
+  blnTitle = MacroHelpers.IsStyleInUse(strBookTitle)
   dictReturn.Item("book_title_exists") = blnTitle
   If blnTitle = False Then
     dictReturn.Item("book_title_added") = AddBookInfo(bk_Title)
@@ -845,7 +845,7 @@ Public Function TitlepageCheck() As genUtils.Dictionary
     ' Is it more than one line?
     lngTitleCount = dictStyles(strBookTitle)("count")
     If lngTitleCount > 1 Then
-      genUtils.zz_clearFind
+      MacroHelpers.zz_clearFind
       activeDoc.Select
       Selection.HomeKey Unit:=wdStory
       With Selection
@@ -871,15 +871,15 @@ Public Function TitlepageCheck() As genUtils.Dictionary
   End If
 
 ' Does Author Name exist?
-  blnAuthor = genUtils.IsStyleInUse(strAuthorName)
+  blnAuthor = MacroHelpers.IsStyleInUse(strAuthorName)
   dictReturn.Item("author_name_exists") = blnAuthor
   If blnAuthor = False Then
     dictReturn.Item("author_name_added") = AddBookInfo(bk_Authors)
   End If
 
 ' Did it all work?
-  If genUtils.IsStyleInUse(strBookTitle) = True And _
-    genUtils.IsStyleInUse(strAuthorName) = True Then
+  If MacroHelpers.IsStyleInUse(strBookTitle) = True And _
+    MacroHelpers.IsStyleInUse(strAuthorName) = True Then
     dictReturn.Item("pass") = True
   End If
   
@@ -892,7 +892,7 @@ TitlepageCheckError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -901,26 +901,26 @@ End Function
 ' Clean up some section styles, standardize page breaks, add section headings
 ' after each page break style.
 
-Public Function SectionCheck() As genUtils.Dictionary
+Public Function SectionCheck() As Dictionary
   On Error GoTo SectionCheckError
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
 
 ' Need to combine returned test dictionaries with this to reutrn single
-  Dim dictStep As genUtils.Dictionary
+  Dim dictStep As Dictionary
   
 ' fix some section styles (can probably cut after update style names)
   Set dictStep = StyleCleanup()
-  Set dictReturn = genUtils.ClassHelpers.MergeDictionary(dictReturn, dictStep)
+  Set dictReturn = ClassHelpers.MergeDictionary(dictReturn, dictStep)
 
 ' Fix page break formatting/styles
   Set dictStep = PageBreakCleanup()
-  Set dictReturn = genUtils.ClassHelpers.MergeDictionary(dictReturn, dictStep)
+  Set dictReturn = ClassHelpers.MergeDictionary(dictReturn, dictStep)
   
 ' Add section heads after each page break style
   Set dictStep = PageBreakCheck()
-  Set dictReturn = genUtils.ClassHelpers.MergeDictionary(dictReturn, dictStep)
+  Set dictReturn = ClassHelpers.MergeDictionary(dictReturn, dictStep)
 
   dictReturn.Item("pass") = True
   Set SectionCheck = dictReturn
@@ -931,7 +931,7 @@ SectionCheckError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -939,9 +939,9 @@ End Function
 ' Tweaking some styles that will cause problems. Can probably cut once we
 ' update style name list.
 
-Private Function StyleCleanup() As genUtils.Dictionary
+Private Function StyleCleanup() As Dictionary
   On Error GoTo StyleCleanupError
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
 ' Change "FM Epigraph" to just "Epigraph" so we can determine section
@@ -956,18 +956,18 @@ Private Function StyleCleanup() As genUtils.Dictionary
   Dim strNewStyle As String
   Dim blnSuccess As Boolean: blnSuccess = False
   For X = LBound(strFmEpis) To UBound(strFmEpis)
-    If genUtils.GeneralHelpers.IsStyleInUse(strFmEpis(X)) = True Then
+    If MacroHelpers.IsStyleInUse(strFmEpis(X)) = True Then
     ' Convert to correct style name (vbTextCompare = case insensitive)
       strNewStyle = VBA.LTrim(VBA.Replace(strFmEpis(X), "FM", "", _
         Compare:=vbTextCompare))
-      blnSuccess = genUtils.GeneralHelpers.StyleReplace(strFmEpis(X), strNewStyle)
+      blnSuccess = MacroHelpers.StyleReplace(strFmEpis(X), strNewStyle)
       dictReturn.Add "convert_fm_epigraph" & X, strNewStyle
     End If
   Next X
 
 ' Remove any section break characters. Can't assume they'll be in their own
 ' paragraphs, so add additional para break.
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   With activeDoc.Range.Find
     .Text = "^b"
     .Replacement.Text = "^p"
@@ -986,13 +986,13 @@ Private Function StyleCleanup() As genUtils.Dictionary
   Dim strOldStyle As String
   strOldStyle = strSectionBreak
   strNewStyle = strPageBreak
-  blnSuccess = genUtils.GeneralHelpers.StyleReplace(strOldStyle, strNewStyle)
+  blnSuccess = MacroHelpers.StyleReplace(strOldStyle, strNewStyle)
   dictReturn.Add "delete_section_brk_style", blnSuccess
 
 ' Remove any Half Title paras. (If want to keep in future, create a separate
 ' function to search for all half titles, add headings/breaks.) Note that any
 ' extra page breaks will get cleaned up in `PageBreakCleanup` function.
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   strNewStyle = strHalftitle
   With activeDoc.Range.Find
     .Text = "*"
@@ -1009,7 +1009,7 @@ Private Function StyleCleanup() As genUtils.Dictionary
     End If
   End With
 
-  Call genUtils.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
   dictReturn.Item("pass") = True
   Set StyleCleanup = dictReturn
@@ -1020,7 +1020,7 @@ StyleCleanupError:
   If ErrorChecker(Err, strNewStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -1037,8 +1037,8 @@ Public Function IsHeading(StyleName As String) As Boolean
     Dim strHeadings As String
     strHeadings = Environ("BkmkrScripts") & Application.PathSeparator & _
       "Word-template_assets" & Application.PathSeparator & "headings.json"
-    If genUtils.IsItThere(strHeadings) = True Then
-      Set dictHeadings = genUtils.ClassHelpers.ReadJson(strHeadings)
+    If Utils.IsItThere(strHeadings) = True Then
+      Set dictHeadings = ClassHelpers.ReadJson(strHeadings)
     Else
       Err.Raise MacError.err_FileNotThere
     End If
@@ -1058,7 +1058,7 @@ IsHeadingError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -1117,7 +1117,7 @@ RevertToBaseStyleError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -1139,7 +1139,7 @@ End Function
 Private Function SectionName(StyleName As String, Optional JsonString As _
   SectionsJson = j_text) As String
   On Error GoTo SectionNameError
-  Dim dictItem As genUtils.Dictionary
+  Dim dictItem As Dictionary
 
 ' Create dictionary from JSON if it hasn't been created yet
   If dictSections Is Nothing Then
@@ -1147,8 +1147,8 @@ Private Function SectionName(StyleName As String, Optional JsonString As _
     Dim strSections As String
     strSections = Environ("BkmkrScripts") & Application.PathSeparator & _
       "Word-template_assets" & Application.PathSeparator & "sections.json"
-    If genUtils.IsItThere(strSections) = True Then
-      Set dictSections = genUtils.ClassHelpers.ReadJson(strSections)
+    If Utils.IsItThere(strSections) = True Then
+      Set dictSections = ClassHelpers.ReadJson(strSections)
     Else
       Err.Raise MacError.err_FileNotThere
     End If
@@ -1189,7 +1189,7 @@ SectionNameError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    genUtils.ReportsTerminate
+    ReportsTerminate
   End If
 End Function
 
@@ -1242,7 +1242,7 @@ AddHeadingError:
   If ErrorChecker(Err, strHeadingStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -1250,9 +1250,9 @@ End Function
 ' Clean up page break characters/styles, so just single paragraph break chars
 ' styles as "Page Break" remain.
 
-Private Function PageBreakCleanup() As genUtils.Dictionary
+Private Function PageBreakCleanup() As Dictionary
   On Error GoTo PageBreakCleanupError
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
   
@@ -1261,7 +1261,7 @@ Private Function PageBreakCleanup() As genUtils.Dictionary
 ' paragraphs that we can clean up later.
 ' Also add "Page Break (pb)" style.
 
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   With activeDoc.Range.Find
     .Text = "^m"
     .Replacement.Text = "^p^m^p"
@@ -1278,7 +1278,7 @@ Private Function PageBreakCleanup() As genUtils.Dictionary
 
 ' If we had an unstyled page break char, new trailing ^p is wrong style
 ' Use this to make sure all correct style.
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   With activeDoc.Range.Find
     .Text = "^m^13{1,}"
     .Replacement.Text = "^m^p"
@@ -1295,7 +1295,7 @@ Private Function PageBreakCleanup() As genUtils.Dictionary
   End With
 
 ' Now that we are sure every PB char has PB style, remove all PB char
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   With activeDoc.Range.Find
     .Text = "^m"
     .Replacement.Text = ""
@@ -1309,7 +1309,7 @@ Private Function PageBreakCleanup() As genUtils.Dictionary
   End With
 
 ' Remove multiple PB-styled paragraphs in a row
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   With activeDoc.Range.Find
     .Text = "^13{2,}"
     .Replacement.Text = "^p"
@@ -1334,7 +1334,7 @@ Private Function PageBreakCleanup() As genUtils.Dictionary
     lngCount = lngCount + 1
     strKey = "firstParaPB" & lngCount
     Set rngPara1 = activeDoc.Paragraphs.First.Range
-    If GeneralHelpers.IsNewLine(rngPara1.Text) = True Then
+    If MacroHelpers.IsNewLine(rngPara1.Text) = True Then
       dictReturn.Add strKey, True
       rngPara1.Delete
     Else
@@ -1360,9 +1360,9 @@ End Function
 ' ===== PageBreakCheck ========================================================
 ' Check that every page break is followed by a heading. If not, add one.
 
-Private Function PageBreakCheck() As genUtils.Dictionary
+Private Function PageBreakCheck() As Dictionary
   On Error GoTo PageBreakCheckError
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
 
@@ -1376,7 +1376,7 @@ Private Function PageBreakCheck() As genUtils.Dictionary
   Dim lngCount As Long
   lngCount = 0
   
-  genUtils.zz_clearFind
+  MacroHelpers.zz_clearFind
   Selection.HomeKey Unit:=wdStory
   With Selection.Find
     .Text = ""
@@ -1386,7 +1386,7 @@ Private Function PageBreakCheck() As genUtils.Dictionary
     Do While .Found = True And lngCount < 200
       ' Loop counter
       lngCount = lngCount + 1
-      lngParaInd = genUtils.GeneralHelpers.ParaIndex
+      lngParaInd = MacroHelpers.ParaIndex
       ' DebugPrint "Page break: " & lngParaInd
       ' Errors if we try to access para after end, so check that
       If lngParaCount > lngParaInd Then
@@ -1414,7 +1414,7 @@ Private Function PageBreakCheck() As genUtils.Dictionary
 ' we need a non-heading style between a section that is ONLY a heading (maybe
 ' it's a placeholder) and the next section's heading.
 
-  If genUtils.StyleReplace(strPageBreak, strBodyStyle) = True Then
+  If MacroHelpers.StyleReplace(strPageBreak, strBodyStyle) = True Then
     dictReturn.Add "pg_brk_style_removed", True
   Else
     dictReturn.Add "pg_brk_style_removed", False
@@ -1429,7 +1429,7 @@ PageBreakCheckError:
   If ErrorChecker(Err, strPageBreak) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -1483,7 +1483,7 @@ SectionHeadIndError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -1505,17 +1505,17 @@ Private Function SectionRange(ParaIndexArray() As Variant) As Variant
   ReDim Preserve rangeArray(lngLBound To lngUBound)
   
 ' G is array index number
-  Dim G As Long
+  Dim g As Long
   Dim lngStart As Long
   Dim lngEnd As Long
 
 ' Loop through passed array
-  For G = lngLBound To lngUBound
+  For g = lngLBound To lngUBound
   ' Determine start and end section index numbers
-    lngStart = ParaIndexArray(G)
+    lngStart = ParaIndexArray(g)
 '    DebugPrint lngStart
-    If G < lngUBound Then
-      lngEnd = ParaIndexArray(G + 1) - 1
+    If g < lngUBound Then
+      lngEnd = ParaIndexArray(g + 1) - 1
     Else
       lngEnd = lngParaCount
     End If
@@ -1538,8 +1538,8 @@ Private Function SectionRange(ParaIndexArray() As Variant) As Variant
     
     End With
   ' Add range to array
-    Set rangeArray(G) = rngSection
-  Next G
+    Set rangeArray(g) = rngSection
+  Next g
   
   SectionRange = rangeArray()
   Exit Function
@@ -1549,7 +1549,7 @@ SectionRangeError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -1558,14 +1558,14 @@ End Function
 ' Validate a variety of heading requirements, fix if not met. Parameter is an
 ' array of ranges (one for each section) returned from SectionRange function
 
-Public Function HeadingCheck() As genUtils.Dictionary
+Public Function HeadingCheck() As Dictionary
   On Error GoTo HeadingCheckError
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
 
 ' Verify first paragraph is a heading
-  Dim dictStep As genUtils.Dictionary
+  Dim dictStep As Dictionary
   Set dictStep = Reports.FirstParaCheck
   Set dictReturn = ClassHelpers.MergeDictionary(dictReturn, dictStep)
 
@@ -1800,16 +1800,16 @@ HeadingCheckError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
 ' ===== FirstParaCheck ========================================================
 ' Make sure first paragraph is an acceptable heading style, or add new para.
 
-Private Function FirstParaCheck() As genUtils.Dictionary
+Private Function FirstParaCheck() As Dictionary
   On Error GoTo FirstParaCheckError
-    Dim dictReturn As genUtils.Dictionary
+    Dim dictReturn As Dictionary
     Set dictReturn = New Dictionary
     dictReturn.Add "pass", False
     
@@ -1841,16 +1841,16 @@ FirstParaCheckError:
   If ErrorChecker(Err, strHeadingStyle) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
 ' ===== IllustrationCheck =====================================================
 ' Various illustration validation checks.
 
-Public Function IllustrationCheck() As genUtils.Dictionary
+Public Function IllustrationCheck() As Dictionary
   On Error GoTo IllustrationCheckError
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
   
@@ -1859,12 +1859,12 @@ Public Function IllustrationCheck() As genUtils.Dictionary
   Dim strPlaceholder As String
   strPlaceholder = "TK.jpg" & vbNewLine
 
-  If genUtils.GeneralHelpers.IsStyleInUse(strIllustrationHolder) = False Then
+  If MacroHelpers.IsStyleInUse(strIllustrationHolder) = False Then
     dictReturn.Add "ill_holder_exists", False
   Else
     dictReturn.Add "ill_holder_exists", True
   ' Replace text of all paragraphs with that style
-    genUtils.zz_clearFind
+    MacroHelpers.zz_clearFind
     With activeDoc.Range.Find
       .Text = ""
       .Replacement.Text = "^p"
@@ -1884,7 +1884,7 @@ Public Function IllustrationCheck() As genUtils.Dictionary
       End If
     
     End With
-    genUtils.zz_clearFind
+    MacroHelpers.zz_clearFind
   End If
   
   dictReturn.Item("pass") = True
@@ -1896,7 +1896,7 @@ IllustrationCheckError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.Reports.ReportsTerminate
+    Call Reports.ReportsTerminate
   End If
 End Function
 
@@ -1957,7 +1957,7 @@ End Function
 '                        vbCr & Status
 '
 '            'DebugPrint sglPercentComplete
-'            Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
+'            Call ClassHelpers.UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
 '        End If
 '
 '        For A = LBound(Stories()) To UBound(Stories())
@@ -2083,7 +2083,7 @@ End Function
 '        sglPercentComplete = (((M / UBound(styleNameM())) * 0.13) + 0.63)
 '        strStatus = "* Checking for " & styleNameM(M) & " styles..." & vbCr & Status
 '
-'        Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
+'        Call ClassHelpers.UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
 '
 '        On Error GoTo ErrHandler
 '
@@ -2669,7 +2669,7 @@ End Function
 '            sglPercentComplete = (((N / activeParaCount) * 0.1) + 0.76)
 '            strStatus = "* Checking paragraph " & N & " of " & activeParaCount & " for approved Bookmaker styles..." & vbCr & StatusBar
 '
-'            Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=ProgressBar2, Status:=strStatus, Percent:=sglPercentComplete)
+'            Call ClassHelpers.UpdateBarAndWait(Bar:=ProgressBar2, Status:=strStatus, Percent:=sglPercentComplete)
 '        End If
 '
 '        For A = LBound(Stories()) To UBound(Stories())
@@ -3239,7 +3239,7 @@ End Function
 '            sglPercentComplete = (((J / activeParaCount) * 0.12) + 0.86)
 '            strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
 '
-'            Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
+'            Call ClassHelpers.UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
 '
 '        End If
 '
@@ -3302,15 +3302,15 @@ Private Sub ISBNcleanup()
     ' a character later, it won't return anything because the whole string needs to have the
     ' style applied for it to be found.
 
-    Dim G As Long
-    For G = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
+    Dim g As Long
+    For g = LBound(strISBNtextArray()) To UBound(strISBNtextArray())
 
         'Move selection to start of document
         Selection.HomeKey Unit:=wdStory
 
         With Selection.Find
             .ClearFormatting
-            .Text = strISBNtextArray(G)
+            .Text = strISBNtextArray(g)
             .Replacement.ClearFormatting
             .Replacement.Text = ""
             .Forward = True
@@ -3327,7 +3327,7 @@ Private Sub ISBNcleanup()
 
         Selection.Find.Execute Replace:=wdReplaceAll
 
-    Next G
+    Next g
 
 Exit Sub
 
@@ -3337,10 +3337,10 @@ ErrHandler:
       Exit Sub
     Else
       Err.Source = strReports & "ISBNcleanup"
-      If genUtils.GeneralHelpers.ErrorChecker(Err) = False Then
+      If MacroHelpers.ErrorChecker(Err) = False Then
         Resume
       Else
-        Call genUtils.Reports.ReportsTerminate
+        Call Reports.ReportsTerminate
       End If
     End If
 
@@ -3515,7 +3515,7 @@ Private Function ChapNumCleanUp(Optional StyleName As String = strChapNumber, _
 
 ' Move selection back to start of RANGE
   Selection.Collapse wdCollapseStart
-  genUtils.GeneralHelpers.zz_clearFind
+  MacroHelpers.zz_clearFind
 
   Dim intCount As Long
   intCount = 0
@@ -3549,7 +3549,7 @@ ChapNumCleanUpError:
   If ErrorChecker(Err, StyleName) = False Then
     Resume
   Else
-    genUtils.Reports.ReportsTerminate
+    Reports.ReportsTerminate
   End If
 End Function
 

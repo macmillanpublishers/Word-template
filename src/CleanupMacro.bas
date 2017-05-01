@@ -11,13 +11,13 @@ Option Explicit
 Option Base 1
 
 Private activeRng As Range
-Private Const strCleanup As String = "genUtils.CleanupMacro."
+Private Const strCleanup As String = "MacroHelpers.CleanupMacro."
 
-Public Function MacmillanManuscriptCleanup() As genUtils.Dictionary
+Public Function MacmillanManuscriptCleanup() As Dictionary
   On Error GoTo MacmillanManuscriptCleanupError
 ' Just checking if it finishes at all for now. Can convert to a more detailed
 ' set of tests later.
-  Dim dictReturn As genUtils.Dictionary
+  Dim dictReturn As Dictionary
   Set dictReturn = New Dictionary
   dictReturn.Add "pass", False
 
@@ -30,7 +30,7 @@ Public Function MacmillanManuscriptCleanup() As genUtils.Dictionary
   
   '------------check for endnotes and footnotes--------------------------------
   Dim stStories() As Variant
-  stStories = genUtils.GeneralHelpers.StoryArray
+  stStories = MacroHelpers.StoryArray
   
   ' ======= Run startup checks ========
   ' True means a check failed (e.g., doc protection on)
@@ -87,118 +87,118 @@ Public Function MacmillanManuscriptCleanup() As genUtils.Dictionary
   
 ' This sub calls ProgressBar.Increment and waits for it to finish before
 ' returning here
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   '-----------Delete hidden text ----------------------------------------------
   Dim S As Long
   
   For S = 1 To UBound(stStories())
-  If genUtils.GeneralHelpers.HiddenTextSucks(StoryType:=(stStories(S))) = _
+  If MacroHelpers.HiddenTextSucks(StoryType:=(stStories(S))) = _
     True Then
     ' Notify user maybe?
     End If
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
 
 ' ---------- Clear formatting from paragraph marks, symbols -------------------
 ' Per Westchester, can cause macro to break
   
   For S = 1 To UBound(stStories())
-    Call genUtils.GeneralHelpers.ClearPilcrowFormat(StoryType:=(stStories(S)))
-    Call genUtils.CleanupMacro.CleanSomeSymbols(StoryTypes:=(stStories(S)))
+    Call MacroHelpers.ClearPilcrowFormat(StoryType:=(stStories(S)))
+    Call MacroHelpers.CleanupMacro.CleanSomeSymbols(StoryTypes:=(stStories(S)))
   Next S
   
   '-----------Find/Replace with Wildcards = False------------------------------
-  Call genUtils.GeneralHelpers.zz_clearFind                          'Clear find object
+  Call MacroHelpers.zz_clearFind                          'Clear find object
   
   sglPercentComplete = 0.2
   strStatus = "* Fixing quotes, unicode, section breaks..." & vbCr & strStatus
 
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
   ' has to be alone b/c Match Wildcards has to be disabled: Smart Quotes,
   ' Unicode (ellipse), section break
-    Call genUtils.CleanupMacro.RmNonWildcardItems(StoryType:=(stStories(S)))
+    Call MacroHelpers.CleanupMacro.RmNonWildcardItems(StoryType:=(stStories(S)))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
 
   '-------------Tag characters styled "span preserve characters"---------------
   sglPercentComplete = 0.4
   strStatus = "* Preserving styled whitespace characters..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
 ' tags styled page breaks, tabs
-    Call genUtils.CleanupMacro.PreserveStyledCharactersA(StoryType:= _
+    Call MacroHelpers.CleanupMacro.PreserveStyledCharactersA(StoryType:= _
       (stStories(S)))
   Next S
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
   '---------------Find/Replace for rest of the typographic errors----------------------
   sglPercentComplete = 0.6
   strStatus = "* Removing unstyled whitespace, fixing ellipses and dashes..." _
     & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
 ' v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
-    Call genUtils.CleanupMacro.RmWhiteSpaceB(StoryType:=(stStories(S)))
+    Call MacroHelpers.CleanupMacro.RmWhiteSpaceB(StoryType:=(stStories(S)))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
 
   '---------------Remove tags from "span preserve characters"-------------------------
   sglPercentComplete = 0.86
   strStatus = "* Cleaning up styled whitespace..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
 ' replaces character tags with actual character
-    Call genUtils.CleanupMacro.PreserveStyledCharactersB(StoryType:= _
+    Call MacroHelpers.CleanupMacro.PreserveStyledCharactersB(StoryType:= _
       (stStories(S)))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
   '---------------Convert all underlines to standard-------------------------
   sglPercentComplete = 0.87
   strStatus = "* Standardizing underline format..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
   For S = 1 To UBound(stStories())
-    Call genUtils.CleanupMacro.FixUnderlines(StoryType:=(stStories(S)))
+    Call MacroHelpers.CleanupMacro.FixUnderlines(StoryType:=(stStories(S)))
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
 
   ' ----------- remove Shape objects
   For S = 1 To UBound(stStories())
-    Call genUtils.CleanupMacro.ShapeDelete
+    Call MacroHelpers.CleanupMacro.ShapeDelete
   Next S
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   
   '-----------------Restore original settings--------------------------------------
   sglPercentComplete = 1#
   strStatus = "* Finishing up..." & vbCr & strStatus
   
-  Call genUtils.ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
 
-  Call genUtils.GeneralHelpers.Cleanup
+  Call MacroHelpers.CleanUp
   Unload oProgressCleanup
     
 '    MsgBox "Hurray, the Macmillan Cleanup macro has finished running! Your manuscript looks great!"                                 'v. 3.1 patch / request  v. 3.2 made a little more fun
@@ -218,7 +218,7 @@ MacmillanManuscriptCleanupError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -247,7 +247,7 @@ Private Sub RmNonWildcardItems(StoryType As WdStoryType)                        
   noWildReplaceArray(2) = "'"
   noWildReplaceArray(3) = """"
 
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
 
   For C = 1 To UBound(noWildTagArray())
     If C = 3 Then wrapToggle = "wdFindStop"
@@ -266,7 +266,7 @@ RmNonWildcardItemsError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -322,7 +322,7 @@ PreserveStyledCharactersAError:
   If ErrorChecker(Err, preserveCharStyle) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -417,7 +417,7 @@ Private Sub RmWhiteSpaceB(StoryType As WdStoryType)
     wsReplaceArray(33) = ". . ." & Chr(146)
   #End If
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   For i = 1 To UBound(wsFindArray())
     With activeRng.Find
       .Text = wsFindArray(i)
@@ -434,7 +434,7 @@ RmWhiteSpaceBError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -466,7 +466,7 @@ Private Sub PreserveStyledCharactersB(StoryType As WdStoryType)
   preserveCharReplaceArray(4) = "^l"
   preserveCharReplaceArray(5) = "- "
 
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   For N = 1 To UBound(preserveCharFindArray())
     With activeRng.Find
       .Text = preserveCharFindArray(N)
@@ -484,7 +484,7 @@ PreserveStyledCharactersBError:
   If ErrorChecker(Err, keyStyle.NameLocal) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -518,7 +518,7 @@ Private Sub FixUnderlines(StoryType As WdStoryType)
   strUnderlines(15) = wdUnderlineWavyHeavy
   strUnderlines(16) = wdUnderlineWords
 
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   For A = LBound(strUnderlines()) To UBound(strUnderlines())
     With activeDoc.Range.Find
       .Wrap = wdFindStop
@@ -535,7 +535,7 @@ FixUnderlinesError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -580,7 +580,7 @@ zz_errorChecksError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Function
 
@@ -618,7 +618,7 @@ Private Sub NumRangeHyphens(StoriesInDoc As Variant)
 '    Set activeRange = activeDoc.StoryRanges(StoriesInDoc(kStory))
   Set activeRange = activeDoc.Range
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   With activeRange.Find
 ' Find each thing that is also a URL
 ' and replace hyphen with tags
@@ -654,7 +654,7 @@ NumRangeHyphensError:
   If ErrorChecker(Err, strLinkStyle) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -673,7 +673,7 @@ Private Sub CleanSomeSymbols(StoryTypes As WdStoryType)
   arrSymbols(2) = "^0169"    ' (c) copyright symbol
   arrSymbols(3) = "^0153"    ' TM trademark symbol
   
-  Call genUtils.GeneralHelpers.zz_clearFind
+  Call MacroHelpers.zz_clearFind
   ' Just removing superscript for right now
   For X = LBound(arrSymbols) To UBound(arrSymbols)
     With activeRange.Find
@@ -692,7 +692,7 @@ CleanSomeSymbolsError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
 
@@ -738,6 +738,6 @@ ShapeDeleteError:
   If ErrorChecker(Err) = False Then
     Resume
   Else
-    Call genUtils.GeneralHelpers.GlobalCleanup
+    Call MacroHelpers.GlobalCleanup
   End If
 End Sub
