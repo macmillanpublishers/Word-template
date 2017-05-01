@@ -653,3 +653,37 @@ Public Function ReadTextFile(Path As String, Optional FirstLineOnly As Boolean _
 End Function
 
 
+' ===== ExistsInCollection ====================================================
+' Tests if item is in the collection by trying to access the item; if it is not
+' in the collection, it generates an error.
+
+' Params:
+' TestCollection: Collection object
+' TestItem: Object or whatever to test
+
+Public Function ExistsInCollection(TestCollection As Collection, TestItem As _
+  Variant) As Boolean
+  
+  On Error GoTo ExistsInCollectionError
+
+  If IsObject(TestItem) = True Then
+    Dim objItem As Object
+    Set objItem = TestCollection.Item(TestItem)
+    ExistsInCollection = True
+  Else
+    Dim varItem As Variant
+    varItem = TestCollection.Item(TestItem)
+    ExistsInCollection = True
+  End If
+
+  Exit Function
+  
+ExistsInCollectionError:
+
+' 5: Invalid procedure call or argument
+  If Err.Number = 5 Then
+    ExistsInCollection = False
+  Else
+    MacroHelpers.ErrorChecker (Err)
+  End If
+End Function
