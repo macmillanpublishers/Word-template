@@ -172,6 +172,35 @@ Public Function GetFileName(File As String) As String
     Application.PathSeparator) - 1)
 End Function
 
+' ===== GetPath ================================================================
+' Returns path to parent directory from string full name to file.
+
+' PARAMS
+' FullName: Full path to a file
+
+' RETURNS
+' Sting path to parent directory, with no trailing separator
+
+Public Function GetPath(FullName As String) As String
+' Opposite of GetFileName, which returns null if not a file
+  Dim strFileName As String
+  strFileName = GetFileName(FullName)
+  
+  Dim strPath As String
+  If strFileName = vbNullString Then
+    strPath = FullName
+  Else
+    strPath = Left(FullName, Len(fullPath) - Len(strFileName))
+  End If
+  
+' Remove trailing path separator
+  If Right(strPath, 1) = Application.PathSeparator Then
+    strPath = Left(strPath, Len(strPath) - 1)
+  End If
+  
+  GetPath = strPath
+
+End Function
 
 ' ===== DebugPrint =============================================================
 ' Use instead of `DebugPrint`. Print to Immediate Window AND write to a file.

@@ -68,7 +68,7 @@ Sub AutoExec()
 '===== PART 2 ============================
   Dim blnInstaller As Boolean
   Dim strTemplateName As String
-  Dim strTemplatePaths() As String
+  Dim colTemplateNames As Collection
 
 ' True = standalone installer file
 ' False = daily update checker already installed
@@ -78,11 +78,11 @@ Sub AutoExec()
   strTemplateName = "Macmillan Styles Template"
 
   'Get array of paths to STYLE TEMPLATE files to install
-  strTemplatePaths = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
+  Set colTemplateNames = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
 
 ' CHECK/UPDATE STYLES TEMPLATES ONLY.
   Call SharedFileInstaller.Installer(Installer:=blnInstaller, _
-      TemplateName:=strTemplateName, TemplatesToInstall:=strTemplatePaths())
+      TemplateName:=strTemplateName, TemplatesToInstall:=colTemplateNames)
 
   ' BLAH BLAH ONTIME NOT WORKING JUST DON'T CHECK ANY MORE WE'LL GET RID OF WITH CONFIG FILE.
   ' Now check GtUpdater.dotm, which can't have code running when we check it, so have to wait 1 second for GtUpdater to
@@ -102,42 +102,35 @@ End Sub
 
 Function CheckGtUpdater(InstallerOrNot As Boolean)
 
-  ' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
-  ' GtUpdater.dotm can't be running code when this launches.
+' Checks version number of GtUpdater.dotm once a day and updates to new version if necessary
+' GtUpdater.dotm can't be running code when this launches.
 
-  '===== DEPENDENCIES ========================
-  ' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
-  ' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
-  ' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
-  ' and be saved in the STARTUP directory.
-  '
-  ' Requires FileInstaller and MacroHelpers modules be installed in the same template.
-
-  ' ======= For testing / debugging ==============
+'===== DEPENDENCIES ========================
+' This is part 1 of 2. It calls the Installer sub, which downloads and installs the Macmillan style templates and macros.
+' If this is meant to be an installer, it should be called "Document_Open()" and reside in the ThisDocument module in a .docm file.
+' If this is meant to be an updater, it should be called "AutoExec()" and reside in the ThisDocument module in a .dotm file,
+' and be saved in the STARTUP directory.
 
   DebugPrint "CheckGtUpdater is running."
 
-  ' ==============================================
-
-  ' ====== PART 1: CHECK VERSION OF TEMPLATE ========
-  Dim strInstallMe() As String
   Dim strTemplateName As String
   strTemplateName = "Macmillan Updater"
 
   ' get array of files to install
-  strInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
+  Dim colInstallMe As Collection
+  Set colInstallMe = GetTemplatesList(TemplatesYouWant:=updaterTemplates)
 
   ' Installer = True if this is for a standalone installation file;
   ' False is for a daily update checker
   Call SharedFileInstaller.Installer(Installer:=InstallerOrNot, _
-      TemplateName:=strTemplateName, TemplatesToInstall:=strInstallMe())
+      TemplateName:=strTemplateName, TemplatesToInstall:=colInstallMe)
 
   ' ====== PART 2: LOAD TEMPLATE AGAIN ==============
-  If IsItThere(strInstallMe(1)) = True Then
+  If IsItThere(colInstallMe.Item(1)) = True Then
   ' Have to add Template before loading if not in Startup
   ' Could do Install:=True with Add method, but it somehow broke everything
-    AddIns.Add (strInstallMe(1))
-    AddIns(strInstallMe(1)).Installed = True
+    AddIns.Add (colInstallMe.Item(1))
+    AddIns(colInstallMe.Item(1)).Installed = True
   Else
     Dim strMessage As String
       strMessage = "Wow, this is really embarrassing but something went wrong with your Macmillan Updater template. Please send an email to " & _

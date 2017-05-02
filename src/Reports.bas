@@ -48,7 +48,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     'StartTime = Timer                               '|
     '=================================================
     
-  '------------check for endnotes and footnotes--------------------------
+  '------------check for endnotes and footnotes--------------------------------
   Dim arrStories() As Variant
   arrStories = StoryArray
   

@@ -87,7 +87,7 @@ Public Sub CastoffStart(FormInputs As CastoffForm)
         
         ' Check that returned array is allocated
         If IsArrayEmpty(arrDesign) = True Then
-            Exit Sub ' Error messages were in DownloadCSV (and DownloadFromConfluence) so none needed here
+            Exit Sub ' Error messages were in DownloadCSV (and DownloadFromGithub) so none needed here
         End If
         
         '------------Get castoff for each Design selected-------------------
@@ -328,7 +328,7 @@ Private Function SpineSize(PageCount As Long)
         ' Check that returned array is allocated
         If IsArrayEmpty(arrSpine) = True Then
             strSpine = "ERROR: cannot calculate spine size"
-            Exit Function ' Error messages were in DownloadCSV (and DownloadFromConfluence) so none needed here
+            Exit Function ' Error messages were in DownloadCSV (and DownloadFromGithub) so none needed here
         End If
     
         '---------Lookup spine size in array-------------------------------
