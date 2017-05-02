@@ -275,7 +275,7 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     Dim styleBadCount As Integer
     Dim styleBadOverflow As Boolean
     Dim activeParaCount As Integer
-    Dim j As Integer, K As Integer, L As Integer
+    Dim J As Integer, K As Integer, L As Integer
     Dim paraStyle As String
     '''''''''''''''''''''
     Dim activeParaRange As Range
@@ -291,14 +291,14 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     styleBadCount = 0
     styleBadOverflow = False
     activeParaCount = activeDoc.Paragraphs.Count
-    For j = 1 To activeParaCount
+    For J = 1 To activeParaCount
         
         'All Progress Bar statements for PC only because won't run modeless on Mac
-        If j Mod 100 = 0 Then
+        If J Mod 100 = 0 Then
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((j / activeParaCount) * 0.45) + 0.18)
-            strStatus = "* Checking paragraph " & j & " of " & activeParaCount & " for Macmillan styles..." & _
+            sglPercentComplete = (((J / activeParaCount) * 0.45) + 0.18)
+            strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & _
                         vbCr & Status
             
             'DebugPrint sglPercentComplete
@@ -346,13 +346,13 @@ CheckGoodStyles:
                             styleBadCount = L
             
                             stylesBad(styleBadCount) = "** ERROR: Non-Macmillan style on page " & pageNumber & _
-                                " (Paragraph " & j & "):  " & paraStyle & vbNewLine & vbNewLine
+                                " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
                         End If
                      End If
                 End If
             End If
         Next A
-    Next j
+    Next J
     
     Status = "* Checking paragraphs for Macmillan styles..." & vbCr & Status
     
@@ -1439,7 +1439,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     ReDim stylesGood(stylesGoodLong)
     Dim styleGoodCount As Integer
     Dim activeParaCount As Integer
-    Dim j As Integer, K As Integer, L As Integer
+    Dim J As Integer, K As Integer, L As Integer
     Dim paraStyle As String
     '''''''''''''''''''''
     Dim activeParaRange As Range
@@ -1449,14 +1449,14 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     '----------Collect all styles being used-------------------------------
     styleGoodCount = 0
     activeParaCount = activeDoc.Paragraphs.Count
-    For j = 1 To activeParaCount
+    For J = 1 To activeParaCount
         
         'All Progress Bar statements for PC only because won't run modeless on Mac
-        If j Mod 100 = 0 Then
+        If J Mod 100 = 0 Then
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((j / activeParaCount) * 0.12) + 0.86)
-            strStatus = "* Checking paragraph " & j & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
+            sglPercentComplete = (((J / activeParaCount) * 0.12) + 0.86)
+            strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
     
             Call UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
             
@@ -1481,7 +1481,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
                 End If
             End If
         Next A
-    Next j
+    Next J
     
     'Sort good styles
     If K <> 0 Then

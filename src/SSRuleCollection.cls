@@ -33,7 +33,7 @@ Public Property Get SectionLists() As Dictionary
     Dim collMain As Collection
     Dim collBackmatter As Collection
     Dim collAll As Collection
-    Dim j As Long
+    Dim J As Long
     
     ' define the collections & dict
     Set collFrontmatter = New Collection
@@ -43,8 +43,8 @@ Public Property Get SectionLists() As Dictionary
     Set prop_sectionLists = New Dictionary
     
     ' cycle through the json data and add section start names to appropriate collections
-    For j = 0 To prop_parsedJSON.Count - 1
-        strSSname = prop_parsedJSON.Keys(j)
+    For J = 0 To prop_parsedJSON.Count - 1
+        strSSname = prop_parsedJSON.Keys(J)
         collAll.Add (strSSname)
         If prop_parsedJSON(strSSname).Item("section_type") = "frontmatter" Then
             collFrontmatter.Add (strSSname)
