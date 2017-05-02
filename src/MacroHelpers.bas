@@ -329,7 +329,7 @@ End Function
 
 Sub GlobalCleanup()
   On Error GoTo GlobalCleanupError
-  MacroHelpers.zz_clearFind
+  zz_clearFind
   If Not activeDoc Is Nothing Then
     Set activeDoc = Nothing
   End If
