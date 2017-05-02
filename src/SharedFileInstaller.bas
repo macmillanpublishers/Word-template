@@ -153,6 +153,13 @@ Public Function StyleDir() As String
 
 End Function
 
+' ===== DownloadJson ==========================================================
+' Downloads JSON and loads into a Dictionary
+
+Public Function DownloadJson(FileName As String) As Dictionary
+
+End Function
+
 
 Public Function DownloadCSV(FileName As String) As Variant
 '---------Download CSV with design specs from Confluence site-------

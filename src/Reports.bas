@@ -1800,4 +1800,12 @@ Private Function CheckFileName() As Boolean
 
 End Function
 
+' ===== SectionStart ==========================================================
+' Validate section-start styles/rules
+' RETURNS
+' Collection of error strings
 
+Private Function SectionStart() As Collection
+' Download JSON with validation rules
+  If
+End Function
