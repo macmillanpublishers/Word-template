@@ -1852,11 +1852,48 @@ Private Function SectionStartRules() As Collection
 End Function
 
 ' ===== ProcessRule ========================================================
-' This would be where the rules would be processed.
-' For now I just have debug output here
+' Returns error message if missing section criteria are matched.
 
-Sub ProcessRule(p_rule As SSRule, p_sectionLists As Dictionary)
+Private Function ProcessRule(p_rule As SSRule, p_sectionLists As Dictionary) _
+  As String
 
+' Create collection of contiguous paragraph blocks
+  Dim colMatchedParaInd As Collection
+  Set colMatchedParaInd = MatchedParaIndices(p_rule.Styles)
+
+' Check if anything was found (and error if it wasn't found but is required)
+  If colMatchedParaInd.Count = 0 Then
+    If p_rule.SectionRequired = True Then
+      ProcessRule = "ERROR MESSAGE HERE"
+    Else
+      Exit Function
+    End If
+  End If
+
+' Sort paragraph indices sequentially
+  Dim arrParaInd() As Variant
+  Dim colSortedParaInd As Collection
+  ' No Collection.Sort method, so we'll use .SortArray
+  arrParaInd = Utils.ToArray(colMatchedParaInd)
+  WordBasic.SortArray arrParaInd
+  Set colSortedParaInd = Utils.ToCollection(arrParaInd)
+
+' Create Collection of Ranges of contiguous blocks
+  Dim colBlockRange As Collection
+  Set colBlockRange = GroupBlocks(ParaIndices:=colSortedParaIndices, _
+    Multiple:=p_rule.Multiple)
+
+' Loop through contiguous blocks to test other criteria
+
+' If optional headings, search UP for each range and add if found
+  
+  
+  
+  
+  
+  
+  
+  
   ' Make sure info from SSRule looks right
   ' Call CheckCollection(p_sectionLists("all"))
   Debug.Print p_rule.Priority & " " & p_rule.RuleName
@@ -1873,4 +1910,87 @@ Sub ProcessRule(p_rule As SSRule, p_sectionLists As Dictionary)
   'Call CheckCollection(p_rule.PreviousUntil)
   'Debug.Print p_rule.LastCriteria
 
-End Sub
+End Function
+
+' ===== GroupBlocks ===========================================================
+' Find contiguous blocks of paragraphs.
+
+' PARAMS
+' ParaIndices: Collection of *SORTED* paragraph indices (integers)
+' Multiple: True = return all blocks / False = only return first block in doc
+
+' RETURNS
+' Collection of Range objects
+
+Private Function GroupBlocks(ParaIndices As Collection, Multiple As Boolean) _
+  As Collection
+  Dim lngBlockStart As Long
+  Dim lngBlockEnd As Long
+  Dim rngBlock As Range
+  Dim colOutput As Collection
+  Set colOutput = New Collection
+
+  With ParaIndices
+    Do
+      lngBlockStart = .Item(1)
+      lngBlockEnd = 0
+
+      Do
+        If .Item(2) > (.Item(1) + 1) Then
+          lngBlockEnd = .Item(1)
+        End If
+        .Remove (1)
+      Loop Until lngBlockEnd > lngBlockStart Or .Count = 0
+      If .Count > 0 Then
+        Set rngBlock = activeDoc.Paragraphs(lngBlockStart).Range
+        rngBlock.SetRange Start:=rngBlock.Start, End:=activeDoc.Paragraphs(lngBlockEnd).Range.End
+        colOutput.Add rngBlock
+      End If
+
+      If Multiple = False Then
+        Exit Do
+      End If
+    Loop Until .Count = 0
+    Set GroupBlocks = colOutput
+  End With
+End Function
+  
+' ===== MatchedParaIndices ====================================================
+' Returns Collection of paragraph indices that match the passed Collection of
+' style names.
+
+Private Function MatchedParaIndices(StyleCollection As Collection) As Collection
+  Dim strStyle As Variant ' Must be Variant to use For Each loop
+  Dim colIndices As Collection
+  Set colIndices = New Collection
+  Dim lngCount As Long
+  Dim lngStartIndex As Long
+  Dim lngEndIndex As Long
+  Dim lngCurrentIndex As Long
+  
+
+  For Each strStyle In StyleCollection
+    MacroHelpers.zz_clearFind
+    With Selection.Find
+      .Format = True
+      .Style = strStyle
+      .Forward = True
+      .Wrap = wdFindStop
+
+      Do While .Found = True And lngCount < 1000 ' counter to stop infinite loop
+        lngCount = lngCount + 1
+        lngStartIndex = MacroHelpers.ParaIndex(UseEnd:=False)
+        lngEndIndex = MacroHelpers.ParaIndex(UseEnd:=True)
+        lngCurrentIndex = lngStartIndex - 1
+        
+        Do
+          lngCurrentIndex = lngCurrentIndex + 1
+          colIndices.Add lngCurrentIndex
+        Loop Until lngCurrentIndex = lngEndIndex
+
+        .Execute
+      Loop
+    End With
+  Next strStyle
+  Set MatchedParaIndices = colIndices
+End Function

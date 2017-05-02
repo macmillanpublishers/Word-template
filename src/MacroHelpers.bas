@@ -688,7 +688,7 @@ Public Function FootnotesExist() As Boolean
 End Function
 
 
-Function IsArrayEmpty(Arr As Variant) As Boolean
+Function IsArrayEmpty(arr As Variant) As Boolean
 
 
     Dim LB As Long
@@ -696,7 +696,7 @@ Function IsArrayEmpty(Arr As Variant) As Boolean
     
     Err.Clear
     On Error Resume Next
-    If IsArray(Arr) = False Then
+    If IsArray(arr) = False Then
         ' we weren't passed an array, return True
         IsArrayEmpty = True
         Exit Function
@@ -704,12 +704,12 @@ Function IsArrayEmpty(Arr As Variant) As Boolean
 
     ' Attempt to get the UBound of the array. If the array is
     ' unallocated, an error will occur.
-    UB = UBound(Arr, 1)
+    UB = UBound(arr, 1)
     If (Err.Number <> 0) Then
         IsArrayEmpty = True
     Else
   On Error GoTo IsArrayEmptyError
-        LB = LBound(Arr)
+        LB = LBound(arr)
         If LB > UB Then
             IsArrayEmpty = True
         Else

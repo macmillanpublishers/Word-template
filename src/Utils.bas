@@ -682,6 +682,7 @@ Public Function ReadTextFile(Path As String, Optional FirstLineOnly As Boolean _
 End Function
 
 
+
 ' ===== ExistsInCollection ====================================================
 ' Tests if item is in the collection by trying to access the item; if it is not
 ' in the collection, it generates an error.
@@ -715,4 +716,52 @@ ExistsInCollectionError:
   Else
     MacroHelpers.ErrorChecker (Err)
   End If
+End Function
+
+
+' ===== ToArray ===============================================================
+' Converts a Collection to an array.
+
+' PARAMS:
+' SourceCollection: A Collection object to be converted
+
+' TODO
+' Add option to remove Empty collection items when converting.
+
+Public Function ToArray(SourceCollection As Collection) As Variant()
+' lngIndexAdjust so it doesn't matter if array is base 0, 1, etc.
+  Dim arr() As Variant
+  Dim lngIndexAdjust As Long
+  Dim lngUBound As Long
+
+' Test array here to get default lower bound, -1 to adjust UBound
+  ReDim arr(2)
+  lngIndexAdjust = LBound(arr) - 1
+  lngUBound = SourceCollection.Count + lngIndexAdjust
+
+  ReDim arr(lngUBound)
+  Dim varItem As Variant
+  
+  For Each varItem In SourceCollection
+    lngIndexAdjust = lngIndexAdjust + 1
+    arr(lngIndexAdjust) = varItem
+  Next varItem
+
+  ToArray = arr
+
+End Function
+
+' ===== ToCollection ==========================================================
+' Convert an array to a Collection
+
+Public Function ToCollection(SourceArray() As Variant) As Collection
+  Dim coll As Collection
+  Set coll = New Collection
+  Dim A As Long
+
+  For A = LBound(SourceArray) To UBound(SourceArray)
+    coll.Add SourceArray(A)
+  Next A
+
+  Set ToCollection = coll
 End Function
