@@ -154,9 +154,27 @@ Public Function StyleDir() As String
 End Function
 
 ' ===== DownloadJson ==========================================================
-' Downloads JSON and loads into a Dictionary
+' Downloads JSON, if download fails can still continue if a previous version
+' is available.
+' PARAMS
+' FileName: name and extension of JSON file (not path)
 
-Public Function DownloadJson(FileName As String) As Dictionary
+' RETURNS:
+' Full path to downloaded JSON file
+
+Public Function DownloadJson(FileName As String) As String
+  Dim dictJsonInfo As Dictionary
+  Set dictJsonInfo = FileInfo(FileName)
+
+  If DownloadFromGithub(FileName) = False Then
+    If Utils.IsItThere(dictJsonInfo("Final")) = True Then
+      DownloadJson = True
+    Else
+      DownloadJson = False
+    End If
+  Else
+    DownloadJson = True
+  End If
 
 End Function
 
