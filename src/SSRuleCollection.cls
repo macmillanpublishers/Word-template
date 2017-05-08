@@ -13,12 +13,11 @@ Option Explicit
 '       PRIVATE VARIABLES
 ' *****************************************************************************
 
-Private prop_parsedJSON As Dictionary
+Private prop_RuleDictionary As Dictionary
 Private prop_sectionLists As Dictionary
 Private prop_FrontmatterStyles As Collection
 Private prop_MainStyles As Collection
 Private prop_BackmatterStyles As Collection
-
 Private prop_rules As Collection
 Private strSSname As String
 
@@ -36,7 +35,7 @@ Public Property Get FrontmatterStyles() As Collection
   Set FrontmatterStyles = prop_FrontmatterStyles
 End Property
 
-' ===== MainStyles ======================================================
+' ===== MainStyles ============================================================
 ' Collection of all Section-Start styles that belong in Backmatter
 
 Public Property Get MainStyles() As Collection
@@ -113,6 +112,9 @@ End Property
 ' to the SSRule factory, and adding the returned SSRUle to the prop_rules collection
 
 Public Property Get Rules() As Collection
+' Check if it's already been created first
+  If prop_rules Is Nothing Then
+    Set prop_rules = New Collection
     Dim dictSingleSectionStart As Dictionary
     Dim objNewSectionStartRule As SSRule
     Dim i As Long
@@ -120,8 +122,6 @@ Public Property Get Rules() As Collection
     Dim str_criteriaCount As String
     Dim lngRulePriority As Long
     Dim dictPriority As Dictionary
-    
-    Set prop_rules = New Collection
     
     ' Cycle through the JSON data
     For i = 0 To prop_parsedJSON.Count - 1
@@ -152,10 +152,44 @@ Public Property Get Rules() As Collection
             Loop
         End If
     Next
+  End If
     
-    Set Rules = prop_rules
+  Set Rules = prop_rules
     
 End Property
+
+
+
+' *****************************************************************************
+'       PRIVATE PROPERTIES
+' *****************************************************************************
+
+' ===== RuleDictionary ========================================================
+' Separate property for the Dictionary containing the JSON data, including
+' downloading the file. Also better encapsulates the creation of the dict, in
+' case we change the source in the future.
+
+Private Property Set RuleDictionary(JsonFileName As String)
+  If prop_RuleDictionary Is Nothing Then
+  ' Local JSON file
+    Dim dictJsonInfo As Dictionary
+    Dim strJsonPath As String
+    Set dictJsonInfo = SharedFileInstaller.FileInfo(FileName:=JsonFilePath)
+    strJsonPath = dictJsonInfo("Final")
+  
+  ' Download JSON file
+  
+  ' If download fails, revert to local version
+  
+  ' Load JSON data into dictionary
+    Set prop_RuleDictionary = ClassHelpers.ReadJson(strJsonPath)
+  End If
+  
+  Set RuleDictionary = prop_RuleDictionary
+End Property
+
+
+
 
 ' *****************************************************************************
 '       PUBLIC METHODS
