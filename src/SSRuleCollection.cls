@@ -15,6 +15,10 @@ Option Explicit
 
 Private prop_parsedJSON As Dictionary
 Private prop_sectionLists As Dictionary
+Private prop_FrontmatterStyles As Collection
+Private prop_MainStyles As Collection
+Private prop_BackmatterStyles As Collection
+
 Private prop_rules As Collection
 Private strSSname As String
 
@@ -22,13 +26,50 @@ Private strSSname As String
 '       PUBLIC PROPERTIES
 ' *****************************************************************************
 
+' ===== FrontmatterStyles =====================================================
+' Collection of all Section-Start styles that belong in Frontmatter
+
+Public Property Get FrontmatterStyles() As Collection
+  If prop_FrontmatterStyles Is Nothing Then
+    Set prop_FrontmatterStyles = SectionLists("frontmatter")
+  End If
+  Set FrontmatterStyles = prop_FrontmatterStyles
+End Property
+
+' ===== MainStyles ======================================================
+' Collection of all Section-Start styles that belong in Backmatter
+
+Public Property Get MainStyles() As Collection
+  If prop_MainStyles Is Nothing Then
+    Set prop_MainStyles = SectionLists("main")
+  End If
+  Set MainStyles = prop_MainStyles
+End Property
+
+' ===== BackmatterStyles ======================================================
+' Collection of all Section-Start styles that belong in Backmatter
+
+Public Property Get BackmatterStyles() As Collection
+  If prop_BackmatterStyles Is Nothing Then
+    Set prop_BackmatterStyles = SectionLists("backmatter")
+  End If
+  Set BackmatterStyles = prop_BackmatterStyles
+End Property
+
 ' ===== SectionLists[PropertyGet] ========================================================
 ' This Property creates a dict containing 4 Collections as a Read-Only property, featuring:
 ' A list(Collection) of "all" Section Start Stylenames, a list of "frontmatter" ones, "backmatter" ones
 ' and "main" ones.  The "all" Collection is needed when checking for acceptable "previous_siblings"
 ' The other three are needed when testing "position" criteria
 
-Public Property Get SectionLists() As Dictionary
+' Set to Private b/c only needed by new FM, Main, BM properties
+
+Private Property Get SectionLists() As Dictionary
+' Check if saved variable already exists, else it will go through the code to create
+' it every time it is accessed
+
+  If prop_sectionLists Is Nothing Then
+    Set prop_sectionLists = New Dictionary
     Dim collFrontmatter As Collection
     Dim collMain As Collection
     Dim collBackmatter As Collection
@@ -40,7 +81,6 @@ Public Property Get SectionLists() As Dictionary
     Set collMain = New Collection
     Set collBackmatter = New Collection
     Set collAll = New Collection
-    Set prop_sectionLists = New Dictionary
     
     ' cycle through the json data and add section start names to appropriate collections
     For J = 0 To prop_parsedJSON.Count - 1
@@ -60,10 +100,12 @@ Public Property Get SectionLists() As Dictionary
     prop_sectionLists.Add "main", collMain
     prop_sectionLists.Add "backmatter", collBackmatter
     prop_sectionLists.Add "all", collAll
+  End If
     
-    Set SectionLists = prop_sectionLists
+  Set SectionLists = prop_sectionLists
     
 End Property
+
 
 ' ===== Rules[PropertyGet] ========================================================
 ' This Property creates a Collection of SSRule objects, by cycling through the json data

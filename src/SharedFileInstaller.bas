@@ -830,6 +830,9 @@ Private Function FullURL(FileName As String) As String
     Case "section_start_rules"
       strRepo = "bookmaker_validator/"
       strSubfolder = vbNullString
+    Case "vba_style_config"
+      strRepo = "Word-template_assets/"
+      strSubfolder = "StyleTemplate_auto-generate/"
   End Select
 
   ' put it all together
@@ -901,12 +904,13 @@ Private Function TmpDir() As String
 End Function
 
 ' ===== FileInfo ==============================================================
-' Returns dictionary with paths needed to download files.
+' Returns dictionary with paths to final file location and other things for
+' downloading.
 
 ' PARAMS
 ' FileName: File name with extension that you want to download.
 
-Private Function FileInfo(FileName As String) As Dictionary
+Public Function FileInfo(FileName As String) As Dictionary
   Dim dictFileInfo As Dictionary
   Set dictFileInfo = New Dictionary
   
@@ -914,6 +918,9 @@ Private Function FileInfo(FileName As String) As Dictionary
   Dim strTmpDir As String
   Dim strBaseName As String
   Dim strSep As String
+
+' Becasue I am too lazy to write this whole thing later
+  strSep = Application.PathSeparator
   
 ' GtUpdater.dotm only file to go in Startup
   If FileName = "GtUpdater.dotm" Then
@@ -923,7 +930,7 @@ Private Function FileInfo(FileName As String) As Dictionary
   End If
 
 ' Create directory if it doesn't exist already
-  If Utils.ParentDirExists(strStyleDir) = False Then
+  If Utils.IsItThere(strStyleDir) = False Then
     MkDir strStyleDir
   End If
 
