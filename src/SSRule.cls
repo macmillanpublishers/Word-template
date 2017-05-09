@@ -271,11 +271,11 @@ End Property
 ' To create new objects for this class, from calls from the factory
 ' We uses the 'rulenum' to check against contiguous criteria blocks and get value for 'LastCriteria'
 
-Public Sub Init(Name As String, values As Dictionary, rulenum As Long)
+Public Sub Init(Name As String, Values As Dictionary, rulenum As Long)
 
     m_str_criteria_count = GetTwoDigitString(rulenum)
     m_str_next_criteria_count = GetTwoDigitString(rulenum + 1)
-    Set m_dictValues = values
+    Set m_dictValues = Values
     prop_ss_name = Name
     
 End Sub
