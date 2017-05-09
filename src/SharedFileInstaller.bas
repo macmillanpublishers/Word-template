@@ -160,20 +160,24 @@ End Function
 ' FileName: name and extension of JSON file (not path)
 
 ' RETURNS:
-' Full path to downloaded JSON file
+' Full path to downloaded JSON file.
+' If download failed and we don't already have a copy locally, returns null string
 
 Public Function DownloadJson(FileName As String) As String
   Dim dictJsonInfo As Dictionary
+  Dim strFinalPath As String
+  
   Set dictJsonInfo = FileInfo(FileName)
+  strFinalPath = dictJsonInfo("Final")
 
   If DownloadFromGithub(FileName) = False Then
-    If Utils.IsItThere(dictJsonInfo("Final")) = True Then
-      DownloadJson = True
+    If Utils.IsItThere(strFinalPath) = True Then
+      DownloadJson = strFinalPath
     Else
-      DownloadJson = False
+      DownloadJson = vbNullString
     End If
   Else
-    DownloadJson = True
+    DownloadJson = strFinalPath
   End If
 
 End Function

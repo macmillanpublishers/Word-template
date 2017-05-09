@@ -82,14 +82,14 @@ Private Property Get SectionLists() As Dictionary
     Set collAll = New Collection
     
     ' cycle through the json data and add section start names to appropriate collections
-    For J = 0 To prop_parsedJSON.Count - 1
-        strSSname = prop_parsedJSON.Keys(J)
+    For J = 0 To RuleDictionary.Count - 1
+        strSSname = RuleDictionary.Keys(J)
         collAll.Add (strSSname)
-        If prop_parsedJSON(strSSname).Item("section_type") = "frontmatter" Then
+        If RuleDictionary(strSSname).Item("section_type") = "frontmatter" Then
             collFrontmatter.Add (strSSname)
-        ElseIf prop_parsedJSON(strSSname).Item("section_type") = "main" Then
+        ElseIf RuleDictionary(strSSname).Item("section_type") = "main" Then
             collMain.Add (strSSname)
-        ElseIf prop_parsedJSON(strSSname).Item("section_type") = "backmatter" Then
+        ElseIf RuleDictionary(strSSname).Item("section_type") = "backmatter" Then
             collBackmatter.Add (strSSname)
         End If
     Next
@@ -124,13 +124,13 @@ Public Property Get Rules() As Collection
     Dim dictPriority As Dictionary
     
     ' Cycle through the JSON data
-    For i = 0 To prop_parsedJSON.Count - 1
+    For i = 0 To RuleDictionary.Count - 1
         Set dictSingleSectionStart = New Dictionary
         Set dictPriority = New Dictionary
         ' get / set the name of this Section Start item
-        strSSname = prop_parsedJSON.Keys(i)
+        strSSname = RuleDictionary.Keys(i)
         ' get / set the value of this Section Start item as a dict
-        Set dictSingleSectionStart = prop_parsedJSON(strSSname)
+        Set dictSingleSectionStart = RuleDictionary(strSSname)
         
         ' Conditional so we don't create a Rule object for an entry with no criteria
         If dictSingleSectionStart.Exists("contiguous_block_criteria_01") Then
@@ -141,7 +141,7 @@ Public Property Get Rules() As Collection
             ' Add new rules for any extra sets of criteria; start checking at "2"
             lng_criteriaCount = 2
             str_criteriaCount = GetTwoDigitString(lng_criteriaCount)
-            Do While prop_parsedJSON(strSSname).Exists("contiguous_block_criteria_" & str_criteriaCount)
+            Do While RuleDictionary(strSSname).Exists("contiguous_block_criteria_" & str_criteriaCount)
                 ' Create the rule object
                 Set objNewSectionStartRule = Factory.CreateSSrule(strSSname, dictSingleSectionStart, lng_criteriaCount)
                 ' add its name + priority to the prop_rules collection
@@ -169,17 +169,17 @@ End Property
 ' downloading the file. Also better encapsulates the creation of the dict, in
 ' case we change the source in the future.
 
-Private Property Set RuleDictionary(JsonFileName As String)
+' PARAMS:
+' JsonFileName : Just file name w/ extension. Rest of info (where to download
+' from, where to save locally, etc.) is created in this procedure.
+
+Private Property Get RuleDictionary() As Dictionary
+' Check if already created before we do it again.
   If prop_RuleDictionary Is Nothing Then
-  ' Local JSON file
-    Dim dictJsonInfo As Dictionary
     Dim strJsonPath As String
-    Set dictJsonInfo = SharedFileInstaller.FileInfo(FileName:=JsonFilePath)
-    strJsonPath = dictJsonInfo("Final")
   
   ' Download JSON file
-  
-  ' If download fails, revert to local version
+    strJsonPath = SharedFileInstaller.DownloadJson("section_start_rules.json")
   
   ' Load JSON data into dictionary
     Set prop_RuleDictionary = ClassHelpers.ReadJson(strJsonPath)
@@ -189,21 +189,11 @@ Private Property Set RuleDictionary(JsonFileName As String)
 End Property
 
 
-
-
 ' *****************************************************************************
 '       PUBLIC METHODS
 ' *****************************************************************************
 
-' ===== Init ========================================================
-' This is called by the factory for this class to initialize a new object,
-' in this case just reading in the json file from the passed filepath as a dict
 
-Public Sub Init(p_JSONpath As String)
-
-    Set prop_parsedJSON = ClassHelpers.ReadJson(p_JSONpath)
-
-End Sub
 
 ' *****************************************************************************
 '       PRIVATE METHODS

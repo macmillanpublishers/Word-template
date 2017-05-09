@@ -6,8 +6,3 @@ Public Function CreateSSrule(Name As String, values As Dictionary, rulenum As Lo
     CreateSSrule.Init Name:=Name, values:=values, rulenum:=rulenum ', section_types:=section_types
 End Function
 
-Public Function CreateSSRuleCollection(JsonPath As String) As SSRuleCollection
-    Set CreateSSRuleCollection = New SSRuleCollection
-    CreateSSRuleCollection.Init p_JSONpath:=JsonPath
-End Function
-
