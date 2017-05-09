@@ -118,41 +118,47 @@ Private Property Get Rules() As Collection
     Set prop_rules = New Collection
     Dim dictSingleSectionStart As Dictionary
     Dim objNewSectionStartRule As SSRule
-    Dim i As Long
     Dim lng_criteriaCount As Long
-    Dim str_criteriaCount As String
-    Dim lngRulePriority As Long
-    Dim dictPriority As Dictionary
+    Dim strCriteriaKey As String
+    Dim varKey As Variant
+    Dim lngPriority As Long
+
+  ' Set up priority collections
+  ' Could probably be more flexible (in case more than 4 priorities) but works for now
+  ' Index will match .Priority
+    Dim A As Long
+    Dim colPriorty As Collection
+    For A = 1 To 4
+      Set colPrioirty = New Collection
+      prop_rules.Add colPrioirty
+    Next A
     
     ' Cycle through the JSON data
-    For i = 0 To RuleDictionary.Count - 1
-        Set dictSingleSectionStart = New Dictionary
-        Set dictPriority = New Dictionary
-        ' get / set the name of this Section Start item
-        strSSname = RuleDictionary.Keys(i)
+    For Each varKey In RuleDictionary.Keys
         ' get / set the value of this Section Start item as a dict
-        Set dictSingleSectionStart = RuleDictionary(strSSname)
+        Set dictSingleSectionStart = RuleDictionary(varKey)
         
-        ' Conditional so we don't create a Rule object for an entry with no criteria
-        If dictSingleSectionStart.Exists("contiguous_block_criteria_01") Then
-            ' Create the rule object & add it to rule object collection
-            Set objNewSectionStartRule = Factory.CreateSSrule(strSSname, dictSingleSectionStart, 1) ', prop_sectionLists)
-            prop_rules.Add objNewSectionStartRule
-            
-            ' Add new rules for any extra sets of criteria; start checking at "2"
-            lng_criteriaCount = 2
-            str_criteriaCount = GetTwoDigitString(lng_criteriaCount)
-            Do While RuleDictionary(strSSname).Exists("contiguous_block_criteria_" & str_criteriaCount)
-                ' Create the rule object
-                Set objNewSectionStartRule = Factory.CreateSSrule(strSSname, dictSingleSectionStart, lng_criteriaCount)
-                ' add its name + priority to the prop_rules collection
-                prop_rules.Add objNewSectionStartRule '.RuleName ', lngRulePriority
-                ' increment count & string
-                lng_criteriaCount = lng_criteriaCount + 1
-                str_criteriaCount = GetTwoDigitString(lng_criteriaCount)
-            Loop
-        End If
-    Next
+    ' Conditional so we don't create a Rule object for an entry with no criteria
+'        If dictSingleSectionStart.Exists("contiguous_block_criteria_01") Then
+'            ' Create the rule object & add it to rule object collection
+'            Set objNewSectionStartRule = Factory.CreateSSrule(varKey, dictSingleSectionStart, 1) ', prop_sectionLists)
+'            prop_rules.Add objNewSectionStartRule
+        
+        ' Can use this for whole loop instead of block above, b/c checking .Exists before creating Rule
+        lng_criteriaCount = 1
+        strCriteriaKey = "contiguous_block_criteria_" & Format(lng_criteriaCount, "00")
+        Do While dictSingleSectionStart.Exists(strCriteriaKey)
+            ' Create the rule object
+            Set objNewSectionStartRule = Factory.CreateSSrule(strSSname, dictSingleSectionStart, lng_criteriaCount)
+            lngPriority = objNewSectionStartRule.Priority
+            ' add its name + priority to the prop_rules collection
+            prop_rules(lngPriority).Add objNewSectionStartRule
+            ' increment count & string
+            lng_criteriaCount = lng_criteriaCount + 1
+            strCriteriaKey = "contiguous_block_criteria_" & Format(lng_criteriaCount, "00")
+        Loop
+'        End If
+    Next varKey
   End If
     
   Set Rules = prop_rules
@@ -233,15 +239,18 @@ End Property
 ' message; if no errors, returns null string.
 
 Public Function Validate() As String
-  Dim varRule As SSRule
-  For Each varRule In Rules
-    With varRule
-      .Process
-      If .Blocks.Count > 0 Then ' we have possible missing ss-starts
-        AddWarning ProcessedRule:=varRule
-      End If
-    End With
-  Next varRule
+  Dim varRule As Variant
+  Dim A As Long
+  For A = 1 To 4
+    For Each varRule In Rules(A)
+      With varRule
+        .Process
+        If .Blocks.Count > 0 Then ' we have possible missing ss-starts
+          AddWarning ProcessedRule:=varRule
+        End If
+      End With
+    Next varRule
+  Next A
 
   Validate = WarningString
 End Function

@@ -49,6 +49,20 @@ Public Property Get SectionName() As String
 End Property
 
 
+Public Property Get Priority() As Long
+    If SectionRequired = True Then
+        prop_priority = 1
+    ElseIf m_dictValues.Exists("order") And m_dictValues.Item("order") = "last" Then
+        prop_priority = 4
+    ElseIf Position <> vbNullString Then
+        prop_priority = 3
+    Else
+        prop_priority = 2
+    End If
+    Priority = prop_priority
+End Property
+
+
 ' ===== Blocks ================================================================
 ' Collection of paragraph indices of the starting paragraph of each block of
 ' contiguous paragraphs that we're editing.
@@ -240,18 +254,6 @@ Private Property Get LastCriteria() As Boolean
     LastCriteria = prop_last
 End Property
 
-Private Property Get Priority() As Long
-    If SectionRequired = True Then
-        prop_priority = 1
-    ElseIf m_dictValues.Exists("order") And m_dictValues.Item("order") = "last" Then
-        prop_priority = 4
-    ElseIf Position <> vbNullString Then
-        prop_priority = 3
-    Else
-        prop_priority = 2
-    End If
-    Priority = prop_priority
-End Property
 
 
 ' ===== SectionStartsInUse =====================================================
