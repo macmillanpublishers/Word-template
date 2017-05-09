@@ -75,12 +75,14 @@ End Property
 
 
 Private Property Get InsertBefore() As Collection
+  If prop_insert_before Is Nothing Then
     If m_dictValues.Exists("section_required") Then
       Set prop_insert_before = m_dictValues("section_required").Item("insert_before")
     Else
       Set prop_insert_before = New Collection
     End If
-    InsertBefore = prop_insert_before
+  End If
+  InsertBefore = prop_insert_before
 End Property
 
 
@@ -99,19 +101,23 @@ Private Property Get Multiple() As Boolean
     Multiple = prop_multiple
 End Property
 Public Property Get Styles() As Collection
+  If prop_styles Is Nothing Then
     Set prop_styles = m_dictValues("contiguous_block_criteria_" & m_str_criteria_count).Item("styles")
-    Set Styles = prop_styles
+  End If
+  Set Styles = prop_styles
 End Property
 
 
 Private Property Get OptionalHeadingStyles() As Collection
+  If prop_optional_heading_styles Is Nothing Then
     If m_dictValues("contiguous_block_criteria_" & m_str_criteria_count).Exists("optional_heading_styles") Then
         Set prop_optional_heading_styles = m_dictValues("contiguous_block_criteria_" & _
         m_str_criteria_count).Item("optional_heading_styles")
     Else
         Set prop_optional_heading_styles = New Collection
     End If
-    Set OptionalHeadingStyles = prop_optional_heading_styles
+  End If
+  Set OptionalHeadingStyles = prop_optional_heading_styles
 End Property
  
 Private Property Get FirstChild() As Boolean
@@ -125,13 +131,15 @@ End Property
 
 
 Private Property Get FirstChildText() As Collection
+  If prop_first_child_text Is Nothing Then
     If m_dictValues("contiguous_block_criteria_" & m_str_criteria_count).Exists("first_child") Then
       Set prop_first_child_text = m_dictValues("contiguous_block_criteria_" & _
       m_str_criteria_count).Item("first_child").Item("text")
     Else
       Set prop_first_child_text = New Collection
     End If
-    Set FirstChildText = prop_first_child_text
+  End If
+  Set FirstChildText = prop_first_child_text
 End Property
 
 
@@ -147,20 +155,24 @@ End Property
 
 
 Private Property Get RequiredStyles() As Collection
+  If prop_required_styles Is Nothing Then
     Set prop_required_styles = m_dictValues("contiguous_block_criteria_" & _
     m_str_criteria_count).Item("previous_sibling").Item("required_styles")
-    Set RequiredStyles = prop_required_styles
+  End If
+  Set RequiredStyles = prop_required_styles
 End Property
 
 
 Private Property Get PreviousUntil() As Collection
+  If prop_previous_until Is Nothing Then
     If m_dictValues("contiguous_block_criteria_" & m_str_criteria_count).Exists("previous_until") Then
         Set prop_previous_until = m_dictValues("contiguous_block_criteria_" & _
         m_str_criteria_count).Item("previous_until")
     Else
         Set prop_previous_until = New Collection
     End If
-    Set PreviousUntil = prop_previous_until
+  End If
+  Set PreviousUntil = prop_previous_until
 End Property
 
 
@@ -199,10 +211,8 @@ End Property
 Private Property Get SectionStartParas() As Collection
 ' If property hasn't been created yet, create it first.
   If prop_SectionStartParas Is Nothing Then
-    Dim col_Sections As Collection
-    Set col_Sections = New Collection
-    Set prop_SectionStartParas = FindStyleInDoc(SearchStyle:=SectionName, _
-      DestinationCollection:=col_Sections)
+    Set prop_SectionStartParas = New Collection
+    ClassHelpers.FindStyleIndex SectionName, prop_SectionStartParas
   End If
   
   Set SectionStartParas = prop_SectionStartParas
@@ -224,7 +234,7 @@ Private Property Get Blocks() As Collection
   ' Create collection of ALL paragraphs using styles in Styles property
     Dim varStyle As Variant
     For Each varStyle In Styles
-      FindStyleInDoc SearchStyle:=varStyle, DestinationCollection:=colPossibleBlocks
+      ClassHelpers.FindStyleIndex varStyle, col_PossibleBlocks
     Next varStyle
 
   ' Sort indices in ascending order. No native Collection.Sort method, convert
@@ -249,9 +259,10 @@ Private Property Get Blocks() As Collection
       
       Do While lngNextIndex <= col_PossibleBlocks.Count
         lngNextValue = col_PossibleBlocks.Item(longnextindex)
-        If lngNextValue = lngCurrentValue + 1 Or Utils.ExistsInCollection(VersatileBlockCollection, lngNextValue) = True Then
-          lngCurrentValue = lngNextValue
-          lngNextIndex = lngNextIndex + 1
+        If lngNextValue = (lngCurrentValue + 1) Or _
+          WT_StyleConfig.VersatileStyleExistsByIndex(lngNextValue) = True Then
+            lngCurrentValue = lngNextValue
+            lngNextIndex = lngNextIndex + 1
         Else
           Exit Do
         End If
@@ -297,34 +308,6 @@ End Sub
 '       PRIVATE METHODS
 ' *****************************************************************************
 
-' ===== FindStyleInDoc =========================================================
-' Adds index numbers for paragraphs with SearchStyle applied to DestinationCollection.
-' Note that because DestinationCollection is passed ByRef we don't need to return
-' it to the calling function.
-
-Private Sub FindStyleInDoc(SearchStyle As String, ByRef DestinationCollection _
-  As Collection)
-  Dim lngFoundIndex As Long
-
-' MacroHelpers.ParaIndex works with current Selection, so use Selection.Find
-' Start from beginning of document
-  activeDoc.Selection.HomeKey Unit:=wdStory
-
-  MacroHelpers.zz_clearFind
-  With Selection.Find
-    .Format = True
-    .Style = SearchStyle
-    .Forward = True
-    .Wrap = wdFindStop
-    .Execute
-    
-    Do While .Execute = True
-      .Execute
-      lngFoundIndex = MacroHelpers.ParaIndex(UseEnd:=False)
-      DestinationCollection.Add lngFoundIndex
-    Loop
-  End With
-End Sub
 
 
 ' ===== CountSections ============================================================

@@ -12,6 +12,7 @@ Option Explicit
 ' Public Properties
 Private prop_VersatileStyles As Collection
 Private prop_SectionStartStyles As Collection
+Private prop_VersatileStylesByIndex As Collection
 
 ' Private Properties
 Private prop_VbaStyleConfig As Dictionary
@@ -43,6 +44,20 @@ Public Property Get SectionStartStyles() As Collection
   Set SectionStartStyles = prop_SectionStartStyles
 End Property
 
+' ===== VersatileStylesByIndex ================================================
+' Collection of paragraph index of each style in current document that has a
+' versatile style applied
+
+Public Property Get VersatileStylesByIndex() As Collection
+  If prop_VersatileStylesByIndex Is Nothing Then
+    Set prop_VersatileStylesByIndex = New Collection
+    Dim varStyle As Variant
+    For Each varStyle In Me.VersatileStyles
+      ClassHelpers.FindStyleIndex varStyle, prop_VersatileStylesByIndex
+    Next varStyle
+  End If
+  Set VersatileStylesByIndex = prop_VersatileStylesByIndex
+End Property
 
 ' *****************************************************************************
 '       PRIVATE PROPERTIES
@@ -80,6 +95,15 @@ End Property
 
 Public Function IsVersatileStyle(StyleName As String) As Boolean
   IsVersatileStyle = Utils.ExistsInCollection(Me.VersatileStyles, StyleName)
+End Function
+
+' ===== VersatileStyleExistsByIndex ===========================================
+' Returns True if the style applied to the paragraph of activeDoc w/ that index
+' number is a VersatileStyle
+
+Public Function VersatileStyleExistsByIndex(ParagraphIndex As Long) As Boolean
+  VersatileStyleExistsByIndex = Utils.ExistsInCollection(Me.VersatileStylesByIndex, _
+    ParagraphIndex)
 End Function
 
 ' ===== IsSectionStartStyle ===================================================

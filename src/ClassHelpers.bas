@@ -181,6 +181,7 @@ MergeDictionaryError:
   End If
 End Function
 
+
 ' =============================================================================
 '       PROGRESS BAR HELPERS
 ' =============================================================================
@@ -209,5 +210,44 @@ UpdateBarAndWaitError:
   Else
     Call MacroHelpers.GlobalCleanup
   End If
+End Sub
+
+
+' =============================================================================
+'       OTHER
+' =============================================================================
+
+
+' ===== FindStyleIndex =========================================================
+' Adds index numbers for paragraphs with SearchStyle applied to DestinationCollection.
+' Note that because DestinationCollection is passed ByRef we don't need to return
+' it to the calling function (so we can add to same collection if we want to).
+
+Public Sub FindStyleIndex(SearchStyle As String, ByRef DestinationCollection _
+  As Collection)
+  Dim lngFoundIndex As Long
+
+' MacroHelpers.ParaIndex works with current *Selection*, so use Selection.Find
+' Start from beginning of document
+  activeDoc.Selection.HomeKey Unit:=wdStory
+
+  MacroHelpers.zz_clearFind
+  With Selection.Find
+    .Format = True
+    .Style = SearchStyle
+    .Forward = True
+    .Wrap = wdFindStop
+    .Execute
+    
+    Do While .Execute = True
+      lngFoundIndex = MacroHelpers.ParaIndex(UseEnd:=False)
+      DestinationCollection.Add lngFoundIndex
+      If Multiple = True Then
+        .Execute
+      Else
+        Exit Do
+      End If
+    Loop
+  End With
 End Sub
 
