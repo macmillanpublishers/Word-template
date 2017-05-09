@@ -718,6 +718,20 @@ ExistsInCollectionError:
   End If
 End Function
 
+' ===== SortCollection ========================================================
+' No natice Collection.Sort method, so we'll convert to an array, sort that,
+' then convert back.
+
+' TODO: If this adds too much overhead, research implementations of sorting
+' algorithms on the Collection directly (info exists for VBA, just not that
+' necessary right now).
+
+Public Sub SortCollection(ByRef SourceCollection As Collection)
+  Dim arr_TempArray() As Variant
+  arr_TempArray = ToArray(SourceCollection)
+  WordBasic.SortArray arr_TempArray
+  Set SourceCollection = ToCollection(arr_TempArray)
+End Sub
 
 ' ===== ToArray ===============================================================
 ' Converts a Collection to an array.

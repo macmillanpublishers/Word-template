@@ -1800,197 +1800,36 @@ Private Function CheckFileName() As Boolean
 
 End Function
 
-' ===== SectionStartRules ========================================================
-' This Sub passes the json filepath to the SSRuleCollection class' factory,
-' That class returns a collection of SSRule objects
-' Then this sub loops through the returned RuleCollection, in order of increasing
-' "priority" value, passing them to the ProcessRule Sub to be processed.
+' ===== SectionStartRules =====================================================
+' Moved JSON download, creation of rule dictionary and ProcessRules loop to
+' SSRulesCollection itself.
 
-' RETURNS:
-' Collection of error message strings
+Private Function SectionStartRules() As String
 
-Private Function SectionStartRules() As Collection
-  Dim strJsonFilepath As String
-  Dim strJsonFilename As String
   Dim objNewSSruleCollection As SSRuleCollection
-  Dim lngRuleCount As Long
-  Dim strRuleName As String
-  Dim lngRulePriority As Long
-  Dim lngPriorityCount As Long
-  Dim lngPriorityCheck As Long
-
-  strJsonFilename = "section_start_rules.json"
-  strJsonFilepath = SharedFileInstaller.DownloadJson(strJsonFilename)
-
-' vbNullString = download error, notified in download function
-  If strJsonFilepath = vbNullString Then
-    Exit Function
-  End If
-
-  '' PRODUCTION PATH (not yet tested :)
-' TODO: Different paths based on "user" vs "server"
-'  strJsonFilepath = "S:" & Application.PathSeparator & "resources" & Application.PathSeparator & _
-'  "bookmaker_scripts" & Application.PathSeparator & "bookmaker_validator" & strJsonFilename
+'  Dim lngRuleCount As Long
+'  Dim strRuleName As String
+'  Dim lngRulePriority As Long
+'  Dim lngPriorityCount As Long
+'  Dim lngPriorityCheck As Long
 
   ' create collection object (which creates a collection of Rule objects)
-  Set objNewSSruleCollection = Factory.CreateSSRuleCollection(strJsonFilepath)
+  Set objNewSSruleCollection = New SSRuleCollection
+  SectionStartRules = objNewSSruleCollection.Validate
 
   ' Loop through Rules by "priority" values (set in SSRule.cls)
-  lngPriorityCount = 1
-  lngPriorityCheck = 1
-  Do Until lngPriorityCheck = 0
-    lngPriorityCheck = 0
-      For lngRuleCount = 1 To objNewSSruleCollection.Rules.Count
-        If objNewSSruleCollection.Rules(lngRuleCount).Priority = lngPriorityCount Then
-          Call ProcessRule(objNewSSruleCollection.Rules(lngRuleCount), objNewSSruleCollection.SectionLists)
-          lngPriorityCheck = lngPriorityCheck + 1
-        End If
-      Next
-    lngPriorityCount = lngPriorityCount + 1
-  Loop
+'  lngPriorityCount = 1
+'  lngPriorityCheck = 1
+'  Do Until lngPriorityCheck = 0
+'    lngPriorityCheck = 0
+'      For lngRuleCount = 1 To objNewSSruleCollection.Rules.Count
+'        If objNewSSruleCollection.Rules(lngRuleCount).Priority = lngPriorityCount Then
+'          Call ProcessRule(objNewSSruleCollection.Rules(lngRuleCount), objNewSSruleCollection.SectionLists)
+'          lngPriorityCheck = lngPriorityCheck + 1
+'        End If
+'      Next
+'    lngPriorityCount = lngPriorityCount + 1
+'  Loop
 
 End Function
 
-' ===== ProcessRule ========================================================
-' Returns error message if missing section criteria are matched.
-
-Private Function ProcessRule(p_rule As SSRule, p_sectionLists As Dictionary) _
-  As String
-
-' Create collection of contiguous paragraph blocks
-  Dim colMatchedParaInd As Collection
-  Set colMatchedParaInd = MatchedParaIndices(p_rule.Styles)
-
-' Check if anything was found (and error if it wasn't found but is required)
-  If colMatchedParaInd.Count = 0 Then
-    If p_rule.SectionRequired = True Then
-      ProcessRule = "ERROR MESSAGE HERE"
-    Else
-      Exit Function
-    End If
-  End If
-
-' Sort paragraph indices sequentially
-  Dim arrParaInd() As Variant
-  Dim colSortedParaInd As Collection
-  ' No Collection.Sort method, so we'll use .SortArray
-  arrParaInd = Utils.ToArray(colMatchedParaInd)
-  WordBasic.SortArray arrParaInd
-  Set colSortedParaInd = Utils.ToCollection(arrParaInd)
-
-' Create Collection of Ranges of contiguous blocks
-  Dim colBlockRange As Collection
-  Set colBlockRange = GroupBlocks(ParaIndices:=colSortedParaIndices, _
-    Multiple:=p_rule.Multiple)
-
-' Loop through contiguous blocks to test other criteria
-
-' If optional headings, search UP for each range and add if found
-  
-  
-  
-  
-  
-  
-  
-  
-  ' Make sure info from SSRule looks right
-  ' Call CheckCollection(p_sectionLists("all"))
-  Debug.Print p_rule.Priority & " " & p_rule.RuleName
-  'Debug.Print p_rule.SectionName
-  'Debug.Print p_rule.SectionRequired
-  'Debug.Print p_rule.Position
-  'Debug.Print p_rule.Multiple
-  'Call CheckCollection(p_rule.Styles)
-  'Call CheckCollection(p_rule.OptionalHeadingStyles)
-  'Debug.Print p_rule.FirstChild
-  'Call CheckCollection(p_rule.FirstChildText)
-  'Debug.Print p_rule.FirstChildMatch
-  'Call CheckCollection(p_rule.RequiredStyles)
-  'Call CheckCollection(p_rule.PreviousUntil)
-  'Debug.Print p_rule.LastCriteria
-
-End Function
-
-' ===== GroupBlocks ===========================================================
-' Find contiguous blocks of paragraphs.
-
-' PARAMS
-' ParaIndices: Collection of *SORTED* paragraph indices (integers)
-' Multiple: True = return all blocks / False = only return first block in doc
-
-' RETURNS
-' Collection of Range objects
-
-Private Function GroupBlocks(ParaIndices As Collection, Multiple As Boolean) _
-  As Collection
-  Dim lngBlockStart As Long
-  Dim lngBlockEnd As Long
-  Dim rngBlock As Range
-  Dim colOutput As Collection
-  Set colOutput = New Collection
-
-  With ParaIndices
-    Do
-      lngBlockStart = .Item(1)
-      lngBlockEnd = 0
-
-      Do
-        If .Item(2) > (.Item(1) + 1) Then
-          lngBlockEnd = .Item(1)
-        End If
-        .Remove (1)
-      Loop Until lngBlockEnd > lngBlockStart Or .Count = 0
-      If .Count > 0 Then
-        Set rngBlock = activeDoc.Paragraphs(lngBlockStart).Range
-        rngBlock.SetRange Start:=rngBlock.Start, End:=activeDoc.Paragraphs(lngBlockEnd).Range.End
-        colOutput.Add rngBlock
-      End If
-
-      If Multiple = False Then
-        Exit Do
-      End If
-    Loop Until .Count = 0
-    Set GroupBlocks = colOutput
-  End With
-End Function
-  
-' ===== MatchedParaIndices ====================================================
-' Returns Collection of paragraph indices that match the passed Collection of
-' style names.
-
-Private Function MatchedParaIndices(StyleCollection As Collection) As Collection
-  Dim strStyle As Variant ' Must be Variant to use For Each loop
-  Dim colIndices As Collection
-  Set colIndices = New Collection
-  Dim lngCount As Long
-  Dim lngStartIndex As Long
-  Dim lngEndIndex As Long
-  Dim lngCurrentIndex As Long
-  
-
-  For Each strStyle In StyleCollection
-    MacroHelpers.zz_clearFind
-    With Selection.Find
-      .Format = True
-      .Style = strStyle
-      .Forward = True
-      .Wrap = wdFindStop
-
-      Do While .Found = True And lngCount < 1000 ' counter to stop infinite loop
-        lngCount = lngCount + 1
-        lngStartIndex = MacroHelpers.ParaIndex(UseEnd:=False)
-        lngEndIndex = MacroHelpers.ParaIndex(UseEnd:=True)
-        lngCurrentIndex = lngStartIndex - 1
-        
-        Do
-          lngCurrentIndex = lngCurrentIndex + 1
-          colIndices.Add lngCurrentIndex
-        Loop Until lngCurrentIndex = lngEndIndex
-
-        .Execute
-      Loop
-    End With
-  Next strStyle
-  Set MatchedParaIndices = colIndices
-End Function

@@ -918,7 +918,7 @@ As Boolean = False) As Boolean
     If WT_Settings.InstallType = "server" Then
       Err.Raise MacError.err_DocProtectionOn
     Else
-      MsgBox "Uh oh ... protection is enabled on document '" & activeDoc & "'." & vbNewLine & _
+      MsgBox "Uh oh ... protection is enabled on document '" & activeDoc.Name & "'." & vbNewLine & _
         "Please unprotect the document and run the macro again." & vbNewLine & vbNewLine & _
         "TIP: If you don't know the protection password, try pasting contents of this file into " & _
         "a new file, and run the macro on that.", , "Error 2"

@@ -66,8 +66,8 @@ End Function
 ' needs to be a function, this needs to be a sub.
 
 Public Sub EndnoteDeEmbed()
-  Set activeDoc = activeDoc
-
+  Set activeDoc = ActiveDocument
+  
   Dim blnNotesExist As Boolean
   blnNotesExist = NotesExist()
   

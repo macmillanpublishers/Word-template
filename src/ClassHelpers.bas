@@ -223,13 +223,16 @@ End Sub
 ' Note that because DestinationCollection is passed ByRef we don't need to return
 ' it to the calling function (so we can add to same collection if we want to).
 
+' TODO: see if there is a better way than ByRef (that doesn't involve writing a
+' MergeCollections function) so we can keep better track of what's in it.
+
 Public Sub FindStyleIndex(SearchStyle As String, ByRef DestinationCollection _
-  As Collection)
+  As Collection, Optional ReturnMultiple As Boolean = True)
   Dim lngFoundIndex As Long
 
 ' MacroHelpers.ParaIndex works with current *Selection*, so use Selection.Find
 ' Start from beginning of document
-  activeDoc.Selection.HomeKey Unit:=wdStory
+  Selection.HomeKey Unit:=wdStory
 
   MacroHelpers.zz_clearFind
   With Selection.Find
@@ -238,7 +241,7 @@ Public Sub FindStyleIndex(SearchStyle As String, ByRef DestinationCollection _
     .Forward = True
     .Wrap = wdFindStop
     .Execute
-    
+
     Do While .Execute = True
       lngFoundIndex = MacroHelpers.ParaIndex(UseEnd:=False)
       DestinationCollection.Add lngFoundIndex

@@ -20,15 +20,16 @@ Private prop_MainStyles As Collection
 Private prop_BackmatterStyles As Collection
 Private prop_rules As Collection
 Private strSSname As String
+Private prop_Warnings As Collection
 
 ' *****************************************************************************
-'       PUBLIC PROPERTIES
+'       PRIVATE PROPERTIES
 ' *****************************************************************************
 
 ' ===== FrontmatterStyles =====================================================
 ' Collection of all Section-Start styles that belong in Frontmatter
 
-Public Property Get FrontmatterStyles() As Collection
+Private Property Get FrontmatterStyles() As Collection
   If prop_FrontmatterStyles Is Nothing Then
     Set prop_FrontmatterStyles = SectionLists("frontmatter")
   End If
@@ -38,7 +39,7 @@ End Property
 ' ===== MainStyles ============================================================
 ' Collection of all Section-Start styles that belong in Backmatter
 
-Public Property Get MainStyles() As Collection
+Private Property Get MainStyles() As Collection
   If prop_MainStyles Is Nothing Then
     Set prop_MainStyles = SectionLists("main")
   End If
@@ -48,7 +49,7 @@ End Property
 ' ===== BackmatterStyles ======================================================
 ' Collection of all Section-Start styles that belong in Backmatter
 
-Public Property Get BackmatterStyles() As Collection
+Private Property Get BackmatterStyles() As Collection
   If prop_BackmatterStyles Is Nothing Then
     Set prop_BackmatterStyles = SectionLists("backmatter")
   End If
@@ -111,7 +112,7 @@ End Property
 ' and passing contiguous-block-criteria for each SectionStart (there may be more than one)
 ' to the SSRule factory, and adding the returned SSRUle to the prop_rules collection
 
-Public Property Get Rules() As Collection
+Private Property Get Rules() As Collection
 ' Check if it's already been created first
   If prop_rules Is Nothing Then
     Set prop_rules = New Collection
@@ -159,11 +160,6 @@ Public Property Get Rules() As Collection
 End Property
 
 
-
-' *****************************************************************************
-'       PRIVATE PROPERTIES
-' *****************************************************************************
-
 ' ===== RuleDictionary ========================================================
 ' Separate property for the Dictionary containing the JSON data, including
 ' downloading the file. Also better encapsulates the creation of the dict, in
@@ -189,10 +185,66 @@ Private Property Get RuleDictionary() As Dictionary
 End Property
 
 
+' ===== Warnings ==============================================================
+' Collection of dictionaries with data about missing section starts. Use
+' native Collection.Add method to add, use WarningString property to return
+' actual text for Style Report.
+
+Private Property Get Warnings() As Collection
+  If prop_Warnings Is Nothing Then
+    Set prop_Warnings = New Collection
+  End If
+
+  Set Warnings = prop_Warnings
+End Property
+
+' ===== WarningString =========================================================
+' Converts Warnings collection to a single string to print in Report output.
+
+Private Property Get WarningString() As String
+  Dim strOutput As String
+  If Warnings.Count > 0 Then
+    strOutput = _
+    "** WARNING: Please check if you're missing a Section style on these pages:" & vbNewLine
+
+    Dim varWarning As Variant
+    For Each varWarning In Warnings
+      strOutput = strOutput & vbNewLine & _
+      "            pg. " & varWarning("page_number") & ": " & varWarning("missing_style")
+    Next varWarning
+    
+    strOutput = strOutput & vbNewLine & _
+    "HINT: Each book section needs to start with an extra paragraph that has a " & vbNewLine & _
+    Chr(34) & "Section-Start" & Chr(34) & " style applied to it. If the pages listed above start new sections" & vbNewLine & _
+    "but don't have a Section style, you should add one now."
+  Else
+    strOutput = vbNullString
+  End If
+  WarningString = strOutput
+End Property
+
+
 ' *****************************************************************************
 '       PUBLIC METHODS
 ' *****************************************************************************
 
+' ===== Validate ==============================================================
+' Loops through .Rules to run validation checks. Returns single string Error
+' message; if no errors, returns null string.
+
+Public Function Validate() As String
+  Dim varRule As SSRule
+  For Each varRule In Rules
+    With varRule
+      .Process
+      If .Blocks.Count > 0 Then ' we have possible missing ss-starts
+        AddWarning ProcessedRule:=varRule
+      End If
+    End With
+  Next varRule
+
+  Validate = WarningString
+End Function
 
 
 ' *****************************************************************************
@@ -211,4 +263,25 @@ Private Function GetTwoDigitString(num As Long)
     End If
 End Function
 
-    
+' ===== AddWarning ============================================================
+' Create dictionary of missing ss-style warning info and add to Warnings property.
+
+Private Sub AddWarning(ProcessedRule As SSRule)
+  Dim varBlock As Variant
+  Dim dictWarningData As Dictionary
+  Dim lngPageNumber As Long
+
+  With ProcessedRule
+    For Each varBlock In .Blocks
+      Set dictWarningData = New Dictionary
+    ' Get page number of first para of block
+      lngPageNumber = MacroHelpers.ParaInfo(paraInd:=varBlock, _
+        InfoType:=wdActiveEndAdjustedPageNumber)
+  
+      dictWarningData.Add "page_number", lngPageNumber
+      dictWarningData.Add "missing_style", .SectionName
+  
+      Warnings.Add dictWarningData
+    Next varBlock
+  End With
+End Sub
