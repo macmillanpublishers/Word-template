@@ -308,7 +308,7 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     Dim styleBadCount As Integer
     Dim styleBadOverflow As Boolean
     Dim activeParaCount As Integer
-    Dim J As Integer, K As Integer, L As Integer
+    Dim j As Integer, K As Integer, L As Integer
     Dim paraStyle As String
     '''''''''''''''''''''
     Dim activeParaRange As Range
@@ -324,14 +324,14 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     styleBadCount = 0
     styleBadOverflow = False
     activeParaCount = activeDoc.Paragraphs.Count
-    For J = 1 To activeParaCount
+    For j = 1 To activeParaCount
         
         'All Progress Bar statements for PC only because won't run modeless on Mac
-        If J Mod 100 = 0 Then
+        If j Mod 100 = 0 Then
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((J / activeParaCount) * 0.45) + 0.18)
-            strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & _
+            sglPercentComplete = (((j / activeParaCount) * 0.45) + 0.18)
+            strStatus = "* Checking paragraph " & j & " of " & activeParaCount & " for Macmillan styles..." & _
                         vbCr & Status
             
             'Debug.Print sglPercentComplete
@@ -339,9 +339,9 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
         End If
         
         For A = LBound(Stories()) To UBound(Stories())
-            If J <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Style
-                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
+            If j <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(j).Style
+                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(j).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
                     
                 'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
@@ -379,13 +379,13 @@ CheckGoodStyles:
                             styleBadCount = L
             
                             stylesBad(styleBadCount) = "** ERROR: Non-Macmillan style on page " & pageNumber & _
-                                " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
+                                " (Paragraph " & j & "):  " & paraStyle & vbNewLine & vbNewLine
                         End If
                      End If
                 End If
             End If
         Next A
-    Next J
+    Next j
     
     Status = "* Checking paragraphs for Macmillan styles..." & vbCr & Status
     
@@ -1610,7 +1610,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     ReDim stylesGood(stylesGoodLong)
     Dim styleGoodCount As Integer
     Dim activeParaCount As Integer
-    Dim J As Integer, K As Integer, L As Integer
+    Dim j As Integer, K As Integer, L As Integer
     Dim paraStyle As String
     '''''''''''''''''''''
     Dim activeParaRange As Range
@@ -1620,23 +1620,23 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     '----------Collect all styles being used-------------------------------
     styleGoodCount = 0
     activeParaCount = activeDoc.Paragraphs.Count
-    For J = 1 To activeParaCount
+    For j = 1 To activeParaCount
         
         'All Progress Bar statements for PC only because won't run modeless on Mac
-        If J Mod 100 = 0 Then
+        If j Mod 100 = 0 Then
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((J / activeParaCount) * 0.12) + 0.86)
-            strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
+            sglPercentComplete = (((j / activeParaCount) * 0.12) + 0.86)
+            strStatus = "* Checking paragraph " & j & " of " & activeParaCount & " for Macmillan styles..." & vbCr & Status
     
             Call UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
             
         End If
         
         For A = LBound(Stories()) To UBound(Stories())
-            If J <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Style
-                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
+            If j <= ActiveDocument.StoryRanges(Stories(A)).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(j).Style
+                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(j).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
         
                 For K = 1 To styleGoodCount
@@ -1652,7 +1652,7 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
                 End If
             End If
         Next A
-    Next J
+    Next j
     
     'Sort good styles
     If K <> 0 Then

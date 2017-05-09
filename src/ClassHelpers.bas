@@ -25,6 +25,7 @@ Private Const strClassHelpers As String = "ClassHelpers."
 ' To get from JSON file to Dictionary object, must read file to string, then
 ' convert string to Dictionary. This does all of that (and some error handling)
 
+
 Public Function ReadJson(JsonPath As String) As Dictionary
   On Error GoTo ReadJsonError
   Dim dictJson As Dictionary
@@ -32,12 +33,12 @@ Public Function ReadJson(JsonPath As String) As Dictionary
   If IsItThere(JsonPath) = True Then
     Dim strJson As String
     
-    strJson = Utils.ReadTextFile(JsonPath, False)
+    strJson = ReadTextFile(JsonPath, False)
     If strJson <> vbNullString Then
-      Set dictJson = MacroHelpers.JsonConverter.ParseJson(strJson)
+      Set dictJson = JsonConverter.ParseJson(strJson)
     Else
       ' If file exists but has no content, return empty dictionary
-      Set dictJson = ClassHelpers.NewDictionary
+      Set dictJson = New Dictionary
     End If
   Else
     Err.Raise MacError.err_FileNotThere
@@ -57,7 +58,7 @@ ReadJsonError:
   If ErrorChecker(Err, JsonPath) = False Then
     Resume
   Else
-    Call MacroHelpers.GlobalCleanup
+    Call GlobalCleanup
   End If
 End Function
 
@@ -66,6 +67,7 @@ End Function
 ' JsonConverter.ConvertToJson returns a string, when we then need to write to
 ' a text file if we want the output. This combines those. Will overwrite the
 ' original file if already exists, will create file if it does not.
+
 
 Public Sub WriteJson(JsonPath As String, JsonData As Dictionary)
   On Error GoTo WriteJsonError:
