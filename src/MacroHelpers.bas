@@ -1775,3 +1775,8 @@ IsNewLineError:
     Call MacroHelpers.GlobalCleanup
   End If
 End Function
+
+
+' ===== MainStartParaIndex ====================================================
+' Returns paragraph index of first paragraph in the Main section, based on
+' WT_StyleConfig values for frontmatter styles.

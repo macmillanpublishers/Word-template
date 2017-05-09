@@ -382,22 +382,99 @@ End Function
 ' OK as is, it is removed from the Blocks collection.
 
 Private Sub CheckPosition()
-
+  If Position <> vbNullString Then
+    Dim varIndex As Variant
+    Dim col_Temp As Collection
+    Dim lngBeginMain As Long
+    lngBeginMain = MacroHelpers.MainStartParaIndex()
+  End If
 End Sub
 
 ' ===== AddOptionalHeadings ===================================================
 ' If rule has optional headings, check each block and add if found.
 
 Private Sub AddOptionalHeadings()
-
+  If OptionalHeadingStyles.Count > 0 Then
+    Dim varIndex As Variant
+    Dim lngCheckPara As Long
+    Dim lngBlockStart As Long
+    Dim strStyle As String
+    Dim col_Temp As Collection
+    Set col_Temp = New Collection
+    
+    For Each varIndex In Blocks
+    ' Current starting paragraph for our block
+      lngBlockStart = varIndex
+    ' Paragraph we're checking
+      lngCheckPara = varIndex - 1
+      Do While lngCheckPara > 0
+        strStyle = ActiveDocument.Paragraphs(lngCheckPara).Range.ParagraphStyle
+        If Utils.ExistsInCollection(OptionalHeadingStyles, strStyle) = True Or _
+          WT_StyleConfig.IsVersatileStyle(strStyle) = True Then
+          ' Previous para IS an optional heading, so adjust our validated Block Start
+          lngBlockStart = lngCheckPara
+          ' Adjust next check para here, since test is at start of Do loop
+          lngCheckPara = lngCheckPara - 1
+        Else
+        ' If didn't match, we've found our block start
+          Exit Do
+        End If
+      Loop
+    ' Add all block starts to new collection (if nothing matched, it will
+    ' be the same as before
+      col_Temp.Add lngBlockStart
+    Next varItem
+  ' Replace Blocks property with our adjusted paragraph indices
+    Set Blocks = col_Temp
+  End If
 End Sub
 
 ' ===== CheckPreviousSiblings =================================================
 ' Check "previous_sibling" and/or "previous_until" criteria. If pass (ie., OK as
-' is), removes Blocks collection.
+' is), removes from Blocks collection.
 
 Private Sub CheckPreviousSiblings()
-
+  If Blocks.Count > 0 Then
+    Dim col_Temp As Collection
+    Set col_Temp = New Collection
+    Dim varIndex As Variant
+    Dim lngCheckIndex As Long
+    Dim strStyle As String
+    
+    If PreviousUntil.Count > 0 Then
+      For Each varIndex In Blocks
+        lngCheckIndex = varIndex - 1
+        
+      Next varIndex
+    
+    Else ' just check single previous sibling
+      For Each varIndex In Blocks
+        lngCheckIndex = varIndex - 1
+        Do While lngCheckIndex > 0
+          strStyle = activeDoc.Paragraphs(lngCheckIndex).Range.ParagraphStyle
+          If Utils.ExistsInCollection(RequiredStyles, strStyle) = True Or _
+            WT_StyleConfig.IsSectionStartStyle(strStyle) = True Then
+            ' Previous style is OK, exit Do and on to next block
+              Exit Do
+          ElseIf PreviousUntil > 0 And Utils.ExistsInCollection(PreviousUntil, _
+            strStyle) = True Then
+            ' Matched PreviousUntil, missing ss style
+              col_Temp.Add varIndex
+              Exit Do
+          Else  ' might be a versatile block
+            If WT_StyleConfig.IsVersatileStyle(strStyle) = False Then
+            ' Definitely didn't match PreviousStyle, so add to new collection of errors
+              col_Temp.Add varIndex
+              Exit Do
+            Else ' It's a versatileStyle, have to check up again
+              lngCheckIndex = lngCheckIndex - 1
+            End If
+          End If
+        Loop
+      Next varIndex
+    End If
+    Set Blocks = col_Temp
+  End If
 End Sub
 
 ' ===== CheckFirstChild =======================================================
