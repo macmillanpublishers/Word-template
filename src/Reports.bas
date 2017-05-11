@@ -137,6 +137,9 @@ Private Sub MakeReport(torDOTcom As Boolean)
 ' -------- validate section-start styles --------------------------------------
   Dim strSectionStartWarnings As String
   strSectionStartWarnings = SectionStartRules()
+  
+' -------- Remove formatting from CN paragraphs -----------------------------------------------
+  Call ChapNumCleanUp
 
   '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
   '-------because it should just be applied to the isbn numerals and hyphens-------------------
@@ -211,7 +214,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     Dim strErrorList As String
     
     If blnTemplateUsed = True Then
-        strErrorList = CreateErrorList(badStyles:=strBadStylesList, strSecStWarnings:=strSectionStartWarnings, arrStyleCount:=styleCount, blnTor:=torDOTcom)
+        strErrorList = CreateErrorList(badStyles:=strBadStylesList, strSecStWarnings:=strSectionStartWarnings, blnTor:=torDOTcom)
         'strErrorList = "testing"
     Else
         strErrorList = ""
@@ -536,115 +539,14 @@ Private Function CreateErrorList(badStyles As String, strSecStWarnings As String
     
     errorList = strSecStWarnings
     
-    '--------------For reference----------------------
-    'arrStyleCount(1) = "Titlepage Book Title (tit)"
-    'arrStyleCount(2) = "Titlepage Author Name (au)"
-    'arrStyleCount(3) = "span ISBN (isbn)"
-    'arrStyleCount(4) = "Chap Number (cn)"
-    'arrStyleCount(5) = "Chap Title (ct)"
-    'arrStyleCount(6) = "Chap Title Nonprinting (ctnp)"
-    'arrStyleCount(7) = "Titlepage Logo (logo)"
-    'arrStyleCount(8) = "Part Title (pt)"
-    'arrStyleCount(9) = "Part Number (pn)"
-    'arrStyleCount(10) = "FM Head (fmh)"
-    'arrStyleCount(11) = "FM Title (fmt)"
-    'arrStyleCount(12) = "BM Head (bmh)"
-    'arrStyleCount(13) = "BM Title (bmt)"
-    'arrStyleCount(14) = "Illustration holder (ill)"
-    'arrStyleCount(15) = "Illustration source (is)"
-    '------------------------------------------------
-    
-    '=====================Generate errors based on number of required elements found==================
-    
-    'If Book Title = 0
-    If arrStyleCount(1) = 0 Then errorList = errorList & "** ERROR: No styled title detected." & _
-        vbNewLine & vbNewLine
-    
-    'If Book Title > 1
-    If arrStyleCount(1) > 1 Then errorList = errorList & "** ERROR: Too many title paragraphs detected." _
-        & " Only 1 allowed." & vbNewLine & vbNewLine
-    
-    'Check if page break before Book Title
-    If arrStyleCount(1) > 0 Then errorList = errorList & CheckPrevStyle(findStyle:="Titlepage Book Title (tit)", _
-        prevStyle:="Page Break (pb)")
-    
-    
-    'If Author Name = 0
-    If arrStyleCount(2) = 0 Then errorList = errorList & "** ERROR: No styled author name detected." _
-        & vbNewLine & vbNewLine
-    
-    'If ISBN = 0
-    If arrStyleCount(3) = 0 Then
-        errorList = errorList & "** ERROR: No styled ISBN detected." _
-        & vbNewLine & vbNewLine
-    Else
-        If blnTor = True Then
-            'check for correct book type following ISBN, in parens.
-            errorList = errorList & BookTypeCheck
-        End If
-    End If
-    
-           
-    'If no chapter opening paragraphs (CN, CT, or CTNP)
-    If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) = 0 Then errorList = errorList _
-        & "** ERROR: No tagged chapter openers detected. If your book does" & vbNewLine _
-        & vbTab & "not have chapter openers, use the Chap Title Nonprinting" & vbNewLine _
-        & vbTab & "(ctnp) style at the start of each section." & vbNewLine & vbNewLine
-    
-    'If CN > CT and CT > 0 (i.e., Not a CT for every CN)
-    If arrStyleCount(4) > arrStyleCount(5) And arrStyleCount(5) > 0 Then errorList = errorList & _
-        "** ERROR: More Chap Number (cn) paragraphs than Chap Title (ct)" & vbNewLine _
-        & vbTab & "paragraphs found. Each Chap Number (cn) paragraph MUST be" & vbNewLine _
-        & vbTab & "followed by a Chap Title (ct) paragraph." & vbNewLine & vbNewLine
-    
-    'If Imprint line = 0
-    If arrStyleCount(7) = 0 Then errorList = errorList & "** WARNING: No styled Titlepage Logo (logo) line detected. " _
-        & "If you would like a logo included on your titlepage, please add this style." & vbNewLine & vbNewLine
-    
-    'If Imprint Lline > 1
-    If arrStyleCount(7) > 1 Then errorList = errorList & "** ERROR: Too many Imprint Line paragraphs" _
-        & " detected. Only 1 allowed." & vbNewLine & vbNewLine
-    
-    'If only CTs because converted by macro check for a page break before
-    If (arrStyleCount(4) > 0 And arrStyleCount(5) = 0) Then errorList = errorList & _
-        CheckPrevStyle(findStyle:="Chap Title (ct)", prevStyle:="Page Break (pb)")
-    
-    'If only PTs (either originally or converted by macro) check for a page break before
-    If (arrStyleCount(9) > 0 And arrStyleCount(8) = 0) Or (arrStyleCount(9) = 0 And arrStyleCount(8) > 0) _
-        Then errorList = errorList & CheckPrevStyle(findStyle:="Part Title (pt)", prevStyle:="Page Break (pb)")
-    
-    'If only FMHs (either originally or converted by macro) check for a page break before
-    If (arrStyleCount(11) > 0 And arrStyleCount(10) = 0) Or (arrStyleCount(11) = 0 And arrStyleCount(10) > 0) _
-        Then errorList = errorList & CheckPrevStyle(findStyle:="FM Head (fmh)", prevStyle:="Page Break (pb)")
-    
-    'If only BMHs (either originally or converted by macro) check for a page break before
-    If (arrStyleCount(13) > 0 And arrStyleCount(12) = 0) Or (arrStyleCount(13) = 0 And arrStyleCount(12) > 0) _
-        Then errorList = errorList & CheckPrevStyle(findStyle:="BM Head (bmh)", prevStyle:="Page Break (pb)")
-    
-    'If only CTP, check for a page break before
-    If arrStyleCount(4) = 0 And arrStyleCount(5) = 0 And arrStyleCount(6) > 0 Then errorList = errorList _
-        & CheckPrevStyle(findStyle:="Chap Title Nonprinting (ctnp)", prevStyle:="Page Break (pb)")
-            
-    'If CNs <= CTs, then check that those 3 styles are in order
-    If arrStyleCount(4) <= arrStyleCount(5) And arrStyleCount(4) > 0 Then errorList = errorList & CheckPrev2Paras("Page Break (pb)", _
-        "Chap Number (cn)", "Chap Title (ct)")
-    
-    'If Illustrations and sources exist, check that source comes after Ill and Cap
+    'Bookmaker file name validation
     If blnTor = True Then
-        If arrStyleCount(14) > 0 And arrStyleCount(15) > 0 Then errorList = errorList & _
-            CheckPrev2Paras("Illustration holder (ill)", "Caption (cap)", "Illustration Source (is)")
         If CheckFileName = True Then errorList = errorList & _
             "**ERROR: Bookmaker can only accept file names that use" & vbNewLine & _
             "letters, numbers, hyphens, or underscores. Punctuation," & vbNewLine & _
             "spaces, and other special characters are not allowed." & vbNewLine & vbNewLine
     End If
-    
-    'Check that only heading styles follow page breaks
-    errorList = errorList & CheckAfterPB
-    
-    ' Check that all CTNP have some text
-    If arrStyleCount(6) > 0 Then errorList = errorList & CheckNonprintingText
-    
+  
     'Add bad styles to error message
     errorList = errorList & badStyles
     
@@ -751,139 +653,6 @@ ErrHandler:
     End If
 End Function
 
-Function CheckAfterPB() As String
-    Dim arrSecStartStyles() As String
-    ReDim arrSecStartStyles(1 To 47)
-    Dim kString As String
-    Dim kCount As Integer
-    Dim pageNumK As Integer
-    Dim nextStyle As String
-    Dim N As Integer
-    Dim nCount As Integer
-    
-    Application.ScreenUpdating = False
-    
-    ' These are all styles allowed to follow a page break
-    arrSecStartStyles(1) = "Chap Title (ct)"
-    arrSecStartStyles(2) = "Chap Number (cn)"
-    arrSecStartStyles(3) = "Chap Title Nonprinting (ctnp)"
-    arrSecStartStyles(4) = "Halftitle Book Title (htit)"
-    arrSecStartStyles(5) = "Titlepage Book Title (tit)"
-    arrSecStartStyles(6) = "Copyright Text single space (crtx)"
-    arrSecStartStyles(7) = "Copyright Text double space (crtxd)"
-    arrSecStartStyles(8) = "Dedication (ded)"
-    arrSecStartStyles(9) = "Ad Card Main Head (acmh)"
-    arrSecStartStyles(10) = "Ad Card List of Titles (acl)"
-    arrSecStartStyles(11) = "Part Title (pt)"
-    arrSecStartStyles(12) = "Part Number (pn)"
-    arrSecStartStyles(13) = "Front Sales Title (fst)"
-    arrSecStartStyles(14) = "Front Sales Quote (fsq)"
-    arrSecStartStyles(15) = "Front Sales Quote NoIndent (fsq1)"
-    arrSecStartStyles(16) = "Epigraph - non-verse (epi)"
-    arrSecStartStyles(17) = "Epigraph - verse (epiv)"
-    arrSecStartStyles(18) = "FM Head (fmh)"
-    arrSecStartStyles(19) = "Illustration holder (ill)"
-    arrSecStartStyles(20) = "Page Break (pb)"
-    arrSecStartStyles(21) = "FM Epigraph - non-verse (fmepi)"
-    arrSecStartStyles(22) = "FM Epigraph - verse (fmepiv)"
-    arrSecStartStyles(23) = "FM Head ALT (afmh)"
-    arrSecStartStyles(24) = "Part Epigraph - non-verse (pepi)"
-    arrSecStartStyles(25) = "Part Epigraph - verse (pepiv)"
-    arrSecStartStyles(26) = "Part Contents Main Head (pcmh)"
-    arrSecStartStyles(27) = "Poem Title (vt)"
-    arrSecStartStyles(28) = "Recipe Head (rh)"
-    arrSecStartStyles(29) = "Sub-Recipe Head (srh)"
-    arrSecStartStyles(30) = "BM Head (bmh)"
-    arrSecStartStyles(31) = "BM Head ALT (abmh)"
-    arrSecStartStyles(32) = "Appendix Head (aph)"
-    arrSecStartStyles(33) = "About Author Text (atatx)"
-    arrSecStartStyles(34) = "About Author Text No-Indent (atatx1)"
-    arrSecStartStyles(35) = "About Author Text Head (atah)"
-    arrSecStartStyles(36) = "Colophon Text (coltx)"
-    arrSecStartStyles(37) = "Colophon Text No-Indent (coltx1)"
-    arrSecStartStyles(38) = "BOB Ad Title (bobt)"
-    arrSecStartStyles(39) = "Series Page Heading (sh)"
-    arrSecStartStyles(40) = "span small caps characters (sc)"
-    arrSecStartStyles(41) = "span italic characters (ital)"
-    arrSecStartStyles(42) = "Design Note (dn)"
-    arrSecStartStyles(43) = "Front Sales Quote Head (fsqh)"
-    arrSecStartStyles(44) = "Section Break (sbr)"
-    arrSecStartStyles(45) = "FM Head Nonprinting (fmhnp)"
-    arrSecStartStyles(46) = "BM Head Nonprinting (bmhnp)"
-    arrSecStartStyles(47) = "Chap Title ALT (act)"
-    
-    kCount = 0
-    kString = ""
-    
-    'Move selection to start of document
-    Selection.HomeKey Unit:=wdStory
-    
-    On Error GoTo ErrHandler1
-    
-    'select paragraph styled as Page Break with manual page break inserted
-        Selection.Find.ClearFormatting
-        With Selection.Find
-            .Text = "^m^p"
-            .Replacement.Text = "^m^p"
-            .Forward = True
-            .Wrap = wdFindStop
-            .Format = True
-            .Style = activeDoc.Styles("Page Break (pb)")
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-        End With
-    
-    Do While Selection.Find.Execute = True And kCount < 200            'jCount so we don't get an infinite loop
-        kCount = kCount + 1
-        nCount = 0
-        'select following paragraph
-        Selection.Next(Unit:=wdParagraph, Count:=1).Select
-        nextStyle = Selection.Style
-        pageNumK = Selection.Information(wdActiveEndPageNumber)
-            
-           For N = LBound(arrSecStartStyles()) To UBound(arrSecStartStyles())
-                'Check if preceding paragraph style is correct
-                If nextStyle <> arrSecStartStyles(N) Then
-                    nCount = nCount + 1
-                Else
-                    Exit For
-                End If
-            Next N
-                
-            If nCount = UBound(arrSecStartStyles()) Then
-                kString = kString & "** ERROR: " & nextStyle & " style on page " & pageNumK _
-                    & " cannot follow Page Break (pb) style." & vbNewLine & vbNewLine
-            End If
-                    
-        'DebugPrint kString
-     
-Err2Resume:
-        
-        'move the selection back to original paragraph, so it won't be
-        'selected again on next search
-        Selection.Previous(Unit:=wdParagraph, Count:=1).Select
-    Loop
-    
-    'DebugPrint kString
-    
-    CheckAfterPB = kString
-    
-    Exit Function
-
-ErrHandler1:
-    If Err.Number = 5941 Or Err.Number = 5834 Then       'Style doesn't exist in document
-        Exit Function
-    End If
-    
-ErrHandler2:
-    If Err.Number = 5941 Or Err.Number = 5834 Then       ' Style doesn't exist in document
-        Resume Err2Resume
-    End If
-
-End Function
 
 
 Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String, Stories() As Variant) As String
@@ -987,79 +756,6 @@ ErrHandler:
 
 End Function
 
-Private Function CountReqdStyles() As Variant
-    Dim arrStyleName(1 To 15) As String                      ' Declare number of items in array
-    Dim intStyleCount() As Variant
-    ReDim intStyleCount(1 To 15) As Variant                  ' Delcare items in array. Must be dynamic to pass back to Sub
-    
-    Dim A As Long
-    Dim xCount As Integer
-    
-    Application.ScreenUpdating = False
-    
-    arrStyleName(1) = "Titlepage Book Title (tit)"
-    arrStyleName(2) = "Titlepage Author Name (au)"
-    arrStyleName(3) = "span ISBN (isbn)"
-    arrStyleName(4) = "Chap Number (cn)"
-    arrStyleName(5) = "Chap Title (ct)"
-    arrStyleName(6) = "Chap Title Nonprinting (ctnp)"
-    arrStyleName(7) = "Titlepage Logo (logo)"
-    arrStyleName(8) = "Part Title (pt)"
-    arrStyleName(9) = "Part Number (pn)"
-    arrStyleName(10) = "FM Head (fmh)"
-    arrStyleName(11) = "FM Title (fmt)"
-    arrStyleName(12) = "BM Head (bmh)"
-    arrStyleName(13) = "BM Title (bmt)"
-    arrStyleName(14) = "Illustration holder (ill)"
-    arrStyleName(15) = "Illustration Source (is)"
-    
-    For A = 1 To UBound(arrStyleName())
-        On Error GoTo ErrHandler
-        intStyleCount(A) = 0
-        With activeDoc.Range.Find
-            .ClearFormatting
-            .Text = ""
-            .Replacement.Text = ""
-            .Forward = True
-            .Wrap = wdFindStop
-            .Format = True
-            .Style = activeDoc.Styles(arrStyleName(A))
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-        Do While .Execute(Forward:=True) = True And intStyleCount(A) < 100   ' < 100 to prevent infinite loop, especially if content controls in title or author blocks
-            intStyleCount(A) = intStyleCount(A) + 1
-        Loop
-        End With
-ErrResume:
-    Next
-    
-                
-    '------------Exit Sub if exactly 100 Titles counted, suggests hidden content controls-----
-    If intStyleCount(1) = 100 Then
-        
-        MsgBox "Something went wrong!" & vbCr & vbCr & "It looks like you might have content controls (form fields or drop downs) in your document, but Word for Mac doesn't play nicely with these." _
-        & vbCr & vbCr & "Try running this macro on a PC or contact workflows@macmillan.com for assistance.", vbCritical, "OH NO!!"
-        Exit Function
-        
-    End If
-    
-    'For A = 1 To UBound(arrStyleName())
-    '    DebugPrint arrStyleName(A) & ": " & intStyleCount(A) & vbNewLine
-    'Next A
-    
-    CountReqdStyles = intStyleCount()
-    Exit Function
-
-ErrHandler:
-    If Err.Number = 5941 Or Err.Number = 5834 Then
-        intStyleCount(A) = 0
-        Resume ErrResume
-    End If
-        
-End Function
 
 
 Private Function GetMetadata() As String
@@ -1176,195 +872,6 @@ ErrHandler:
 
 End Function
 
-Function CheckPrev2Paras(StyleA As String, StyleB As String, StyleC As String) As String
-    Dim strErrors As String
-    Dim intCount As Integer
-    Dim pageNum As Integer
-    Dim intCurrentPara As Integer
-    Dim strStyle1 As String
-    Dim strStyle2 As String
-    Dim strStyle3 As String
-    
-    Application.ScreenUpdating = False
-    
-        'check if styles exist, else exit sub
-        On Error GoTo ErrHandler:
-        Dim keyStyle As Word.Style
-    
-        Set keyStyle = activeDoc.Styles(StyleA)
-        Set keyStyle = activeDoc.Styles(StyleB)
-        Set keyStyle = activeDoc.Styles(StyleC)
-    
-    
-    strErrors = ""
-    
-    'Move selection to start of document
-    Selection.HomeKey Unit:=wdStory
-    
-    'select paragraph with that style
-        Selection.Find.ClearFormatting
-        With Selection.Find
-            .Text = ""
-            .Replacement.Text = ""
-            .Forward = True
-            .Wrap = wdFindStop
-            .Format = True
-            .Style = activeDoc.Styles(StyleC)
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-        End With
-    
-    intCount = 0
-    
-    Do While Selection.Find.Execute = True And intCount < 300            'jCount < 300 so we don't get an infinite loop
-        intCount = intCount + 1
-        
-        'Get number of current pagaraph, because we get an error if try to select before 1st para
-        
-        intCurrentPara = activeDoc.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
-        
-        'DebugPrint intCurrentPara
-        
-        'Also determine if selection is the LAST paragraph of the document, for later
-        Dim SelectionIncludesFinalParagraphMark As Boolean
-        If Selection.Type = wdSelectionNormal And Selection.End = activeDoc.Content.End Then
-            SelectionIncludesFinalParagraphMark = True
-        Else
-            SelectionIncludesFinalParagraphMark = False
-        End If
-        
-        'DebugPrint intCurrentPara
-        
-        If intCurrentPara > 1 Then      'NOT first paragraph of document
-            'select preceding paragraph
-            Selection.Previous(Unit:=wdParagraph, Count:=1).Select
-            pageNum = Selection.Information(wdActiveEndPageNumber)
-        
-                'Check if preceding paragraph style is correct
-                If Selection.Style <> StyleA Then
-                
-                    If Selection.Style = StyleB Then
-                        'select preceding paragraph again, see if it's prevStyle
-                        Selection.Previous(Unit:=wdParagraph, Count:=1).Select
-                        pageNum = Selection.Information(wdActiveEndPageNumber)
-                        
-                            If Selection.Style <> StyleA Then
-                                strErrors = strErrors & "** ERROR: " & StyleB & " followed by " & StyleC & "" _
-                                    & " on" & vbNewLine & vbTab & "page " & pageNum & " must be preceded by " _
-                                    & StyleA & "." & vbNewLine & vbNewLine
-                            Else
-                                'If you're searching for a page break before, also check if manual page break is in paragraph
-                                If StyleA = "Page Break (pb)" Then
-                                    If InStr(Selection.Text, Chr(12)) = 0 Then
-                                        strErrors = strErrors & "** ERROR: Missing manual page break on page " & pageNum & "." _
-                                            & vbNewLine & vbNewLine
-                                    End If
-                                End If
-                            End If
-                            
-                        Selection.Next(Unit:=wdParagraph, Count:=1).Select
-                    Else
-                    
-                        strErrors = strErrors & "** ERROR: " & StyleC & " on page " _
-                            & pageNum & " must be used after an" & vbNewLine & vbTab & StyleA & "." _
-                                & vbNewLine & vbNewLine
-                            
-                    End If
-                Else
-                    'Make sure initial selection wasn't last paragraph, or else we'll error when trying to select after it
-                    If SelectionIncludesFinalParagraphMark = False Then
-                        'select follow paragraph again, see if it's a Caption
-                        Selection.Next(Unit:=wdParagraph, Count:=2).Select
-                        pageNum = Selection.Information(wdActiveEndPageNumber)
-                            
-                            If Selection.Style = StyleB Then
-                                strErrors = strErrors & "** ERROR: " & StyleC & " style on page " & pageNum & " must" _
-                                    & " come after " & StyleB & " style." & vbNewLine & vbNewLine
-                            End If
-                        Selection.Previous(Unit:=wdParagraph, Count:=2).Select
-                    End If
-                    
-                    'If you're searching for a page break before, also check if manual page break is in paragraph
-                    If StyleA = "Page Break (pb)" Then
-                        If InStr(Selection.Text, Chr(12)) = 0 Then
-                            strErrors = strErrors & "** ERROR: Missing manual page break on page " & pageNum & "." _
-                                & vbNewLine & vbNewLine
-                        End If
-                    End If
-                End If
-            
-                'DebugPrint strErrors
-        
-            'move the selection back to original paragraph, so it won't be
-            'selected again on next search
-            Selection.Next(Unit:=wdParagraph, Count:=1).Select
-        
-        Else 'Selection is first paragraph of the document
-            strErrors = strErrors & "** ERROR: " & StyleC & " cannot be first paragraph of document." & vbNewLine & vbNewLine
-        End If
-        
-    Loop
-    
-    '------------------------Search for Illustration holder and check previous paragraph--------------
-    'Move selection to start of document
-    Selection.HomeKey Unit:=wdStory
-    
-    'select paragraph with that style
-        Selection.Find.ClearFormatting
-        With Selection.Find
-            .Text = ""
-            .Replacement.Text = ""
-            .Forward = True
-            .Wrap = wdFindStop
-            .Format = True
-            .Style = activeDoc.Styles(StyleA)
-            .MatchCase = False
-            .MatchWholeWord = False
-            .MatchWildcards = False
-            .MatchSoundsLike = False
-            .MatchAllWordForms = False
-        End With
-    
-    intCount = 0
-    
-    Do While Selection.Find.Execute = True And intCount < 1000            'jCount < 1000 so we don't get an infinite loop
-        intCount = intCount + 1
-        
-        'Get number of current pagaraph, because we get an error if try to select before 1st para
-        intCurrentPara = activeDoc.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
-    
-        If intCurrentPara > 1 Then      'NOT first paragraph of document
-            'select preceding paragraph
-            Selection.Previous(Unit:=wdParagraph, Count:=1).Select
-            pageNum = Selection.Information(wdActiveEndPageNumber)
-        
-                'Check if preceding paragraph style is a Caption, which is not allowed
-                If Selection.Style = StyleB Then
-                    strErrors = strErrors & "** ERROR: " & StyleB & " on page " & pageNum & " must come after " _
-                                    & StyleA & "." & vbNewLine & vbNewLine
-                End If
-                
-            Selection.Next(Unit:=wdParagraph, Count:=1).Select
-        End If
-    Loop
-    
-    'DebugPrint strErrors
-    
-    CheckPrev2Paras = strErrors
-    
-    'Move selection back to start of document
-    Selection.HomeKey Unit:=wdStory
-    Exit Function
-
-ErrHandler:
-    If Err.Number = 5941 Or Err.Number = 5834 Then       'Style doesn't exist in document
-        Exit Function
-    End If
-
-End Function
 
 Private Function CreateReportText(TemplateUsed As Boolean, errorList As String, metadata As String, illustrations As String, goodStyles As String) As String
 
@@ -1643,77 +1150,14 @@ ErrHandler:
         
 End Function
 
-Private Function CheckNonprintingText()
-    ' Verify that all "Chapter Title Nonprinting (ctnp)" paragraphs have some body text
-    Dim iCount As Long
-    Dim strBodyText As String
-    Dim strErrors As String
-    Dim pageNum As Long
-    Dim intCount As Long
-
-    
-    'Move selection back to start of document
-    Selection.HomeKey Unit:=wdStory
-
-    On Error GoTo ErrHandler
-    
-    intCount = 0
-    With Selection.Find
-        .ClearFormatting
-        .Text = ""
-        .Replacement.Text = ""
-        .Forward = True
-        .Wrap = wdFindStop
-        .Format = True
-        .Style = activeDoc.Styles("Chap Title Nonprinting (ctnp)")
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = False
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-        
-        Do While .Execute(Forward:=True) = True And intCount < 1000   ' < 1000 to precent infinite loop
-            intCount = intCount + 1
-            strBodyText = Selection.Text
-
-            pageNum = Selection.Information(wdActiveEndPageNumber)
-            
-'            'Record current selection because we need to return to it later
-'            activeDoc.Bookmarks.Add Name:="CTNP", Range:=Selection.Range
-'
-'            Selection.Collapse Direction:=wdCollapseEnd
-'            Selection.EndOf Unit:=wdLine, Extend:=wdExtend
-            
-            If strBodyText = Chr(13) Then
-                strErrors = strErrors & _
-                    "** ERROR: Chap Title Nonprinting paragraph on page " & pageNum & " requires body text." & _
-                    vbNewLine & vbNewLine
-            End If
-
-            
-'            'Now we need to return the selection to where it was above, or else we can't loop through selection.find
-'            If activeDoc.Bookmarks.Exists("ISBN") = True Then
-'                Selection.GoTo what:=wdGoToBookmark, Name:="ISBN"
-'                activeDoc.Bookmarks("ISBN").Delete
-'            End If
-            
-        Loop
-    
-    End With
-    
-    CheckNonprintingText = strErrors
-    
-    Exit Function
-    
-ErrHandler:
-        'DebugPrint Err.Number & ": " & Err.Description
-    If Err.Number = 5941 Or Err.Number = 5834 Then      ' style doesn't exist in document
-        Exit Function
-    End If
-    
-End Function
 
 Private Sub ChapNumCleanUp()
+  On Error GoTo ErrHandler
+  Dim strCNStyle As String
+  strCNStyle = "Chap Number (cn)"
+
+  If MacroHelpers.IsStyleInUse(strCNStyle) = True Then
+  
     ' Removes character styles from Chapter Number paragraphs
     Dim iCount As Long
     Dim strText As String
@@ -1721,8 +1165,6 @@ Private Sub ChapNumCleanUp()
 
     'Move selection back to start of document
     Selection.HomeKey Unit:=wdStory
-
-    On Error GoTo ErrHandler
     
     intCount = 0
     With Selection.Find
@@ -1732,29 +1174,29 @@ Private Sub ChapNumCleanUp()
         .Forward = True
         .Wrap = wdFindStop
         .Format = True
-        .Style = activeDoc.Styles("Chap Number (cn)")
+        .Style = activeDoc.Styles(strCNStyle)
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
         
-        Do While .Execute(Forward:=True) = True And intCount < 1000   ' < 1000 to precent infinite loop
+        Do While .Execute(Forward:=True) = True And intCount < 1000   ' < 1000 to prevent infinite loop
             intCount = intCount + 1
             #If Mac Then
                 ' Mac 2011 doesn't support ClearCharacterFormattingAll method
                 ' And ClearFormatting removes paragraph formatting as well
                 Selection.ClearFormatting
-                Selection.Style = "Chap Number (cn)"
+                Selection.Style = strCNStyle
             #Else
                 Selection.ClearCharacterAllFormatting
             #End If
         Loop
     
     End With
+  End If
     
-    
-    Exit Sub
+  Exit Sub
     
 ErrHandler:
         'DebugPrint Err.Number & ": " & Err.Description
