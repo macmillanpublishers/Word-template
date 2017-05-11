@@ -221,7 +221,12 @@ End Sub
 ' ===== FindStyleIndex =========================================================
 ' Adds index numbers for paragraphs with SearchStyle applied to DestinationCollection.
 ' Note that because DestinationCollection is passed ByRef we don't need to return
-' it to the calling function (so we can add to same collection if we want to).
+' it to the calling function (so we can ADD to same collection if we want to).
+
+' PARAMS
+' SearchStyle: name of style we're looking for
+' DestinationCollection: collection to add indices to
+' ReturnMultiple: True finds all instances, False only finds first one.
 
 ' TODO: see if there is a better way than ByRef (that doesn't involve writing a
 ' MergeCollections function) so we can keep better track of what's in it.

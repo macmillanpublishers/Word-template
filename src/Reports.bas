@@ -59,13 +59,13 @@ Private Sub MakeReport(torDOTcom As Boolean)
     Exit Sub
   End If
   
-  Dim blnOldStartStyles As Boolean
-  m_strVersion = GetStyleVersion()
-  If m_strVersion = vbNullString Then
-    blnOldStartStyles = True
-  Else
-    blnOldStartStyles = False
-  End If
+'  Dim blnOldStartStyles As Boolean
+'  m_strVersion = GetStyleVersion()
+'  If m_strVersion = vbNullString Then
+'    blnOldStartStyles = True
+'  Else
+'    blnOldStartStyles = False
+'  End If
     
   '--------Progress Bar------------------------------
   'Percent complete and status for progress bar (PC) and status bar (Mac)
@@ -135,7 +135,8 @@ Private Sub MakeReport(torDOTcom As Boolean)
   Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
 
 ' -------- validate section-start styles --------------------------------------
-
+  Dim strSectionStartWarnings As String
+  strSectionStartWarnings = SectionStartRules()
 
   '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
   '-------because it should just be applied to the isbn numerals and hyphens-------------------
@@ -210,7 +211,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     Dim strErrorList As String
     
     If blnTemplateUsed = True Then
-        strErrorList = CreateErrorList(badStyles:=strBadStylesList, arrStyleCount:=styleCount, blnTor:=torDOTcom)
+        strErrorList = CreateErrorList(badStyles:=strBadStylesList, strSecStWarnings:=strSectionStartWarnings, arrStyleCount:=styleCount, blnTor:=torDOTcom)
         'strErrorList = "testing"
     Else
         strErrorList = ""
@@ -530,10 +531,10 @@ ErrHandler:
 End Function
 
 
-Private Function CreateErrorList(badStyles As String, arrStyleCount() As Variant, blnTor As Boolean) As String
+Private Function CreateErrorList(badStyles As String, strSecStWarnings As String, arrStyleCount() As Variant, blnTor As Boolean) As String
     Dim errorList As String
     
-    errorList = ""
+    errorList = strSecStWarnings
     
     '--------------For reference----------------------
     'arrStyleCount(1) = "Titlepage Book Title (tit)"

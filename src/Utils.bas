@@ -722,6 +722,10 @@ End Function
 ' No natice Collection.Sort method, so we'll convert to an array, sort that,
 ' then convert back.
 
+' PARAMS
+' SourceCollection: ByRef so actual collection will be changed in calling
+' procedure.
+
 ' TODO: If this adds too much overhead, research implementations of sorting
 ' algorithms on the Collection directly (info exists for VBA, just not that
 ' necessary right now).

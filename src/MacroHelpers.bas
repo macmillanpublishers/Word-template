@@ -1777,6 +1777,15 @@ IsNewLineError:
 End Function
 
 
-' ===== MainStartParaIndex ====================================================
-' Returns paragraph index of first paragraph in the Main section, based on
-' WT_StyleConfig values for frontmatter styles.
+' ===== GetTextByIndex ========================================================
+' Returns text of paragraph with index number, with trailing newlines and other
+' whitespace removed.
+
+Public Function GetTextByIndex(ParaIndex As Long) As String
+  Dim strParaText As String
+  strParaText = ActiveDocument.Paragraphs(ParaIndex).Range.Text
+  If IsNewLine(Right(strParaText, 1)) = True Then
+    strParaText = Left(strParaText, Len(strParaText) - 1)
+  End If
+  GetTextByIndex = Trim(strParaText)
+End Function

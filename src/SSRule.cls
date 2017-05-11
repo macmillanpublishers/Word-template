@@ -18,7 +18,7 @@ Private prop_rule_name As String
 Private prop_ss_name As String
 Private prop_section_required As Boolean
 Private prop_insert_before As Collection
-Private prop_position As String
+Private prop_position As WT_SectionType
 Private prop_multiple As Boolean
 Private prop_styles As Collection
 Private prop_optional_heading_styles As Collection
@@ -158,11 +158,11 @@ Private Property Get InsertBefore() As Collection
   InsertBefore = prop_insert_before
 End Property
 
-Private Property Get Position() As String
+Private Property Get Position() As WT_SectionType
     If m_dictValues.Exists("position") Then
-      prop_position = m_dictValues("position")
+      prop_position = WT_Enums.CSectionType(m_dictValues("position"))
     Else
-      prop_position = ""
+      prop_position = WT_SectionType.no_section
     End If
     Position = prop_position
 End Property
@@ -302,13 +302,78 @@ End Sub
 
 Public Sub Process()
   If CheckSectionCounts = True Then
-    CheckPosition
+' Moved CheckPosition to calling method in parent, so we don't have to pass
+' SectionLists collection to every rule.
+'    CheckPosition
     AddOptionalHeadings
     CheckPreviousSibling
     CheckFirstChild
   End If
 End Sub
 
+
+
+' ===== CheckPosition =========================================================
+' Validate Position property. If validation determines a contiguous block is
+' OK as is, it is removed from the Blocks collection.
+
+' Public so it can be run from calling procedure: We can check if this needs
+' to be run at all before we call it, to avoid having to pass the Sections
+' collection to every rule when this property is only used once.
+
+Public Sub CheckPosition(Sections As Collection)
+  If Position <> WT_SectionType.no_section Then
+    Dim varIndex As Variant
+    Dim lngSectionStart As Long
+    Dim lngSectionEnd As Long
+
+    Dim col_Temp As Collection
+    Set col_Temp = New Collection
+  
+    Select Case Position
+      Case WT_SectionType.frontmatter
+        lngSectionStart = FindSectionStart("frontmatter", Sections)
+        lngSectionEnd = FindSectionStart("main", Sections)
+        If lngSectionEnd = 0 Then
+          lngSectionEnd = FindSectionStart("backmatter", Sections)
+        End If
+        If lngSectionEnd > 0 Then
+          lngSectionEnd = lngSectionEnd - 1
+        End If
+        
+      Case WT_SectionType.main
+        lngSectionStart = FindSectionStart("main", Sections)
+        lngSectionEnd = FindSectionStart("backmatter", Sections)
+        If lngSectionEnd > 0 Then
+          lngSectionEnd = lngSectionEnd - 1
+        End If
+
+      Case WT_SectionType.backmatter
+        lngSectionStart = FindSectionStart("backmatter", Sections)
+        lngSectionEnd = activeDoc.Paragraphs.Count
+
+    End Select
+  
+  ' If no section start, clearly we don't have that section
+    If CBool(lngSectionStart) Then
+      For Each varIndex In Blocks
+      ' Check if block paragraph is after the start paragraph
+        If varIndex >= lngSectionStart Then
+        ' If no end, following section doesn't exist
+          If CBool(lngSectionEnd) Then
+          ' Check if block is before end of section
+            If varIndex <= lngSectionEnd Then
+              col_Temp.Add varIndex
+            End If
+          End If
+        End If
+      Next varIndex
+    End If
+    
+    Set Blocks = col_Temp
+  
+  End If
+End Sub
 ' *****************************************************************************
 '       PRIVATE METHODS
 ' *****************************************************************************
@@ -377,18 +442,43 @@ Private Function CheckInsertBefore() As Long
   End If
 End Function
 
-' ===== CheckPosition =========================================================
-' Validate Position property. If validation determines a contiguous block is
-' OK as is, it is removed from the Blocks collection.
+' ===== FindSectionStart ======================================================
+' Finds first paragraph in doc with a style for that section type. Options are
+' "frontmatter", "main", and "backmatter".
 
-Private Sub CheckPosition()
-  If Position <> vbNullString Then
-    Dim varIndex As Variant
-    Dim col_Temp As Collection
-    Dim lngBeginMain As Long
-    lngBeginMain = MacroHelpers.MainStartParaIndex()
+' PARAMS
+' SectionType: type of section we're looking for (fm, main, bm)
+' SectionStyles: Collection of section-start styles for that type.
+
+' RETURNS:
+' Paragraph index of first instance, or 0 if none found.
+
+Private Function FindSectionStart(SectionType As String, SectionStyles As _
+  Dictionary) As Long
+
+' Pull out collection of styles for our section type
+  Dim col_SearchStyles As Collection
+  Set col_SearchStyles = SectionStyles(SectionType)
+
+  Dim varStyle As Variant
+  Dim col_FirstInstance As Collection
+  Set col_FirstInstance = New Collection
+
+' Create collection of the FIRST instance of each section style
+  For Each varStyle In col_SearchStyles
+    ClassHelpers.FindStyleIndex varStyle, col_FirstInstance, False
+  Next varStyle
+
+  If col_FirstInstance.Count > 0 Then
+    Utils.SortCollection col_FirstInstance
+    FindSectionStart = col_FirstInstance(1)
+  Else
+    FindSectionStart = 0
   End If
-End Sub
+  
+End Function
+
+
 
 ' ===== AddOptionalHeadings ===================================================
 ' If rule has optional headings, check each block and add if found.
@@ -441,38 +531,36 @@ Private Sub CheckPreviousSiblings()
     Dim lngCheckIndex As Long
     Dim strStyle As String
     
-    If PreviousUntil.Count > 0 Then
-      For Each varIndex In Blocks
-        lngCheckIndex = varIndex - 1
-        
-      Next varIndex
-    
-    Else ' just check single previous sibling
-      For Each varIndex In Blocks
-        lngCheckIndex = varIndex - 1
-        Do While lngCheckIndex > 0
-          strStyle = activeDoc.Paragraphs(lngCheckIndex).Range.ParagraphStyle
-          If Utils.ExistsInCollection(RequiredStyles, strStyle) = True Or _
-            WT_StyleConfig.IsSectionStartStyle(strStyle) = True Then
-            ' Previous style is OK, exit Do and on to next block
-              Exit Do
-          ElseIf PreviousUntil > 0 And Utils.ExistsInCollection(PreviousUntil, _
-            strStyle) = True Then
-            ' Matched PreviousUntil, missing ss style
-              col_Temp.Add varIndex
-              Exit Do
-          Else  ' might be a versatile block
-            If WT_StyleConfig.IsVersatileStyle(strStyle) = False Then
-            ' Definitely didn't match PreviousStyle, so add to new collection of errors
-              col_Temp.Add varIndex
-              Exit Do
-            Else ' It's a versatileStyle, have to check up again
-              lngCheckIndex = lngCheckIndex - 1
-            End If
-          End If
-        Loop
-      Next varIndex
-    End If
+    For Each varIndex In Blocks
+      lngCheckIndex = varIndex - 1
+      Do While lngCheckIndex > 0
+        strStyle = activeDoc.Paragraphs(lngCheckIndex).Range.ParagraphStyle
+        If Utils.ExistsInCollection(RequiredStyles, strStyle) = True Or _
+          WT_StyleConfig.IsSectionStartStyle(strStyle) = True Then
+          ' Previous style is OK, exit Do and on to next block
+            Exit Do
+        ' If no PreviousUntil, this won't match
+        ElseIf Utils.ExistsInCollection(PreviousUntil, _
+          strStyle) = True Then
+          ' Matched PreviousUntil, missing ss style
+            col_Temp.Add varIndex
+            Exit Do
+        Else
+          lngCheckIndex = lngCheckIndex - 1
+        End If
+      
+      ' If no PreviousUntil, only continue searching if it's a VersatileStyle
+      ' Otherwise it's an error.
+        If PreviousUntil.Count = 0 And _
+           WT_StyleConfig.IsVersatileStyle(strStyle) = False Then
+        ' Definitely didn't match PreviousStyle, so add to new collection of errors
+          col_Temp.Add varIndex
+          Exit Do
+        End If
+      
+      Loop
+    Next varIndex
+
     Set Blocks = col_Temp
   End If
 End Sub
@@ -481,7 +569,22 @@ End Sub
 ' Validate "first_child" criteria, removes from Blocks if ok as is.
 
 Private Sub CheckFirstChild()
-
+  If FirstChild = True Then
+    Dim varIndex As Variant
+    Dim col_Temp As Collection
+    Set col_Temp = New Collection
+    Dim strFirstText As String
+    Dim blnMatch As Boolean
+    
+    For Each varIndex In Blocks
+      strFirstText = MacroHelpers.GetTextByIndex(varIndex)
+      blnMatch = Utils.ExistsInCollection(FirstChildText, strFirstText)
+      If blnMatch = FirstChildMatch Then
+        col_Temp.Add varIndex
+      Else
+    Next varIndex
+    Set Blocks = col_Temp
+  End If
 End Sub
 
 ' ===== GetTwoDigitString ========================================================

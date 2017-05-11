@@ -26,43 +26,16 @@ Private prop_Warnings As Collection
 '       PRIVATE PROPERTIES
 ' *****************************************************************************
 
-' ===== FrontmatterStyles =====================================================
-' Collection of all Section-Start styles that belong in Frontmatter
-
-Private Property Get FrontmatterStyles() As Collection
-  If prop_FrontmatterStyles Is Nothing Then
-    Set prop_FrontmatterStyles = SectionLists("frontmatter")
-  End If
-  Set FrontmatterStyles = prop_FrontmatterStyles
-End Property
-
-' ===== MainStyles ============================================================
-' Collection of all Section-Start styles that belong in Backmatter
-
-Private Property Get MainStyles() As Collection
-  If prop_MainStyles Is Nothing Then
-    Set prop_MainStyles = SectionLists("main")
-  End If
-  Set MainStyles = prop_MainStyles
-End Property
-
-' ===== BackmatterStyles ======================================================
-' Collection of all Section-Start styles that belong in Backmatter
-
-Private Property Get BackmatterStyles() As Collection
-  If prop_BackmatterStyles Is Nothing Then
-    Set prop_BackmatterStyles = SectionLists("backmatter")
-  End If
-  Set BackmatterStyles = prop_BackmatterStyles
-End Property
-
 ' ===== SectionLists[PropertyGet] ========================================================
 ' This Property creates a dict containing 4 Collections as a Read-Only property, featuring:
 ' A list(Collection) of "all" Section Start Stylenames, a list of "frontmatter" ones, "backmatter" ones
 ' and "main" ones.  The "all" Collection is needed when checking for acceptable "previous_siblings"
 ' The other three are needed when testing "position" criteria
 
-' Set to Private b/c only needed by new FM, Main, BM properties
+' Set to Private b/c only needed by Validate procedure.
+
+' TODO: Get some benchmarks on how long this takes to create. If more than a couple of seconds,
+' move this data to vba_style_config.json.
 
 Private Property Get SectionLists() As Dictionary
 ' Check if saved variable already exists, else it will go through the code to create
@@ -244,6 +217,11 @@ Public Function Validate() As String
   For A = 1 To 4
     For Each varRule In Rules(A)
       With varRule
+      ' Check .Position property separately so we can pass SectionLists collection
+      ' from here.
+        If .Position <> vbNullString Then
+          .CheckPosition Sections:=SectionLists
+        End If
         .Process
         If .Blocks.Count > 0 Then ' we have possible missing ss-starts
           AddWarning ProcessedRule:=varRule
