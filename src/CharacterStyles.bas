@@ -292,57 +292,32 @@ Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
 ' in the first or last paragraph, so add dummy paragraphs here (with tags)
 ' that we can remove later on.
 
-  activeRng.InsertBefore "``0``" & vbNewLine
-  activeRng.InsertAfter vbNewLine & "``0``"
-  
-  Dim tagArray(13) As String
-  Dim StylePreserveArray(13) As String
-  Dim E As Long
-  
-  StylePreserveArray(1) = "Space Break (#)"
-  StylePreserveArray(2) = "Space Break with Ornament (orn)"
-  StylePreserveArray(3) = "Space Break with ALT Ornament (orn2)"
-  StylePreserveArray(4) = "Section Break (sbr)"
-  StylePreserveArray(5) = "Part Start (pts)"
-  StylePreserveArray(6) = "Part End (pte)"
-  StylePreserveArray(7) = "Page Break (pb)"
-  StylePreserveArray(8) = "Space Break - 1-Line (ls1)"
-  StylePreserveArray(9) = "Space Break - 2-Line (ls2)"
-  StylePreserveArray(10) = "Space Break - 3-Line (ls3)"
-  StylePreserveArray(11) = "Column Break (cbr)"
-  StylePreserveArray(12) = "Design Note (dn)"
-  StylePreserveArray(13) = "Bookmaker Page Break (br)"
+  activeRng.InsertBefore vbNewLine
+  activeRng.InsertAfter vbNewLine
 
-' Only tag left side: we're searching for paragraph styles below, so each result
-' will always end in ^13, which becomes our closing tag later. If we add a
-' closing tag of our own, it gets added to the *following* paragraph, which
-' complicates some later things we need to cleanup.
+' tag paragraphs allowed to be blank
+  Dim varStyle As Variant
+  For Each varStyle In WT_StyleConfig.AllowedBlankStyles
+  ' Only search if style is in doc (so can run on non-styled manuscripts)
+  ' If found, add an optional hyphen (^31) before the final newline (^13).
+  ' The ^31 will prevent matching as multiple newlines when we remove those,
+  ' but it's still whitespace so if something goes awry, we don't leave visible
+  ' tags in the doc and freak people out.
 
-  tagArray(1) = "`1`^&"
-  tagArray(2) = "`2`^&"
-  tagArray(3) = "`3`^&"
-  tagArray(4) = "`4`^&"
-  tagArray(5) = "`5`^&"
-  tagArray(6) = "`6`^&"
-  tagArray(7) = "`7`^&"
-  tagArray(8) = "`8`^&"
-  tagArray(9) = "`9`^&"
-  tagArray(10) = "`0`^&"
-  tagArray(11) = "`L`^&"
-  tagArray(12) = "`R`^&"
-  tagArray(13) = "`N`^&"
-  
-  Call MacroHelpers.zz_clearFind
-  For E = 1 To UBound(StylePreserveArray())
-    With activeRng.Find
+    If MacroHelpers.IsStyleInDoc(varStyle) = True Then
+      MacroHelpers.zz_clearFind
+      With activeRng.Find
       .Text = "^13"
-      .Replacement.Text = tagArray(E)
+      .Replacement.Text = "^31^13"    ' add optional hyphen before trailing newline
       .Wrap = wdFindContinue
       .Format = True
       .Style = StylePreserveArray(E)
       .MatchWildcards = True
       .Execute Replace:=wdReplaceAll
-    End With
+      End With
+    End If
+  Next varStyle
+
 NextLoop:
   Next
   Exit Sub
@@ -367,32 +342,15 @@ End Sub
 Private Sub RemoveBreaks(StoryType As WdStoryType)
   On Error GoTo RemoveBreaksError
   Set activeRng = activeDoc.StoryRanges(StoryType)
-    
-  Dim wsFindArray(1 To 2) As String
-  Dim wsReplaceArray(1 To 2) As String
-  Dim Q As Long
-  
-' Remove page break and section break characters. Will have to re-evaluate
-' before we move this to user-macro to determine what breaks to preserve
-' (though section-start styles may make this moot).
-  wsFindArray(1) = "^m"
-  wsReplaceArray(1) = vbNullString
-
-' Now that we've cleaned up errant page breaks, remove any blank paragraphs
-  wsFindArray(2) = "^13{2,}"               '2 or more paragraphs
-  wsReplaceArray(2) = "^p"
-
 
   Call MacroHelpers.zz_clearFind
-  For Q = 1 To UBound(wsFindArray())
     With activeRng.Find
-      .Text = wsFindArray(Q)
-      .Replacement.Text = wsReplaceArray(Q)
+      .Text = "^13{2,}"
+      .Replacement.Text = "^p"
       .Wrap = wdFindContinue
       .MatchWildcards = True
       .Execute Replace:=wdReplaceAll
     End With
-  Next
   Exit Sub
 
 RemoveBreaksError:
@@ -408,58 +366,15 @@ Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
   On Error GoTo PreserveWhiteSpaceinBrkStylesBError
   
   Set activeRng = activeDoc.StoryRanges(StoryType)
-
-' Now we need to remove our first/last dummy paragraphs
-  Dim myRange(1 To 2) As Range
-  Dim strText As String
-  Dim strTag As String
-  Dim strEnd As String
-  Dim A As Long
-  Set myRange(1) = activeDoc.Paragraphs.First.Range
-  Set myRange(2) = activeDoc.Paragraphs.Last.Range
-  
-  For A = LBound(myRange) To UBound(myRange)
-    strText = myRange(A).Text
-    ' Validate that it is in fact the paragraph we added
-    ' we added 5 chars, + new line char
-    If Len(strText) >= 6 Then
-    ' Separate our tag text from rest of para
-      strTag = Left(strText, 5)
-      strEnd = Right(strText, Len(strText) - 5)
-    ' To be our added para, needs our tag AND new line char and nothing else
-      If strTag = "``0``" And MacroHelpers.IsNewLine(strEnd) = True Then
-        myRange(A).Delete
-      End If
-    End If
-  Next A
-
-  Dim tagArrayB(13) As String
-  Dim F As Long
-    
-  tagArrayB(1) = "`1`(^13)"
-  tagArrayB(2) = "`2`(^13)"
-  tagArrayB(3) = "`3`(^13)"
-  tagArrayB(4) = "`4`(^13)"
-  tagArrayB(5) = "`5`(^13)"
-  tagArrayB(6) = "`6`(^13)"
-  tagArrayB(7) = "`7`(^13)"
-  tagArrayB(8) = "`8`(^13)"
-  tagArrayB(9) = "`9`(^13)"
-  tagArrayB(10) = "`0`(^13)"
-  tagArrayB(11) = "`L`(^13)"
-  tagArrayB(12) = "`R`(^13)"
-  tagArrayB(13) = "`N`(^13)"
-
+' Remove those optional hyphens we added earlier, also all optional hyphens
   Call MacroHelpers.zz_clearFind
-  For F = 1 To UBound(tagArrayB())
-    With activeRng.Find
-      .Text = tagArrayB(F)
-      .Replacement.Text = "\1"
-      .Wrap = wdFindContinue
-      .MatchWildcards = True
-      .Execute Replace:=wdReplaceAll
-    End With
-  Next
+  With activeRng.Find
+    .Text = "^-"
+    .Replacement.Text = ""
+    .Wrap = wdFindContinue
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
 
 ' We also want to remove last para if it only contains a blank para, of any style
 ' Loop until we find a paragraph with text.

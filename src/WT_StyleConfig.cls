@@ -12,6 +12,7 @@ Option Explicit
 ' Public Properties
 Private prop_VersatileStyles As Collection
 Private prop_SectionStartStyles As Collection
+Private prop_AllowedBlankStyles As Collection
 Private prop_VersatileStylesByIndex As Collection
 
 ' Private Properties
@@ -42,6 +43,17 @@ Public Property Get SectionStartStyles() As Collection
     Set prop_SectionStartStyles = VbaStyleConfig("sectionstarts")
   End If
   Set SectionStartStyles = prop_SectionStartStyles
+End Property
+
+' ===== AllowedBlankStyles ====================================================
+' Collection of styles that are allowed to be blank (no text). VbaStyleConfig
+' downloads the source JSON file.
+
+Public Property Get AllowedBlankStyles() As Collection
+  If prop_AllowedBlankStyles Is Nothing Then
+    Set prop_AllowedBlankStyles = VbaStyleConfig("allowedblankparas")
+  End If
+  Set AllowedBlankStyles = prop_AllowedBlankStyles
 End Property
 
 ' ===== VersatileStylesByIndex ================================================
