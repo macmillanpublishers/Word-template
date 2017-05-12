@@ -144,6 +144,9 @@ Private Sub MakeReport(torDOTcom As Boolean)
   '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
   '-------because it should just be applied to the isbn numerals and hyphens-------------------
   Call ISBNcleanup
+  
+' -------------- Clean up page break characters -------------------------------
+  Call MacroHelpers.PageBreakCleanup
     
   '--------Get title/author/isbn/imprint text from document-----------
   sglPercentComplete = 0.11

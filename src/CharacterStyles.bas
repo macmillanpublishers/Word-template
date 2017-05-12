@@ -135,6 +135,8 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
     Call MacroHelpers.ClearPilcrowFormat(StoryType:=(stStories(S)))
   Next S
 
+' -------------- Clean up page break characters -------------------------------
+  Call MacroHelpers.PageBreakCleanup
 
 ' ===================== Replace Local Styles Start ============================
 

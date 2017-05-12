@@ -1789,3 +1789,128 @@ Public Function GetTextByIndex(ParaIndex As Long) As String
   End If
   GetTextByIndex = Trim(strParaText)
 End Function
+
+
+' ===== PageBreakCleanup ======================================================
+' Remove any page break characters or styles that are previous sibling of a
+' section start style.
+
+' Tags any remaining page break characters with the page break style.
+
+' TODO: Figure out how to handle section breaks
+
+Public Sub PageBreakCleanup()
+' Add paragraph breaks around every page break character (so we know for sure
+' paragraph style of break won't apply to any body text). Will add extra blank
+' paragraphs that we can clean up later.
+' Also add "Page Break (pb)" style.
+
+  MacroHelpers.zz_clearFind
+  With activeDoc.Range.Find
+    .Text = "^m"
+    .Replacement.Text = "^p^m^p"
+    .Format = True
+    .Replacement.Style = strPageBreak
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' If we had an unstyled page break char, new trailing ^p is wrong style
+' Use this to make sure all correct style.
+  MacroHelpers.zz_clearFind
+  With activeDoc.Range.Find
+    .Text = "^m^13{1,}"
+    .Replacement.Text = "^m^p"
+    .Format = True
+    .MatchWildcards = True
+    .Replacement.Style = strPageBreak
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' Now that we are sure every PB char has PB style, remove all PB char
+  MacroHelpers.zz_clearFind
+  With activeDoc.Range.Find
+    .Text = "^m"
+    .Replacement.Text = ""
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' Remove multiple PB-styled paragraphs in a row
+  MacroHelpers.zz_clearFind
+  With activeDoc.Range.Find
+    .Text = "^13{2,}"
+    .Replacement.Text = "^p"
+    .Format = True
+    .Style = strPageBreak
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' Now we should have all PBs are just single paragraph return with PB style.
+' So we just need to add the PB character.
+  MacroHelpers.zz_clearFind
+  With activeDoc.Range.Find
+    .Text = "^p"
+    .Replacement.Text = "^m^p"
+    .Format = True
+    .Style = strPageBreak
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' Remove any manual breaks preceding section start styles
+  Dim varStyle As Variant
+  Dim lngSectionStyle As Long
+  Dim lngPrevSibling As Long
+  Dim colDeleteTheseOnes As Collection
+  Set colDeleteTheseOnes = New Collection
+
+  For Each varStyle In WT_StyleConfig.SectionStartStyles
+    MacroHelpers.zz_clearFind
+    Selection.HomeKey Unit:=wdStory
+    With Selection.Find
+      .Format = True
+      .Style = varStyle
+      .Execute
+      
+      Do While .Found = True
+      ' Check previous paragraph for Page Break
+        lngSectionStyle = MacroHelpers.ParaIndex
+        If lngSectionStyle > 1 Then
+          lngPrevSibling = lngSectionStyle - 1
+          If activeDoc.Paragraphs(lngPrevSibling).Range.ParagraphStyle = strPageBreak Then
+          ' Add to collection to delete later (because if we delete it now it will mess up
+          ' our paragraph indices. Add Before first so our list is reverse sorted, so we
+          ' can delete from the bottom up (again to not mess with paragraph indices)
+            colDeleteTheseOnes.Add Item:=lngPrevSibling, Before:=1
+          End If
+        End If
+      Loop
+    End With
+  Next varStyle
+  
+' Actually delete these now
+  Dim varIndex As Variant
+  For Each varIndex In colDeleteTheseOnes
+    activeDoc.Paragraphs(varIndex).Range.Delete
+  Next varIndex
+
+' Remove any first paragraphs until we get one with text
+  Dim lngCount As Long
+  Dim rngPara1 As Range
+  Dim strKey As String
+  
+  Do
+    lngCount = lngCount + 1
+    strKey = "firstParaPB" & lngCount
+    Set rngPara1 = activeDoc.Paragraphs.First.Range
+    If MacroHelpers.IsNewLine(rngPara1.Text) = True Then
+      rngPara1.Delete
+    Else
+      dictReturn.Add strKey, False
+      Exit Do
+    End If
+  Loop Until lngCount > 20 ' For runaway loops
+
+  Exit Sub
+End Sub
+
