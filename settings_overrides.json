@@ -1,0 +1,9 @@
+{
+	"InstallType":{
+		"debug":"user",
+	},
+	"DownloadBranch":{
+		"Word-template":"testsectionstart",
+		"bookmaker_validator":"versatileparas"
+	}
+}

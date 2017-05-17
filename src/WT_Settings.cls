@@ -35,6 +35,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private p_strInstallType As String
+Private p_Overrides As String
 
 ' *****************************************************************************
 '     PROCEDURES
@@ -64,9 +65,17 @@ Public Property Get InstallType() As String
       Case Else
         p_strInstallType = "user"
     End Select
+    
+    If p_strInstallType = "debug" And Overrides("InstallType").Exists(p_strInstallType) Then
+      p_strInstallType = Overrides("InstallType")(p_strInstallType)
+    Else
+      DownloadBranch = "master"
+    End If
   Else
     DebugPrint "InstallType already set"
   End If
+  
+
   
   DebugPrint "Current InstallType: " & p_strInstallType
   InstallType = p_strInstallType
@@ -74,9 +83,10 @@ End Property
 
 ' ===== DownloadBranch ========================================================
 ' Name of Git branch files should be downloaded from. Branch must be on Github.
+' Users always default to "master" but debug can pull from anything.
 
 ' PARAMS
-' None
+' Repo: name of the
 
 ' RETURNS
 ' String
@@ -84,8 +94,41 @@ End Property
 ' NOTES
 ' Read-only
 
-Public Property Get DownloadBranch() As String
-  DownloadBranch = "sectionstart"
+Public Property Get DownloadBranch(Repo As String) As String
+
+  If Me.InstallType = "debug" And Overrides("DownloadBranch").Exists(Repo) Then
+    DownloadBranch = Overrides("DownloadBranch")(Repo)
+  Else
+    DownloadBranch = "master"
+  End If
 End Property
 
 ' =====
+
+' ***** PRIVATE PROPERTIES *****************************************************
+
+' ===== Overrides ==============================================================
+' Read JSON file to override certain settings when debugging. Must be in same
+' directory as this file.
+
+Private Property Get Overrides() As Dictionary
+  If p_Overrides Is Nothing Then
+    Dim strFile As String
+    strFile = ThisDocument.Path & Application.PathSeparator & "settings_overrides.json"
+  
+    If Utils.IsItThere(strFile) = True Then
+      Set p_Overrides = ClassHelpers.ReadJson(strFile)
+    Else
+      Set p_Overrides = New Dictionary
+    End If
+  End If
+
+  Set Overrides = p_Overrides
+  
+End Property
+
+
+
+
+
+

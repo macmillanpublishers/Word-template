@@ -805,42 +805,53 @@ Private Function FullURL(FileName As String) As String
   Dim strNameOnly As String
   Dim strRepo As String
   Dim strSubfolder As String
-  
-' DO include trailing slash at end of each, because some variables will be null
-  strBaseUrl = "https://raw.githubusercontent.com/macmillanpublishers/"
-  strBranch = WT_Settings.DownloadBranch & "/"
+  Dim strFilePath As String
+
+  strBaseUrl = "https://raw.githubusercontent.com/macmillanpublishers"
 ' Strip extension, bc some files have related version file w/ same name, diff ext
   strNameOnly = Utils.GetFileNameOnly(FileName)
 
   Select Case strNameOnly
     Case "macmillan"
-      strRepo = "Word-template_assets/"
-      strSubfolder = "StyleTemplate_auto-generate/"
+      strRepo = "Word-template_assets"
+      strSubfolder = "StyleTemplate_auto-generate"
     Case "macmillan_NoColor"
-      strRepo = "Word-template_assets/"
-      strSubfolder = "StyleTemplate_auto-generate/"
+      strRepo = "Word-template_assets"
+      strSubfolder = "StyleTemplate_auto-generate"
     Case "macmillan_CoverCopy"
-      strRepo = "Word-template_assets/"
+      strRepo = "Word-template_assets"
       strSubfolder = vbNullString
     Case "Styles_Bookmaker"
-      strRepo = "Word-template_assets/"
+      strRepo = "Word-template_assets"
       strSubfolder = vbNullString
     Case "Word-template"
-      strRepo = "Word-template/"
+      strRepo = "Word-template"
       strSubfolder = vbNullString
     Case "GtUpdater"
-      strRepo = "Word-template/"
+      strRepo = "Word-template"
       strSubfolder = vbNullString
     Case "section_start_rules"
-      strRepo = "bookmaker_validator/"
+      strRepo = "bookmaker_validator"
       strSubfolder = vbNullString
     Case "vba_style_config"
-      strRepo = "Word-template_assets/"
-      strSubfolder = "StyleTemplate_auto-generate/"
+      strRepo = "Word-template_assets"
+      strSubfolder = "StyleTemplate_auto-generate"
   End Select
 
+' Get branch based on repo for now, so don't all have to be on same branch
+' TODO: Read branch for each file from a config
+  strBranch = WT_Settings.DownloadBranch(Repo:=strRepo)
+  
+' Test if strSubfolder exists, and if so combine to create full file path.
+' If we combine below and an item is blank, will get a double separator
+  If strSubfolder <> vbNullString Then
+    strFilePath = strSubfolder & "/"
+  End If
+  
+  strFilePath = strFilePath & FileName
+  
   ' put it all together
-  FullURL = strBaseUrl & strRepo & strBranch & strSubfolder & FileName
+  FullURL = strBaseUrl & "/" & strRepo & "/" & strBranch & "/" & strFilePath
 End Function
 
 
