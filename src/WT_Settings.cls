@@ -35,7 +35,8 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private p_strInstallType As String
-Private p_Overrides As String
+Private p_Overrides As Dictionary
+
 
 ' *****************************************************************************
 '     PROCEDURES
@@ -68,14 +69,10 @@ Public Property Get InstallType() As String
     
     If p_strInstallType = "debug" And Overrides("InstallType").Exists(p_strInstallType) Then
       p_strInstallType = Overrides("InstallType")(p_strInstallType)
-    Else
-      DownloadBranch = "master"
     End If
   Else
     DebugPrint "InstallType already set"
   End If
-  
-
   
   DebugPrint "Current InstallType: " & p_strInstallType
   InstallType = p_strInstallType

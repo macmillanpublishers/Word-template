@@ -16,9 +16,6 @@ Attribute VB_Name = "Utils"
 ' *****************************************************************************
 Option Explicit
 
-' assign to actual document we're working on
-' TODO: probably better managed via a class
-Public activeDoc As Document
 
 
 ' *****************************************************************************
@@ -190,7 +187,7 @@ Public Function GetPath(FullName As String) As String
   If strFileName = vbNullString Then
     strPath = FullName
   Else
-    strPath = Left(FullName, Len(fullPath) - Len(strFileName))
+    strPath = Left(FullName, Len(FullName) - Len(strFileName))
   End If
   
 ' Remove trailing path separator

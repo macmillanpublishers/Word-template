@@ -1,6 +1,6 @@
 {
 	"InstallType":{
-		"debug":"user",
+		"default":"user",
 	},
 	"DownloadBranch":{
 		"Word-template":"testsectionstart",

@@ -36,11 +36,18 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
 ' file and only updates if out of date.
 
 ' Remove file names from collection if they don't need to be updated rignt now
-  Dim strFileName As Variant
+  Dim A As Long
+  Dim strFileName As String
   Dim dictFileInfo As Dictionary
 
   If Installer = False Then
-    For Each strFileName In TemplateToInstall
+' Not using For Each b/c we need index number to remove from collection
+' Counting backwards since removing reassigns index numbers
+    For A = TemplatesToInstall.Count To 1 Step -1
+      'Need a variant to loop through Collection, but these functions only
+      'accept strings as arguments.
+      strFileName = TemplatesToInstall(A)
+      
     ' If exists, check if it's been checked today
       If IsTemplateThere(FileName:=strFileName) = True Then
         Set dictFileInfo = FileInfo(strFileName)
@@ -51,10 +58,10 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
             TemplatesToInstall.Remove strFileName
           End If
         Else ' Has been checked today, don't update
-          TemplatesToInstall.Remove strFileName
+          TemplatesToInstall.Remove (A)
         End If
       End If
-    Next strFileName
+    Next A
   End If
 
 ' If everything is OK, quit sub
@@ -87,7 +94,9 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
 
 ' --------- DOWNLOAD FILES ----------------------------------------------------
 'If False, error in download; user was notified in DownloadFromGithub function
-  For Each strFileName In TemplatesToInstall
+  Dim varItem As Variant
+  For Each varItem In TemplatesToInstall
+    strFileName = CStr(varItem)
     If DownloadFromGithub(FileName:=strFileName) = False Then
       If Installer = True Then
         #If Mac Then    ' because application.quit generates error on Mac
@@ -112,7 +121,7 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
         Next
       End If
     #End If
-  Next strFileName
+  Next varItem
   
 '------Display installation complete message   ---------------------------
   Dim strComplete As String
@@ -273,7 +282,7 @@ Public Function GetTemplatesList(TemplatesYouWant As TemplatesList) As _
   End If
 
   ' also get the installer file
-  If TemplatesYouWant = allTemplates And PathToRepo <> vbNullString Then
+  If TemplatesYouWant = allTemplates Then
     colTemplates.Add "MacmillanTemplateInstaller.docm"
   End If
 
