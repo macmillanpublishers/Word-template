@@ -298,7 +298,7 @@ End Function
 ' DEPENDENCIES:
 ' Add file and download URL info to FullURL function.
 
-Private Function DownloadFromGithub(FileName As String) As Boolean
+Public Function DownloadFromGithub(FileName As String) As Boolean
 
   Dim dictFullPaths As Dictionary
   Set dictFullPaths = FileInfo(FileName)

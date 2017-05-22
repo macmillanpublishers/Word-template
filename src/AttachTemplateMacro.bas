@@ -26,39 +26,48 @@ End Sub
 Sub AttachMe(TemplateName As String)
 'Attaches a style template from the MacmillanStyleTemplate directory
 
-    Dim currentUser As String
-    Dim myFile As String
-    Dim strStyleDir As String
-        
-    ' Get local style directory
-    strStyleDir = SharedFileInstaller.StyleDir()
-    myFile = strStyleDir & Application.PathSeparator & TemplateName
+' Get version number of style template to add to doc properties
+  Dim strVersionFileName As String
+  strVersionFileName = Utils.GetFileNameOnly(TemplateName) & ".txt"
+
+  Dim dictVersionInfo As Dictionary
+  Set dictVersionInfo = SharedFileInstaller.FileInfo(strVersionFileName)
+
+  Dim strVersionPath As String
+  Dim strVersionNumber As String
+  
+  strVersionPath = dictVersionInfo("Final")
+
+  If Utils.IsItThere(strVersionPath) = False Then
+  ' Download version file if we don't have it
+    SharedFileInstaller.DownloadFromGithub strVersionFileName
+  End If
+  strVersionNumber = Utils.ReadTextFile(strVersionPath)
+
+' Get path to actual template
+  Dim dictTemplateInfo As Dictionary
+  Set dictTemplateInfo = SharedFileInstaller.FileInfo(TemplateName)
+
+  Dim strTemplatePath As String
+  strTemplatePath = dictTemplateInfo("Final")
+
+  ' Can't attach template to another template, so
+  If IsTemplate(ActiveDocument) = False Then
+    'Check that file exists
+    If IsItThere(strTemplatePath) = True Then
     
-    ' Get version file name
-    Dim strVersionPath As String
-    Dim strVersionNumber As String
-    
-    strVersionPath = Left(myFile, Len(myFile - 4)) & "txt"
-    strVersionNumber = Utils.ReadTextFile(strVersionPath)
-   
-        
-    ' Can't attach template to another template, so
-    If IsTemplate(ActiveDocument) = False Then
-        'Check that file exists
-        If IsItThere(myFile) = True Then
-        
-            'Apply template with Styles
-            With ActiveDocument
-                .UpdateStylesOnOpen = True
-                .AttachedTemplate = myFile
-            End With
-            SetStyleVersion VersionNumber:=strVersionNumber
-        Else
-            MsgBox "That style template doesn't seem to exist." & vbNewLine & vbNewLine & _
-                    "Install the Macmillan Style Template and try again, or contact workflows@macmillan.com for assistance.", _
-                    vbCritical, "Oh no!"
-        End If
+      'Apply template with Styles
+      With ActiveDocument
+        .UpdateStylesOnOpen = True
+        .AttachedTemplate = strTemplatePath
+      End With
+      SetStyleVersion VersionNumber:=strVersionNumber
+    Else
+      MsgBox "That style template doesn't seem to exist." & vbNewLine & vbNewLine & _
+        "Install the Macmillan Style Template and try again, or contact workflows@macmillan.com for assistance.", _
+        vbCritical, "Oh no!"
     End If
+  End If
     
 End Sub
 

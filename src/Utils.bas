@@ -259,17 +259,19 @@ End Function
 Public Function DocPropExists(objDoc As Document, PropName As String) As Boolean
   DocPropExists = False
 
-  Dim A As Long
+' Note DocumentProperties returns a Collection
   Dim docProps As DocumentProperties
-  docProps = objDoc.CustomDocumentProperties
+  Set docProps = objDoc.CustomDocumentProperties
+
+  Dim varProp As Variant
 
   If docProps.Count > 0 Then
-      For A = 1 To docProps.Count
-          If dopProps.Name = PropName Then
+      For Each varProp In docProps
+          If varProp.Name = PropName Then
               DocPropExists = True
               Exit Function
           End If
-      Next A
+      Next varProp
   Else
       DocPropExists = False
   End If
