@@ -54,28 +54,33 @@ Public Property Get InstallType() As String
     Dim strLocalUser As String
     strLocalUser = Environ("USERNAME")
 
-  ' user is "padwoadmin" on both servers
+  ' username is "padwoadmin" on both servers
   ' TODO: change this to read from config file
     Select Case strLocalUser
       Case "padwoadmin"
         p_strInstallType = "server"
-      Case "erica.warren"
-        p_strInstallType = "debug"
-      Case "matthew.retzer"
-        p_strInstallType = "debug"
       Case Else
         p_strInstallType = "user"
     End Select
-    
-    If p_strInstallType = "debug" And Overrides("InstallType").Exists(p_strInstallType) Then
-      p_strInstallType = Overrides("InstallType")(p_strInstallType)
-    End If
+
   Else
     DebugPrint "InstallType already set"
   End If
   
   DebugPrint "Current InstallType: " & p_strInstallType
   InstallType = p_strInstallType
+End Property
+
+
+' ===== DebugOn ===============================================================
+' Are we in debugging mode?
+
+Public Property Get DebugOn() As Boolean
+  If Overrides.Exists("DebugOn") Then
+    DebugOn = True
+  Else
+    DebugOn = False
+  End If
 End Property
 
 ' ===== DownloadBranch ========================================================
@@ -93,7 +98,7 @@ End Property
 
 Public Property Get DownloadBranch(Repo As String) As String
 
-  If Me.InstallType = "debug" And Overrides("DownloadBranch").Exists(Repo) Then
+  If Overrides("DownloadBranch").Exists(Repo) Then
     DownloadBranch = Overrides("DownloadBranch")(Repo)
   Else
     DownloadBranch = "master"
