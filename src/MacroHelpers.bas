@@ -100,12 +100,8 @@ Public Function ErrorChecker(objError As Object, Optional strValue As _
   ' False.
   blnNotifyUser = True
   ErrorChecker = True
-  ' Eventually get this email from the config.json file, once we have error
-  ' handling that can handle an error in the error handler. At the moment, if
-  ' any procedure in the call stack to get the email errors, we end up in a
-  ' loop until it crashes.
   strHelpContact = vbNewLine & vbNewLine & "Email workflows@macmillan.com if" _
-    & " you need help. Be sure to attach the text file that was just produced."
+    & " you need help."
 
   ' ----- Check if parameter was passed ---------------------------------------
   If strValue = vbNullString Then
@@ -304,15 +300,15 @@ Public Function ErrorChecker(objError As Object, Optional strValue As _
   Close #LogFileNum ' close the file
   
   ' Do not display alerts for Bookmaker project (automated)
-  If Left(Err.Source, InStr(Err.Source, ".") - 1) = "Bookmaker" Then
+  If WT_Settings.InstallType = "server" Then
     blnNotifyUser = False
   End If
   
-'  If blnNotifyUser = True Then
-'      strErrMessage = strErrMessage & vbNewLine & vbNewLine & strHelpContact
-'      MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
-'          "Macmillan Tools Error"
-'  End If
+  If blnNotifyUser = True Then
+      strErrMessage = strErrMessage & vbNewLine & vbNewLine & strHelpContact
+      MsgBox Prompt:=strErrMessage, Buttons:=vbExclamation, Title:= _
+          "Macmillan Tools Error"
+  End If
   DebugPrint "ErrorChecker: " & ErrorChecker
   Exit Function
 
@@ -532,19 +528,17 @@ ParaInfoError:
   End If
 End Function
 
-Public Sub zz_clearFind()
+Public Sub zz_clearFind(Optional TargetRange As Range)
   On Error GoTo zz_clearFindError
-'  lngErrorCount = lngErrorCount + 1
-'  DebugPrint "zz_clearFind " & lngErrorCount
-    Dim clearRng As Range
-    Set clearRng = activeDoc.Words.First
-'    DebugPrint activeDoc.FullName
-    
-    With clearRng.Find
+
+' If we didn't pass a Range, reset the Selection.Find
+' Can sometimes have sticky properties if not reset properly.
+  If TargetRange Is Nothing Then
+    With Selection.Find
         .ClearFormatting
         .Replacement.ClearFormatting
-        .Text = " "
-        .Replacement.Text = " "
+        .Text = ""
+        .Replacement.Text = ""
         .Wrap = wdFindStop
         .Format = False
         .Forward = True
@@ -553,8 +547,34 @@ Public Sub zz_clearFind()
         .MatchWildcards = False
         .MatchSoundsLike = False
         .MatchAllWordForms = False
-        .Execute
+' Not 100% sure, but I think some Find/Replace issues are caused b/c
+' Execute doesn't work (or at least is wonky) if you don't set the
+' Replace parameter each time.
+        .Execute Replace:=wdReplaceNone
     End With
+  Else
+    With TargetRange.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = ""
+        .Replacement.Text = ""
+        .Wrap = wdFindStop
+        .Format = False
+        .Forward = True
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+        .Execute Replace:=wdReplaceNone
+    End With
+  End If
+
+' So we can see updates in the Advanced Find UI
+  If WT_Settings.DebugOn = True Then
+    Application.ScreenRefresh
+  End If
+  
   Exit Sub
 zz_clearFindError:
 ' Can't do any replace if doc is password protected, but this runs
@@ -570,28 +590,30 @@ zz_clearFindError:
   End If
 End Sub
 
-Public Function StoryArray() As Variant
-  On Error GoTo StoryArrayError
+Public Function ActiveStories() As Collection
+  On Error GoTo ActiveStoriesError
     '------------check for endnotes and footnotes--------------------------
-    Dim strStories() As Variant
-    
-    ReDim strStories(1 To 1)
-    strStories(1) = wdMainTextStory
+    Dim colStories As Collection
+    Set colStories = New Collection
+
+    Dim storyAdd As WdStoryType
+    storyAdd = wdMainTextStory
+    colStories.Add storyAdd
     
     If activeDoc.Endnotes.Count > 0 Then
-        ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
-        strStories(UBound(strStories())) = wdEndnotesStory
+        storyAdd = wdEndnotesStory
+        colStories.Add storyAdd
     End If
     
     If activeDoc.Footnotes.Count > 0 Then
-        ReDim Preserve strStories(1 To (UBound(strStories()) + 1))
-        strStories(UBound(strStories())) = wdFootnotesStory
+        storyAdd = wdFootnotesStory
+        colStories.Add storyAdd
     End If
     
-    StoryArray = strStories
+    Set ActiveStories = colStories
   Exit Function
-StoryArrayError:
-  Err.Source = strModule & "StoryArray"
+ActiveStoriesError:
+  Err.Source = strModule & "ActiveStories"
   If ErrorChecker(Err) = False Then
     Resume
   Else
@@ -900,8 +922,7 @@ StyleReplaceError:
 End Function
 
 
-Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll _
-As Boolean = False) As Boolean
+Function StartupSettings(Optional AcceptAll As Boolean = False) As Boolean
   On Error GoTo StartupSettingsError
 ' records/adjusts/checks settings and stuff before running the rest of the macro
 ' returns TRUE if some check is bad and we can't run the macro
@@ -1020,8 +1041,10 @@ As Boolean = False) As Boolean
 ' types of fields, this loop doesn't affect them.
 ' NOTE: Moved this to separate procedure to use Matt's code.
 ' Must run AFTER content control cleanup.
-  
-  Call UpdateUnlinkFieldCodes(StoriesUsed)
+
+  Dim colStoriesUsed As Collection
+  Set colStoriesUsed = MacroHelpers.ActiveStories()
+  Call UpdateUnlinkFieldCodes(colStoriesUsed)
 
 
   ' ========== STATUS BAR: store current setting and display ==========
@@ -1047,9 +1070,8 @@ End Function
 ' each field. If this is our cookbook template with the automatic TOC, that
 ' will be unlinked as well.
 
-Public Sub UpdateUnlinkFieldCodes(Optional p_stories As Variant)
+Public Sub UpdateUnlinkFieldCodes(Optional p_stories As Collection)
   Dim objField As Field
-  Dim A As Long
   Dim thisRange As Range
   Dim strContent As String
   Dim blnTOCpresent As Boolean
@@ -1059,29 +1081,35 @@ Public Sub UpdateUnlinkFieldCodes(Optional p_stories As Variant)
   
   ' p_stories is optional; if an array of stories is not passed,
   ' just use the main text story here
-  If IsArrayEmpty(p_stories) = True Then
-      ReDim p_stories(1 To 1)
-      p_stories(1) = wdMainTextStory
+  If p_stories.Count = 0 Then
+    Dim mainStory As WdStoryType
+    mainStory = wdMainTextStory
+    Set p_stories = New Collection
+    p_stories.Add mainStory
   End If
-  
-  For A = LBound(p_stories) To UBound(p_stories)
-      Set thisRange = activeDoc.StoryRanges(p_stories(A))
-      If thisRange.Fields.Count > 0 Then
-        For Each objField In thisRange.Fields
-  '            DebugPrint thisRange.Fields.Count
-            With objField
-              If .Type = wdFieldTOC Then
-                blnTOCpresent = True
-              End If
-              
-              .Update
-              .Locked = False
-              .Unlink
-            
-            End With
-          Next objField
-      End If
-  Next A
+
+  Dim varStory As Variant
+  Dim currentStory As WdStoryType
+
+  For Each varStory In p_stories
+    currentStory = varStory
+    Set thisRange = activeDoc.StoryRanges(currentStory)
+    If thisRange.Fields.Count > 0 Then
+      For Each objField In thisRange.Fields
+'            DebugPrint thisRange.Fields.Count
+        With objField
+          If .Type = wdFieldTOC Then
+            blnTOCpresent = True
+          End If
+          
+          .Update
+          .Locked = False
+          .Unlink
+        
+        End With
+      Next objField
+    End If
+  Next
   
   ' If automatic TOC was unlinked above, need to map built-in TOC styles to ours
   If blnTOCpresent = True Then
@@ -1374,7 +1402,7 @@ CleanUpError:
   End If
 End Sub
 
-Function HiddenTextSucks(StoryType As WdStoryType) As Boolean
+Function HiddenTextSucks(StoryType As Long) As Boolean
 'v. 3.1 patch : redid this whole thing as an array, addedsmart quotes, wrap toggle var
   On Error GoTo HiddenTextSucksError
 '    DebugPrint StoryType
@@ -1479,28 +1507,30 @@ ClearPilcrowFormatError:
   End If
 End Sub
 
-Sub StyleAllHyperlinks(Optional StoriesInUse As Variant)
+Sub StyleAllHyperlinks(Optional StoriesInUse As Collection)
   On Error GoTo StyleAllHyperlinksError
-    ' StoriesInUse is an array of wdStoryTypes in use
+    ' StoriesInUse is a collection of wdStoryTypes in use
     ' Clears active links and adds macmillan URL char styles
     ' to any proper URLs.
     ' Breaking up into sections because AutoFormat does not apply hyperlinks to FN/EN stories.
     ' Also if you AutoFormat a second time it undoes all of the formatting already applied to hyperlinks
     
-    Dim S As Long
-    
     Call zz_clearFind
     
-    For S = LBound(StoriesInUse) To UBound(StoriesInUse)
+    Dim varStory As Variant
+    Dim curStory As WdStoryType
+    For Each varStory In StoriesInUse
+      curStory = varStory
         'Styles hyperlinks, must be performed after PreserveWhiteSpaceinBrkStylesA
-        Call StyleHyperlinksA(StoryType:=(StoriesInUse(S)))
-    Next S
+        Call StyleHyperlinksA(StoryType:=curStory)
+    Next
     
     Call MacroHelpers.AutoFormatHyperlinks
     
-    For S = LBound(StoriesInUse) To UBound(StoriesInUse)
-        Call StyleHyperlinksB(StoryType:=(StoriesInUse(S)))
-    Next S
+    For Each varStory In StoriesInUse
+      curStory = varStory
+        Call StyleHyperlinksB(StoryType:=curStory)
+    Next
  Exit Sub
 StyleAllHyperlinksError:
   Err.Source = strModule & "StyleAllHyperlinks"
@@ -1615,7 +1645,7 @@ Private Sub AutoFormatHyperlinks()
     Dim f1 As Boolean, f2 As Boolean, f3 As Boolean
     Dim f4 As Boolean, f5 As Boolean, f6 As Boolean
     Dim f7 As Boolean, f8 As Boolean, f9 As Boolean
-    Dim f10 As Boolean
+    Dim f10 As Boolean, f11 As Boolean
       
     'This first bit autoformats hyperlinks in main text story
     With Options
@@ -1630,6 +1660,7 @@ Private Sub AutoFormatHyperlinks()
         f8 = .AutoFormatReplaceFractions
         f9 = .AutoFormatReplacePlainTextEmphasis
         f10 = .AutoFormatReplaceHyperlinks
+        f11 = .AutoFormatDeleteAutoSpaces
         ' Only convert URLs
         .AutoFormatApplyHeadings = False
         .AutoFormatApplyLists = False
@@ -1641,6 +1672,7 @@ Private Sub AutoFormatHyperlinks()
         .AutoFormatReplaceFractions = False
         .AutoFormatReplacePlainTextEmphasis = False
         .AutoFormatReplaceHyperlinks = True
+        .AutoFormatDeleteAutoSpaces = False
         ' Perform AutoFormat
         activeDoc.Content.AutoFormat
         ' Restore original AutoFormat settings
@@ -1654,6 +1686,7 @@ Private Sub AutoFormatHyperlinks()
         .AutoFormatReplaceFractions = f8
         .AutoFormatReplacePlainTextEmphasis = f9
         .AutoFormatReplaceHyperlinks = f10
+        .AutoFormatDeleteAutoSpaces = f11
     End With
     
     'This bit autoformats hyperlinks in endnotes and footnotes
@@ -1803,56 +1836,58 @@ Public Sub PageBreakCleanup()
 ' Add paragraph breaks around every page break character (so we know for sure
 ' paragraph style of break won't apply to any body text). Will add extra blank
 ' paragraphs that we can clean up later.
-' Also add "Page Break (pb)" style.
 
-  MacroHelpers.zz_clearFind
-  With activeDoc.Range.Find
+  Dim currentRng As Range
+  Set currentRng = activeDoc.Range
+
+  MacroHelpers.zz_clearFind currentRng
+  With currentRng.Find
     .Text = "^m"
     .Replacement.Text = "^p^m^p"
     .Format = True
-    .Replacement.Style = strPageBreak
+    .Replacement.Style = WT_StyleConfig.MacmillanStyles("pagebreak")
     .Execute Replace:=wdReplaceAll
   End With
 
 ' If we had an unstyled page break char, new trailing ^p is wrong style
 ' Use this to make sure all correct style.
-  MacroHelpers.zz_clearFind
-  With activeDoc.Range.Find
+  MacroHelpers.zz_clearFind currentRng
+  With currentRng.Find
     .Text = "^m^13{1,}"
     .Replacement.Text = "^m^p"
     .Format = True
     .MatchWildcards = True
-    .Replacement.Style = strPageBreak
+    .Replacement.Style = WT_StyleConfig.MacmillanStyles("pagebreak")
     .Execute Replace:=wdReplaceAll
   End With
 
 ' Now that we are sure every PB char has PB style, remove all PB char
-  MacroHelpers.zz_clearFind
-  With activeDoc.Range.Find
+  MacroHelpers.zz_clearFind currentRng
+  With currentRng.Find
     .Text = "^m"
     .Replacement.Text = ""
     .Execute Replace:=wdReplaceAll
   End With
 
 ' Remove multiple PB-styled paragraphs in a row
-  MacroHelpers.zz_clearFind
-  With activeDoc.Range.Find
+  MacroHelpers.zz_clearFind currentRng
+  With currentRng.Find
     .Text = "^13{2,}"
     .Replacement.Text = "^p"
     .Format = True
-    .Style = strPageBreak
+    .Style = WT_StyleConfig.MacmillanStyles("pagebreak")
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
   End With
 
 ' Now we should have all PBs are just single paragraph return with PB style.
 ' So we just need to add the PB character.
-  MacroHelpers.zz_clearFind
-  With activeDoc.Range.Find
+  MacroHelpers.zz_clearFind currentRng
+  With currentRng.Find
     .Text = "^p"
     .Replacement.Text = "^m^p"
     .Format = True
-    .Style = strPageBreak
+    .Style = WT_StyleConfig.MacmillanStyles("pagebreak")
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
   End With
@@ -1870,6 +1905,8 @@ Public Sub PageBreakCleanup()
     With Selection.Find
       .Format = True
       .Style = varStyle
+      .Forward = True
+      .Wrap = wdFindStop
       .Execute
       
       Do While .Found = True
@@ -1877,13 +1914,14 @@ Public Sub PageBreakCleanup()
         lngSectionStyle = MacroHelpers.ParaIndex
         If lngSectionStyle > 1 Then
           lngPrevSibling = lngSectionStyle - 1
-          If activeDoc.Paragraphs(lngPrevSibling).Range.ParagraphStyle = strPageBreak Then
+          If activeDoc.Paragraphs(lngPrevSibling).Range.ParagraphStyle = WT_StyleConfig.MacmillanStyles("pagebreak") Then
           ' Add to collection to delete later (because if we delete it now it will mess up
           ' our paragraph indices. Add Before first so our list is reverse sorted, so we
           ' can delete from the bottom up (again to not mess with paragraph indices)
             colDeleteTheseOnes.Add Item:=lngPrevSibling, Before:=1
           End If
         End If
+        .Execute
       Loop
     End With
   Next varStyle
@@ -1903,49 +1941,15 @@ Public Sub PageBreakCleanup()
     lngCount = lngCount + 1
     strKey = "firstParaPB" & lngCount
     Set rngPara1 = activeDoc.Paragraphs.First.Range
-    If MacroHelpers.IsNewLine(rngPara1.Text) = True Then
+    If MacroHelpers.IsNewLine(rngPara1.Text) = True And _
+      WT_StyleConfig.IsSectionStartStyle(rngPara1.ParagraphStyle) = False Then
       rngPara1.Delete
     Else
-      dictReturn.Add strKey, False
       Exit Do
     End If
   Loop Until lngCount > 20 ' For runaway loops
-
-  Exit Sub
 End Sub
 
-
-
-
-' =============================================================================
-'       PROGRESS BAR HELPERS
-' =============================================================================
-'
-' ===== UpdateBarAndWait ======================================================
-' Call this to update the progress bar. Can't be in the ProgressBar class,
-' because that class can crash the program if it gets called
-' again before it finishes the first call. This includes `DoEvents` which allows
-' other work to finish before returning to the calling procedure.
-
-Public Sub UpdateBarAndWait(Bar As ProgressBar, Status As String, _
-  Percent As Single)
-    On Error GoTo UpdateBarAndWaitError
-    Bar.Done = False
-    Bar.Increment Percent, Status
-    Do
-        DoEvents  ' Allows other macro execution to continue
-    Loop Until Bar.Done = True
-    DebugPrint "Progress: " & (Percent * 100) & "%"
-  Exit Sub
-
-UpdateBarAndWaitError:
-  Err.Source = strClassHelpers & "UpdateBarAndWaitError"
-  If ErrorChecker(Err) = False Then
-    Resume
-  Else
-    Call MacroHelpers.GlobalCleanup
-  End If
-End Sub
 
 
 

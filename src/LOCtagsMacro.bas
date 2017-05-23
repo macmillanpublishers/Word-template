@@ -33,7 +33,7 @@ Sub LibraryOfCongressTags()
     
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)
-    If StartupSettings(StoriesUsed:=stStories) = True Then
+    If StartupSettings() = True Then
         Call Cleanup
         Exit Sub
     End If

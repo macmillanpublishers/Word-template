@@ -64,10 +64,10 @@ Public Property Get InstallType() As String
     End Select
 
   Else
-    DebugPrint "InstallType already set"
+'    DebugPrint "InstallType already set"
   End If
   
-  DebugPrint "Current InstallType: " & p_strInstallType
+'  DebugPrint "Current InstallType: " & p_strInstallType
   InstallType = p_strInstallType
 End Property
 

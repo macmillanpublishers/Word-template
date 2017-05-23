@@ -126,12 +126,12 @@ Private Function EndnoteUnlink(p_blnAutomated As Boolean) As Dictionary
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
   If WT_Settings.InstallType = "user" Then
-    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=False) = True Then
+    If MacroHelpers.StartupSettings(AcceptAll:=False) = True Then
       Call MacroHelpers.Cleanup
       Exit Sub
     End If
   Else
-    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=True) = True Then
+    If MacroHelpers.StartupSettings(AcceptAll:=True) = True Then
       Call MacroHelpers.Cleanup
       Exit Sub
     End If
@@ -234,7 +234,7 @@ Private Function EndnoteUnlink(p_blnAutomated As Boolean) As Dictionary
   
   ' Add page break before new section
   a_strText(1) = vbNewLine
-  a_strStyle(1) = Reports.strPageBreak
+  a_strStyle(1) = WT_StyleConfig.MacmillanStyles("pagebreak")
   
   ' N.B., If your Range includes the final paragraph return of the doc,
   ' wdCollapseEnd leaves the insertion point BEFORE that last paragraph

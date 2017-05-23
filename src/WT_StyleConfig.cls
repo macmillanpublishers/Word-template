@@ -14,6 +14,8 @@ Private prop_VersatileStyles As Collection
 Private prop_SectionStartStyles As Collection
 Private prop_AllowedBlankStyles As Collection
 Private prop_VersatileStylesByIndex As Collection
+Private prop_MacmillanStyles As Dictionary
+
 
 ' Private Properties
 Private prop_VbaStyleConfig As Dictionary
@@ -69,6 +71,19 @@ Public Property Get VersatileStylesByIndex() As Collection
     Next varStyle
   End If
   Set VersatileStylesByIndex = prop_VersatileStylesByIndex
+End Property
+
+
+' ===== MacmillanStyles =======================================================
+' Hard coded for now, move to style config json.
+
+Public Property Get MacmillanStyles() As Dictionary
+  If prop_MacmillanStyles Is Nothing Then
+    Set prop_MacmillanStyles = New Dictionary
+    prop_MacmillanStyles.Add "pagebreak", "Page Break (pb)"
+    
+  End If
+  Set MacmillanStyles = prop_MacmillanStyles
 End Property
 
 ' *****************************************************************************

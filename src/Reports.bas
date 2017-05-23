@@ -48,13 +48,11 @@ Private Sub MakeReport(torDOTcom As Boolean)
     'StartTime = Timer                               '|
     '=================================================
     
-  '------------check for endnotes and footnotes--------------------------------
-  Dim arrStories() As Variant
-  arrStories = StoryArray
+
   
   ' ======= Run startup checks ========
   ' True means a check failed (e.g., doc protection on)
-  If MacroHelpers.StartupSettings(StoriesUsed:=arrStories) = True Then
+  If MacroHelpers.StartupSettings() = True Then
     Call Cleanup
     Exit Sub
   End If
@@ -133,6 +131,10 @@ Private Sub MakeReport(torDOTcom As Boolean)
 
   oProgressBkmkr.Title = strTitle
   Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
+
+  '------------check for endnotes and footnotes--------------------------------
+  Dim arrStories() As Variant
+  arrStories = StoryArray
 
 ' -------- validate section-start styles --------------------------------------
   Dim strSectionStartWarnings As String

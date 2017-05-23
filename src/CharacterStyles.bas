@@ -61,19 +61,16 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
 'Remember time when macro starts
 'StartTime = Timer
 
-' ------------check for endnotes and footnotes---------------------------------
-  Dim stStories() As Variant
-  stStories = MacroHelpers.StoryArray
     
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
   If WT_Settings.InstallType = "user" Then
-    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=False) = True Then
+    If MacroHelpers.StartupSettings(AcceptAll:=False) = True Then
       Call MacroHelpers.Cleanup
       Exit Sub
     End If
   Else
-    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=True) = True Then
+    If MacroHelpers.StartupSettings(AcceptAll:=True) = True Then
       Call MacroHelpers.Cleanup
       Exit Sub
     End If
@@ -115,25 +112,32 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-' -----------Delete hidden text ------------------------------------------------
-  Dim S As Long
+
+' ------------check for endnotes and footnotes---------------------------------
+  Dim colStories As Collection
+  Set colStories = MacroHelpers.ActiveStories
+  Dim varStory As Variant
+  Dim currentStory As WdStoryType
   
+' -----------Delete hidden text ------------------------------------------------
+
+  For Each varStory In colStories
+    currentStory = varStory
   ' Note, if you don't delete hidden text, this macro turns it into reg. text.
-  For S = 1 To UBound(stStories())
-  If MacroHelpers.HiddenTextSucks(StoryType:=(stStories(S))) = _
-    True Then
+    If MacroHelpers.HiddenTextSucks(StoryType:=currentStory) = True Then
     ' Notify user maybe?
     End If
-  Next S
+  Next
   
   Call MacroHelpers.zz_clearFind
 
 ' -------------- Clear formatting from paragraph marks ------------------------
 ' can cause errors
   
-  For S = 1 To UBound(stStories())
-    Call MacroHelpers.ClearPilcrowFormat(StoryType:=(stStories(S)))
-  Next S
+  For Each varStory In colStories
+    currentStory = varStory
+    Call MacroHelpers.ClearPilcrowFormat(StoryType:=currentStory)
+  Next
 
 ' -------------- Clean up page break characters -------------------------------
   Call MacroHelpers.PageBreakCleanup
@@ -149,9 +153,10 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
-    Call PreserveWhiteSpaceinBrkStylesA(StoryType:=(stStories(S)))
-  Next S
+  For Each varStory In colStories
+    currentStory = varStory
+    Call PreserveWhiteSpaceinBrkStylesA(StoryType:=currentStory)
+  Next
   
   Call MacroHelpers.zz_clearFind
   
@@ -162,7 +167,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  Call MacroHelpers.StyleAllHyperlinks(StoriesInUse:=stStories)
+  Call MacroHelpers.StyleAllHyperlinks(StoriesInUse:=colStories)
   
   Call MacroHelpers.zz_clearFind
 
@@ -173,9 +178,10 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
-    Call RemoveBreaks(StoryType:=(stStories(S)))
-  Next S
+  For Each varStory In colStories
+    currentStory = varStory
+    Call RemoveBreaks(StoryType:=currentStory)
+  Next
   
   Call MacroHelpers.zz_clearFind
   
@@ -186,10 +192,11 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
-    Call TagExistingCharStyles(StoryType:=(stStories(S)))
-  Next S
-  
+  For Each varStory In colStories
+    currentStory = varStory
+    Call TagExistingCharStyles(StoryType:=currentStory)
+  Next
+
   Call MacroHelpers.zz_clearFind
   
 ' -------------------------Tag direct formatting-------------------------------
@@ -202,13 +209,17 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   ' allBkmkrStyles is a jagged array (array of arrays) to hold in-use Bookmaker styles.
   ' i.e., one array for each story. Must be Variant.
   Dim allBkmkrStyles() As Variant
-  For S = 1 To UBound(stStories())
+  Dim S As Long
+  S = 0
+  For Each varStory In colStories
+    currentStory = varStory
+    S = S + 1
   'tag local styling, reset local styling, remove text highlights
-    Call LocalStyleTag(StoryType:=(stStories(S)))
-      
+    Call LocalStyleTag(StoryType:=currentStory)
+    
     ReDim Preserve allBkmkrStyles(1 To S)
-    allBkmkrStyles(S) = TagBkmkrCharStyles(StoryType:=stStories(S))
-  Next S
+    allBkmkrStyles(S) = TagBkmkrCharStyles(StoryType:=currentStory)
+  Next
   
   Call MacroHelpers.zz_clearFind
 
@@ -219,10 +230,10 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
-    Call LocalStyleReplace(StoryType:=(stStories(S)), _
-      BkmkrStyles:=allBkmkrStyles(S))
-  Next S
+  For Each varStory In colStories
+    currentStory = varStory
+    Call LocalStyleReplace(StoryType:=currentStory, BkmkrStyles:=allBkmkrStyles(S))
+  Next
   
   Call MacroHelpers.zz_clearFind
   
@@ -233,9 +244,10 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
-    Call PreserveWhiteSpaceinBrkStylesB(StoryType:=(stStories(S)))
-  Next S
+  For Each varStory In colStories
+    currentStory = varStory
+    Call PreserveWhiteSpaceinBrkStylesB(StoryType:=currentStory)
+  Next
   
   Call MacroHelpers.zz_clearFind
     
@@ -294,8 +306,10 @@ Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
 ' in the first or last paragraph, so add dummy paragraphs here (with tags)
 ' that we can remove later on.
 
-  activeRng.InsertBefore vbNewLine
+'  activeRng.InsertBefore "|||" & vbNewLine
+'  activeRng.Paragraphs.First.Style = "Normal"
   activeRng.InsertAfter vbNewLine
+  activeRng.Paragraphs.Last.Style = "Normal"
 
 ' tag paragraphs allowed to be blank
   Dim varStyle As Variant
@@ -306,22 +320,21 @@ Private Sub PreserveWhiteSpaceinBrkStylesA(StoryType As WdStoryType)
   ' but it's still whitespace so if something goes awry, we don't leave visible
   ' tags in the doc and freak people out.
 
-    If MacroHelpers.IsStyleInDoc(varStyle) = True Then
+    If MacroHelpers.IsStyleInUse(CStr(varStyle)) = True Then
       MacroHelpers.zz_clearFind
-      With activeRng.Find
-      .Text = "^13"
-      .Replacement.Text = "^31^13"    ' add optional hyphen before trailing newline
-      .Wrap = wdFindContinue
-      .Format = True
-      .Style = StylePreserveArray(E)
-      .MatchWildcards = True
-      .Execute Replace:=wdReplaceAll
+      Selection.HomeKey Unit:=wdStory
+      With Selection.Find
+        .Text = "(*)(^13)"
+        .Replacement.Text = "\1```\2"    ' add optional hyphen before trailing newline
+        .Format = True
+        .Style = CStr(varStyle)
+        .Replacement.Style = CStr(varStyle)
+        .MatchWildcards = True
+        .Execute Replace:=wdReplaceAll
       End With
     End If
-  Next varStyle
-
 NextLoop:
-  Next
+  Next varStyle
   Exit Sub
     
 PreserveWhiteSpaceinBrkStylesAError:
@@ -371,7 +384,7 @@ Private Sub PreserveWhiteSpaceinBrkStylesB(StoryType As WdStoryType)
 ' Remove those optional hyphens we added earlier, also all optional hyphens
   Call MacroHelpers.zz_clearFind
   With activeRng.Find
-    .Text = "^-"
+    .Text = "```"
     .Replacement.Text = ""
     .Wrap = wdFindContinue
     .MatchWildcards = False

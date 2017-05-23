@@ -35,12 +35,12 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
   If WT_Settings.InstallType = "user" Then
-    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=False) = True Then
+    If MacroHelpers.StartupSettings(AcceptAll:=False) = True Then
       Call MacroHelpers.Cleanup
       Exit Sub
     End If
   Else
-    If MacroHelpers.StartupSettings(StoriesUsed:=stStories, AcceptAll:=True) = True Then
+    If MacroHelpers.StartupSettings(AcceptAll:=True) = True Then
       Call MacroHelpers.Cleanup
       Exit Sub
     End If

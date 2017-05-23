@@ -692,28 +692,23 @@ End Function
 
 Public Function ExistsInCollection(TestCollection As Collection, TestItem As _
   Variant) As Boolean
-  
-  On Error GoTo ExistsInCollectionError
 
   If IsObject(TestItem) = True Then
     Dim objItem As Object
-    Set objItem = TestCollection.Item(TestItem)
-    ExistsInCollection = True
+    For Each objItem In TestCollection
+      If objItem Is TestItem Then
+        ExistsInCollection = True
+        Exit Function
+      End If
+    Next
   Else
     Dim varItem As Variant
-    varItem = TestCollection.Item(TestItem)
-    ExistsInCollection = True
-  End If
-
-  Exit Function
-  
-ExistsInCollectionError:
-
-' 5: Invalid procedure call or argument
-  If Err.Number = 5 Then
-    ExistsInCollection = False
-  Else
-    MacroHelpers.ErrorChecker (Err)
+    For Each varItem In TestCollection
+      If varItem = TestItem Then
+        ExistsInCollection = True
+        Exit Function
+      End If
+    Next
   End If
 End Function
 
