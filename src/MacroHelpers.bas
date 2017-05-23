@@ -1820,6 +1820,7 @@ Public Function GetTextByIndex(ParaIndex As Long) As String
   If IsNewLine(Right(strParaText, 1)) = True Then
     strParaText = Left(strParaText, Len(strParaText) - 1)
   End If
+  Debug.Print Trim(strParaText)
   GetTextByIndex = Trim(strParaText)
 End Function
 

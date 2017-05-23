@@ -249,8 +249,8 @@ Public Sub FindStyleIndex(SearchStyle As String, ByRef DestinationCollection _
     .Wrap = wdFindStop
     .Execute
 
-    Do While .Execute = True
-      lngFoundIndex = MacroHelpers.ParaIndex(UseEnd:=False)
+    Do While .Found = True
+      lngFoundIndex = MacroHelpers.ParaIndex(UseEnd:=True)
       DestinationCollection.Add lngFoundIndex
       If ReturnMultiple = True Then
         .Execute
