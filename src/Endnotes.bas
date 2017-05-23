@@ -118,25 +118,21 @@ Private Function EndnoteUnlink(p_blnAutomated As Boolean) As Dictionary
   Dim strStatus As String
   Dim strTitle As String
   palgraveTag = False
-
-' ------------check for endnotes and footnotes---------------------------------
-  Dim stStories() As Variant
-  stStories = MacroHelpers.StoryArray
     
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
   If WT_Settings.InstallType = "user" Then
     If MacroHelpers.StartupSettings(AcceptAll:=False) = True Then
       Call MacroHelpers.Cleanup
-      Exit Sub
+      Exit Function
     End If
   Else
     If MacroHelpers.StartupSettings(AcceptAll:=True) = True Then
       Call MacroHelpers.Cleanup
-      Exit Sub
+      Exit Function
     End If
   End If
-  
+
 ' -----------------------------------------------------------------------------
 ' -----------------------------------------------------------------------------
 ' This section only if being run by a person.

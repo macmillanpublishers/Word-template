@@ -27,24 +27,28 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   
   'Remember time when macro starts
   '  StartTime = Timer
-  
-  '------------check for endnotes and footnotes--------------------------------
-  Dim stStories() As Variant
-  stStories = MacroHelpers.StoryArray
+
   
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
   If WT_Settings.InstallType = "user" Then
     If MacroHelpers.StartupSettings(AcceptAll:=False) = True Then
       Call MacroHelpers.Cleanup
-      Exit Sub
+      Exit Function
     End If
   Else
     If MacroHelpers.StartupSettings(AcceptAll:=True) = True Then
       Call MacroHelpers.Cleanup
-      Exit Sub
+      Exit Function
     End If
   End If
+
+' ------------check for endnotes and footnotes---------------------------------
+  Dim colStories As Collection
+  Set colStories = MacroHelpers.ActiveStories
+  Dim varStory As Variant
+  Dim currentStory As WdStoryType
+  
   
   ' Change to just check for backtick characters
   If zz_errorChecks = True Then
@@ -99,24 +103,23 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
     Status:=strStatus, Percent:=sglPercentComplete)
   
   '-----------Delete hidden text ----------------------------------------------
-  Dim S As Long
-  
-  For S = 1 To UBound(stStories())
-  If MacroHelpers.HiddenTextSucks(StoryType:=(stStories(S))) = _
-    True Then
+  For Each varStory In colStories
+    currentStory = varStory
+    If MacroHelpers.HiddenTextSucks(StoryType:=currentStory) = True Then
     ' Notify user maybe?
     End If
-  Next S
+  Next
   
   Call MacroHelpers.zz_clearFind
 
 ' ---------- Clear formatting from paragraph marks, symbols -------------------
 ' Per Westchester, can cause macro to break
   
-  For S = 1 To UBound(stStories())
-    Call MacroHelpers.ClearPilcrowFormat(StoryType:=(stStories(S)))
-    Call CleanSomeSymbols(StoryTypes:=(stStories(S)))
-  Next S
+  For Each varStory In colStories
+    currentStory = varStory
+    Call MacroHelpers.ClearPilcrowFormat(StoryType:=currentStory)
+    Call CleanSomeSymbols(StoryTypes:=currentStory)
+  Next
   
   '-----------Find/Replace with Wildcards = False------------------------------
   Call MacroHelpers.zz_clearFind                          'Clear find object
@@ -127,11 +130,12 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
+  For Each varStory In colStories
+    currentStory = varStory
   ' has to be alone b/c Match Wildcards has to be disabled: Smart Quotes,
   ' Unicode (ellipse), section break
-    Call RmNonWildcardItems(StoryType:=(stStories(S)))
-  Next S
+    Call RmNonWildcardItems(StoryType:=currentStory)
+  Next
   
   Call MacroHelpers.zz_clearFind
 
@@ -142,11 +146,11 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
+  For Each varStory In colStories
 ' tags styled page breaks, tabs
-    Call PreserveStyledCharactersA(StoryType:= _
-      (stStories(S)))
-  Next S
+    currentStory = varStory
+    Call PreserveStyledCharactersA(StoryType:=currentStory)
+  Next
   Call MacroHelpers.zz_clearFind
   
   '---------------Find/Replace for rest of the typographic errors----------------------
@@ -157,10 +161,11 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
+  For Each varStory In colStories
 ' v. 3.7 does NOT remove manual page breaks or multiple paragraph returns
-    Call RmWhiteSpaceB(StoryType:=(stStories(S)))
-  Next S
+    currentStory = varStory
+    Call RmWhiteSpaceB(StoryType:=currentStory)
+  Next
   
   Call MacroHelpers.zz_clearFind
 
@@ -171,11 +176,11 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
+  For Each varStory In colStories
+    currentStory = varStory
 ' replaces character tags with actual character
-    Call PreserveStyledCharactersB(StoryType:= _
-      (stStories(S)))
-  Next S
+    Call PreserveStyledCharactersB(StoryType:=currentStory)
+  Next
   
   Call MacroHelpers.zz_clearFind
   
@@ -186,16 +191,18 @@ Public Function MacmillanManuscriptCleanup() As Dictionary
   Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressCleanup, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
-  For S = 1 To UBound(stStories())
-    Call FixUnderlines(StoryType:=(stStories(S)))
-  Next S
+  For Each varStory In colStories
+   currentStory = varStory
+   Call FixUnderlines(StoryType:=currentStory)
+  Next
   
   Call MacroHelpers.zz_clearFind
 
   ' ----------- remove Shape objects
-  For S = 1 To UBound(stStories())
+  For Each varStory In colStories
+    currentStory = varStory
     Call ShapeDelete
-  Next S
+  Next
   
   Call MacroHelpers.zz_clearFind
   

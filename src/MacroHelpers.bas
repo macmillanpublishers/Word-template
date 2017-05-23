@@ -570,10 +570,10 @@ Public Sub zz_clearFind(Optional TargetRange As Range)
     End With
   End If
 
-' So we can see updates in the Advanced Find UI
-  If WT_Settings.DebugOn = True Then
-    Application.ScreenRefresh
-  End If
+'' So we can see updates in the Advanced Find UI
+'  If WT_Settings.DebugOn = True Then
+'    Application.ScreenRefresh
+'  End If
   
   Exit Sub
 zz_clearFindError:

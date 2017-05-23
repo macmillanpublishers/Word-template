@@ -26,10 +26,7 @@ Sub LibraryOfCongressTags()
     '''         3/24/15 : re-did ELC in case of atax or other styles present early in manuscript ; uses while loop to scan for first backmatter style that
     '''                 is not eventually followed by <ch#> or <tp> tag
     ''''''''''''''''''''''''''''''
-    
-    '------------check for endnotes and footnotes--------------------------
-    Dim stStories() As Variant
-    stStories = StoryArray
+
     
     ' ======= Run startup checks ========
     ' True means a check failed (e.g., doc protection on)

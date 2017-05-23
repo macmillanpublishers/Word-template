@@ -132,9 +132,12 @@ Private Sub MakeReport(torDOTcom As Boolean)
   oProgressBkmkr.Title = strTitle
   Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
 
-  '------------check for endnotes and footnotes--------------------------------
-  Dim arrStories() As Variant
-  arrStories = StoryArray
+' ------------check for endnotes and footnotes---------------------------------
+  Dim colStories As Collection
+  Set colStories = MacroHelpers.ActiveStories
+  Dim varStory As Variant
+  Dim currentStory As WdStoryType
+
 
 ' -------- validate section-start styles --------------------------------------
   Dim strSectionStartWarnings As String
@@ -266,7 +269,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
 
 End Sub
 
-Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As Variant
+Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Status As String, ProgTitle As String) As Variant
     'Creates a list of Macmillan styles in use
     'And a separate list of non-Macmillan styles in use
     
@@ -289,8 +292,12 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     '''''''''''''''''''''
     Dim activeParaRange As Range
     Dim pageNumber As Integer
-    Dim A As Long
     
+    Dim colStories As Collection
+    Set colStories = MacroHelpers.ActiveStories
+    
+    Dim varStory As Variant
+    Dim currentStory As WdStoryType
     
     'Alter built-in Normal (Web) style temporarily (later, maybe forever?)
     activeDoc.Styles("Normal (Web)").NameLocal = "_"
@@ -314,10 +321,12 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
             Call UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
         End If
         
-        For A = LBound(Stories()) To UBound(Stories())
-            If J <= activeDoc.StoryRanges(Stories(A)).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Style
-                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
+
+        For Each varStory In colStories
+          currentStory = varStory
+            If J <= activeDoc.StoryRanges(currentStory).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(currentStory).Paragraphs(J).Style
+                Set activeParaRange = activeDoc.StoryRanges(currentStory).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
                     
                 'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
@@ -509,7 +518,7 @@ NextLoop:
     'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
     Dim strTorBadStyles As String
     If Tor = True Then
-        strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle, Stories:=Stories)
+        strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle)
         strBadStyles = strBadStyles & strTorBadStyles
     End If
     
@@ -660,7 +669,8 @@ End Function
 
 
 
-Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, ProgressTitle As String, Stories() As Variant) As String
+Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, _
+  ProgressTitle As String, CurrentStories As Collection) As String
     'Called from GoodBadStyles sub if torDOTcom parameter is set to True.
     
     Dim paraStyle As String
@@ -687,6 +697,8 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
     TheOS = System.OperatingSystem
     Dim sglPercentComplete As Single
     Dim strStatus As String
+    Dim varStory As Variant
+    Dim currentStory As WdStoryType
     
     Application.ScreenUpdating = False
     
@@ -709,9 +721,10 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
             Call UpdateBarAndWait(Bar:=ProgressBar2, Status:=strStatus, Percent:=sglPercentComplete)
         End If
         
-        For A = LBound(Stories()) To UBound(Stories())
-            If N <= activeDoc.StoryRanges(Stories(A)).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(N).Style
+        For Each varStory In CurrentStories
+          currentStory = varStory
+            If N <= activeDoc.StoryRanges(currentStory).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(currentStory).Paragraphs(N).Style
                 'DebugPrint paraStyle
                 
                 If Right(paraStyle, 1) = ")" Then
@@ -732,7 +745,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                     
                     'DebugPrint intBadCount
                     If intBadCount = UBound(arrTorStyles()) Then
-                        Set activeParaRange = activeDoc.StoryRanges(A).Paragraphs(N).Range
+                        Set activeParaRange = activeDoc.StoryRanges(currentStory).Paragraphs(N).Range
                         pageNumber = activeParaRange.Information(wdActiveEndPageNumber)
                         strBadStyles = strBadStyles & "** ERROR: Non-Bookmaker style on page " & pageNumber _
                             & " (Paragraph " & N & "):  " & paraStyle & vbNewLine & vbNewLine
@@ -936,7 +949,7 @@ Private Function CreateReportText(TemplateUsed As Boolean, errorList As String, 
     
 End Function
 
-Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgTitle As String, Stories() As Variant) As String
+Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgTitle As String) As String
     'Creates a list of all styles in use, not just Macmillan styles
     'No list of bad styles
     'For use when no Macmillan template is attached
@@ -957,7 +970,11 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
     '''''''''''''''''''''
     Dim activeParaRange As Range
     Dim pageNumber As Integer
-    Dim A As Long
+    
+    Dim colStories As Collection
+    Set colStories = MacroHelpers.ActiveStories
+    Dim varStory As Variant
+    Dim currentStory As WdStoryType
     
     '----------Collect all styles being used-------------------------------
     styleGoodCount = 0
@@ -975,10 +992,11 @@ Private Function StylesInUse(ProgressBar As ProgressBar, Status As String, ProgT
             
         End If
         
-        For A = LBound(Stories()) To UBound(Stories())
-            If J <= activeDoc.StoryRanges(Stories(A)).Paragraphs.Count Then
-                paraStyle = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Style
-                Set activeParaRange = activeDoc.StoryRanges(Stories(A)).Paragraphs(J).Range
+        For Each varStory In colStories
+          currentStory = varStory
+            If J <= activeDoc.StoryRanges(currentStory).Paragraphs.Count Then
+                paraStyle = activeDoc.StoryRanges(currentStory).Paragraphs(J).Style
+                Set activeParaRange = activeDoc.StoryRanges(currentStory).Paragraphs(J).Range
                 pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
         
                 For K = 1 To styleGoodCount
