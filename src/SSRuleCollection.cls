@@ -19,7 +19,6 @@ Private prop_FrontmatterStyles As Collection
 Private prop_MainStyles As Collection
 Private prop_BackmatterStyles As Collection
 Private prop_rules As Collection
-Private strSSname As String
 Private prop_Warnings As Collection
 
 ' *****************************************************************************
@@ -56,8 +55,10 @@ Private Property Get SectionLists() As Dictionary
     Set collAll = New Collection
     
     ' cycle through the json data and add section start names to appropriate collections
+    Dim strSSname As String
     For J = 0 To RuleDictionary.Count - 1
         strSSname = RuleDictionary.Keys(J)
+        Debug.Print "style name: " & strSSname
         collAll.Add (strSSname)
         If RuleDictionary(strSSname).Item("section_type") = "frontmatter" Then
             collFrontmatter.Add (strSSname)
@@ -102,15 +103,16 @@ Private Property Get Rules() As Collection
     Dim A As Long
     Dim colPriorty As Collection
     For A = 1 To 4
-      Set colPrioirty = New Collection
-      prop_rules.Add colPrioirty
+      Set colPriorty = New Collection
+      prop_rules.Add colPriorty
     Next A
     
     ' Cycle through the JSON data
+    Dim strSSname As String
     For Each varKey In RuleDictionary.Keys
+        strSSname = varKey
         ' get / set the value of this Section Start item as a dict
         Set dictSingleSectionStart = RuleDictionary(varKey)
-        
     ' Conditional so we don't create a Rule object for an entry with no criteria
 '        If dictSingleSectionStart.Exists("contiguous_block_criteria_01") Then
 '            ' Create the rule object & add it to rule object collection
@@ -212,25 +214,30 @@ End Property
 ' message; if no errors, returns null string.
 
 Public Function Validate() As String
-  Dim varRule As Variant
+  Dim objRule As Object
+  Dim specificRule As SSRule
   Dim A As Long
   For A = 1 To 4
-    For Each varRule In Rules(A)
-      With varRule
+    For Each objRule In Rules(A)
+      Set specificRule = objRule
+      With specificRule
       ' Check .Position property separately so we can pass SectionLists collection
       ' from here.
-        If .Position <> vbNullString Then
+        If .Position <> WT_SectionType.no_section Then
           .CheckPosition Sections:=SectionLists
         End If
         .Process
         If .Blocks.Count > 0 Then ' we have possible missing ss-starts
-          AddWarning ProcessedRule:=varRule
+          AddWarning ProcessedRule:=specificRule
         End If
       End With
-    Next varRule
+    Next objRule
   Next A
+  
+  Dim strFinalWarning As String
+  strFinalWarning = WarningString
 
-  Validate = WarningString
+  Validate = strFinalWarning
 End Function
 
 
@@ -257,12 +264,14 @@ Private Sub AddWarning(ProcessedRule As SSRule)
   Dim varBlock As Variant
   Dim dictWarningData As Dictionary
   Dim lngPageNumber As Long
+  Dim lngIndex As Long
 
   With ProcessedRule
     For Each varBlock In .Blocks
+      lngIndex = varBlock
       Set dictWarningData = New Dictionary
     ' Get page number of first para of block
-      lngPageNumber = MacroHelpers.ParaInfo(paraInd:=varBlock, _
+      lngPageNumber = MacroHelpers.ParaInfo(paraInd:=lngIndex, _
         InfoType:=wdActiveEndAdjustedPageNumber)
   
       dictWarningData.Add "page_number", lngPageNumber

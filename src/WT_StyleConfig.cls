@@ -67,7 +67,7 @@ Public Property Get VersatileStylesByIndex() As Collection
     Set prop_VersatileStylesByIndex = New Collection
     Dim varStyle As Variant
     For Each varStyle In Me.VersatileStyles
-      ClassHelpers.FindStyleIndex varStyle, prop_VersatileStylesByIndex
+      ClassHelpers.FindStyleIndex CStr(varStyle), prop_VersatileStylesByIndex
     Next varStyle
   End If
   Set VersatileStylesByIndex = prop_VersatileStylesByIndex

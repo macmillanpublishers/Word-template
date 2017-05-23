@@ -50,16 +50,18 @@ End Property
 
 
 Public Property Get Priority() As Long
+  If prop_priority = 0 Then
     If SectionRequired = True Then
         prop_priority = 1
     ElseIf m_dictValues.Exists("order") And m_dictValues.Item("order") = "last" Then
         prop_priority = 4
-    ElseIf Position <> vbNullString Then
+    ElseIf Position <> WT_SectionType.no_section Then
         prop_priority = 3
     Else
         prop_priority = 2
     End If
-    Priority = prop_priority
+  End If
+  Priority = prop_priority
 End Property
 
 
@@ -81,11 +83,13 @@ Public Property Get Blocks() As Collection
   ' Create collection of ALL paragraphs using styles in Styles property
     Dim varStyle As Variant
     For Each varStyle In Styles
-      ClassHelpers.FindStyleIndex varStyle, col_PossibleBlocks, Multiple
+      ClassHelpers.FindStyleIndex CStr(varStyle), col_PossibleBlocks, Multiple
     Next varStyle
 
   ' Sort indices in ascending order.
-    Utils.SortCollection col_PossibleBlocks
+    If col_PossibleBlocks.Count > 0 Then
+      Utils.SortCollection col_PossibleBlocks
+    End If
 
   ' Pull out contiguous indices
     Dim lngCurrentIndex As Long
@@ -101,7 +105,7 @@ Public Property Get Blocks() As Collection
       lngNextIndex = lngCurrentIndex + 1
       
       Do While lngNextIndex <= col_PossibleBlocks.Count
-        lngNextValue = col_PossibleBlocks.Item(longnextindex)
+        lngNextValue = col_PossibleBlocks.Item(lngNextIndex)
         If lngNextValue = (lngCurrentValue + 1) Or _
           WT_StyleConfig.VersatileStyleExistsByIndex(lngNextValue) = True Then
             lngCurrentValue = lngNextValue
@@ -117,6 +121,14 @@ Public Property Get Blocks() As Collection
   Set Blocks = prop_Blocks
 End Property
 
+Public Property Get Position() As WT_SectionType
+    If m_dictValues.Exists("position") Then
+      prop_position = WT_Enums.CSectionType(m_dictValues("position"))
+    Else
+      prop_position = WT_SectionType.no_section
+    End If
+    Position = prop_position
+End Property
 
 ' *****************************************************************************
 '       PRIVATE PROPERTIES
@@ -158,14 +170,7 @@ Private Property Get InsertBefore() As Collection
   InsertBefore = prop_insert_before
 End Property
 
-Private Property Get Position() As WT_SectionType
-    If m_dictValues.Exists("position") Then
-      prop_position = WT_Enums.CSectionType(m_dictValues("position"))
-    Else
-      prop_position = WT_SectionType.no_section
-    End If
-    Position = prop_position
-End Property
+
 
 
 Private Property Get Multiple() As Boolean
@@ -306,7 +311,7 @@ Public Sub Process()
 ' SectionLists collection to every rule.
 '    CheckPosition
     AddOptionalHeadings
-    CheckPreviousSibling
+    CheckPreviousSiblings
     CheckFirstChild
   End If
 End Sub
@@ -321,7 +326,7 @@ End Sub
 ' to be run at all before we call it, to avoid having to pass the Sections
 ' collection to every rule when this property is only used once.
 
-Public Sub CheckPosition(Sections As Collection)
+Public Sub CheckPosition(Sections As Dictionary)
   If Position <> WT_SectionType.no_section Then
     Dim varIndex As Variant
     Dim lngSectionStart As Long
@@ -355,14 +360,16 @@ Public Sub CheckPosition(Sections As Collection)
     End Select
   
   ' If no section start, clearly we don't have that section
+    Dim lngIndex As Long
     If CBool(lngSectionStart) Then
       For Each varIndex In Blocks
+        lngIndex = varIndex
       ' Check if block paragraph is after the start paragraph
-        If varIndex >= lngSectionStart Then
+        If lngIndex >= lngSectionStart Then
         ' If no end, following section doesn't exist
           If CBool(lngSectionEnd) Then
           ' Check if block is before end of section
-            If varIndex <= lngSectionEnd Then
+            If lngIndex <= lngSectionEnd Then
               col_Temp.Add varIndex
             End If
           End If
@@ -466,7 +473,7 @@ Private Function FindSectionStart(SectionType As String, SectionStyles As _
 
 ' Create collection of the FIRST instance of each section style
   For Each varStyle In col_SearchStyles
-    ClassHelpers.FindStyleIndex varStyle, col_FirstInstance, False
+    ClassHelpers.FindStyleIndex CStr(varStyle), col_FirstInstance, False
   Next varStyle
 
   If col_FirstInstance.Count > 0 Then
@@ -513,7 +520,7 @@ Private Sub AddOptionalHeadings()
     ' Add all block starts to new collection (if nothing matched, it will
     ' be the same as before
       col_Temp.Add lngBlockStart
-    Next varItem
+    Next varIndex
   ' Replace Blocks property with our adjusted paragraph indices
     Set Blocks = col_Temp
   End If
@@ -575,13 +582,15 @@ Private Sub CheckFirstChild()
     Set col_Temp = New Collection
     Dim strFirstText As String
     Dim blnMatch As Boolean
+    Dim lngIndex As Long
     
     For Each varIndex In Blocks
-      strFirstText = MacroHelpers.GetTextByIndex(varIndex)
+      lngIndex = varIndex
+      strFirstText = MacroHelpers.GetTextByIndex(lngIndex)
       blnMatch = Utils.ExistsInCollection(FirstChildText, strFirstText)
       If blnMatch = FirstChildMatch Then
         col_Temp.Add varIndex
-      Else
+      End If
     Next varIndex
     Set Blocks = col_Temp
   End If

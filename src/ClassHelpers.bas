@@ -252,7 +252,7 @@ Public Sub FindStyleIndex(SearchStyle As String, ByRef DestinationCollection _
     Do While .Execute = True
       lngFoundIndex = MacroHelpers.ParaIndex(UseEnd:=False)
       DestinationCollection.Add lngFoundIndex
-      If Multiple = True Then
+      If ReturnMultiple = True Then
         .Execute
       Else
         Exit Do

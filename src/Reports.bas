@@ -132,13 +132,6 @@ Private Sub MakeReport(torDOTcom As Boolean)
   oProgressBkmkr.Title = strTitle
   Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
 
-' ------------check for endnotes and footnotes---------------------------------
-  Dim colStories As Collection
-  Set colStories = MacroHelpers.ActiveStories
-  Dim varStory As Variant
-  Dim currentStory As WdStoryType
-
-
 ' -------- validate section-start styles --------------------------------------
   Dim strSectionStartWarnings As String
   strSectionStartWarnings = SectionStartRules()
@@ -183,8 +176,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
   Dim strBadStylesList As String
               
   'returns array with 2 elements, 1: good styles list, 2: bad styles list
-  arrGoodBadStyles = GoodBadStyles(Tor:=torDOTcom, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle, _
-      Stories:=arrStories)
+  arrGoodBadStyles = GoodBadStyles(Tor:=torDOTcom, ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
   strGoodStylesList = arrGoodBadStyles(1)
   'DebugPrint strGoodStylesList
   strBadStylesList = arrGoodBadStyles(2)
@@ -209,7 +201,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     
     'If template not used, just returns list of styles in use
     If blnTemplateUsed = False Then
-        strGoodStylesList = StylesInUse(ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle, Stories:=arrStories)
+        strGoodStylesList = StylesInUse(ProgressBar:=oProgressBkmkr, Status:=strStatus, ProgTitle:=strTitle)
         strBadStylesList = ""
     End If
     
@@ -369,7 +361,7 @@ CheckGoodStyles:
                      End If
                 End If
             End If
-        Next A
+        Next varStory
     Next J
     
     Status = "* Checking paragraphs for Macmillan styles..." & vbCr & Status
@@ -518,7 +510,8 @@ NextLoop:
     'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
     Dim strTorBadStyles As String
     If Tor = True Then
-        strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle)
+        strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle, _
+          CurrentStories:=colStories)
         strBadStyles = strBadStyles & strTorBadStyles
     End If
     
@@ -548,7 +541,7 @@ ErrHandler:
 End Function
 
 
-Private Function CreateErrorList(badStyles As String, strSecStWarnings As String, arrStyleCount() As Variant, blnTor As Boolean) As String
+Private Function CreateErrorList(badStyles As String, strSecStWarnings As String, blnTor As Boolean) As String
     Dim errorList As String
     
     errorList = strSecStWarnings
@@ -1273,6 +1266,7 @@ End Function
 Private Function SectionStartRules() As String
 
   Dim objNewSSruleCollection As SSRuleCollection
+  Dim strWarnings As String
 '  Dim lngRuleCount As Long
 '  Dim strRuleName As String
 '  Dim lngRulePriority As Long
@@ -1281,7 +1275,9 @@ Private Function SectionStartRules() As String
 
   ' create collection object (which creates a collection of Rule objects)
   Set objNewSSruleCollection = New SSRuleCollection
-  SectionStartRules = objNewSSruleCollection.Validate
+
+  strWarnings = objNewSSruleCollection.Validate
+  SectionStartRules = strWarnings
 
   ' Loop through Rules by "priority" values (set in SSRule.cls)
 '  lngPriorityCount = 1
