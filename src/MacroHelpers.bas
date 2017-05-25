@@ -929,10 +929,12 @@ Function StartupSettings(Optional AcceptAll As Boolean = False) As Boolean
 
 ' activeDoc is global variable to hold our document, so if user clicks a different
 ' document during execution, won't switch to that doc.
+' ALWAYS set to Nothing first to reset for this macro.
+' Then only refer to this object, not ActiveDocument directly.
 
-  If activeDoc Is Nothing Then
-    Set activeDoc = ActiveDocument
-  End If
+  Set activeDoc = Nothing
+  Set activeDoc = ActiveDocument
+
 
 ' check if file has doc protection on, quit function if it does
   If activeDoc.ProtectionType <> wdNoProtection Then

@@ -217,6 +217,7 @@ Public Function Validate() As String
   Dim objRule As Object
   Dim specificRule As SSRule
   Dim A As Long
+  Dim blnCheckWarnings As Boolean
   For A = 1 To 4
     For Each objRule In Rules(A)
       Set specificRule = objRule
@@ -226,18 +227,15 @@ Public Function Validate() As String
         If .Position <> WT_SectionType.no_section Then
           .CheckPosition Sections:=SectionLists
         End If
-        .Process
-        If .Blocks.Count > 0 Then ' we have possible missing ss-starts
+        blnCheckWarnings = .Process
+        If blnCheckWarnings = True And .Blocks.Count > 0 Then ' we have possible missing ss-starts
           AddWarning ProcessedRule:=specificRule
         End If
       End With
     Next objRule
   Next A
-  
-  Dim strFinalWarning As String
-  strFinalWarning = WarningString
 
-  Validate = strFinalWarning
+  Validate = WarningString
 End Function
 
 

@@ -305,16 +305,32 @@ End Sub
 ' removes items from Blocks if they don't need more validation, so once finished
 ' only errors will remain in Blocks.
 
-Public Sub Process()
+' RETURNS
+' True: Possible Error was found, calling procedure should check .Blocks property
+' for location of potential missing section starts.
+
+' False: OK as is, do not check .Blocks
+
+Public Function Process() As Boolean
   If CheckSectionCounts = True Then
-' Moved CheckPosition to calling method in parent, so we don't have to pass
-' SectionLists collection to every rule.
-'    CheckPosition
+  ' AddOptionalHeadings doesn't by itself affect whether criteria are triggered,
+  ' so doesn't return a value.
     AddOptionalHeadings
+  
+  ' CheckPreviousSiblings and CheckFirstChild remove items from .Blocks property
+  ' if they are OK as is, so only potential errors if items remain after.
     CheckPreviousSiblings
     CheckFirstChild
+    If Blocks.Count > 0 Then
+      Process = True
+    Else
+      Process = False
+    End If
+
+  Else ' CheckSectionCounts determined we can stop
+    Process = False
   End If
-End Sub
+End Function
 
 
 
@@ -391,7 +407,6 @@ End Sub
 ' which we'll pull errors later.
 
 Private Function CheckSectionCounts() As Boolean
-  CheckSectionCounts = False
   If SectionStartsInUse.Count > 0 Then
     If Multiple = False Then
     ' Multiple = False and we found at least 1 section, so stop processing rule
@@ -399,10 +414,13 @@ Private Function CheckSectionCounts() As Boolean
     ' Blocks.Count determines errors, but if we Get Blocks when it is Nothing,
     ' it will run the search!
       Set Blocks = New Collection
+      CheckSectionCounts = False
+      Exit Function
     Else ' Multiple = True
       If SectionStartsInUse.Count < Blocks.Count Then
         ' Only continue if more blocks than sections
         CheckSectionCounts = True
+        Exit Function
       End If
     End If
   Else  ' SectionStartsInUse = 0
@@ -414,7 +432,13 @@ Private Function CheckSectionCounts() As Boolean
         Set col_FirstInd = New Collection
         col_FirstInd.Add CheckInsertBefore()
         Set Blocks = col_FirstInd
+        ' Nothing else to process, since it doesn't exist in doc
+        CheckSectionCounts = False
+        Exit Function
       End If
+    Else
+    ' this sectionstyle not in use, but there are contiguous blocks
+      CheckSectionCounts = True
     End If
   End If
 End Function
