@@ -196,7 +196,8 @@ Public Function DownloadCSV(FileName As String) As Variant
 '---------Download CSV with design specs from Confluence site-------
   Dim dictCsvInfo As Dictionary
   Set dictCsvInfo = FileInfo(FileName)
-
+  Dim strMessage As String
+  
 ' Always download, so don't return CheckLog resutl
   CheckLog LogPath:=dictCsvInfo("Log")
 
@@ -231,10 +232,10 @@ Public Function DownloadCSV(FileName As String) As Variant
     blnRemoveHeaderRow = True
     blnRemoveHeaderCol = False
   End If
-    
+
   'Double check that CSV is there
   Dim arrFinal() As Variant
-  If IsItThere(strPath) = False Then
+  If IsItThere(dictCsvInfo("Final")) = False Then
     strMessage = "The macro is unable to access the data file right now." _
       & " Please check your internet connection and try again, or " & _
       "contact workflows@macmillan.com."
@@ -242,6 +243,8 @@ Public Function DownloadCSV(FileName As String) As Variant
     Exit Function
   Else
   ' Load CSV into an array
+    Dim strPath As String
+    strPath = dictCsvInfo("Final")
     arrFinal = LoadCSVtoArray(Path:=strPath, RemoveHeaderRow:= _
       blnRemoveHeaderRow, RemoveHeaderCol:=blnRemoveHeaderCol)
   End If
@@ -614,6 +617,7 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
         num_rows = UBound(lines)
         one_line = Split(lines(0), ",")
         num_cols = UBound(one_line)
+
         ReDim the_array(num_rows - lngHeaderRow, num_cols - lngHeaderCol) ' -1 if we are not using header row/col
         
         ' Copy the data into the array.

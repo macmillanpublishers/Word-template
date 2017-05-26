@@ -747,7 +747,7 @@ Private Function BadTorStyles(ProgressBar2 As ProgressBar, StatusBar As String, 
                 
                 End If
             End If
-        Next A
+        Next varStory
 ErrResume:
     
     Next N
