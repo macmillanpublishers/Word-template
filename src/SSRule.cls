@@ -89,33 +89,39 @@ Public Property Get Blocks() As Collection
   ' Sort indices in ascending order.
     If col_PossibleBlocks.Count > 0 Then
       Utils.SortCollection col_PossibleBlocks
-    End If
 
-  ' Pull out contiguous indices
-    Dim lngCurrentIndex As Long
-    Dim lngNextIndex As Long
-    Dim lngCurrentValue As Long
-    Dim lngNextValue As Long
-    
-    lngCurrentIndex = 1
-    
-    Do While lngCurrentIndex <= col_PossibleBlocks.Count
-      lngCurrentValue = col_PossibleBlocks.Item(lngCurrentIndex)
-      prop_Blocks.Add lngCurrentValue
-      lngNextIndex = lngCurrentIndex + 1
-      
-      Do While lngNextIndex <= col_PossibleBlocks.Count
-        lngNextValue = col_PossibleBlocks.Item(lngNextIndex)
-        If lngNextValue = (lngCurrentValue + 1) Or _
-          WT_StyleConfig.VersatileStyleExistsByIndex(lngNextValue) = True Then
-            lngCurrentValue = lngNextValue
-            lngNextIndex = lngNextIndex + 1
-        Else
-          Exit Do
-        End If
-      Loop
-      lngCurrentIndex = lngNextIndex
-    Loop
+      If Multiple = False Then
+      ' We only need the FIRST instance of any paragraph in Styles
+        Set prop_Blocks = New Collection
+        prop_Blocks.Add col_PossibleBlocks(1)
+      Else
+      ' Pull out contiguous indices
+        Dim lngCurrentIndex As Long
+        Dim lngNextIndex As Long
+        Dim lngCurrentValue As Long
+        Dim lngNextValue As Long
+        
+        lngCurrentIndex = 1
+        
+        Do While lngCurrentIndex <= col_PossibleBlocks.Count
+          lngCurrentValue = col_PossibleBlocks.Item(lngCurrentIndex)
+          prop_Blocks.Add lngCurrentValue
+          lngNextIndex = lngCurrentIndex + 1
+          
+          Do While lngNextIndex <= col_PossibleBlocks.Count
+            lngNextValue = col_PossibleBlocks.Item(lngNextIndex)
+            If lngNextValue = (lngCurrentValue + 1) Or _
+              WT_StyleConfig.VersatileStyleExistsByIndex(lngNextValue) = True Then
+                lngCurrentValue = lngNextValue
+                lngNextIndex = lngNextIndex + 1
+            Else
+              Exit Do
+            End If
+          Loop
+          lngCurrentIndex = lngNextIndex
+        Loop
+      End If
+    End If
   End If
   
   Set Blocks = prop_Blocks
@@ -632,3 +638,17 @@ Private Function GetTwoDigitString(num As Long)
     End If
 End Function
 
+
+' *****************************************************************************
+'     EVENTS
+'******************************************************************************
+
+' ===== Class_Terminate =======================================================
+' Do we need to clear all the objects out?
+
+Private Sub Class_Terminate()
+  If Not prop_Blocks Is Nothing Then
+    Set prop_Blocks = Nothing
+  End If
+
+End Sub
