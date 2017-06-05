@@ -30,38 +30,7 @@ Public Function MacmillanCharStyles() As Dictionary
   
   CharacterProgress.Title = "Macmillan Character Styles Macro"
   DebugPrint "Starting Character Styles macro"
-  
-  Call CharacterStyles.ActualCharStyles(oProgressChar:= _
-    CharacterProgress, StartPercent:=0, TotalPercent:=1)
-  
-  dictReturn.Item("pass") = True
-  Set MacmillanCharStyles = dictReturn
-  Exit Function
 
-MacmillanCharStylesError:
-  Err.Source = strCharStyles & "MacmillanCharStyles"
-  If ErrorChecker(Err) = False Then
-    Resume
-  Else
-    Call MacroHelpers.GlobalCleanup
-  End If
-End Function
-
-Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
-  TotalPercent As Single)
-' Have to pass the ProgressBar so this can be run from within another macro
-' StartPercent is the percentage the progress bar is at when this sub starts
-' TotalPercent is the total percent of the progress bar that this sub will cover
-
-  On Error GoTo ActualCharStylesError
-'------------------Time Start-----------------
-'Dim StartTime As Double
-'Dim SecondsElapsed As Double
-
-'Remember time when macro starts
-'StartTime = Timer
-
-    
 ' ======= Run startup checks ========
 ' True means a check failed (e.g., doc protection on)
   If WT_Settings.InstallType = "user" Then
@@ -80,7 +49,6 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
 ' Percent complete and status for progress bar (PC) and status bar (Mac)
   Dim sglPercentComplete As Single
   Dim strStatus As String
-  Dim strTitle As String
   
   'First status shown will be randomly pulled from array, for funzies
   Dim funArray() As String
@@ -105,13 +73,42 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   X = Int(UBound(funArray()) * Rnd()) + 1
 
 ' first number is percent of THIS macro completed
-  sglPercentComplete = (0.09 * TotalPercent) + StartPercent
+  sglPercentComplete = 0.09
   strStatus = funArray(X)
   
 ' Calls ProgressBar.Increment mathod and waits for it to complete
-  Call ClassHelpers.UpdateBarAndWait(Bar:=oProgressChar, _
+  Call ClassHelpers.UpdateBarAndWait(Bar:=CharacterProgress, _
     Status:=strStatus, Percent:=sglPercentComplete)
   
+  Call CharacterStyles.ActualCharStyles(oProgressChar:= _
+    CharacterProgress, StartPercent:=sglPercentComplete, TotalPercent:=1, Status:=strStatus)
+  
+  dictReturn.Item("pass") = True
+  Set MacmillanCharStyles = dictReturn
+  Exit Function
+
+MacmillanCharStylesError:
+  Err.Source = strCharStyles & "MacmillanCharStyles"
+  If ErrorChecker(Err) = False Then
+    Resume
+  Else
+    Call MacroHelpers.GlobalCleanup
+  End If
+End Function
+
+Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
+  TotalPercent As Single, Status As String)
+' Have to pass the ProgressBar so this can be run from within another macro
+' StartPercent is the percentage the progress bar is at when this sub starts
+' TotalPercent is the total percent of the progress bar that this sub will cover
+
+  On Error GoTo ActualCharStylesError
+'------------------Time Start-----------------
+'Dim StartTime As Double
+'Dim SecondsElapsed As Double
+
+'Remember time when macro starts
+'StartTime = Timer
 
 ' ------------check for endnotes and footnotes---------------------------------
   Dim colStories As Collection
@@ -146,6 +143,10 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
 
 ' -----------------------Tag space break styles--------------------------------
   Call MacroHelpers.zz_clearFind
+  Dim sglPercentComplete As Single
+  Dim strStatus As String
+  strStatus = Status
+  
   
   sglPercentComplete = (0.18 * TotalPercent) + StartPercent
   strStatus = "* Preserving styled whitespace..." & vbCr & strStatus
@@ -251,19 +252,7 @@ Sub ActualCharStyles(oProgressChar As ProgressBar, StartPercent As Single, _
   
   Call MacroHelpers.zz_clearFind
     
-' -------------- Tag un-styled paragraphs as TX / TX1 / COTX1 -----------------
-' NOTE: must be done AFTER character styles, because if whole para has direct
-' format it will be removed when apply style (but style won't be removed).
-' This is total progress bar that will be covered in TagUnstyledText
-  Dim sglTotalForText As Single
-  sglTotalForText = TotalPercent - sglPercentComplete
 
-  Call TagUnstyledText(objTagProgress:=oProgressChar, StartingPercent:= _
-    sglPercentComplete, TotalPercent:=sglTotalForText, Status:=strStatus)
-
-' Only tagging through main text story, because Endnotes story and Footnotes
-' story should already be tagged at Endnote Text and Footnote Text by dafault
-' when created
 
 ' ---------------------------Return settings to original-----------------------
   sglPercentComplete = TotalPercent + StartPercent
@@ -1003,116 +992,4 @@ TagBkmkrCharStylesError:
   End If
 End Function
 
-Private Sub TagUnstyledText(objTagProgress As ProgressBar, StartingPercent _
-  As Single, TotalPercent As Single, Status As String)
-  
-  On Error GoTo TagUnstyledTextError
-' Make sure we're always working with the right document
-  Dim thisDoc As Document
-  Set thisDoc = activeDoc
-
-  ' Rename built-in style that has parens
-  thisDoc.Styles("Normal (Web)").NameLocal = "_"
-
-  Dim lngParaCount As Long
-  Dim A As Long
-  Dim strCurrentStyle As String
-  Dim strTX As String
-  Dim strTX1 As String
-  Dim strNewStyle As String
-  Dim strParaStatus As String
-  Dim sglStartingPercent As Single
-  Dim sglTotalPercent As Single
-  Dim strNextStyle As String
-  Dim strNextNextStyle As String
-  Dim strCOTX1 As String
-  Dim sglPercentComplete As Single
-
-' Making these variables so we don't get any input errors with the style names t/o
-  strTX = "Text - Standard (tx)"
-  strTX1 = "Text - Std No-Indent (tx1)"
-  strCOTX1 = "Chap Opening Text No-Indent (cotx1)"
-
-  lngParaCount = thisDoc.Paragraphs.Count
-
-  Dim myStyle As Style ' For error handlers
-
-' Loop through all paras, tag any w/o close parens as TX or TX1
-' (or COTX1 if following chap opener)
-  For A = 1 To lngParaCount
-
-    If A Mod 100 = 0 Then
-      ' Increment progress bar
-      sglPercentComplete = (((A / lngParaCount) * TotalPercent) + StartingPercent)
-      strParaStatus = "* Tagging non-Macmillan paragraphs with Text - " & _
-          "Standard (tx): " & A & " of " & lngParaCount & vbNewLine & Status
-      Call ClassHelpers.UpdateBarAndWait(Bar:=objTagProgress, Status:=strParaStatus, _
-          Percent:=sglPercentComplete)
-    End If
-
-    strCurrentStyle = thisDoc.Paragraphs(A).Range.ParagraphStyle
-'    DebugPrint strCurrentStyle
-
-  ' tag all non-Macmillan-style paragraphs with standard Macmillan styles
-  ' Macmillan styles all end in close parens
-    If Right(strCurrentStyle, 1) <> ")" Then    ' it's not a Macmillan style
-    ' If flush left, make No-Indent
-      If thisDoc.Paragraphs(A).FirstLineIndent = 0 Then
-          strNewStyle = strTX1
-      Else
-          strNewStyle = strTX
-      End If
-  
-    ' Change the style of the paragraph in question
-    ' This is where it will error if no style present
-      thisDoc.Paragraphs(A).Style = strNewStyle
-    
-    ElseIf A < lngParaCount Then ' it is already a Macmillan style
-    ' but can't check next para if it's the last para
-    
-    ' is it a chap head?
-      If InStr(strCurrentStyle, "(cn)") > 0 Or _
-        InStr(strCurrentStyle, "(ct)") > 0 Or _
-        InStr(strCurrentStyle, "(ctnp)") > 0 Then
-
-        strNextStyle = thisDoc.Paragraphs(A + 1).Range.ParagraphStyle
-
-      ' is the next para non-Macmillan (and thus should be COTX1)
-        If Right(strNextStyle, 1) <> ")" Then     ' it's not a Macmillan style
-        ' so it should be COTX1
-        ' Will error if this style not present in doc
-          strNewStyle = strCOTX1
-          thisDoc.Paragraphs(A + 1).Style = strNewStyle
-        Else ' it IS a Macmillan style too
-        ' it IT a chap opener? (can have CN followed by CT)
-          If InStr(strNextStyle, "(cn)") > 0 Or _
-            InStr(strNextStyle, "(ct)") > 0 Or _
-            InStr(strNextStyle, "(ctnp)") > 0 Then
-
-            strNextNextStyle = thisDoc.Paragraphs(A + 2).Range.ParagraphStyle
-
-            If Right(strNextNextStyle, 1) <> ")" Then ' it's not Macmillan
-            ' so it should be COTX1
-              strNewStyle = strCOTX1
-              thisDoc.Paragraphs(A + 2).Style = strNewStyle
-            End If
-          End If
-        End If
-      End If
-    End If
-  Next A
-
-  ' Change Normal (Web) back
-  thisDoc.Styles("Normal (Web),_").NameLocal = "Normal (Web)"
-
-  Exit Sub
-
-TagUnstyledTextError:
-  Err.Source = strCharStyles & "TagUnstyledText"
-  If ErrorChecker(Err, strNewStyle) = False Then
-    Resume
-  Else
-    Call MacroHelpers.GlobalCleanup
-  End If
-End Sub
 
