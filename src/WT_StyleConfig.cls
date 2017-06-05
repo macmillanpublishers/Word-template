@@ -15,6 +15,7 @@ Private prop_SectionStartStyles As Collection
 Private prop_AllowedBlankStyles As Collection
 Private prop_VersatileStylesByIndex As Collection
 Private prop_MacmillanStyles As Dictionary
+Private prop_BookmakerStyles As Collection
 
 
 ' Private Properties
@@ -86,6 +87,16 @@ Public Property Get MacmillanStyles() As Dictionary
   Set MacmillanStyles = prop_MacmillanStyles
 End Property
 
+' ===== BookmakerStyles =======================================================
+' Collection of styles allowed in Bookmaker
+
+Public Property Get BookmakerStyles() As Collection
+  If prop_BookmakerStyles Is Nothing Then
+    Set prop_BookmakerStyles = VbaStyleConfig("bookmakerstyles")
+  End If
+  Set BookmakerStyles = prop_BookmakerStyles
+End Property
+
 ' *****************************************************************************
 '       PRIVATE PROPERTIES
 ' *****************************************************************************
@@ -144,4 +155,11 @@ End Function
 
 Public Function IsSectionStartStyle(StyleName As String) As Boolean
   IsSectionStartStyle = Utils.ExistsInCollection(Me.SectionStartStyles, StyleName)
+End Function
+
+' ===== IsBookmakerStyle ======================================================
+' Tests if a style is in the BookmakerStyles collection
+
+Public Function IsBookmakerStyle(StyleName As String) As Boolean
+  IsBookmakerStyle = Utils.ExistsInCollection(Me.BookmakerStyles, StyleName)
 End Function

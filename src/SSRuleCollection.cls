@@ -19,7 +19,7 @@ Private prop_FrontmatterStyles As Collection
 Private prop_MainStyles As Collection
 Private prop_BackmatterStyles As Collection
 Private prop_rules As Collection
-Private prop_Warnings As Collection
+Private prop_Warnings As Dictionary
 
 ' *****************************************************************************
 '       PRIVATE PROPERTIES
@@ -171,31 +171,44 @@ End Property
 ' native Collection.Add method to add, use WarningString property to return
 ' actual text for Style Report.
 
-Private Property Get Warnings() As Collection
+Private Property Get Warnings() As Dictionary
   If prop_Warnings Is Nothing Then
-    Set prop_Warnings = New Collection
+    Set prop_Warnings = New Dictionary
   End If
 
   Set Warnings = prop_Warnings
 End Property
 
 ' ===== WarningString =========================================================
-' Converts Warnings collection to a single string to print in Report output.
+' Converts Warnings dictionary to a single string to print in Report output.
+' Sorts by page number so they appear in order.
 
 Private Property Get WarningString() As String
   Dim strOutput As String
   If Warnings.Count > 0 Then
     strOutput = _
     "** WARNING: Please check if you're missing a Section style on these pages:" & vbNewLine
-
-    Dim varWarning As Variant
-    For Each varWarning In Warnings
-      strOutput = strOutput & vbNewLine & _
-      "            pg. " & varWarning("page_number") & ": " & varWarning("missing_style")
-    Next varWarning
     
-    strOutput = strOutput & vbNewLine & _
-    "HINT: Each book section needs to start with an extra paragraph that has a " & vbNewLine & _
+  ' No built-in way to sort Dictionary keys, but the .Keys property is an array,
+  ' and we CAN sort an array...
+    Dim arrTemp() As Variant
+    arrTemp = Warnings.Keys
+      
+    WordBasic.SortArray arrTemp()
+
+    Dim varKey As Variant
+    Dim varStyle As Variant
+    Dim colSections As Collection
+    For Each varKey In arrTemp
+      Set colSections = Warnings(varKey)
+      For Each varStyle In colSections
+        strOutput = strOutput & vbNewLine & _
+        "            pg. " & varKey & ": " & varStyle
+      Next varStyle
+    Next varKey
+    
+    strOutput = strOutput & vbNewLine & vbNewLine & _
+    "HINT: Each book section needs to start with an special paragraph that has a " & vbNewLine & _
     Chr(34) & "Section-Start" & Chr(34) & " style applied to it. If the pages listed above start new sections" & vbNewLine & _
     "but don't have a Section style, you should add one now."
   Else
@@ -260,22 +273,28 @@ End Function
 
 Private Sub AddWarning(ProcessedRule As SSRule)
   Dim varBlock As Variant
-  Dim dictWarningData As Dictionary
+  Dim colWarningData As Collection
   Dim lngPageNumber As Long
   Dim lngIndex As Long
 
   With ProcessedRule
     For Each varBlock In .Blocks
       lngIndex = varBlock
-      Set dictWarningData = New Dictionary
+
+      
     ' Get page number of first para of block
       lngPageNumber = MacroHelpers.ParaInfo(paraInd:=lngIndex, _
         InfoType:=wdActiveEndAdjustedPageNumber)
   
-      dictWarningData.Add "page_number", lngPageNumber
-      dictWarningData.Add "missing_style", .SectionName
-  
-      Warnings.Add dictWarningData
+      If Warnings.Exists(lngPageNumber) = True Then
+        Set colWarningData = Warnings(lngPageNumber)
+      Else
+        Set colWarningData = New Collection
+      End If
+      
+      colWarningData.Add .SectionName
+      
+      Set Warnings.Item(lngPageNumber) = colWarningData
     Next varBlock
   End With
 End Sub

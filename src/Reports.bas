@@ -41,11 +41,11 @@ Private Sub MakeReport(torDOTcom As Boolean)
     
     '=================================================
     '''''              Timer Start                  '|
-    'Dim StartTime As Double                         '|
-    'Dim SecondsElapsed As Double                    '|
+    Dim StartTime As Double                         '|
+    Dim SecondsElapsed As Double                    '|
                                                     '|
     '''''Remember time when macro starts            '|
-    'StartTime = Timer                               '|
+    StartTime = Timer                               '|
     '=================================================
     
 
@@ -253,10 +253,10 @@ Private Sub MakeReport(torDOTcom As Boolean)
     '============================================================================
     '----------------------Timer End-------------------------------------------
     ''''Determine how many seconds code took to run
-      'SecondsElapsed = Round(Timer - StartTime, 2)
+      SecondsElapsed = Round(Timer - StartTime, 2)
     
     ''''Notify user in seconds
-      'DebugPrint "This code ran successfully in " & SecondsElapsed & " seconds"
+      DebugPrint "This code ran successfully in " & SecondsElapsed & " seconds"
     '============================================================================
 
 End Sub
@@ -319,7 +319,7 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
             If J <= activeDoc.StoryRanges(currentStory).Paragraphs.Count Then
                 paraStyle = activeDoc.StoryRanges(currentStory).Paragraphs(J).Style
                 Set activeParaRange = activeDoc.StoryRanges(currentStory).Paragraphs(J).Range
-                pageNumber = activeParaRange.Information(wdActiveEndPageNumber)                 'alt: (wdActiveEndAdjustedPageNumber)
+                pageNumber = activeParaRange.Information(wdActiveEndAdjustedPageNumber)                 'alt: (wdActiveEndPageNumber)
                     
                 'If InStrRev(paraStyle, ")", -1, vbTextCompare) Then        'ALT calculation to "Right", can speed test
                 If Right(paraStyle, 1) = ")" Then
@@ -337,6 +337,15 @@ CheckGoodStyles:
                         styleGoodCount = K
                         ReDim Preserve stylesGood(1 To styleGoodCount)
                         stylesGood(styleGoodCount) = paraStyle & " -- p. " & pageNumber
+                    End If
+                    
+                    'If this is for the Bookmaker toolchain, test if only those styles used
+                    Dim strTorBadStyles As String
+                    If Tor = True Then
+                        If WT_StyleConfig.IsBookmakerStyle(paraStyle) = False Then
+                          strTorBadStyles = strTorBadStyles & "** ERROR: Non-Bookmaker style on page " & pageNumber _
+                            & " (Paragraph " & J & "):  " & paraStyle & vbNewLine & vbNewLine
+                        End If
                     End If
                 
                 Else
@@ -400,7 +409,8 @@ CheckGoodStyles:
         strBadStyles = ""
     End If
     
-    'DebugPrint strBadStyles
+    ' Add Bad bookmaker styles
+    strBadStyles = strBadStyles & strTorBadStyles
     
     '-------------------get list of good character styles--------------
     
@@ -506,14 +516,7 @@ NextLoop:
     
     'Add character styles to Good styles list
     strGoodStyles = strGoodStyles & charStyles
-    
-    'If this is for the Tor.com Bookmaker toolchain, test if only those styles used
-    Dim strTorBadStyles As String
-    If Tor = True Then
-        strTorBadStyles = BadTorStyles(ProgressBar2:=ProgressBar, StatusBar:=Status, ProgressTitle:=ProgTitle, _
-          CurrentStories:=colStories)
-        strBadStyles = strBadStyles & strTorBadStyles
-    End If
+
     
     'DebugPrint strGoodStyles
     'DebugPrint strBadStyles
