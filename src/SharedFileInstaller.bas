@@ -245,6 +245,7 @@ Public Function DownloadCSV(FileName As String) As Variant
   ' Load CSV into an array
     Dim strPath As String
     strPath = dictCsvInfo("Final")
+    Debug.Print strPath
     arrFinal = LoadCSVtoArray(Path:=strPath, RemoveHeaderRow:= _
       blnRemoveHeaderRow, RemoveHeaderCol:=blnRemoveHeaderCol)
   End If
@@ -560,7 +561,8 @@ End Sub
 
 
 
-Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, RemoveHeaderCol As Boolean) As Variant
+Public Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, _
+  RemoveHeaderCol As Boolean) As Variant
 
 '------Load CSV into 2d array, NOTE!!: base 0---------
 ' But also note that this now removes the header row and column too
@@ -601,7 +603,7 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
         Open Path For Input As fnum
         whole_file = Input$(LOF(fnum), #fnum)
         Close fnum
-
+        
         ' Break the file into lines (trying to capture whichever line break is used)
         If InStr(1, whole_file, vbCrLf) <> 0 Then
             lines = Split(whole_file, vbCrLf)
@@ -617,6 +619,9 @@ Private Function LoadCSVtoArray(Path As String, RemoveHeaderRow As Boolean, Remo
         num_rows = UBound(lines)
         one_line = Split(lines(0), ",")
         num_cols = UBound(one_line)
+        
+        num_cols = 1
+        lngHeaderCol = 1
 
         ReDim the_array(num_rows - lngHeaderRow, num_cols - lngHeaderCol) ' -1 if we are not using header row/col
         

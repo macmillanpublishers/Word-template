@@ -34,7 +34,7 @@ Private Sub PC_BestStylesView()
         ActiveDocument.FormattingShowFilter = wdShowFilterStylesAvailable
         
         'Sorts styles alphabetically
-        ActiveDocument.StyleSortMethod = wdStyleSortByName
+        ActiveDocument.StyleSortMethod = wdStyleSortRecommended
         
         'Open Style Inspector
         Application.TaskPanes(wdTaskPaneStyleInspector).Visible = True
