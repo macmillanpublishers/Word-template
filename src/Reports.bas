@@ -39,7 +39,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     '-----------------------------------------------------------
     
     
-    '=================================================
+'    '=================================================
     '''''              Timer Start                  '|
     Dim StartTime As Double                         '|
     Dim SecondsElapsed As Double                    '|
@@ -133,10 +133,17 @@ Private Sub MakeReport(torDOTcom As Boolean)
   Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
 
 ' -------- validate section-start styles --------------------------------------
+  sglPercentComplete = 0.09
+  strStatus = "* Checking for section styles..." & vbCr & strStatus
+  Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
+
   Dim strSectionStartWarnings As String
   strSectionStartWarnings = SectionStartRules()
   
 ' -------- Remove formatting from CN paragraphs -----------------------------------------------
+  sglPercentComplete = 0.11
+  strStatus = "* Cleaning up chapter numbers and page breaks..." & vbCr & strStatus
+  Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
   Call ChapNumCleanUp
 
   '-------remove "span ISBN (isbn)" style from letters, spaces, parens, etc.-------------------
@@ -147,8 +154,8 @@ Private Sub MakeReport(torDOTcom As Boolean)
   Call MacroHelpers.PageBreakCleanup
     
   '--------Get title/author/isbn/imprint text from document-----------
-  sglPercentComplete = 0.11
-  Application.ScreenUpdating = True
+  sglPercentComplete = 0.12
+'  Application.ScreenUpdating = True
   strStatus = "* Getting book metadata from manuscript..." & vbCr & strStatus
   
   Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
@@ -157,7 +164,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
   strMetadata = GetMetadata
     
   '-------------------Get Illustrations List from Document-----------
-  sglPercentComplete = 0.15
+  sglPercentComplete = 0.13
   strStatus = "* Getting list of illustrations..." & vbCr & strStatus
   
   Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
@@ -166,7 +173,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
   strIllustrationsList = IllustrationsList
       
   '-------------------Get list of good and bad styles from document---------
-  sglPercentComplete = 0.18
+  sglPercentComplete = 0.16
   strStatus = "* Getting list of styles in use..." & vbCr & strStatus
   
   Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
@@ -206,10 +213,10 @@ Private Sub MakeReport(torDOTcom As Boolean)
     End If
     
     '-------------------Create list of errors----------------------------
-    sglPercentComplete = 0.98
-    strStatus = "* Checking styles for errors..." & vbCr & strStatus
-    
-    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
+'    sglPercentComplete = 0.99
+'    strStatus = "* Checking styles for errors..." & vbCr & strStatus
+'
+'    Call UpdateBarAndWait(Bar:=oProgressBkmkr, Status:=strStatus, Percent:=sglPercentComplete)
     
     Dim strErrorList As String
     
@@ -254,7 +261,7 @@ Private Sub MakeReport(torDOTcom As Boolean)
     '----------------------Timer End-------------------------------------------
     ''''Determine how many seconds code took to run
       SecondsElapsed = Round(Timer - StartTime, 2)
-    
+
     ''''Notify user in seconds
       DebugPrint "This code ran successfully in " & SecondsElapsed & " seconds"
     '============================================================================
@@ -281,6 +288,7 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     Dim activeParaCount As Integer
     Dim J As Integer, K As Integer, L As Integer
     Dim paraStyle As String
+    
     '''''''''''''''''''''
     Dim activeParaRange As Range
     Dim pageNumber As Integer
@@ -299,13 +307,14 @@ Private Function GoodBadStyles(Tor As Boolean, ProgressBar As ProgressBar, Statu
     styleBadCount = 0
     styleBadOverflow = False
     activeParaCount = activeDoc.Paragraphs.Count
+    
     For J = 1 To activeParaCount
         
         'All Progress Bar statements for PC only because won't run modeless on Mac
-        If J Mod 100 = 0 Then
+        If J Mod 10 = 0 Then
         
             'Percent complete and status for progress bar (PC) and status bar (Mac)
-            sglPercentComplete = (((J / activeParaCount) * 0.45) + 0.18)
+            sglPercentComplete = (((J / activeParaCount) * 0.74) + 0.16)
             strStatus = "* Checking paragraph " & J & " of " & activeParaCount & " for Macmillan styles..." & _
                         vbCr & Status
             
@@ -440,12 +449,10 @@ CheckGoodStyles:
     styleNameM(20) = "span symbols ital (symi)"
     styleNameM(21) = "span symbols bold (symb)"
     
-    
-    
     For M = 1 To UBound(styleNameM())
         
         'Percent complete and status for progress bar (PC) and status bar (Mac)
-        sglPercentComplete = (((M / UBound(styleNameM())) * 0.13) + 0.63)
+        sglPercentComplete = (((M / UBound(styleNameM())) * 0.09) + 0.9)
         strStatus = "* Checking for " & styleNameM(M) & " styles..." & vbCr & Status
     
         Call UpdateBarAndWait(Bar:=ProgressBar, Status:=strStatus, Percent:=sglPercentComplete)
