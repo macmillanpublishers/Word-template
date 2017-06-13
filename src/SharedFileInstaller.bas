@@ -919,22 +919,7 @@ Private Sub CloseOpenDocs()
     
 End Sub
 
-' ===== TmpDir ================================================================
-' Returns path to TEMP directory, no trailing path separator
 
-Private Function TmpDir() As String
-  Dim strTmpDir As String
-  #If Mac Then
-    strTmpDir = MacScript("path to temporary items as string")
-  #Else
-    strTmpDir = Environ("TEMP")
-  #End If
-' Remove trailing path separator, if any
-  If Right(strTmpDir, 1) = Application.PathSeparator Then
-    strTmpDir = Left(strTmpDir, Len(strTmpDir) - 1)
-  End If
-  TmpDir = strTmpDir
-End Function
 
 ' ===== FileInfo ==============================================================
 ' Returns dictionary with paths to final file location and other things for
@@ -946,14 +931,10 @@ End Function
 Public Function FileInfo(FileName As String) As Dictionary
   Dim dictFileInfo As Dictionary
   Set dictFileInfo = New Dictionary
-  
   Dim strStyleDir As String
   Dim strTmpDir As String
   Dim strBaseName As String
-  Dim strSep As String
 
-' Becasue I am too lazy to write this whole thing later
-  strSep = Application.PathSeparator
   
 ' GtUpdater.dotm only file to go in Startup
   If FileName = "GtUpdater.dotm" Then

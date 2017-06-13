@@ -4,77 +4,62 @@
 		"direct": "raw.githubusercontent.com",
 		"releases": "github.com"
 	},
+	"regions": ["us", "uk"],
 	"files": {
-		"Word-template": {
+		"Word-template.dotm": {
 			"repo": "Word-template",
-			"subfolders": [],
-			"extension": "dotm",
 			"source": "releases",
-			"latest_release": "3.0.9"
+			"latest_release": "3.10"
 		},
-		"GtUpdater": {
+		"GtUpdater.dotm": {
 			"repo": "Word-template",
-			"subfolders": [],
-			"extension": "dotm",
 			"source": "releases",
-			"latest_release": "3.0.9"
+			"latest_release": "3.10"
 		},
-		"macmillan": {
+		"macmillan.dotx": {
 			"repo": "Word-template_assets",
 			"subfolders": ["StyleTemplate_auto-generate"],
-			"extension": "dotx",
 			"source": "direct",
 			"latest_release": "4.7"
 		},
-		"macmillan_NoColor": {
+		"macmillan_NoColor.dotx": {
 			"repo": "Word-template_assets",
 			"subfolders": ["StyleTemplate_auto-generate"],
-			"extension": "dotx",
 			"source": "direct",
 			"latest_release": "4.7"
 		},
-		"macmillan_CoverCopy": {
+		"macmillan_CoverCopy.dotm": {
 			"repo": "Word-template_assets",
-			"subfolders": [],
-			"extension": "dotm",
 			"source": "direct",
 			"latest_release": "2.0"
 		},
-		"Styles_Bookmaker": {
+		"Styles_Bookmaker.csv": {
 			"repo": "Word-template_assets",
-			"subfolders": [],
-			"extension": "csv",
 			"source": "direct"
 		},
-		"section_start_rules": {
+		"section_start_rules.json": {
 			"repo": "bookmaker_validator",
-			"subfolders": [],
-			"extension": "json",
 			"source": "direct"
 		},
-		"vba_style_config": {
+		"vba_style_config.json": {
 			"repo": "Word-template_assets",
 			"subfolders": ["StyleTemplate_auto-generate"],
-			"extension": "json",
 			"source": "direct"
 		},
-		"global_config": {
+		"global_config.json": {
 			"repo": "Word-template",
-			"subfolders": [],
-			"extension": "json",
+			"subfolders": ["config"],
 			"source": "releases",
-			"latest_release": "3.0.9"
+			"latest_release": "3.10"
 		},
-		"us_config": {
+		"us_config.json": {
 			"repo": "Word-template",
 			"subfolders": ["config"],
-			"extension": "json",
 			"source": "direct"
 		},
-		"uk_config": {
+		"uk_config.json": {
 			"repo": "Word-template",
 			"subfolders": ["config"],
-			"extension": "json",
 			"source": "direct"
 		}
 	}
