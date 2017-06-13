@@ -1,79 +1,81 @@
-"organization": "macmillanpublishers",
-"source_urls": {
-	"direct": "raw.githubusercontent.com",
-	"releases": "github.com"
-},
-"files": {
-	"Word-template": {
-		"repo": "Word-template",
-		"subfolders": [],
-		"extension": "dotm",
-		"source": "releases",
-		"latest_release": "3.0.9"
+{
+	"organization": "macmillanpublishers",
+	"source_urls": {
+		"direct": "raw.githubusercontent.com",
+		"releases": "github.com"
 	},
-	"GtUpdater": {
-		"repo": "Word-template",
-		"subfolders": [],
-		"extension": "dotm",
-		"source": "releases",
-		"latest_release": "3.0.9"
-	},
-	"macmillan": {
-		"repo": "Word-template_assets",
-		"subfolders": ["StyleTemplate_auto-generate"],
-		"extension": "dotx",
-		"source": "direct",
-		"latest_release": "4.7"
-	},
-	"macmillan_NoColor": {
-		"repo": "Word-template_assets",
-		"subfolders": ["StyleTemplate_auto-generate"],
-		"extension": "dotx",
-		"source": "direct",
-		"latest_release": "4.7"
-	},
-	"macmillan_CoverCopy": {
-		"repo": "Word-template_assets",
-		"subfolders": [],
-		"extension": "dotm",
-		"source": "direct",
-		"latest_release": "2.0"
-	},
-	"Styles_Bookmaker": {
-		"repo": "Word-template_assets",
-		"subfolders": [],
-		"extension": "csv",
-		"source": "direct"
-	},
-	"section_start_rules": {
-		"repo": "bookmaker_validator",
-		"subfolders": [],
-		"extension": "json",
-		"source": "direct"
-	},
-	"vba_style_config": {
-		"repo": "Word-template_assets",
-		"subfolders": ["StyleTemplate_auto-generate"],
-		"extension": "json",
-		"source": "direct"
-	},
-	"global_config": {
-		"repo": "Word-template",
-		"subfolders": [],
-		"extension": "json",
-		"source": "releases",
-		"latest_release": "3.0.9"
-	},
-	"us_config": {
-		"repo": "Word-template",
-		"subfolders": ["config"],
-		"extension": "json",
-		"source": "direct"
-	},
-	"uk_config": {
-		"repo": "Word-template",
-		"subfolders": ["config"],
-		"extension": "json",
-		"source": "direct"
+	"files": {
+		"Word-template": {
+			"repo": "Word-template",
+			"subfolders": [],
+			"extension": "dotm",
+			"source": "releases",
+			"latest_release": "3.0.9"
+		},
+		"GtUpdater": {
+			"repo": "Word-template",
+			"subfolders": [],
+			"extension": "dotm",
+			"source": "releases",
+			"latest_release": "3.0.9"
+		},
+		"macmillan": {
+			"repo": "Word-template_assets",
+			"subfolders": ["StyleTemplate_auto-generate"],
+			"extension": "dotx",
+			"source": "direct",
+			"latest_release": "4.7"
+		},
+		"macmillan_NoColor": {
+			"repo": "Word-template_assets",
+			"subfolders": ["StyleTemplate_auto-generate"],
+			"extension": "dotx",
+			"source": "direct",
+			"latest_release": "4.7"
+		},
+		"macmillan_CoverCopy": {
+			"repo": "Word-template_assets",
+			"subfolders": [],
+			"extension": "dotm",
+			"source": "direct",
+			"latest_release": "2.0"
+		},
+		"Styles_Bookmaker": {
+			"repo": "Word-template_assets",
+			"subfolders": [],
+			"extension": "csv",
+			"source": "direct"
+		},
+		"section_start_rules": {
+			"repo": "bookmaker_validator",
+			"subfolders": [],
+			"extension": "json",
+			"source": "direct"
+		},
+		"vba_style_config": {
+			"repo": "Word-template_assets",
+			"subfolders": ["StyleTemplate_auto-generate"],
+			"extension": "json",
+			"source": "direct"
+		},
+		"global_config": {
+			"repo": "Word-template",
+			"subfolders": [],
+			"extension": "json",
+			"source": "releases",
+			"latest_release": "3.0.9"
+		},
+		"us_config": {
+			"repo": "Word-template",
+			"subfolders": ["config"],
+			"extension": "json",
+			"source": "direct"
+		},
+		"uk_config": {
+			"repo": "Word-template",
+			"subfolders": ["config"],
+			"extension": "json",
+			"source": "direct"
+		}
 	}
 }
