@@ -130,6 +130,10 @@ Public Property Get Region() As String
   Region = p_Region
 End Property
 
+
+
+
+
 ' ***** PRIVATE PROPERTIES *****************************************************
 
 ' ===== TmpDir ================================================================

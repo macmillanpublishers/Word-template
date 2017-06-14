@@ -21,7 +21,7 @@ Sub AutoExec()
   ' NOTE! Must use 'End' here because 'Exit' won't clear static variable (WT_Settings)
     End
   Else
-    DebugPrint "Install is: " & WT_Settings.InstallType
+'    DebugPrint "Install is: " & WT_Settings.InstallType
   End If
 
 ' CHECK IF FLAG FILE IS PRESENT IN SAME DIR, IF YES THEN QUIT
@@ -80,7 +80,7 @@ Sub AutoExec()
   strTemplateName = "Macmillan Styles Template"
 
   'Get array of paths to STYLE TEMPLATE files to install
-  Set colTemplateNames = GetTemplatesList(TemplatesYouWant:=stylesTemplates)
+  Set colTemplateNames = SharedFileInstaller.GetTemplatesList(TemplatesYouWant:=stylesTemplates)
 
 ' CHECK/UPDATE STYLES TEMPLATES ONLY.
   Call SharedFileInstaller.Installer(Installer:=blnInstaller, _

@@ -639,7 +639,7 @@ Private Function CheckLog(LogPath As String) As Boolean
   Dim strStylesDir As String
   
   strLogDir = Utils.GetPath(LogPath)
-  strStylesDir = StyleDir
+  strStylesDir = WT_Settings.StyleDir
 
 ' Have to create "log" directory here, bc creation elsewhere marks as "updated"
   If IsItThere(LogPath) = False Then
