@@ -139,28 +139,6 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
 
 End Sub
 
-Public Function StyleDir() As String
-  Dim strFullPath As String
-  Dim strMacDocs As String
-  Dim strStylesName As String
-
-  strStylesName = "MacmillanStyleTemplate"
-
-  #If Mac Then
-    strMacDocs = MacScript("return (path to documents folder) as string")
-    strFullPath = strMacDocs & strStylesName
-  #Else
-    strFullPath = Environ("APPDATA") & Application.PathSeparator & strStylesName
-  #End If
-
-' Create directory if it doesn't exist yet
-  If Utils.IsItThere(strFullPath) = False Then
-    MkDir strFullPath
-  End If
-
-  StyleDir = strFullPath
-
-End Function
 
 ' ===== DownloadJson ==========================================================
 ' Downloads JSON, if download fails can still continue if a previous version
@@ -815,61 +793,121 @@ Private Sub OpenDocPC(FilePath As String)
         Documents.Open FileName:=FilePath, ReadOnly:=True, Visible:=False      'Win Word DOES allow Visible as an argument :)
 End Sub
 
+' ===== FullURL ===============================================================
+' Takes file name (with extension) you want to download as an argument, returns
+' URL to download that file from, based on config file info.
+
 Private Function FullURL(FileName As String) As String
-' Takes a file name as an argument and returns the URL to that file ON GITHUB
-' TODO: Create from config file
-  Dim strBaseUrl As String
-  Dim strBranch As String
-  Dim strNameOnly As String
-  Dim strRepo As String
-  Dim strSubfolder As String
-  Dim strFilePath As String
+  Dim dictWorkingData As Dictionary
+  Set dictWorkingData = GetWorkingData(FileName)
 
-  strBaseUrl = "https://raw.githubusercontent.com/macmillanpublishers"
-' Strip extension, bc some files have related version file w/ same name, diff ext
-  strNameOnly = Utils.GetFileNameOnly(FileName)
+' Add path elements to a collection, we'll Join later
+  Dim collPath As Collection
+  Set collPath = New Collection
 
-  Select Case strNameOnly
-    Case "macmillan"
-      strRepo = "Word-template_assets"
-      strSubfolder = "StyleTemplate_auto-generate"
-    Case "macmillan_NoColor"
-      strRepo = "Word-template_assets"
-      strSubfolder = "StyleTemplate_auto-generate"
-    Case "macmillan_CoverCopy"
-      strRepo = "Word-template_assets"
-      strSubfolder = vbNullString
-    Case "Styles_Bookmaker"
-      strRepo = "Word-template_assets"
-      strSubfolder = vbNullString
-    Case "Word-template"
-      strRepo = "Word-template"
-      strSubfolder = vbNullString
-    Case "GtUpdater"
-      strRepo = "Word-template"
-      strSubfolder = vbNullString
-    Case "section_start_rules"
-      strRepo = "bookmaker_validator"
-      strSubfolder = vbNullString
-    Case "vba_style_config"
-      strRepo = "Word-template_assets"
-      strSubfolder = "StyleTemplate_auto-generate"
-  End Select
-
-' Get branch based on repo for now, so don't all have to be on same branch
-' TODO: Read branch for each file from a config
-  strBranch = WT_Settings.DownloadBranch(Repo:=strRepo)
+  With collPath
+  ' Start with base URL
+    .Add dictWorkingData("source_urls")(dictWorkingData("source"))
   
-' Test if strSubfolder exists, and if so combine to create full file path.
-' If we combine below and an item is blank, will get a double separator
-  If strSubfolder <> vbNullString Then
-    strFilePath = strSubfolder & "/"
+  ' Add next two elements (always same format)
+    .Add dictWorkingData("organization")
+    .Add dictWorkingData("repo")
+  
+  ' Add middle parts based on type of path we're building
+
+    If dictWorkingData.Exists("current_release") = True Then
+      .Add "releases"
+      .Add "download"
+      .Add dictWorkingData("current_release")
+    Else
+    ' Can override download branch by adding to config file.
+      If dictWorkingData.Exists("branch") = True Then
+        .Add dictWorkingData("branch")
+      Else
+        .Add "master"
+      End If
+
+    ' Add subfolders if we have any
+      If dictWorkingData.Exists("subfolders") = True Then
+        Dim collSubfolders As Collection
+        Set collSubfolders = dictWorkingData("subfolders")
+  
+        Dim varDir As Variant
+        For Each varDir In collSubfolders
+          .Add varDir
+        Next varDir
+      End If
+    End If
+
+  ' Add the file name to the end!
+    .Add FileName
+  End With
+  
+' No native Join function for Collections, so convert to an array first
+  Dim varPathArray As Variant
+  varPathArray = Utils.ToArray(collPath)
+  
+  FullURL = Join(varPathArray, "/")
+End Function
+
+' ===== GetWorkingData ========================================================
+' Loop through all config files in order of least important to more important
+' and add each value to working dictionary. Items that take precedence will
+' overwrite the value from the previous configs.
+
+Private Function GetWorkingData(FileName As String) As Dictionary
+  Dim collConfigs As Collection
+  Dim objDict As Object
+  Dim varKey1 As Variant
+  Dim dictFileData As Dictionary
+  Dim varKey2 As Variant
+  Dim dictWorkingData As Dictionary
+
+  Set dictWorkingData = New Dictionary
+
+  If FileName = "global_config.json" Then
+  ' Read from CustomDocumentProperties, since we can't get data
+  ' from a file we don't yet have
+    With dictWorkingData
+    ' source_urls is a collection, so save multiple as comma-seprated string
+      .Add "source_urls", Utils.ToCollection(Split(ThisDocument.CustomDocumentProperties("source_urls"), ","))
+      .Add "source", ThisDocument.CustomDocumentProperties("source")
+      .Add "organization", ThisDocument.CustomDocumentProperties("organization")
+      .Add "repo", ThisDocument.CustomDocumentProperties("repo")
+      .Add "subfolders", Utils.ToCollection(Split(ThisDocument.CustomDocumentProperties("subfolders"), ","))
+    End With
+  
+  Else
+  ' Read data from config files
+
+    Set collConfigs = New Collection
+    collConfigs.Add GlobalConfig
+    collConfigs.Add RegionConfig
+    collConfigs.Add LocalConfig
+  
+    For Each objDict In collConfigs
+      For Each varKey1 In objDict.Keys
+        If varKey1 = "files" Then
+          Set dictFileData = objDict("files")(FileName)
+          For Each varKey2 In dictFileData.Keys
+            If IsObject(dictFileData(varKey2)) = True Then
+              Set dictWorkingData.Item(varKey2) = dictFileData(varKey2)
+            Else
+              dictWorkingData.Item(varKey2) = dictFileData(varKey2)
+            End If
+          Next varKey2
+        Else
+          If IsObject(objDict(varKey1)) = True Then
+            Set dictWorkingData.Item(varKey1) = objDict(varKey1)
+          Else
+            dictWorkingData.Item(varKey1) = objDict(varKey1)
+          End If
+        End If
+      Next varKey1
+    Next objDict
   End If
-  
-  strFilePath = strFilePath & FileName
-  
-  ' put it all together
-  FullURL = strBaseUrl & "/" & strRepo & "/" & strBranch & "/" & strFilePath
+
+  Set GetWorkingData = dictWorkingData
 End Function
 
 
@@ -935,13 +973,8 @@ Public Function FileInfo(FileName As String) As Dictionary
   Dim strTmpDir As String
   Dim strBaseName As String
 
-  
-' GtUpdater.dotm only file to go in Startup
-  If FileName = "GtUpdater.dotm" Then
-    strStyleDir = Application.StartupPath
-  Else
     strStyleDir = StyleDir()
-  End If
+
 
 ' Create directory if it doesn't exist already
   If Utils.IsItThere(strStyleDir) = False Then

@@ -35,9 +35,11 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private p_strInstallType As String
-Private p_Overrides As Dictionary
 Private p_GlobalConfig As Dictionary
 Private p_DefaultConfigPath As String
+Private p_TmpDir As String
+Private p_Region As String
+Private p_LocalConfig As Dictionary
 
 
 ' *****************************************************************************
@@ -75,134 +77,91 @@ End Property
 
 
 ' ===== DebugOn ===============================================================
-' Are we in debugging mode?
+' Are we in debugging mode? NOTE: can't use 'Debug' because that's reserved!
 
 Public Property Get DebugOn() As Boolean
-  If Overrides.Exists("DebugOn") Then
-    DebugOn = True
-  Else
-    DebugOn = False
+  If LocalConfig.Exists("debug") = True Then
+    DebugOn = LocalConfig("debug")
   End If
 End Property
 
-' ===== DownloadBranch ========================================================
-' Name of Git branch files should be downloaded from. Branch must be on Github.
-' Users always default to "master" but debug can pull from anything.
 
-' PARAMS
-' Repo: name of the
+' ===== StyleDir ==============================================================
+' Returns path to MacmillanStyleTemplate directory on local machine. If you pass
+' "GtUpdater.dotm" as FileName, it returns the Startup folder.
 
-' RETURNS
-' String
 
-' NOTES
-' Read-only
+Public Property Get StyleDir(Optional FileName As String) As String
+  Dim strFullPath As String
 
-Public Property Get DownloadBranch(Repo As String) As String
-
-  If Overrides("DownloadBranch").Exists(Repo) Then
-    DownloadBranch = Overrides("DownloadBranch")(Repo)
+' GtUpdater.dotm only file to go in Startup
+  If FileName = "GtUpdater.dotm" Then
+    strFullPath = Application.StartupPath
   Else
-    DownloadBranch = "master"
+    Dim strMacDocs As String
+    Dim strStylesName As String
+    strStylesName = "MacmillanStyleTemplate"
+  
+    #If Mac Then
+      strMacDocs = MacScript("return (path to documents folder) as string")
+      strFullPath = strMacDocs & strStylesName
+    #Else
+      strFullPath = Environ("APPDATA") & Application.PathSeparator & strStylesName
+    #End If
+  
+  ' Create directory if it doesn't exist yet
+    If Utils.IsItThere(strFullPath) = False Then
+      MkDir strFullPath
+    End If
   End If
+
+  StyleDir = strFullPath
+
 End Property
 
-' ===== FileInfo ==============================================================
-' Processes data in various config files to return info about a specific file
-' required by the template.
 
-' RETURNS
-' Dictionary with the following keys:
-' "Final" : Full path (with file name) to file on local computer
-' "Tmp" : Full path (with file name) to file in TMP dir
-' "Log" : Full path to download log file for this file
-' "Remote" : Full download URL for file from remote repo/release
+' ===== Region ================================================================
+' What region (us or uk) is user in?
 
-Public Property Get FileInfo(FileName As String) As Dictionary
-  Dim dictWorkingData As Dictionary
-  Set dictWorkingData = GetWorkingData(FileName)
-
-  Dim strFinal As String
-  Dim strTmp As String
-  Dim strLog As String
-  Dim strRemote As String
-  Dim strBaseName As String
-  
-  strBaseName = Utils.GetFileNameOnly(FileName)
-
-  strFinal = BuildPath(FileName)
-  strTmp = TmpDir & Application.PathSeparator & FileName
-  strLog = RootDir & Application.PathSeparator & "log" & Application.PathSeparator _
-    & strBaseName & "_updates.log"
-  strRemote = BuildPath(FileName, True)
-
-  Set FileInfo = New Dictionary
-  With FileInfo
-    .Add "Final", strFinal
-    .Add "Tmp", strTmp
-    .Add "Log", strLog
-    .Add "Remote", strRemote
-  End With
-  
+Public Property Get Region() As String
+  If p_Region = vbNullString Then
+    p_Region = LocalConfig("region")
+  End If
+  Region = p_Region
 End Property
-
 
 ' ***** PRIVATE PROPERTIES *****************************************************
-
-' ===== RootDir ===============================================================
-' Local root directory for all this stuff. Is
 
 ' ===== TmpDir ================================================================
 ' Returns path to TEMP directory, no trailing path separator
 
 Private Property Get TmpDir() As String
-  Dim strTmpDir As String
-  #If Mac Then
-    strTmpDir = MacScript("path to temporary items as string")
-  #Else
-    strTmpDir = Environ("TEMP")
-  #End If
-' Remove trailing path separator, if any
-  If Right(strTmpDir, 1) = Application.PathSeparator Then
-    strTmpDir = Left(strTmpDir, Len(strTmpDir) - 1)
+  If p_TmpDir = vbNullString Then
+    #If Mac Then
+      p_TmpDir = MacScript("path to temporary items as string")
+    #Else
+      p_TmpDir = Environ("TEMP")
+    #End If
+  ' Remove trailing path separator, if any
+    If Right(p_TmpDir, 1) = Application.PathSeparator Then
+      p_TmpDir = Left(strTmpDir, Len(p_TmpDir) - 1)
+    End If
   End If
-  TmpDir = strTmpDir
+  TmpDir = p_TmpDir
 End Property
 
 
 ' ===== DefaultConfigPath =====================================================
-' Default path to config files on local machine. Since file paths are stored in
-' the config files, we need a way to access the config files themselves before
-' we can read them.
+' Default path to config files on local machine.
 
 Private Property Get DefaultConfigPath() As String
   If p_DefaultConfigPath = vbNullString Then
-    p_DefaultConfigPath = ThisDocument.Path & Application.PathSeparator & "config"
+    p_DefaultConfigPath = StyleDir & Application.PathSeparator & "config"
     If Utils.IsItThere(p_DefaultConfigPath) = False Then
       MkDir p_DefaultConfigPath
     End If
   End If
     DefaultConfigPath = p_DefaultConfigPath
-End Property
-
-' ===== Overrides ==============================================================
-' Read JSON file to override certain settings when debugging. Must be in same
-' directory as this file.
-
-Private Property Get Overrides() As Dictionary
-  If p_Overrides Is Nothing Then
-    Dim strFile As String
-    strFile = ThisDocument.Path & Application.PathSeparator & "settings_overrides.json"
-  
-    If Utils.IsItThere(strFile) = True Then
-      Set p_Overrides = ClassHelpers.ReadJson(strFile)
-    Else
-      Set p_Overrides = New Dictionary
-    End If
-  End If
-
-  Set Overrides = p_Overrides
-  
 End Property
 
 
@@ -226,128 +185,64 @@ Private Property Get GlobalConfig() As Dictionary
   Set GlobalConfig = p_GlobalConfig
 End Property
 
-' ***** PRIVATE METHODS *******************************************************
+' ===== RegionConfig ==========================================================
+' Dictionary of data in global_config.json file. If file isn't present, it is
+' downloaded from the URL saved in the template's CustomDocumentProperties.
 
-' ===== GetWorkingData ========================================================
-' Loop through all config files in order of least important to more important
-' and add each value to working dictionary. Items that take precedence will
-' overwrite the value from the previous configs.
+Private Property Get RegionConfig() As Dictionary
+  If p_RegionConfig Is Nothing Then
+    Dim strFileName As String
+    Dim strFullPath As String
+    strFileName = Me.Region & "_config.json"
+    strFullPath = DefaultConfigPath & Application.PathSeparator & strFileName
 
-Private Function GetWorkingData(FileName As String) As Dictionary
-  Dim collConfigs As Collection
-  Dim objDict As Object
-  Dim varKey1 As Variant
-  Dim dictFileData As Dictionary
-  Dim varKey2 As Variant
-  Dim dictWorkingData As Dictionary
-
-  Set dictWorkingData = New Dictionary
-
-  If FileName = "global_config.json" Then
-  ' Read from CustomDocumentProperties, since we can't get data
-  ' from a file we don't yet have
-    With dictWorkingData
-      .Add "source_urls", Utils.ToCollection(Split(ThisDocument.CustomDocumentProperties("source_urls"), ","))
-      .Add "source", ThisDocument.CustomDocumentProperties("source")
-      .Add "organization", ThisDocument.CustomDocumentProperties("organization")
-      .Add "repo", ThisDocument.CustomDocumentProperties("repo")
-      .Add "subfolders", Utils.ToCollection(Split(ThisDocument.CustomDocumentProperties("subfolders"), ","))
-    End With
-  
-  Else
-  ' Read data from config files
-
-    Set collConfigs = New Collection
-    collConfigs.Add GlobalConfig
-    collConfigs.Add RegionConfig
-    collConfigs.Add LocalConfig
-  
-    For Each objDict In collConfigs
-      For Each varKey1 In objDict.Keys
-        If varKey1 = "files" Then
-          Set dictFileData = objDict("files")(FileName)
-          For Each varKey2 In dictFileData.Keys
-            If IsObject(dictFileData(varKey2)) = True Then
-              Set dictWorkingData.Item(varKey2) = dictFileData(varKey2)
-            Else
-              dictWorkingData.Item(varKey2) = dictFileData(varKey2)
-            End If
-          Next varKey2
-        Else
-          If IsObject(objDict(varKey1)) = True Then
-            Set dictWorkingData.Item(varKey1) = objDict(varKey1)
-          Else
-            dictWorkingData.Item(varKey1) = objDict(varKey1)
-          End If
-        End If
-      Next varKey1
-    Next objDict
+    If Utils.IsItThere(strFullPath) = False Then
+      DownloadFromGithub strFullPath
+    End If
+    Set p_RegionConfig = ClassHelpers.ReadJson(strFileName)
   End If
+  
+  Set RegionConfig = p_RegionConfig
+End Property
 
-  Set GetWorkingData = dictWorkingData
-End Function
+' ===== LocalConfig ===========================================================
+' Local settings. Both a Set and a Get since we need to be able to edit locally.
+'
+Private Property Set LocalConfig(NewLocalConfig As Dictionary)
+  Dim strLocalFile As String
+  strLocalFile = DefaultConfigPath & Application.Path & "local_config.json"
+  ClassHelpers.WriteJson strLocalFile, NewLocalConfig
+End Property
 
-' ===== BuildPath =============================================================
-' The part of the path to the file after the root directory/URL, so we can match
-' the local path to the remote URL path.
-
-Private Function BuildPath(FileName As String, Optional IsUrl As Boolean _
-  = False) As String
-  Dim dictWorkingData As Dictionary
-  Set dictWorkingData = GetWorkingData(FileName)
-
-' Add path elements to a collection, we'll Join later
-  Dim collPath As Collection
-  Set collPath = New Collection
-
-' Set separator and base for local files vs. URLs
-  Dim strSeparator As String
-  If IsUrl = True Then
-    strSeparator = "/"
-    collPath.Add dictWorkingData("source_urls")(dictWorkingData("source"))
-  Else
-    strSeparator = Application.PathSeparator
-    collPath.Add RootDir
-  End If
-
-' Add next two elements (all same format)
-  collPath.Add dictWorkingData("organization")
-  collPath.Add dictWorkingData("repo")
-
-' Add middle parts based on type of path we're building
-  If IsUrl = True Then
-    If dictWorkingData("source") = "releases" Then
-      collPath.Add "releases"
-      collPath.Add "download"
-      collPath.Add dictWorkingData("current_release")
-    Else
-      If dictWorkingData.Exists("branch") = True Then
-        collPath.Add dictWorkingData("branch")
+Private Property Get LocalConfig() As Dictionary
+  If p_LocalConfig Is Nothing Then
+    Dim strLocalFile As String
+    strLocalFile = DefaultConfigPath & Application.PathSeparator & "local_config.json"
+    
+    If Utils.IsItThere(strLocalFile) = False Then
+    ' Only user-supplied local setting right now is Region so just using a MsgBox
+    ' but eventually move this to a more flexible UserForm
+      Dim strMessage As String
+      strMessage = "Are you in the United States?" & vbNewLine & vbNewLine & _
+      vbTab & "US users: click YES" & vbNewLine & _
+      vbTab & "UK users: click NO"
+      
+      Dim strTitle As String
+      strTitle = "Please Select Your Region"
+ 
+      Dim strRegion As String
+      If MsgBox(strMessage, vbYesNo + vbQuestion, strTitle) = vbYes Then
+        strRegion = "us"
       Else
-        collPath.Add "master"
+        strRegion = "uk"
       End If
+
+      Set p_LocalConfig = New Dictionary
+      p_LocalConfig.Add "region", strRegion
+      ClassHelpers.WriteJson strLocalFile, p_LocalConfig
+    Else
+      Set p_LocalConfig = ClassHelpers.ReadJson(strLocalFile)
     End If
   End If
-
-' Add subfolders if we have any (and not downloading from releases)
-  If dictWorkingData.Exists("subfolders") = True Then
-    If IsUrl = False Or dictWorkingData("source") = "direct" Then
-      Dim collSubfolders As Collection
-      Set collSubfolders = dictWorkingData("subfolders")
-
-      Dim varDir As Variant
-      For Each varDir In collSubfolders
-        collPath.Add varDir
-      Next varDir
-    End If
-  End If
-
-' Add the file name to the end!
-  collPath.Add FileName
-  
-' No native Join function for Collections, so convert to an array first
-  Dim varPathArray As Variant
-  varPathArray = Utils.ToArray(collPath)
-  
-  BuildPath = Join(varPathArray, strSeparator)
-End Function
+  Set LocalConfig = p_LocalConfig
+End Property

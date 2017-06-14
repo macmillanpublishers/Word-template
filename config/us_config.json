@@ -1,22 +1,19 @@
 {
 	"files": {
-		"Word-template": {
-			"current_release": "3.0.9"
+		"Word-template.dotm": {
+			"current_release": "v3.9.0"
 		},
-		"GtUpdater": {
-			"current_release": "3.0.9"
+		"GtUpdater.dotm": {
+			"current_release": "v3.9.0"
 		},
-		"macmillan": {
-			"current_release": "4.7"
+		"macmillan.dotx": {
+			"current_release": "v4.6.0"
 		},
-		"macmillan_NoColor": {
-			"current_release": "4.7"
+		"macmillan_NoColor.dotx": {
+			"current_release": "v4.6.0"
 		},
-		"macmillan_CoverCopy": {
-			"current_release": "2.0"
-		},
-		"global_config": {
-			"current_release": "3.0.9"
+		"macmillan_CoverCopy.dotm": {
+			"current_release": "v2.0.0"
 		}
 	}
 }
