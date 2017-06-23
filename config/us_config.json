@@ -1,19 +1,19 @@
 {
 	"files": {
 		"Word-template.dotm": {
-			"current_release": "v3.9.0"
+			"latest_release": "v2.9.5"
 		},
 		"GtUpdater.dotm": {
-			"current_release": "v3.9.0"
+			"latest_release": "v2.9.5"
 		},
 		"macmillan.dotx": {
-			"current_release": "v4.6.0"
+			"latest_release": "v2.0"
 		},
 		"macmillan_NoColor.dotx": {
-			"current_release": "v4.6.0"
+			"latest_release": "v2.0"
 		},
 		"macmillan_CoverCopy.dotm": {
-			"current_release": "v2.0.0"
+			"latest_release": "v2.0"
 		}
 	}
 }

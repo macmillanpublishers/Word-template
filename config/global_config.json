@@ -1,37 +1,37 @@
 {
 	"organization": "macmillanpublishers",
 	"source_urls": {
-		"direct": "raw.githubusercontent.com",
-		"releases": "github.com"
+		"direct": "https://raw.githubusercontent.com",
+		"releases": "https://github.com"
 	},
 	"regions": ["us", "uk"],
 	"files": {
 		"Word-template.dotm": {
 			"repo": "Word-template",
 			"source": "releases",
-			"latest_release": "v3.10"
+			"latest_release": "v3.1.0"
 		},
 		"GtUpdater.dotm": {
 			"repo": "Word-template",
 			"source": "releases",
-			"latest_release": "v3.10"
+			"latest_release": "v3.1.0"
 		},
 		"macmillan.dotx": {
 			"repo": "Word-template_assets",
 			"subfolders": ["StyleTemplate_auto-generate"],
 			"source": "direct",
-			"latest_release": "v4.7"
+			"latest_release": "v4.7.0"
 		},
 		"macmillan_NoColor.dotx": {
 			"repo": "Word-template_assets",
 			"subfolders": ["StyleTemplate_auto-generate"],
 			"source": "direct",
-			"latest_release": "v4.7"
+			"latest_release": "v4.7.0"
 		},
 		"macmillan_CoverCopy.dotm": {
 			"repo": "Word-template_assets",
 			"source": "direct",
-			"latest_release": "v2.0"
+			"latest_release": "v4.7.0"
 		},
 		"section_start_rules.json": {
 			"repo": "bookmaker_validator",
