@@ -438,7 +438,7 @@ Private Sub PrintStylesPC()
     Dim A As Long
     
     ' This is the template where the building block is saved
-    strPath = SharedFileInstaller.StyleDir & Application.PathSeparator & "Word-template.dotm"
+    strPath = WT_Settings.StyleDir & Application.PathSeparator & "Word-template.dotm"
     If IsItThere(strPath) = True Then
         Set objTemplate = Templates(strPath)
     Else

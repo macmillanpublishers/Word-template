@@ -139,7 +139,7 @@ End Property
 ' ===== TmpDir ================================================================
 ' Returns path to TEMP directory, no trailing path separator
 
-Private Property Get TmpDir() As String
+Public Property Get TmpDir() As String
   If p_TmpDir = vbNullString Then
     #If Mac Then
       p_TmpDir = MacScript("path to temporary items as string")
@@ -173,7 +173,7 @@ End Property
 ' Dictionary of data in global_config.json file. If file isn't present, it is
 ' downloaded from the URL saved in the template's CustomDocumentProperties.
 
-Private Property Get GlobalConfig() As Dictionary
+Public Property Get GlobalConfig() As Dictionary
   If p_GlobalConfig Is Nothing Then
     Dim strFileName As String
     Dim strFullPath As String
@@ -193,7 +193,7 @@ End Property
 ' Dictionary of data in global_config.json file. If file isn't present, it is
 ' downloaded from the URL saved in the template's CustomDocumentProperties.
 
-Private Property Get RegionConfig() As Dictionary
+Public Property Get RegionConfig() As Dictionary
   If p_RegionConfig Is Nothing Then
     Dim strFileName As String
     Dim strFullPath As String
@@ -218,7 +218,7 @@ Private Property Set LocalConfig(NewLocalConfig As Dictionary)
   ClassHelpers.WriteJson strLocalFile, NewLocalConfig
 End Property
 
-Private Property Get LocalConfig() As Dictionary
+Public Property Get LocalConfig() As Dictionary
   If p_LocalConfig Is Nothing Then
     Dim strLocalFile As String
     strLocalFile = DefaultConfigPath & Application.PathSeparator & "local_config.json"

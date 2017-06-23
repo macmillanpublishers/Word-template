@@ -198,7 +198,7 @@ End Sub
 Private Sub tagChapterHeads()
     Set activeRng = activeDoc.Range
     Dim CHstylesArray(3) As String                                   ' number of items in array should be declared here
-    Dim i As Long
+    Dim I As Long
     Dim chTag As Integer
     
     CHstylesArray(1) = "Chap Number (cn)"
@@ -207,7 +207,7 @@ Private Sub tagChapterHeads()
     
 On Error GoTo ErrHandler
     
-    For i = 1 To UBound(CHstylesArray())
+    For I = 1 To UBound(CHstylesArray())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -215,7 +215,7 @@ On Error GoTo ErrHandler
       .Replacement.Text = "`CH|^&|CH`"
       .Wrap = wdFindContinue
       .Format = True
-      .Style = CHstylesArray(i)
+      .Style = CHstylesArray(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = True
@@ -243,12 +243,12 @@ On Error GoTo 0
     CHLOCtags(3) = ""
     CHLOCtags(4) = "<ch>"
     
-    For i = 1 To UBound(CHfauxTags())
+    For I = 1 To UBound(CHfauxTags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = CHfauxTags(i)
-      .Replacement.Text = CHLOCtags(i)
+      .Text = CHfauxTags(I)
+      .Replacement.Text = CHLOCtags(I)
       .Wrap = wdFindContinue
       .Format = False
       .Forward = True
@@ -310,7 +310,7 @@ Private Sub tagTitlePage()
     
     Set activeRng = activeDoc.Range
     Dim TPstylesArray(10) As String                                   ' number of items in array should be declared here
-    Dim i As Long
+    Dim I As Long
     
     TPstylesArray(1) = "Titlepage Author Name (au)"
     TPstylesArray(2) = "Titlepage Book Subtitle (stit)"
@@ -325,7 +325,7 @@ Private Sub tagTitlePage()
     
 On Error GoTo ErrHandler
 
-    For i = 1 To UBound(TPstylesArray())
+    For I = 1 To UBound(TPstylesArray())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -333,7 +333,7 @@ On Error GoTo ErrHandler
       .Replacement.Text = "`TP|^&|TP`"
       .Wrap = wdFindContinue
       .Format = True
-      .Style = TPstylesArray(i)
+      .Style = TPstylesArray(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False
@@ -361,15 +361,15 @@ On Error GoTo 0
     directionBool(1) = True
     directionBool(2) = False
     
-    For i = 1 To UBound(TPLOCtags())
+    For I = 1 To UBound(TPLOCtags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = TPfauxTags(i)
-      .Replacement.Text = TPLOCtags(i)
+      .Text = TPfauxTags(I)
+      .Replacement.Text = TPLOCtags(I)
       .Wrap = wdFindContinue
       .Format = False
-      .Forward = directionBool(i)
+      .Forward = directionBool(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False
@@ -412,11 +412,11 @@ On Error GoTo 0
     
     Call zz_clearFindB
     
-    For i = 1 To UBound(TPfauxTags())
+    For I = 1 To UBound(TPfauxTags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = TPfauxTags(i)
+      .Text = TPfauxTags(I)
       .Replacement.Text = ""
       .Wrap = wdFindContinue
       .Format = False
@@ -445,14 +445,14 @@ Private Sub tagCopyrightPage()
     
     Set activeRng = activeDoc.Range
     Dim CPstylesArray(2) As String                                   ' number of items in array should be declared here
-    Dim i As Long
+    Dim I As Long
     
     CPstylesArray(1) = "Copyright Text double space (crtxd)"
     CPstylesArray(2) = "Copyright Text single space (crtx)"
 
 On Error GoTo ErrHandler
 
-    For i = 1 To UBound(CPstylesArray())
+    For I = 1 To UBound(CPstylesArray())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -460,7 +460,7 @@ On Error GoTo ErrHandler
       .Replacement.Text = "`CP|^&|CP`"
       .Wrap = wdFindContinue
       .Format = True
-      .Style = CPstylesArray(i)
+      .Style = CPstylesArray(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False
@@ -488,15 +488,15 @@ On Error GoTo 0
     directionBool(1) = True
     directionBool(2) = False
     
-    For i = 1 To UBound(CPLOCtags())
+    For I = 1 To UBound(CPLOCtags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = CPfauxTags(i)
-      .Replacement.Text = CPLOCtags(i)
+      .Text = CPfauxTags(I)
+      .Replacement.Text = CPLOCtags(I)
       .Wrap = wdFindContinue
       .Format = False
-      .Forward = directionBool(i)
+      .Forward = directionBool(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False
@@ -539,11 +539,11 @@ On Error GoTo 0
     
     Call zz_clearFindB
     
-    For i = 1 To UBound(CPfauxTags())
+    For I = 1 To UBound(CPfauxTags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = CPfauxTags(i)
+      .Text = CPfauxTags(I)
       .Replacement.Text = ""
       .Wrap = wdFindContinue
       .Format = False
@@ -574,7 +574,7 @@ Private Sub tagTOC()
     
     Set activeRng = activeDoc.Range
     Dim TOCstylesArray(10) As String                                   ' number of items in array should be declared here
-    Dim i As Long
+    Dim I As Long
     
     TOCstylesArray(1) = "TOC Frontmatter Head (cfmh)"
     TOCstylesArray(2) = "TOC Author (cau)"
@@ -588,7 +588,7 @@ Private Sub tagTOC()
     TOCstylesArray(10) = "TOC Page Number (cnum)"
     
 On Error GoTo ErrHandler
-    For i = 1 To UBound(TOCstylesArray())
+    For I = 1 To UBound(TOCstylesArray())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -596,7 +596,7 @@ On Error GoTo ErrHandler
       .Replacement.Text = "`TOC|^&|TOC`"
       .Wrap = wdFindContinue
       .Format = True
-      .Style = TOCstylesArray(i)
+      .Style = TOCstylesArray(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False
@@ -624,15 +624,15 @@ On Error GoTo 0
     directionBool(1) = True
     directionBool(2) = False
     
-    For i = 1 To UBound(TOCLOCtags())
+    For I = 1 To UBound(TOCLOCtags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = TOCfauxTags(i)
-      .Replacement.Text = TOCLOCtags(i)
+      .Text = TOCfauxTags(I)
+      .Replacement.Text = TOCLOCtags(I)
       .Wrap = wdFindContinue
       .Format = False
-      .Forward = directionBool(i)
+      .Forward = directionBool(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False
@@ -675,11 +675,11 @@ On Error GoTo 0
     
     Call zz_clearFindB
     
-    For i = 1 To UBound(TOCfauxTags())
+    For I = 1 To UBound(TOCfauxTags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = TOCfauxTags(i)
+      .Text = TOCfauxTags(I)
       .Replacement.Text = ""
       .Wrap = wdFindContinue
       .Format = False
@@ -708,7 +708,7 @@ Private Sub tagSeriesPage()
     
     Set activeRng = activeDoc.Range
     Dim SPstylesArray(8) As String                                   ' number of items in array should be declared here
-    Dim i As Long
+    Dim I As Long
     
     SPstylesArray(1) = "Series Page Heading (sh)"
     SPstylesArray(2) = "Series Page Text (stx)"
@@ -721,7 +721,7 @@ Private Sub tagSeriesPage()
     
 On Error GoTo ErrHandler
 
-    For i = 1 To UBound(SPstylesArray())
+    For I = 1 To UBound(SPstylesArray())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -729,7 +729,7 @@ On Error GoTo ErrHandler
       .Replacement.Text = "`SP|^&|SP`"
       .Wrap = wdFindContinue
       .Format = True
-      .Style = SPstylesArray(i)
+      .Style = SPstylesArray(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False
@@ -757,15 +757,15 @@ On Error GoTo 0
     directionBool(1) = True
     directionBool(2) = False
     
-    For i = 1 To UBound(SPLOCtags())
+    For I = 1 To UBound(SPLOCtags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = SPfauxTags(i)
-      .Replacement.Text = SPLOCtags(i)
+      .Text = SPfauxTags(I)
+      .Replacement.Text = SPLOCtags(I)
       .Wrap = wdFindContinue
       .Format = False
-      .Forward = directionBool(i)
+      .Forward = directionBool(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False
@@ -808,11 +808,11 @@ On Error GoTo 0
     
     Call zz_clearFindB
     
-    For i = 1 To UBound(SPfauxTags())
+    For I = 1 To UBound(SPfauxTags())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = SPfauxTags(i)
+      .Text = SPfauxTags(I)
       .Replacement.Text = ""
       .Wrap = wdFindContinue
       .Format = False
@@ -839,7 +839,7 @@ Private Sub tagEndLastChapter()
 
     Set activeRng = activeDoc.Range
     Dim ELCstylesArray(9) As String                                   ' number of items in array should be declared here
-    Dim i As Long
+    Dim I As Long
     
     ELCstylesArray(1) = "BM Head (bmh)"
     ELCstylesArray(2) = "BM Title (bmt)"
@@ -852,7 +852,7 @@ Private Sub tagEndLastChapter()
     ELCstylesArray(9) = "About Author Text Head (atah)"
     
 On Error GoTo ErrHandler
-    For i = 1 To UBound(ELCstylesArray())
+    For I = 1 To UBound(ELCstylesArray())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -860,7 +860,7 @@ On Error GoTo ErrHandler
       .Replacement.Text = "``````^&"
       .Wrap = wdFindContinue
       .Format = True
-      .Style = ELCstylesArray(i)
+      .Style = ELCstylesArray(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = True
@@ -1191,7 +1191,7 @@ Private Function volumestylecheck()
     Set activeRng = activeDoc.Range
     volumestylecheck = False
     Dim VOLstylesArray(2) As String                                   ' number of items in array should be declared here
-    Dim i As Long
+    Dim I As Long
     Dim mainDoc As Document
     Set mainDoc = activeDoc
     Dim iReply As Integer
@@ -1201,14 +1201,14 @@ Private Function volumestylecheck()
 
 On Error GoTo ErrHandler
 
-    For i = 1 To UBound(VOLstylesArray())
+    For I = 1 To UBound(VOLstylesArray())
     With activeRng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
       .Text = ""
       .Wrap = wdFindContinue
       .Format = True
-      .Style = VOLstylesArray(i)
+      .Style = VOLstylesArray(I)
       .MatchCase = False
       .MatchWholeWord = False
       .MatchWildcards = False

@@ -14,7 +14,7 @@ Sub CheckMacmillanGT()
 
     
     templateFile = "Word-template.dotm"  'the template file you are checking
-    strTemplatePath = SharedFileInstaller.StyleDir()
+    strTemplatePath = WT_Settings.StyleDir
 
     Call VersionCheck(strTemplatePath, templateFile)
 
@@ -31,7 +31,7 @@ Sub CheckMacmillan()
     Dim strTemplatePath As String
     
     templateFile = "macmillan.dotx"  'the template file you are checking
-    strTemplatePath = SharedFileInstaller.StyleDir()
+    strTemplatePath = WT_Settings.StyleDir
     
     Call VersionCheck(strTemplatePath, templateFile)
 

@@ -348,7 +348,7 @@ Private Sub RmWhiteSpaceB(StoryType As WdStoryType)
 
   Dim wsFindArray(33) As String              'number of items in array should be declared here
   Dim wsReplaceArray(33) As String       'and here
-  Dim i As Long
+  Dim I As Long
 
   wsFindArray(1) = ".{4,}"             '4 or more consecutive periods, into proper 4 dot ellipse
   wsFindArray(2) = "..."                  '3 consecutive periods, into 3 dot ellipse
@@ -433,10 +433,10 @@ Private Sub RmWhiteSpaceB(StoryType As WdStoryType)
   #End If
   
   Call MacroHelpers.zz_clearFind
-  For i = 1 To UBound(wsFindArray())
+  For I = 1 To UBound(wsFindArray())
     With activeRng.Find
-      .Text = wsFindArray(i)
-      .Replacement.Text = wsReplaceArray(i)
+      .Text = wsFindArray(I)
+      .Replacement.Text = wsReplaceArray(I)
       .Wrap = wdFindContinue
       .MatchWildcards = True
       .Execute Replace:=wdReplaceAll

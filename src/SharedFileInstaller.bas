@@ -14,12 +14,6 @@ Attribute VB_Name = "SharedFileInstaller"
 Option Explicit
 Option Base 1
 
-Public Enum GitBranch
-  master = 1
-  releases = 2
-  develop = 3
-End Enum
-
 Public Enum TemplatesList
   updaterTemplates = 1
   toolsTemplates = 2
@@ -702,83 +696,96 @@ End Function
 Private Function NeedUpdate(FileName As String) As Boolean
 ' FileName should be to TEMPLATE (.dotm) file
   Dim dictTemplateFile As Dictionary
+  Dim strFilePath As String
   Set dictTemplateFile = FileInfo(FileName)
+  strFilePath = dictTemplateFile("Final")
 
-'------------------------- Get installed version number -----------------------------------
+'----- Get local version number -----------------------------------
   Dim logString As String
+  Dim strLocalVersion As String
 
-' Get version number of installed template
-  Dim strInstalledVersion As String
-
-  If IsItThere(dictTemplateFile("Final")) = True Then
-
+  If IsItThere(strFilePath) = True Then
     #If Mac Then
-      Call OpenDocMac(dictTemplateFile("Final"))
+      Call OpenDocMac(strFilePath)
     #Else
-      Call OpenDocPC(dictTemplateFile("Final"))
+      Call OpenDocPC(strFilePath)
     #End If
 
-    strInstalledVersion = Documents(dictTemplateFile("Final")).CustomDocumentProperties("Version")
-    Documents(dictTemplateFile("Final")).Close SaveChanges:=wdDoNotSaveChanges
-    logString = Now & " -- installed version is " & strInstalledVersion
+    strLocalVersion = Documents(strFilePath).CustomDocumentProperties("Version")
+    Documents(strFilePath).Close SaveChanges:=wdDoNotSaveChanges
+    logString = Now & " -- Local version is " & strLocalVersion
+    LogInformation dictTemplateFile("Log"), logString
   Else
-    strInstalledVersion = "0"     ' Template is not installed
-    logString = Now & " -- No template installed, version number is 0."
-  End If
-
-  LogInformation dictTemplateFile("Log"), logString
-
-'------------------------- Try to get current version's number from Confluence
-  Dim strVersion As String
-  Dim dictVersionFile As Dictionary
-
-  Dim strMacDocs As String
-
-  strVersion = Utils.GetFileNameOnly(FileName) & ".txt"
-  Set dictVersionFile = FileInfo(strVersion)
-
-' If False, error in download; user was notified in DownloadFromGithub function
-  If DownloadFromGithub(FileName:=strVersion) = False Then
-    NeedUpdate = False
+    NeedUpdate = True
+    logString = Now & " -- No template installed, update required."
+    LogInformation dictTemplateFile("Log"), logString
     Exit Function
   End If
 
-'-------------------- Get version number of current template ---------------------
-  If IsItThere(dictVersionFile("Final")) = True Then
-    NeedUpdate = True
-    Dim strCurrentVersion As String
-    strCurrentVersion = ReadTextFile(Path:=dictVersionFile("Final"), FirstLineOnly:=True)
+'------------------------- Get latest version from config files ---------------
+  Dim dictConfigData As Dictionary
+  Dim strLatestVersion As String
 
-  ' git converts all line endings to LF which messes up PC, and I don't want to deal
-  ' with it so we'll just remove everything
-    If InStr(strCurrentVersion, vbCrLf) > 0 Then
-      strCurrentVersion = Replace(strCurrentVersion, vbCrLf, "")
-    ElseIf InStr(strCurrentVersion, vbLf) > 0 Then
-      strCurrentVersion = Replace(strCurrentVersion, vbLf, "")
-    ElseIf InStr(strCurrentVersion, vbCr) > 0 Then
-      strCurrentVersion = Replace(strCurrentVersion, vbCr, "")
-    End If
-
-    logString = Now & " -- Current version is " & strCurrentVersion
-  Else
-    NeedUpdate = False
-    logString = Now & " -- Download of version file for " & FileName & " failed."
-  End If
-
+  Set dictConfigData = GetWorkingData(FileName)
+  strLatestVersion = dictConfigData("latest_release")
+  logString = Now & " -- Latest available version is " & strLatestVersion
   LogInformation dictVersionFile("Log"), logString
 
-  If NeedUpdate = False Then
-    Exit Function
-  End If
+' -------------------- Compare version numbers --------------------------------
+' Convert version strings to arrays
+  Dim arrLocalVersion As Variant
+  Dim arrLatestVersion As Variant
+  arrLocalVersion = ParseVersion(strLocalVersion)
+  arrLatestVersion = ParseVersion(strLatestVersion)
 
-'--------------------- Compare version numbers -----------------------------------
+' Compare each element of the versions to each other
+  Dim arrBase As Variant
+  Dim arrComp As Variant
+  Dim blnBaseLocal As Boolean
+  Dim iBase As Long
+  Dim iComp As Long
+  Dim lngLB As Long
+  Dim lngUB As Long
+  Dim lngIndexDiff As Long
+  Dim lngEqualItems As Long
 
-  If strInstalledVersion >= strCurrentVersion Then
-    NeedUpdate = False
-    logString = Now & " -- Current version matches installed version."
+' Might be different lengths, need to loop through shorter array to avoid errors
+  If arrLocalVersion.Length < arrLatestVersion.Length Then
+    arrBase = arrLocalVersion
+    arrComp = arrLatestVersion
+    blnBaseLocal = True
   Else
-    NeedUpdate = True
-    logString = Now & " -- Current version greater than installed version."
+    arrBase = arrLatestVersion
+    arrComp = arrLocalVersion
+    blnBaseLocal = False
+  End If
+  
+  lngLB = LBound(arrBase)
+  lngUB = UBound(arrBase)
+' Becasue can't guarantee both will be base 0 or base 1
+  lngIndexDiff = LBound(arrComp) - lngLB
+
+  For iBase = lngLB To lngUB
+    iComp = iBase + lngIndexDiff
+    If arrBase(iBase) > arrComp(iComp) Then
+      NeedUpdate = Not blnBaseLocal
+      Exit For
+    ElseIf arrBase(iBase) < arrComp(iComp) Then
+      NeedUpdate = blnBaseLocal
+      Exit For
+    Else
+      lngEqualItems = lngEqualItems + 1
+    ' Handling for one version having more elements than the other
+      If lngEqualItems = lngUB And arrComp.Length > arrBase.Length Then
+        NeedUpdate = blnBaseLocal
+      End If
+    End If
+  Next iBase
+  
+  If NeedUpdate = False Then
+    logString = Now & " -- No update needed."
+  Else
+    logString = Now & " -- Updating to newer version."
   End If
 
   LogInformation dictVersionFile("Log"), logString
@@ -792,6 +799,22 @@ End Sub
 Private Sub OpenDocPC(FilePath As String)
         Documents.Open FileName:=FilePath, ReadOnly:=True, Visible:=False      'Win Word DOES allow Visible as an argument :)
 End Sub
+
+' ===== ParseVersion ==========================================================
+' Convert version number string to individual integers for semantic versioning.
+
+' RETURNS
+' version segments (e.g., major, minor, patch) as an array
+
+Private Function ParseVersion(VersionStr As String) As Variant
+' Check for prefix and remove
+  If Left(VersionStr, 1) = "v" Then
+    VersionStr = Right(VersionStr, Len(VersionStr) - 1)
+  End If
+  
+' Split string on points
+  ParseVersion = Split(VersionStr, ".")
+End Function
 
 ' ===== FullURL ===============================================================
 ' Takes file name (with extension) you want to download as an argument, returns
@@ -814,16 +837,16 @@ Private Function FullURL(FileName As String) As String
     .Add dictWorkingData("repo")
   
   ' Add middle parts based on type of path we're building
-
-    If dictWorkingData.Exists("current_release") = True Then
+    If dictWorkingData("source") = "releases" Then
       .Add "releases"
       .Add "download"
-      .Add dictWorkingData("current_release")
+      .Add dictWorkingData("latest_release")
     Else
-    ' Can override download branch by adding to config file.
+    ' Can override download branch by adding to local_config file.
       If dictWorkingData.Exists("branch") = True Then
         .Add dictWorkingData("branch")
       Else
+      ' If no branch in any config, defaults to master branch
         .Add "master"
       End If
 
@@ -855,61 +878,116 @@ End Function
 ' and add each value to working dictionary. Items that take precedence will
 ' overwrite the value from the previous configs.
 
+' only gets data from "files" object for specific file
+
 Private Function GetWorkingData(FileName As String) As Dictionary
   Dim collConfigs As Collection
   Dim objDict As Object
-  Dim varKey1 As Variant
-  Dim dictFileData As Dictionary
-  Dim varKey2 As Variant
   Dim dictWorkingData As Dictionary
 
-  Set dictWorkingData = New Dictionary
-
+' global config data handled separately
   If FileName = "global_config.json" Then
-  ' Read from CustomDocumentProperties, since we can't get data
-  ' from a file we don't yet have
-    With dictWorkingData
-    ' source_urls is a collection, so save multiple as comma-seprated string
-      .Add "source_urls", Utils.ToCollection(Split(ThisDocument.CustomDocumentProperties("source_urls"), ","))
-      .Add "source", ThisDocument.CustomDocumentProperties("source")
-      .Add "organization", ThisDocument.CustomDocumentProperties("organization")
-      .Add "repo", ThisDocument.CustomDocumentProperties("repo")
-      .Add "subfolders", Utils.ToCollection(Split(ThisDocument.CustomDocumentProperties("subfolders"), ","))
-    End With
-  
+    Set GetWorkingData = GetBlocalConfigData
+    Exit Function
   Else
   ' Read data from config files
-
     Set collConfigs = New Collection
-    collConfigs.Add GlobalConfig
-    collConfigs.Add RegionConfig
-    collConfigs.Add LocalConfig
-  
+    collConfigs.Add WT_Settings.GlobalConfig
+    collConfigs.Add WT_Settings.RegionConfig
+    collConfigs.Add WT_Settings.LocalConfig
+
+  ' Add each config in order
+    Set dictWorkingData = New Dictionary
     For Each objDict In collConfigs
-      For Each varKey1 In objDict.Keys
-        If varKey1 = "files" Then
-          Set dictFileData = objDict("files")(FileName)
-          For Each varKey2 In dictFileData.Keys
-            If IsObject(dictFileData(varKey2)) = True Then
-              Set dictWorkingData.Item(varKey2) = dictFileData(varKey2)
-            Else
-              dictWorkingData.Item(varKey2) = dictFileData(varKey2)
-            End If
-          Next varKey2
-        Else
-          If IsObject(objDict(varKey1)) = True Then
-            Set dictWorkingData.Item(varKey1) = objDict(varKey1)
-          Else
-            dictWorkingData.Item(varKey1) = objDict(varKey1)
-          End If
-        End If
-      Next varKey1
+      AddConfigData DestinationDictionary:=dictWorkingData, File:=FileName, _
+        ConfigData:=objDict
     Next objDict
   End If
 
   Set GetWorkingData = dictWorkingData
 End Function
 
+' ===== GetGlobalConfigData ===================================================
+' data to download global_config.json is handled differently than all other files
+' since we can't get the data from the file we don't yet have. So those items
+' are all stored in the CustomDocumentProperties of ThisDocument.
+
+' Needs to check against local_config.json in case we have a branch overrride.
+
+Private Function GetGlobalConfigData() As Dictionary
+  Dim dictConfig As Dictionary
+  Set dictConfig = New Dictionary
+
+' Read from CustomDocumentProperties
+  With dictConfig
+  ' If value is a JSON object or array, we've written the full JSON string to
+  ' the value of the CustomDocProp and appended ".json" to the key
+
+    Dim docProps As DocumentProperties
+    Set docProps = ThisDocument.CustomDocumentProperties
+
+    Dim varProperty As DocumentProperty
+    Dim strShortKey As String
+    If docProps.Count > 0 Then
+      For Each varProperty In docProps
+        If Utils.GetFileExtension(varProperty.Name) = "json" Then
+          .Add Key:=Utils.GetFileNameOnly(varProperty.Name), _
+            Item:=JsonConverter.ParseJson(JsonString:=varProperty.Value)
+        Else
+          .Add Key:=varProperty.Name, Item:=varProperty.Value
+        End If
+      Next varKey
+    End If
+  End With
+  
+  ' If local_config exists, add that data as well. Note items with the same key
+  ' will overwrite anything already added to the dictionary.
+  AddConfigData DestinationDictionary:=dictConfig, File:="global_config.json", _
+    ConfigData:=WT_Settings.LocalConfig
+  
+  Set GetGlobalConfigData = dictConfig
+End Function
+
+' ===== AddConfigData =========================================================
+' Adds data from a config.json file to an already existant dictionary. If a key
+' being added already exists in the dictionary, the value will be overwritten.
+
+' PARAMS:
+' DestinationDictionary: BY REF, so it changes the object passed to it (don't
+' need to return a new dictionary object.
+
+' ConfigData: the config data we're adding
+
+Private Sub AddConfigData(ByRef DestinationDictionary As Dictionary, File As String, _
+  ConfigData As Dictionary)
+  
+  Dim varKey1 As Variant
+  Dim varKey2 As Variant
+  Dim dictFileData As Variant
+
+  With DestinationDictionary
+    For Each varKey1 In ConfigData.Keys
+    ' only get data for the file we're looking for
+      If varKey1 = "files" Then
+        Set dictFileData = ConfigData("files")(File)
+        For Each varKey2 In dictFileData.Keys
+          If IsObject(dictFileData(varKey2)) = True Then
+            Set .Item(varKey2) = dictFileData(varKey2)
+          Else
+            .Item(varKey2) = dictFileData(varKey2)
+          End If
+        Next varKey2
+      Else
+        If IsObject(ConfigData(varKey1)) = True Then
+          Set .Item(varKey1) = ConfigData(varKey1)
+        Else
+          .Item(varKey1) = ConfigData(varKey1)
+        End If
+      End If
+    Next varKey1
+  End With
+
+End Sub
 
 Private Function ImportVariable(strFile As String) As String
  
@@ -973,7 +1051,7 @@ Public Function FileInfo(FileName As String) As Dictionary
   Dim strTmpDir As String
   Dim strBaseName As String
 
-    strStyleDir = StyleDir()
+  strStyleDir = WT_Settings.StyleDir
 
 
 ' Create directory if it doesn't exist already
@@ -981,7 +1059,7 @@ Public Function FileInfo(FileName As String) As Dictionary
     MkDir strStyleDir
   End If
 
-  strTmpDir = TmpDir()
+  strTmpDir = WT_Settings.TmpDir
   strBaseName = Utils.GetFileNameOnly(FileName)
   
   With dictFileInfo
