@@ -39,6 +39,7 @@ Private p_GlobalConfig As Dictionary
 Private p_DefaultConfigPath As String
 Private p_TmpDir As String
 Private p_Region As String
+Private p_RegionConfig As Dictionary
 Private p_LocalConfig As Dictionary
 
 
@@ -126,13 +127,12 @@ End Property
 Public Property Get Region() As String
   If p_Region = vbNullString Then
     p_Region = LocalConfig("region")
+    If p_Region = vbNullString Then
+      p_Region = AskForRegion
+    End If
   End If
   Region = p_Region
 End Property
-
-
-
-
 
 ' ***** PRIVATE PROPERTIES *****************************************************
 
@@ -183,7 +183,7 @@ Public Property Get GlobalConfig() As Dictionary
     If Utils.IsItThere(strFullPath) = False Then
       DownloadFromGithub strFileName
     End If
-    Set p_GlobalConfig = ClassHelpers.ReadJson(strFileName)
+    Set p_GlobalConfig = ClassHelpers.ReadJson(strFullPath)
   End If
   
   Set GlobalConfig = p_GlobalConfig
@@ -197,13 +197,13 @@ Public Property Get RegionConfig() As Dictionary
   If p_RegionConfig Is Nothing Then
     Dim strFileName As String
     Dim strFullPath As String
-    strFileName = Me.Region & "_config.json"
+    strFileName = Me.Region & "_region_config.json"
     strFullPath = DefaultConfigPath & Application.PathSeparator & strFileName
 
     If Utils.IsItThere(strFullPath) = False Then
-      DownloadFromGithub strFullPath
+      DownloadFromGithub strFileName
     End If
-    Set p_RegionConfig = ClassHelpers.ReadJson(strFileName)
+    Set p_RegionConfig = ClassHelpers.ReadJson(strFullPath)
   End If
   
   Set RegionConfig = p_RegionConfig
@@ -214,8 +214,9 @@ End Property
 '
 Private Property Set LocalConfig(NewLocalConfig As Dictionary)
   Dim strLocalFile As String
-  strLocalFile = DefaultConfigPath & Application.Path & "local_config.json"
+  strLocalFile = DefaultConfigPath & Application.PathSeparator & "local_config.json"
   ClassHelpers.WriteJson strLocalFile, NewLocalConfig
+  Set p_LocalConfig = NewLocalConfig
 End Property
 
 Public Property Get LocalConfig() As Dictionary
@@ -224,29 +225,48 @@ Public Property Get LocalConfig() As Dictionary
     strLocalFile = DefaultConfigPath & Application.PathSeparator & "local_config.json"
     
     If Utils.IsItThere(strLocalFile) = False Then
-    ' Only user-supplied local setting right now is Region so just using a MsgBox
-    ' but eventually move this to a more flexible UserForm
-      Dim strMessage As String
-      strMessage = "Are you in the United States?" & vbNewLine & vbNewLine & _
-      vbTab & "US users: click YES" & vbNewLine & _
-      vbTab & "UK users: click NO"
-      
-      Dim strTitle As String
-      strTitle = "Please Select Your Region"
- 
-      Dim strRegion As String
-      If MsgBox(strMessage, vbYesNo + vbQuestion, strTitle) = vbYes Then
-        strRegion = "us"
-      Else
-        strRegion = "uk"
-      End If
-
       Set p_LocalConfig = New Dictionary
-      p_LocalConfig.Add "region", strRegion
-      ClassHelpers.WriteJson strLocalFile, p_LocalConfig
     Else
       Set p_LocalConfig = ClassHelpers.ReadJson(strLocalFile)
     End If
   End If
   Set LocalConfig = p_LocalConfig
 End Property
+
+' *****************************************************************************
+'       METHODS
+'******************************************************************************
+
+' ===== AskForRegion ==========================================================
+' Prompts the user to pick their Region. Eventually turn it into a UserForm, and
+' pull the region options from global_config.
+
+Private Function AskForRegion() As String
+  Dim strMessage As String
+  strMessage = "Are you in the United States?" & vbNewLine & vbNewLine & _
+  vbTab & "US users: click YES" & vbNewLine & _
+  vbTab & "UK users: click NO"
+  
+  Dim strTitle As String
+  strTitle = "Please Select Your Region"
+
+  If MsgBox(strMessage, vbYesNo + vbQuestion, strTitle) = vbYes Then
+    AskForRegion = "us"
+  Else
+    AskForRegion = "uk"
+  End If
+  
+' Now we have to add this to LocalConfig and write it to the JSON file
+  Dim dictConfig As Dictionary
+  Set dictConfig = LocalConfig
+  dictConfig.Item("region") = AskForRegion
+' LocalConfig Set procedure sets the local variable and writes to JSON
+  Set LocalConfig = dictConfig
+End Function
+
+' *****************************************************************************
+'       EVENTS
+'******************************************************************************
+
+' ===== Class_Terminate =======================================================
+

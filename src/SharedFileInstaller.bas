@@ -882,6 +882,7 @@ End Function
 
 Private Function GetWorkingData(FileName As String) As Dictionary
   Dim collConfigs As Collection
+  Set collConfigs = New Collection
   Dim objDict As Object
   Dim dictWorkingData As Dictionary
   
@@ -890,20 +891,25 @@ Private Function GetWorkingData(FileName As String) As Dictionary
     Set GetWorkingData = GetGlobalConfigData
     Exit Function
   Else
-  ' Read data from config files
-    Set collConfigs = New Collection
+  ' Read data from global config file for other files
     collConfigs.Add WT_Settings.GlobalConfig
-    collConfigs.Add WT_Settings.RegionConfig
-    collConfigs.Add WT_Settings.LocalConfig
-
-  ' Add each config in order
-    Set dictWorkingData = New Dictionary
-    For Each objDict In collConfigs
-      AddConfigData DestinationDictionary:=dictWorkingData, File:=FileName, _
-        ConfigData:=objDict
-    Next objDict
   End If
 
+' region config data from info in global config and local config files
+  If InStr(FileName, "_region_config") = False Then
+    collConfigs.Add WT_Settings.RegionConfig
+  End If
+
+' Always add local config (though might be empty Dictionary)
+  collConfigs.Add WT_Settings.LocalConfig
+  
+' Add each config in order
+  Set dictWorkingData = New Dictionary
+  For Each objDict In collConfigs
+    AddConfigData DestinationDictionary:=dictWorkingData, File:=FileName, _
+      ConfigData:=objDict
+  Next objDict
+    
   Set GetWorkingData = dictWorkingData
 End Function
 

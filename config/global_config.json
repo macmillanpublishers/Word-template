@@ -47,12 +47,12 @@
 			"subfolders": ["config"],
 			"source": "direct"
 		},
-		"us_config.json": {
+		"us_region_config.json": {
 			"repo": "Word-template",
 			"subfolders": ["config"],
 			"source": "direct"
 		},
-		"uk_config.json": {
+		"uk_region_config.json": {
 			"repo": "Word-template",
 			"subfolders": ["config"],
 			"source": "direct"

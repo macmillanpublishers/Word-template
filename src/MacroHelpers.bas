@@ -67,6 +67,9 @@ End Enum
 
 Public Function ErrorChecker(objError As Object, Optional strValue As _
     String) As Boolean
+' For debugging
+  Stop
+  
     ' strValue - varies based on type of error passed. use for things like
     ' file name, path, whatever is being checked by that errored.
   lngErrorCount = lngErrorCount + 1
@@ -286,7 +289,7 @@ Public Function ErrorChecker(objError As Object, Optional strValue As _
   ' Format date so it can be part of file name. Only including date b/c users
   ' will likely run things repeatedly before asking for help, and don't want
   ' to generate a bunch of files if include time as well.
-  strFileName = Replace(Right(activeDoc.Name, InStrRev(activeDoc.Name, _
+  strFileName = Replace(Right(ThisDocument.Name, InStrRev(activeDoc.Name, _
     ".") - 1), " ", "")
   strErrLog = activeDoc.Path & Application.PathSeparator & "ALERT_" & _
     strFileName & "_" & Format(Date, "yyyy-mm-dd") & ".txt"
