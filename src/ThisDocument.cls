@@ -10,10 +10,74 @@ Attribute VB_Exposed = True
 Option Explicit
 Option Base 1
 
+' ===== Document_Open ================================================================
+' This sub will run automatically when a NEW document is created from this template,
+' i.e. when a user double-clicks to run the installer.
+
+Private Sub Document_Open()
+  MsgBox "Word-template INSTALLER Document_Open is running"
+
+' Check if we're on the server; if so, don't run this check
+  If WT_Settings.InstallType <> "user" Then
+    DebugPrint "On server, quitting AutoExec"
+  ' NOTE! Must use 'End' here because 'Exit' won't clear static variable (WT_Settings)
+    End
+  End If
+
+' CHECK IF FLAG FILE IS PRESENT IN SAME DIR, IF YES THEN QUIT
+' WILL BE ADDED WHEN WE'RE UNLOAD/LOADING ADDINS AS PART OF UPDATE/INSTALL STUFF
+' AND DON'T WANT THIS TO LAUNCH EVERY TIME
+  Dim blnDisableAutoMacroFileExists As Boolean
+  blnDisableAutoMacroFileExists = IsItThere(ThisDocument.Path & _
+    Application.PathSeparator & "DISABLE_AUTO_EXEC.txt")
+  If blnDisableAutoMacroFileExists = True Then
+    Exit Sub
+  End If
+
+'===== PART 2 ============================
+  Dim blnInstaller As Boolean
+  Dim strTemplateName As String
+  Dim colTemplateNames As Collection
+
+' True = standalone installer file
+' False = daily update checker already installed
+  blnInstaller = True
+
+  'Plain English name of what you're installing/updating, should be singular
+  strTemplateName = "Macmillan Tools and Style Template"
+
+  'Get array of paths to STYLE TEMPLATE files to install
+  Set colTemplateNames = SharedFileInstaller.GetTemplatesList(TemplatesYouWant:=installTemplates)
+  
+  ' Unload all add-ins first
+  Dim strFileNames As Variant
+  
+  For Each strFileNames In colTemplateNames
+    On Error Resume Next        'Error = add-in not available, don't need to uninstall
+      AddIns(strFileNames).Installed = False
+    On Error GoTo 0
+  Next
+
+' Install ALL template files (even if already exist)
+  Call SharedFileInstaller.Installer(Installer:=blnInstaller, _
+      TemplateName:=strTemplateName, TemplatesToInstall:=colTemplateNames)
+
+  ' Load GtUpdater add-in (which will then load MacGT add-in)
+  
+  On Error Resume Next        'Error = add-in not available
+    AddIns(colTemplateNames.Item(1)).Installed = True
+  On Error GoTo 0
+
+  ThisDocument.Close
+  Exit Sub
+
+ErrHandler:
+  MsgBox Err.Number & ": " & Err.Description
+End Sub
 
 
 Sub AutoExec()
-  DebugPrint "Word-template AutoExec is running"
+  MsgBox "US TEST Word-template AutoExec is running"
 
 ' Check if we're on the server; if so, don't run this check
   If WT_Settings.InstallType <> "user" Then
