@@ -884,10 +884,10 @@ Private Function GetWorkingData(FileName As String) As Dictionary
   Dim collConfigs As Collection
   Dim objDict As Object
   Dim dictWorkingData As Dictionary
-
+  
 ' global config data handled separately
   If FileName = "global_config.json" Then
-    Set GetWorkingData = GetBlocalConfigData
+    Set GetWorkingData = GetGlobalConfigData
     Exit Function
   Else
   ' Read data from config files
@@ -936,7 +936,7 @@ Private Function GetGlobalConfigData() As Dictionary
         Else
           .Add Key:=varProperty.Name, Item:=varProperty.Value
         End If
-      Next varKey
+      Next varProperty
     End If
   End With
   
@@ -1050,22 +1050,47 @@ Public Function FileInfo(FileName As String) As Dictionary
   Dim strStyleDir As String
   Dim strTmpDir As String
   Dim strBaseName As String
+  Dim strFinalPath As String
+  Dim strLogPath As String
 
+  Dim strSep As String
+  strSep = Application.PathSeparator
+
+' Full path to file in Tmp dir
+  strTmpDir = WT_Settings.TmpDir & strSep & FileName
+
+' Get root Style directory
   strStyleDir = WT_Settings.StyleDir
-
-
 ' Create directory if it doesn't exist already
   If Utils.IsItThere(strStyleDir) = False Then
     MkDir strStyleDir
   End If
 
-  strTmpDir = WT_Settings.TmpDir
+' Create full path to the log file for this file
   strBaseName = Utils.GetFileNameOnly(FileName)
-  
+  strLogPath = strStyleDir & strSep & "log" & strSep & strBaseName & "_updates.log"
+
+' Create full path to file in final location
+' Config files go in their own subfolder
+  If InStr(FileName, "_config") Then
+  ' Verify that directory exists, create if it doesn't
+    Dim strConfigPath As String
+    strConfigPath = strStyleDir & strSep & "config"
+    If Utils.IsItThere(strConfigPath) = False Then
+      MkDir strConfigPath
+    End If
+  ' add to path
+    strFinalPath = strConfigPath
+  Else
+    strFinalPath = strStyleDir
+  End If
+
+  strFinalPath = strFinalPath & strSep & FileName
+
   With dictFileInfo
-    .Add "Final", strStyleDir & strSep & FileName
-    .Add "Tmp", strTmpDir & strSep & FileName
-    .Add "Log", strStyleDir & strSep & "log" & strSep & strBaseName & "_updates.log"
+    .Add "Final", strFinalPath
+    .Add "Tmp", strTmpDir
+    .Add "Log", strLogPath
   End With
   
   Set FileInfo = dictFileInfo

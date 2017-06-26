@@ -14,7 +14,7 @@ Option Base 1
 ' This sub will run automatically when a NEW document is created from this template,
 ' i.e. when a user double-clicks to run the installer.
 
-Private Sub Document_Open()
+Private Sub Document_New()
   MsgBox "Word-template INSTALLER Document_Open is running"
 
 ' Check if we're on the server; if so, don't run this check

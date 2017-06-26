@@ -148,7 +148,7 @@ Public Property Get TmpDir() As String
     #End If
   ' Remove trailing path separator, if any
     If Right(p_TmpDir, 1) = Application.PathSeparator Then
-      p_TmpDir = Left(strTmpDir, Len(p_TmpDir) - 1)
+      p_TmpDir = Left(p_TmpDir, Len(p_TmpDir) - 1)
     End If
   End If
   TmpDir = p_TmpDir
@@ -181,7 +181,7 @@ Public Property Get GlobalConfig() As Dictionary
     strFullPath = DefaultConfigPath & Application.PathSeparator & strFileName
 
     If Utils.IsItThere(strFullPath) = False Then
-      DownloadFromGithub strFullPath
+      DownloadFromGithub strFileName
     End If
     Set p_GlobalConfig = ClassHelpers.ReadJson(strFileName)
   End If
