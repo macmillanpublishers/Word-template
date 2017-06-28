@@ -15,7 +15,8 @@ Option Base 1
 ' i.e. when a user double-clicks to run the installer.
 
 Private Sub Document_New()
-  MsgBox "Word-template INSTALLER Document_Open is running"
+  MsgBox "Word-template INSTALLER v.1.9.0 Document_New is running"
+  Stop
 
 ' Check if we're on the server; if so, don't run this check
   If WT_Settings.InstallType <> "user" Then

@@ -285,6 +285,7 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
 
 ' Get URL to download from.
   myURL = FullURL(FileName:=FileName)
+  DebugPrint "Attempting to download: " & myURL
 
   'Get temp dir based on OS, then download file.
   #If Mac Then
@@ -339,14 +340,15 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
     
     'Attempt to download file
     On Error Resume Next
-      Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-      WinHttpReq.Open "GET", myURL, False
-      WinHttpReq.Send
+      Dim PingHttpReq As Object
+      Set PingHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
+      PingHttpReq.Open "GET", "https://www.google.com"
+      PingHttpReq.Send
 
       ' Exit sub if error in connecting to website
       If Err.Number <> 0 Then 'HTTP request is not OK
-        'DebugPrint WinHttpReq.Status
-        logString = Now & " -- could not connect to Confluence site: Error " & Err.Number
+        DebugPrint PingHttpReq.Status
+        logString = Now & " -- could not connect to website: Error " & Err.Number
         LogInformation dictFullPaths("Log"), logString
         strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
             "Please check your internet connection or contact workflows@macmillan.com for help."
@@ -355,8 +357,12 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
         On Error GoTo 0
         Exit Function
       End If
-    On Error GoTo 0
-        
+'    On Error GoTo 0
+    DebugPrint myURL
+    Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
+    WinHttpReq.Open "GET", myURL, False
+    WinHttpReq.Send
+      
     'DebugPrint "Http status for " & FileName & ": " & WinHttpReq.Status
     If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
   
@@ -975,14 +981,18 @@ Private Sub AddConfigData(ByRef DestinationDictionary As Dictionary, File As Str
     For Each varKey1 In ConfigData.Keys
     ' only get data for the file we're looking for
       If varKey1 = "files" Then
-        Set dictFileData = ConfigData("files")(File)
-        For Each varKey2 In dictFileData.Keys
-          If IsObject(dictFileData(varKey2)) = True Then
-            Set .Item(varKey2) = dictFileData(varKey2)
-          Else
-            .Item(varKey2) = dictFileData(varKey2)
-          End If
-        Next varKey2
+        If ConfigData(varKey1).Exists(File) Then
+          Set dictFileData = ConfigData("files")(File)
+          For Each varKey2 In dictFileData.Keys
+            If IsObject(dictFileData(varKey2)) = True Then
+              Dim col As Collection
+              Set col = dictFileData(varKey2)
+              Set .Item(varKey2) = col
+            Else
+              .Item(varKey2) = dictFileData(varKey2)
+            End If
+          Next varKey2
+        End If
       Else
         If IsObject(ConfigData(varKey1)) = True Then
           Set .Item(varKey1) = ConfigData(varKey1)
