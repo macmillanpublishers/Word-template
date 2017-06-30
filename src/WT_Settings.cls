@@ -94,26 +94,20 @@ End Property
 
 Public Property Get StyleDir(Optional FileName As String) As String
   Dim strFullPath As String
+  Dim strMacDocs As String
+  Dim strStylesName As String
+  strStylesName = "MacmillanStyleTemplate"
 
-' GtUpdater.dotm only file to go in Startup
-  If FileName = "GtUpdater.dotm" Then
-    strFullPath = Application.StartupPath
-  Else
-    Dim strMacDocs As String
-    Dim strStylesName As String
-    strStylesName = "MacmillanStyleTemplate"
-  
-    #If Mac Then
-      strMacDocs = MacScript("return (path to documents folder) as string")
-      strFullPath = strMacDocs & strStylesName
-    #Else
-      strFullPath = Environ("APPDATA") & Application.PathSeparator & strStylesName
-    #End If
-  
-  ' Create directory if it doesn't exist yet
-    If Utils.IsItThere(strFullPath) = False Then
-      MkDir strFullPath
-    End If
+  #If Mac Then
+    strMacDocs = MacScript("return (path to documents folder) as string")
+    strFullPath = strMacDocs & strStylesName
+  #Else
+    strFullPath = Environ("APPDATA") & Application.PathSeparator & strStylesName
+  #End If
+
+' Create directory if it doesn't exist yet
+  If Utils.IsItThere(strFullPath) = False Then
+    MkDir strFullPath
   End If
 
   StyleDir = strFullPath

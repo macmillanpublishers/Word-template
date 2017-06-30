@@ -15,8 +15,6 @@ Option Base 1
 ' i.e. when a user double-clicks to run the installer.
 
 Private Sub Document_New()
-  MsgBox "Word-template INSTALLER v.1.9.0 Document_New is running"
-  Stop
 
 ' Check if we're on the server; if so, don't run this check
   If WT_Settings.InstallType <> "user" Then
@@ -56,15 +54,14 @@ Private Sub Document_New()
   For Each strFileNames In colTemplateNames
     On Error Resume Next        'Error = add-in not available, don't need to uninstall
       AddIns(strFileNames).Installed = False
-    On Error GoTo 0
+    On Error GoTo ErrHandler
   Next
 
 ' Install ALL template files (even if already exist)
   Call SharedFileInstaller.Installer(Installer:=blnInstaller, _
       TemplateName:=strTemplateName, TemplatesToInstall:=colTemplateNames)
 
-  ' Load GtUpdater add-in (which will then load MacGT add-in)
-  
+' Load GtUpdater add-in (which will then load MacGT add-in)
   On Error Resume Next        'Error = add-in not available
     AddIns(colTemplateNames.Item(1)).Installed = True
   On Error GoTo 0
@@ -78,7 +75,7 @@ End Sub
 
 
 Sub AutoExec()
-  MsgBox "US TEST Word-template AutoExec is running"
+  DebugPrint "Word-template AutoExec is running"
 
 ' Check if we're on the server; if so, don't run this check
   If WT_Settings.InstallType <> "user" Then

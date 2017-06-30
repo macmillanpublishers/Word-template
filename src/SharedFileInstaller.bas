@@ -290,7 +290,8 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
   'Get temp dir based on OS, then download file.
   #If Mac Then
     Dim strBashTmp As String
-    strBashTmp = Replace(Right(dictFullPaths("Tmp"), Len(dictFullPaths("Tmp")) - (InStr(dictFullPaths("Tmp"), ":") - 1)), ":", "/")
+    strBashTmp = Replace(Right(dictFullPaths("Tmp"), Len(dictFullPaths("Tmp")) - _
+      (InStr(dictFullPaths("Tmp"), ":") - 1)), ":", "/")
     'DebugPrint strBashTmp
     
     'check for network
@@ -1088,10 +1089,6 @@ Public Function FileInfo(FileName As String) As Dictionary
 
 ' Get root Style directory
   strStyleDir = WT_Settings.StyleDir
-' Create directory if it doesn't exist already
-  If Utils.IsItThere(strStyleDir) = False Then
-    MkDir strStyleDir
-  End If
 
 ' Create full path to the log file for this file
   strBaseName = Utils.GetFileNameOnly(FileName)
@@ -1099,7 +1096,8 @@ Public Function FileInfo(FileName As String) As Dictionary
 
 ' Create full path to file in final location
 ' Config files go in their own subfolder
-  If InStr(FileName, "_config") Then
+' GtUpdater goes in STARTUP
+  If FileName Like "*_config" Then
   ' Verify that directory exists, create if it doesn't
     Dim strConfigPath As String
     strConfigPath = strStyleDir & strSep & "config"
@@ -1108,6 +1106,8 @@ Public Function FileInfo(FileName As String) As Dictionary
     End If
   ' add to path
     strFinalPath = strConfigPath
+  ElseIf FileName Like "GtUpdater*" Then
+    strFinalPath = Application.StartupPath
   Else
     strFinalPath = strStyleDir
   End If
