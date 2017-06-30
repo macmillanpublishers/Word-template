@@ -305,7 +305,7 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
     Else 'internet is working, download file
       'Make sure file is there
       Dim httpStatus As Long
-      httpStatus = ShellAndWaitMac("curl -s -o /dev/null -w '%{http_code}' " & myURL)
+      httpStatus = ShellAndWaitMac("curl -L -s -o /dev/null -w '%{http_code}' " & myURL)
       
       If httpStatus = 200 Then                    ' File is there
         'Now delete file if already there, then download new file
@@ -340,10 +340,10 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
     
     'Attempt to download file
     On Error Resume Next
-      Dim PingHttpReq As Object
-      Set PingHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-      PingHttpReq.Open "GET", "https://www.google.com"
-      PingHttpReq.Send
+      ' Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
+      Set WinHttpReq = CreateObject("WinHttp.WinHttpRequest.5.1")
+      WinHttpReq.Open "GET", myURL, False
+      WinHttpReq.Send
 
       ' Exit sub if error in connecting to website
       If Err.Number <> 0 Then 'HTTP request is not OK
@@ -358,10 +358,6 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
         Exit Function
       End If
 '    On Error GoTo 0
-    DebugPrint myURL
-    Set WinHttpReq = CreateObject("MSXML2.XMLHTTP.3.0")
-    WinHttpReq.Open "GET", myURL, False
-    WinHttpReq.Send
       
     'DebugPrint "Http status for " & FileName & ": " & WinHttpReq.Status
     If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
@@ -733,9 +729,24 @@ Private Function NeedUpdate(FileName As String) As Boolean
   Dim strLatestVersion As String
 
   Set dictConfigData = GetWorkingData(FileName)
-  strLatestVersion = dictConfigData("latest_release")
-  logString = Now & " -- Latest available version is " & strLatestVersion
-  LogInformation dictVersionFile("Log"), logString
+  ' If branch is listed, that takes precedence over latest_release
+  If dictConfigData.Exists("branch") = True Then
+    NeedUpdate = True
+    logString = Now & " -- Specific branch listed, proceeding with direct download."
+    LogInformation dictVersionFile("Log"), logString
+    Exit Function
+  ElseIf dictConfigData.Exists("latest_release") = True Then
+    strLatestVersion = dictConfigData("latest_release")
+    logString = Now & " -- Latest release is " & strLatestVersion
+    LogInformation dictVersionFile("Log"), logString
+  Else
+  ' If no branch OR latest_release, default to master branch
+    NeedUpdate = True
+    logString = Now & " -- No specific branch or release listed, proceeding " & _
+      "with direct download from master branch."
+    LogInformation dictVersionFile("Log"), logString
+    Exit Function
+  End If
 
 ' -------------------- Compare version numbers --------------------------------
 ' Convert version strings to arrays
@@ -791,7 +802,7 @@ Private Function NeedUpdate(FileName As String) As Boolean
   If NeedUpdate = False Then
     logString = Now & " -- No update needed."
   Else
-    logString = Now & " -- Updating to newer version."
+    logString = Now & " -- Updating to newer release."
   End If
 
   LogInformation dictVersionFile("Log"), logString
@@ -836,36 +847,34 @@ Private Function FullURL(FileName As String) As String
 
   With collPath
   ' Start with base URL
-    .Add dictWorkingData("source_urls")(dictWorkingData("source"))
+    .Add dictWorkingData("base_url")
   
   ' Add next two elements (always same format)
-    .Add dictWorkingData("organization")
+    .Add dictWorkingData("owner")
     .Add dictWorkingData("repo")
   
-  ' Add middle parts based on type of path we're building
-    If dictWorkingData("source") = "releases" Then
-      .Add "releases"
-      .Add "download"
+  ' Add string for direct download
+    .Add "raw"
+  
+  ' Add branch or tag (branch takes precedence if it exists)
+    If dictWorkingData.Exists("branch") = True Then
+      .Add dictWorkingData("branch")
+    ElseIf dictWorkingData.Exists("latest_release") = True Then
       .Add dictWorkingData("latest_release")
     Else
-    ' Can override download branch by adding to local_config file.
-      If dictWorkingData.Exists("branch") = True Then
-        .Add dictWorkingData("branch")
-      Else
-      ' If no branch in any config, defaults to master branch
-        .Add "master"
-      End If
+    ' If no branch or latest_release in any config, defaults to master branch
+      .Add "master"
+    End If
+    
+  ' Add subfolders if we have any
+    If dictWorkingData.Exists("subfolders") = True Then
+      Dim collSubfolders As Collection
+      Set collSubfolders = dictWorkingData("subfolders")
 
-    ' Add subfolders if we have any
-      If dictWorkingData.Exists("subfolders") = True Then
-        Dim collSubfolders As Collection
-        Set collSubfolders = dictWorkingData("subfolders")
-  
-        Dim varDir As Variant
-        For Each varDir In collSubfolders
-          .Add varDir
-        Next varDir
-      End If
+      Dim varDir As Variant
+      For Each varDir In collSubfolders
+        .Add varDir
+      Next varDir
     End If
 
   ' Add the file name to the end!
@@ -967,6 +976,8 @@ End Function
 ' PARAMS:
 ' DestinationDictionary: BY REF, so it changes the object passed to it (don't
 ' need to return a new dictionary object.
+
+' File: Name of the file that we're trying to download/get data ABOUT
 
 ' ConfigData: the config data we're adding
 
