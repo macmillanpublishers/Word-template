@@ -348,7 +348,6 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
 
       ' Exit sub if error in connecting to website
       If Err.Number <> 0 Then 'HTTP request is not OK
-        DebugPrint PingHttpReq.Status
         logString = Now & " -- could not connect to website: Error " & Err.Number
         LogInformation dictFullPaths("Log"), logString
         strErrMsg = "There was an error trying to download the Macmillan template." & vbNewLine & vbNewLine & _
@@ -1097,7 +1096,7 @@ Public Function FileInfo(FileName As String) As Dictionary
 ' Create full path to file in final location
 ' Config files go in their own subfolder
 ' GtUpdater goes in STARTUP
-  If FileName Like "*_config" Then
+  If FileName Like "*_config*" Then
   ' Verify that directory exists, create if it doesn't
     Dim strConfigPath As String
     strConfigPath = strStyleDir & strSep & "config"
