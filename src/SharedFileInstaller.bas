@@ -33,6 +33,7 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
   Dim A As Long
   Dim strFileName As String
   Dim dictFileInfo As Dictionary
+  Dim logString As String
 
   If Installer = False Then
 ' Not using For Each b/c we need index number to remove from collection
@@ -41,10 +42,12 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
       'Need a variant to loop through Collection, but these functions only
       'accept strings as arguments.
       strFileName = TemplatesToInstall(A)
+      Set dictFileInfo = FileInfo(strFileName)
       
     ' If exists, check if it's been checked today
       If IsTemplateThere(FileName:=strFileName) = True Then
-        Set dictFileInfo = FileInfo(strFileName)
+        logString = Now & " -- " & strFileName & " already exists."
+  ' Can't update Log here, b/c CheckLog uses log updates to determine when checked
       ' If HASN'T been checked today, run NeedUpdate
         If CheckLog(LogPath:=dictFileInfo("Log")) = False Then
         ' If DON'T need update, remove from collection
@@ -54,8 +57,11 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
         Else ' Has been checked today, don't update
           TemplatesToInstall.Remove (A)
         End If
+      Else
+        logString = Now & " -- " & strFileName & " doesn't exist in " & dictFileInfo("Final")
       End If
     Next A
+    LogInformation dictFileInfo("Log"), logString
   End If
 
 ' If everything is OK, quit sub
@@ -645,10 +651,10 @@ Private Function CheckLog(LogPath As String) As Boolean
       If IsItThere(strStylesDir) = False Then
         MkDir (strStylesDir)
         MkDir (strLogDir)
-        logString = Now & " -- Creating MacmillanStyleTemplate directory."
+        logString = logString & vbNewLine & Now & " -- Creating MacmillanStyleTemplate directory."
       Else
         MkDir (strLogDir)
-        logString = Now & " -- Creating log directory."
+        logString = logString & vbNewLine & Now & " -- Creating log directory."
       End If
     End If
   Else    'logfile exists, so check last modified date
@@ -656,10 +662,10 @@ Private Function CheckLog(LogPath As String) As Boolean
     lastModDate = FileDateTime(LogPath)
     If DateDiff("d", lastModDate, Date) < 1 Then       'i.e. 1 day
       CheckLog = True
-      logString = Now & " -- Already checked less than 1 day ago."
+      logString = logString & vbNewLine & Now & " -- Already checked less than 1 day ago."
     Else
       CheckLog = False
-      logString = Now & " -- >= 1 day since last update check."
+      logString = logString & vbNewLine & Now & " -- >= 1 day since last update check."
     End If
   End If
   
@@ -669,7 +675,7 @@ Private Function CheckLog(LogPath As String) As Boolean
 End Function
 
 
-Private Function IsTemplateThere(FileName As String)
+Private Function IsTemplateThere(FileName As String) As Boolean
   Dim dictTemplateInfo As Dictionary
   Set dictTemplateInfo = FileInfo(FileName)
 
@@ -680,19 +686,14 @@ Private Function IsTemplateThere(FileName As String)
   If IsItThere(strDir) = False Then
     MkDir (strDir)
     IsTemplateThere = False
-    logString = Now & " -- Creating template directory."
   Else
   ' Check if template file exists
     If IsItThere(dictTemplateInfo("Final")) = False Then
       IsTemplateThere = False
-      logString = Now & " -- " & FileName & " doesn't exist in " & strDir
     Else
       IsTemplateThere = True
-      logString = Now & " -- " & FileName & " already exists."
     End If
   End If
-
-  LogInformation dictTemplateInfo("Log"), logString
 End Function
 
 Private Function NeedUpdate(FileName As String) As Boolean
@@ -733,18 +734,18 @@ Private Function NeedUpdate(FileName As String) As Boolean
   If dictConfigData.Exists("branch") = True Then
     NeedUpdate = True
     logString = Now & " -- Specific branch listed, proceeding with direct download."
-    LogInformation dictVersionFile("Log"), logString
+    LogInformation dictTemplateFile("Log"), logString
     Exit Function
   ElseIf dictConfigData.Exists("latest_release") = True Then
     strLatestVersion = dictConfigData("latest_release")
     logString = Now & " -- Latest release is " & strLatestVersion
-    LogInformation dictVersionFile("Log"), logString
+    LogInformation dictTemplateFile("Log"), logString
   Else
   ' If no branch OR latest_release, default to master branch
     NeedUpdate = True
     logString = Now & " -- No specific branch or release listed, proceeding " & _
       "with direct download from master branch."
-    LogInformation dictVersionFile("Log"), logString
+    LogInformation dictTemplateFile("Log"), logString
     Exit Function
   End If
 
@@ -767,7 +768,7 @@ Private Function NeedUpdate(FileName As String) As Boolean
   Dim lngEqualItems As Long
 
 ' Might be different lengths, need to loop through shorter array to avoid errors
-  If arrLocalVersion.Length < arrLatestVersion.Length Then
+  If UBound(arrLocalVersion) < UBound(arrLatestVersion) Then
     arrBase = arrLocalVersion
     arrComp = arrLatestVersion
     blnBaseLocal = True
@@ -793,7 +794,7 @@ Private Function NeedUpdate(FileName As String) As Boolean
     Else
       lngEqualItems = lngEqualItems + 1
     ' Handling for one version having more elements than the other
-      If lngEqualItems = lngUB And arrComp.Length > arrBase.Length Then
+      If lngEqualItems = lngUB And UBound(arrComp) > UBound(arrBase) Then
         NeedUpdate = blnBaseLocal
       End If
     End If
@@ -805,7 +806,7 @@ Private Function NeedUpdate(FileName As String) As Boolean
     logString = Now & " -- Updating to newer release."
   End If
 
-  LogInformation dictVersionFile("Log"), logString
+  LogInformation dictTemplateFile("Log"), logString
 
 End Function
 
