@@ -1,0 +1,48 @@
+{
+	"owner": "macmillanpublishers",
+	"base_url": "https://github.com",
+	"regions": ["us", "uk"],
+	"files": {
+		"Word-template.dotm": {
+			"repo": "Word-template",
+			"latest_release": "v3.1.0"
+		},
+		"GtUpdater.dotm": {
+			"repo": "Word-template",
+			"latest_release": "v3.1.0"
+		},
+		"macmillan.dotx": {
+			"repo": "Word-template_assets",
+			"subfolders": ["StyleTemplate_auto-generate"],
+			"latest_release": "v4.7.0"
+		},
+		"macmillan_NoColor.dotx": {
+			"repo": "Word-template_assets",
+			"subfolders": ["StyleTemplate_auto-generate"],
+			"latest_release": "v4.7.0"
+		},
+		"macmillan_CoverCopy.dotm": {
+			"repo": "Word-template_assets",
+			"latest_release": "v4.7.0"
+		},
+		"section_start_rules.json": {
+			"repo": "bookmaker_validator"
+		},
+		"vba_style_config.json": {
+			"repo": "Word-template_assets",
+			"subfolders": ["StyleTemplate_auto-generate"]
+		},
+		"global_config.json": {
+			"repo": "Word-template",
+			"subfolders": ["config"]
+		},
+		"us_region_config.json": {
+			"repo": "Word-template",
+			"subfolders": ["config"]
+		},
+		"uk_region_config.json": {
+			"repo": "Word-template",
+			"subfolders": ["config"]
+		}
+	}
+}
