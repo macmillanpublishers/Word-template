@@ -18,7 +18,7 @@ Sub CheckMacmillanGT()
         strMacDocs = MacScript("return (path to documents folder) as string")
         strTemplatePath = strMacDocs & "MacmillanStyleTemplate:" & templateFile
     #Else
-        strTemplatePath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & templateFile
+        strTemplatePath = Environ("APPDATA") & "\MacmillanStyleTemplate\" & templateFile
     #End If
 
     
@@ -44,7 +44,7 @@ Sub CheckMacmillan()
         strMacDocs = MacScript("return (path to documents folder) as string")
         strTemplatePath = strMacDocs & "MacmillanStyleTemplate:" & templateFile
     #Else
-        strTemplatePath = Environ("PROGRAMDATA") & "\MacmillanStyleTemplate\" & templateFile
+        strTemplatePath = Environ("APPDATA") & "\MacmillanStyleTemplate\" & templateFile
     #End If
 
     

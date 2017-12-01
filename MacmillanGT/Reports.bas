@@ -428,7 +428,7 @@ CheckGoodStyles:
     '-------------------get list of good character styles--------------
     
     Dim charStyles As String
-    Dim styleNameM(1 To 21) As String        'declare number in array
+    Dim styleNameM(1 To 22) As String        'declare number in array
     Dim M As Integer
     
     styleNameM(1) = "span italic characters (ital)"
@@ -452,6 +452,7 @@ CheckGoodStyles:
     styleNameM(19) = "span ISBN (isbn)"
     styleNameM(20) = "span symbols ital (symi)"
     styleNameM(21) = "span symbols bold (symb)"
+    styleNameM(22) = "span smcap underscore (scus)"
     
     
     

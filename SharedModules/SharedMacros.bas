@@ -810,7 +810,7 @@ Sub CreateTextFile(strText As String, suffix As String)
     TheOS = System.OperatingSystem
     
     'activeDocName below works for .doc and .docx
-    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, ".do") - 1)
+    activeDocName = Left(activeDoc.Name, InStrRev(activeDoc.Name, LCase(".do")) - 1)
     activeDocPath = Replace(activeDoc.Path, activeDoc.Name, "")
     
     'create text file
@@ -1141,6 +1141,7 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
         Next objDocProp
     #Else
         CleanUpRecipeContentControls
+        ClearContentControls
     #End If
 
     
@@ -1170,7 +1171,18 @@ Function StartupSettings(Optional StoriesUsed As Variant, Optional AcceptAll As 
     Next bkm
     
 End Function
+Private Sub ClearContentControls()
+' Run CleanupRecipeContentControls first.
 
+    'This is it's own sub because doesn't exist in Mac Word,
+    ' breaks whole sub if included
+    Dim cc As ContentControl
+    
+    For Each cc In ActiveDocument.ContentControls
+        cc.Delete
+    Next
+
+End Sub
 
 ' ===== CookbookTOCStyleMap ====================================================
 '
