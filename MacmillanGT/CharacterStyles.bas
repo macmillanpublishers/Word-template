@@ -468,7 +468,7 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
     
     '------------tag key styles-------------------------------
     Dim tagStyleFindArray(1 To 8) As Boolean         ' Fixed at 8
-    Dim tagStyleReplaceArray(1 To 13) As String
+    Dim tagStyleReplaceArray(1 To 14) As String
     Dim g As Long
     
 ' We aren't iterating through tagStyleFindArray below; each item is fixed to represent
@@ -494,6 +494,8 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
     tagStyleReplaceArray(11) = "`A|^&|A`" ' Bold + Ital
     tagStyleReplaceArray(12) = "`BB|^&|BB`" ' Smcap + Bold + Ital
     tagStyleReplaceArray(13) = "`MU|^&|MU`" ' Smcap + Underline
+    tagStyleReplaceArray(14) = "`IU|^&|IU`" ' Ital + Underline
+    
     
     For g = LBound(tagStyleReplaceArray) To UBound(tagStyleReplaceArray)
     ' All tagStyleFindArray items are False at this point; current item is True to find just that
@@ -523,6 +525,10 @@ Private Sub LocalStyleTag(StoryType As WdStoryType)
           Case 13 ' Smcap + Underline
             tagStyleFindArray(3) = True
             tagStyleFindArray(4) = True
+
+          Case 14 ' Smcap + Underline
+            tagStyleFindArray(2) = True
+            tagStyleFindArray(3) = True
         End Select
         
         With activeRng.Find
@@ -575,8 +581,8 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     
     '-------------apply styles to tags
     'number of items in array should = styles in LocalStyleTag + styles in TagExistingCharStyles
-    Dim tagFindArray(1 To 29) As String              ' number of items in array should be declared here
-    Dim tagReplaceArray(1 To 29) As String         'and here
+    Dim tagFindArray(1 To 30) As String              ' number of items in array should be declared here
+    Dim tagReplaceArray(1 To 30) As String         'and here
     Dim h As Long
     
     tagFindArray(1) = "`B|(*)|B`"
@@ -608,6 +614,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     tagFindArray(27) = "`EE|(*)|EE`"
     tagFindArray(28) = "`FF|(*)|FF`"
     tagFindArray(29) = "`MU|(*)|MU`"
+    tagFindArray(30) = "`IU|(*)|IU`"
     
     
     tagReplaceArray(1) = "span boldface characters (bf)"
@@ -639,6 +646,7 @@ Private Sub LocalStyleReplace(StoryType As WdStoryType, BkmkrStyles As Variant)
     tagReplaceArray(27) = "span illustration holder (illi)"
     tagReplaceArray(28) = "span design note (dni)"
     tagReplaceArray(29) = "span smcap underscore (scus)"
+    tagReplaceArray(30) = "span ital underscore (ius)"
     
     For h = LBound(tagFindArray()) To UBound(tagFindArray())
     
@@ -779,6 +787,16 @@ ErrorHandler:
                 With myStyle.Font
                     .Shading.BackgroundPatternColor = wdColorLightTurquoise
                     .Underline = wdUnderlineSingle
+                End With
+                Resume
+                
+            Case "span ital underscore (ius)"
+                Set myStyle = ActiveDocument.Styles.Add(Name:=tagReplaceArray(h), _
+                    Type:=wdStyleTypeCharacter)
+                With myStyle.Font
+                    .Shading.BackgroundPatternColor = wdColorLightTurquoise
+                    .Underline = wdUnderlineSingle
+                    .Italic = True
                 End With
                 Resume
             
