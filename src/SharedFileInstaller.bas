@@ -14,62 +14,103 @@ Attribute VB_Name = "SharedFileInstaller"
 Option Explicit
 Option Base 1
 
-Public Enum TemplatesList
-  updaterTemplates = 1
-  toolsTemplates = 2
-  stylesTemplates = 3
-  installTemplates = 4
-  allTemplates = 5
-End Enum
-
-Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
-  TemplatesToInstall As Collection)
-
-'"Installer" argument = True if this is for a standalone installtion file.
-'"Installer" argument = False is this is part of a daily check of the current
-' file and only updates if out of date.
-
-' Remove file names from collection if they don't need to be updated rignt now
-  Dim A As Long
-  Dim strFileName As String
-  Dim dictFileInfo As Dictionary
-  Dim logString As String
-
-  If Installer = False Then
-' Not using For Each b/c we need index number to remove from collection
-' Counting backwards since removing reassigns index numbers
-    For A = TemplatesToInstall.Count To 1 Step -1
-      'Need a variant to loop through Collection, but these functions only
-      'accept strings as arguments.
-      strFileName = TemplatesToInstall(A)
-      Set dictFileInfo = FileInfo(strFileName)
-      
-    ' If exists, check if it's been checked today
-      If IsTemplateThere(FileName:=strFileName) = True Then
-        logString = Now & " -- " & strFileName & " already exists."
-  ' Can't update Log here, b/c CheckLog uses log updates to determine when checked
-      ' If HASN'T been checked today, run NeedUpdate
-        If CheckLog(LogPath:=dictFileInfo("Log")) = False Then
-        ' If DON'T need update, remove from collection
-          If NeedUpdate(FileName:=strFileName) = False Then
-            TemplatesToInstall.Remove strFileName
-          End If
-        Else ' Has been checked today, don't update
-          TemplatesToInstall.Remove (A)
+Public Function ConfigCheckedToday() As Boolean
+' Read current config files (which will prompt download if missing)
+  Dim dictConfigs As Dictionary
+  Set dictConfigs = WT_Settings.MasterConfig("files")
+  ConfigCheckedToday = True
+  Dim varFileKey As Variant
+  For Each varFileKey In dictConfigs
+    If varFileKey Like "*_config" Then
+      Dim strLog As String
+      strLog = FileInfo(CStr(varFileKey))("log")
+      If CheckLog(LogPath:=strLog) = False Then
+        ConfigCheckedToday = False
+        If DownloadFromGithub(FileName:=CStr(varFileKey)) = False Then
+          ConfigCheckedToday = True
+          Exit Function
         End If
-      Else
-        logString = Now & " -- " & strFileName & " doesn't exist in " & dictFileInfo("Final")
       End If
-    Next A
-    LogInformation dictFileInfo("Log"), logString
-  End If
+    End If
+  Next varFileKey
+  Set dictConfigs = Nothing
+End Function
 
-' If everything is OK, quit sub
-  If TemplatesToInstall.Count = 0 Then
+Public Function InstallerNeeded() As Boolean
+  Dim dictFiles As Dictionary
+  Set dictFiles = WT_Settings.MasterConfig("files")
+  
+  InstallerNeeded = False
+  Dim varKey As Variant
+  Dim strFile As String
+  For Each varKey In dictFiles.Keys
+    strFile = CStr(varKey)
+    If UpdateCheck(FileName:=strFile) = True Then
+      InstallerNeeded = True
+      Exit For
+    End If
+  Next varKey
+  Set dictFiles = Nothing
+End Function
+
+Public Sub Updater()
+' Download this file again to temp only
+  If DownloadFromGithub(FileName:=ThisDocument.Name, TempOnly:=True) = False Then
     Exit Sub
   End If
 
+' Create a Document object or set a reference
+  Dim strTempInstaller As String
+  strTempInstaller = FileInfo(ThisDocument.Name)("Tmp")
+  
+' Set a reference to the temp installer file
+  Application.Run strTempInstaller & "!Installer", False
+  
+End Sub
+
+' ----- UpdateCheck -----------------------------------------------------------
+' Checks if the file passed as argument needs to be updated.
+
+' PARAMS
+' FileName: File name only, with extension
+
+' RETURNS
+' True : An update is needed
+' False : No update is needed
+
+Private Function UpdateCheck(FileName As String) As Boolean
+  Dim dictFileInfo As Dictionary
+  Dim logString As String
+  Set dictFileInfo = FileInfo(FileName)
+
+' Check if file exists in final location
+  If IsTemplateThere(FileName:=FileName) = True Then
+    logString = Now & " -- " & FileName & " already exists."
+
+  ' If exists, check if it has been updated today
+    If CheckLog(LogPath:=dictFileInfo("Log")) = False Then
+  ' NOTE: Can't update Log here, b/c CheckLog uses log updates to determine when checked
+    ' If hasn't been checked yet today, check if version is most recent
+      UpdateCheck = NeedUpdate(FileName:=FileName)
+    Else ' Has been checked today, don't update
+      UpdateCheck = False
+    End If
+  Else
+  ' File does NOT exist, so we need to update/install
+    logString = Now & " -- " & strFileName & " doesn't exist in " & dictFileInfo("Final")
+    UpdateCheck = True
+  End If
+
+  LogInformation dictFileInfo("Log"), logString
+
+End Function
+
+Public Sub Installer(Installer As Boolean)
+
+'"Installer" argument = True if this is for a standalone installtion file.
+
   ' Alert user that installation is happening
+  Dim TemplateName As String: TemplateName = "Macmillan Tools"
   Dim strWelcome As String
   If Installer = True Then
     strWelcome = "Welcome to the " & TemplateName & " Installer!" & vbNewLine _
@@ -84,7 +125,7 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
     MsgBox "Please try to install the files at a later time."
   
     If Installer = True Then
-      activeDoc.Close (wdDoNotSaveChanges)
+      ThisDocument.Close (wdDoNotSaveChanges)
     End If
     Exit Sub
   End If
@@ -94,6 +135,19 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
 
 ' --------- DOWNLOAD FILES ----------------------------------------------------
 'If False, error in download; user was notified in DownloadFromGithub function
+  Dim TemplatesToInstall As Collection
+  Set TemplatesToInstall = New Collection
+  Dim dictFiles As Dictionary
+  Set dictFiles = WT_Settings.MasterConfig("files")
+  
+  Dim varKey As Variant
+  For Each varKey In dictFiles.Keys
+    If dictFile(varKey)("release") <> "latest" Then
+      TemplatesToInstall.Add varKey
+    End If
+  Next varKey
+  Set dictFiles = Nothing
+  
   Dim varItem As Variant
   For Each varItem In TemplatesToInstall
     strFileName = CStr(varItem)
@@ -113,13 +167,11 @@ Public Sub Installer(Installer As Boolean, TemplateName As String, ByRef _
   ' Will be added again by Word-template AutoExec when it's launched
     #If Mac Then
       Dim Bar As CommandBar
-      If strFileName = "Word-template.dotm" Then
         For Each Bar In CommandBars
           If Bar.Name = "Macmillan Tools" Then
             Bar.Delete
           End If
         Next
-      End If
     #End If
   Next varItem
   
@@ -233,44 +285,44 @@ Public Function DownloadCSV(FileName As String) As Variant
 End Function
 
 
-Public Function GetTemplatesList(TemplatesYouWant As TemplatesList) As _
-  Collection
-' returns a Collection of template file names to download
-
-  Dim colTemplates As Collection
-  Set colTemplates = New Collection
-
-' get the updater file for these requests
-  If TemplatesYouWant = updaterTemplates Or _
-    TemplatesYouWant = installTemplates Or _
-    TemplatesYouWant = allTemplates Then
-      colTemplates.Add "GtUpdater.dotm"
-  End If
-
-' get the tools file for these requests
-  If TemplatesYouWant = toolsTemplates Or _
-    TemplatesYouWant = installTemplates Or _
-    TemplatesYouWant = allTemplates Then
-      colTemplates.Add "Word-template.dotm"
-  End If
-
-  ' get the styles files for these requests
-  If TemplatesYouWant = stylesTemplates Or _
-    TemplatesYouWant = installTemplates Or _
-    TemplatesYouWant = allTemplates Then
-    colTemplates.Add "macmillan.dotx"
-    colTemplates.Add "macmillan_NoColor.dotx"
-    colTemplates.Add "macmillan_CoverCopy.dotm"
-  End If
-
-  ' also get the installer file
-  If TemplatesYouWant = allTemplates Then
-    colTemplates.Add "MacmillanTemplateInstaller.docm"
-  End If
-
-  Set GetTemplatesList = colTemplates
-
-End Function
+'Public Function GetTemplatesList(TemplatesYouWant As TemplatesList) As _
+'  Collection
+'' returns a Collection of template file names to download
+'
+'  Dim colTemplates As Collection
+'  Set colTemplates = New Collection
+'
+'' get the updater file for these requests
+'  If TemplatesYouWant = updaterTemplates Or _
+'    TemplatesYouWant = installTemplates Or _
+'    TemplatesYouWant = allTemplates Then
+'      colTemplates.Add "GtUpdater.dotm"
+'  End If
+'
+'' get the tools file for these requests
+'  If TemplatesYouWant = toolsTemplates Or _
+'    TemplatesYouWant = installTemplates Or _
+'    TemplatesYouWant = allTemplates Then
+'      colTemplates.Add "Word-template.dotm"
+'  End If
+'
+'  ' get the styles files for these requests
+'  If TemplatesYouWant = stylesTemplates Or _
+'    TemplatesYouWant = installTemplates Or _
+'    TemplatesYouWant = allTemplates Then
+'    colTemplates.Add "macmillan.dotx"
+'    colTemplates.Add "macmillan_NoColor.dotx"
+'    colTemplates.Add "macmillan_CoverCopy.dotm"
+'  End If
+'
+'  ' also get the installer file
+'  If TemplatesYouWant = allTemplates Then
+'    colTemplates.Add "MacmillanTemplateInstaller.docm"
+'  End If
+'
+'  Set GetTemplatesList = colTemplates
+'
+'End Function
 
 
 ' ===== DownloadFromGithub ================================================
@@ -280,8 +332,9 @@ End Function
 ' DEPENDENCIES:
 ' Add file and download URL info to FullURL function.
 
-Public Function DownloadFromGithub(FileName As String) As Boolean
-
+Public Function DownloadFromGithub(FileName As String, Optional TempOnly As _
+  Boolean = False) As Boolean
+                                                                                                                                                                                                                                                              
   Dim dictFullPaths As Dictionary
   Set dictFullPaths = FileInfo(FileName)
   
@@ -369,11 +422,11 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
     If WinHttpReq.Status = 200 Then  ' 200 = HTTP request is OK
   
       'if connection OK, download file to temp dir
-      myURL = WinHttpReq.responseBody
+      myURL = WinHttpReq.Responsebody
       Set oStream = CreateObject("ADODB.Stream")
       oStream.Open
       oStream.Type = 1
-      oStream.Write WinHttpReq.responseBody
+      oStream.Write WinHttpReq.Responsebody
       oStream.SaveToFile dictFullPaths("Tmp"), 2 ' 1 = no overwrite, 2 = overwrite
       oStream.Close
       Set oStream = Nothing
@@ -459,38 +512,40 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
     logString = Now & " -- No previous version file in final directory."
     LogInformation dictFullPaths("Log"), logString
   End If
+
+  If TempOnly = True Then
+    'If delete was successful, move downloaded file to final directory
+    If IsItThere(dictFullPaths("Final")) = False Then
+      logString = Now & " -- Final directory clear of " & FileName & " file."
+      LogInformation dictFullPaths("Log"), logString
       
-  'If delete was successful, move downloaded file to final directory
-  If IsItThere(dictFullPaths("Final")) = False Then
-    logString = Now & " -- Final directory clear of " & FileName & " file."
-    LogInformation dictFullPaths("Log"), logString
+      ' move template to final directory
+      Name dictFullPaths("Tmp") As dictFullPaths("Final")
+      
+      'Mac won't load macros from a template downloaded from the internet to Startup.
+      'Need to send these commands for it to work, see Confluence
+      ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
+      #If Mac Then
+        If InStr(1, FileName, ".dotm") Then
+          Dim strCommand As String
+          strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
+              "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
+              Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & dictFullPaths("Final") & Chr(34)
+              'DebugPrint strCommand
+              MacScript (strCommand)
+        End If
+      #End If
     
-    ' move template to final directory
-    Name dictFullPaths("Tmp") As dictFullPaths("Final")
-    
-    'Mac won't load macros from a template downloaded from the internet to Startup.
-    'Need to send these commands for it to work, see Confluence
-    ' Do NOT use open/save as option, this removes customUI which creates Mac Tools toolbar later
-    #If Mac Then
-      If InStr(1, FileName, ".dotm") Then
-        Dim strCommand As String
-        strCommand = "do shell script " & Chr(34) & "xattr -wx com.apple.FinderInfo \" & Chr(34) & _
-            "57 58 54 4D 4D 53 57 44 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\" & _
-            Chr(34) & Chr(32) & Chr(34) & " & quoted form of POSIX path of " & Chr(34) & dictFullPaths("Final") & Chr(34)
-            'DebugPrint strCommand
-            MacScript (strCommand)
-      End If
-    #End If
-  
-  Else
-    logString = Now & " -- old " & FileName & " file not cleared from Final directory."
-    LogInformation dictFullPaths("Log"), logString
-    strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
-        "Please close all other Word documents and try again, or contact workflows@macmillan.com."
-    MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FileName & ")"
-    DownloadFromGithub = False
-    On Error GoTo 0
-    Exit Function
+    Else
+      logString = Now & " -- old " & FileName & " file not cleared from Final directory."
+      LogInformation dictFullPaths("Log"), logString
+      strErrMsg = "There was an error installing the Macmillan template." & vbNewLine & _
+          "Please close all other Word documents and try again, or contact workflows@macmillan.com."
+      MsgBox strErrMsg, vbCritical, "Error 5: Previous version uninstall failed (" & FileName & ")"
+      DownloadFromGithub = False
+      On Error GoTo 0
+      Exit Function
+    End If
   End If
   
   'If move was successful, yay! Else, :(
@@ -507,10 +562,12 @@ Public Function DownloadFromGithub(FileName As String) As Boolean
     On Error GoTo 0
     Exit Function
   End If
-  
-  'Cleanup: Get rid of temp file if downloaded correctly
-  If IsItThere(dictFullPaths("Tmp")) = True Then
-    Kill dictFullPaths("Tmp")
+
+  If TempOnly = True Then
+    'Cleanup: Get rid of temp file if downloaded correctly
+    If IsItThere(dictFullPaths("Tmp")) = True Then
+      Kill dictFullPaths("Tmp")
+    End If
   End If
   
   ' Disable Startup add-ins so they don't launch right away and mess of the code that's running
@@ -736,8 +793,8 @@ Private Function NeedUpdate(FileName As String) As Boolean
     logString = Now & " -- Specific branch listed, proceeding with direct download."
     LogInformation dictTemplateFile("Log"), logString
     Exit Function
-  ElseIf dictConfigData.Exists("latest_release") = True Then
-    strLatestVersion = dictConfigData("latest_release")
+  ElseIf dictConfigData.Exists("release") = True Then
+    strLatestVersion = dictConfigData("release")
     logString = Now & " -- Latest release is " & strLatestVersion
     LogInformation dictTemplateFile("Log"), logString
   Else
@@ -860,8 +917,12 @@ Private Function FullURL(FileName As String) As String
   ' Add branch or tag (branch takes precedence if it exists)
     If dictWorkingData.Exists("branch") = True Then
       .Add dictWorkingData("branch")
-    ElseIf dictWorkingData.Exists("latest_release") = True Then
-      .Add dictWorkingData("latest_release")
+    ElseIf dictWorkingData.Exists("release") = True Then
+      If dictWorkingData("release") = "latest" Then
+        .Add LatestRelease(Owner:=dictWorkingData("owner"), Repo:=dictWorkingData("repo"))
+      Else
+        .Add dictWorkingData("release")
+      End If
     Else
     ' If no branch or latest_release in any config, defaults to master branch
       .Add "master"
@@ -887,6 +948,44 @@ Private Function FullURL(FileName As String) As String
   varPathArray = Utils.ToArray(collPath)
   
   FullURL = Join(varPathArray, "/")
+End Function
+
+' ===== LatestRelease =========================================================
+' Returns the tag string for the latest release on Github for the repo.
+
+' PARAMS
+' Owner[string]: the user or organization for the repo on github
+' Repo[string]: the repo name
+
+Private Function LatestRelease(Owner As String, Repo As String) As String
+  Dim strURLarray(1 To 7) As String
+  Dim strURL As String
+  
+  strURLarray(1) = "https:/"
+  strURLarray(2) = "api.github.com"
+  strURLarray(3) = "repos"
+  strURLarray(4) = Owner
+  strURLarray(5) = Repo
+  strURLarray(6) = "releases"
+  strURLarray(7) = "latest"
+  
+  strURL = Join(strURLarray, "/")
+  
+  Dim WinHttpReq As Object
+  Dim dictResponse As Dictionary
+
+  Set WinHttpReq = CreateObject("WinHttp.WinHttpRequest.5.1")
+  With WinHttpReq
+    .Open "GET", strURL, False
+    WinHttpReq.Send
+    If .Status = 200 Then  ' 200 = HTTP request is OK
+      Set dictResponse = JsonConverter.ParseJson(WinHttpReq.ResponseText)
+      LatestRelease = dictResponse("tag_name")
+    End If
+  
+  End With
+   Set WinHttpReq = Nothing
+
 End Function
 
 ' ===== GetWorkingData ========================================================

@@ -200,11 +200,11 @@ Public Function GetPath(FullName As String) As String
 End Function
 
 ' ===== DebugPrint =============================================================
-' Use instead of `DebugPrint`. Print to Immediate Window AND write to a file.
+' Use instead of `Debug.Print`. Print to Immediate Window AND write to a file.
 ' Immediate Window has a small buffer and isn't very useful if you are debugging
 ' something that ends up crashing the app.
 
-' Actual `DebugPrint` can take more complex arguments but here we'll just take
+' Actual `Debug.Print` can take more complex arguments but here we'll just take
 ' anything that can evaluate to a string.
 
 ' Need to set "VbaDebug" environment variable to True also

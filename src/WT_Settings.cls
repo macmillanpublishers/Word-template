@@ -35,6 +35,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private p_strInstallType As String
+Private p_MasterConfig As Dictionary
 Private p_GlobalConfig As Dictionary
 Private p_DefaultConfigPath As String
 Private p_TmpDir As String
@@ -162,6 +163,17 @@ Private Property Get DefaultConfigPath() As String
     DefaultConfigPath = p_DefaultConfigPath
 End Property
 
+' ===== MasterConfig ==========================================================
+' All config data, i.e. local data overwrites region, overwrites global.
+
+Public Property Get MasterConfig() As Dictionary
+  If p_MasterConfig Is Nothing Then
+    Set p_MasterConfig = Me.GlobalConfig
+    Set p_MasterConfig = MergeDictionary(p_MasterConfig, Me.RegionConfig)
+    Set p_MasterConfig = MergeDictionary(p_MasterConfig, LocalConfig)
+  End If
+  Set MasterConfig = p_MasterConfig
+End Property
 
 ' ===== GlobalConfig ==========================================================
 ' Dictionary of data in global_config.json file. If file isn't present, it is
