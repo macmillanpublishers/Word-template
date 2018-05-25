@@ -10,7 +10,7 @@
 			<tab id="CustomTab1" label="Macmillan Tools" insertAfterMso="TabHome">
 				<group id="CustGrp1" label="Macmillan Styles" >
 					<button id="AttachTemplateMacro.zz_AttachStyleTemplate" label="Add Manuscript Styles" image="addfile" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="AttachTemplateMacro.zz_AttachBoundMSTemplate" label="Remove Color Guides" image="removefile" size="large" onAction="RibbonControl.LaunchMacros" />	
+					<button id="AttachTemplateMacro.zz_AttachBoundMSTemplate" label="Remove Color Guides" image="removefile" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="AttachTemplateMacro.zz_AttachCoverTemplate" label="Add Cover Copy Styles" image="book" size="normal" onAction="RibbonControl.LaunchMacros" />
 					<button id="PrintStyles.PrintStyles" label="Print Styles in Margin" image="print" size="normal" onAction="RibbonControl.LaunchMacros" />
 					<button id="ViewStyles.StylesViewLaunch" size="normal" image="eye" onAction="RibbonControl.LaunchMacros" label="View Styles"/>
@@ -23,8 +23,8 @@
 				<group id="CustGrp3" label="Style Tools" >
 					<button id="CharacterStyles.MacmillanCharStyles" label="Tag Character Styles" image="tag" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="TagUnstyledParas.TagUnstyledText" label="Style Body Text" image="target" size="large" onAction="RibbonControl.LaunchMacros" />
-					<button id="Reports.MacmillanStyleReport" label="Style Report" image="file" size="normal" onAction="RibbonControl.LaunchMacros" />
-					<button id="Reports.BookmakerReqs" label="Bookmaker Check" image="checkfile" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<!--<button id="Reports.MacmillanStyleReport" label="Style Report" image="file" size="normal" onAction="RibbonControl.LaunchMacros" />
+					<button id="Reports.BookmakerReqs" label="Bookmaker Check" image="checkfile" size="normal" onAction="RibbonControl.LaunchMacros" />-->
 					<button id="LOCtagsMacro.LibraryOfCongressTags" label="CIP Application" image="index" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp4" label="Help" >

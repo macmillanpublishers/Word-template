@@ -16,6 +16,9 @@
 			"subfolders": ["StyleTemplate_auto-generate"],
 			"latest_release": "v4.7.0"
 		},
+    "macmillan.txt": {
+      "repo": "RS_style_template"
+    },
 		"macmillan_NoColor.dotx": {
 			"repo": "Word-template_assets",
 			"subfolders": ["StyleTemplate_auto-generate"],
