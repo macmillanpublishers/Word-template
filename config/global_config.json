@@ -24,10 +24,16 @@
 			"subfolders": ["StyleTemplate_auto-generate"],
 			"latest_release": "v4.7.0"
 		},
+    "macmillan_NoColor.txt": {
+      "repo": "Word-template_assets"
+    },
 		"macmillan_CoverCopy.dotm": {
 			"repo": "Word-template_assets",
 			"latest_release": "v4.7.0"
 		},
+    "macmillan_CoverCopy.txt": {
+      "repo": "Word-template_assets"
+    },
 		"section_start_rules.json": {
 			"repo": "bookmaker_validator"
 		},
