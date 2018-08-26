@@ -5,11 +5,11 @@
 	"files": {
 		"Word-template.dotm": {
 			"repo": "Word-template",
-			"latest_release": "v5.0"
+			"latest_release": "v5.1"
 		},
 		"GtUpdater.dotm": {
 			"repo": "Word-template",
-			"latest_release": "v5.1"
+			"latest_release": "v5.0"
 		},
 		"macmillan.dotx": {
 			"repo": "Word-template_assets",
