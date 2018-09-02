@@ -21,7 +21,7 @@
 					<button id="CleanupMacro.MacmillanManuscriptCleanup" label="Manuscript Cleanup" image="wineglass" size="large" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp3" label="Style Tools" >
-					<button id="CharacterStyles.MacmillanCharStyles" label="Tag Character Styles" image="tag" size="large" onAction="RibbonControl.LaunchMacros" />
+					<button id="CharacterStyles.MacmillanCharStylesSub" label="Tag Character Styles" image="tag" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="TagUnstyledParas.TagUnstyledText" label="Style Body Text" image="target" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="Reports.MacmillanStyleReport" label="Style Report" image="file" size="normal" onAction="RibbonControl.LaunchMacros" />
 					<button id="Reports.BookmakerReqs" label="Bookmaker Check" image="checkfile" size="normal" onAction="RibbonControl.LaunchMacros" />
