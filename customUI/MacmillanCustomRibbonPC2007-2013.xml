@@ -19,6 +19,7 @@
 					<!--<button id="CastoffMacro.UniversalCastoff" label="Castoff" image="calculator" size="large" onAction="RibbonControl.LaunchMacros" />-->
 					<button id="Endnotes.EndnoteDeEmbed" label="Unlink Endnotes" image="unlink" size="large" onAction="RibbonControl.LaunchMacros" />
 					<button id="CleanupMacro.MacmillanManuscriptCleanupSub" label="Manuscript Cleanup" image="wineglass" size="large" onAction="RibbonControl.LaunchMacros" />
+          <button id="Clean_Start.LaunchCleanup" label="New Cleanup" image="wineglass" size="large" onAction="RibbonControl.LaunchMacros" />
 				</group>
 				<group id="CustGrp3" label="Style Tools" >
 					<button id="CharacterStyles.MacmillanCharStylesSub" label="Tag Character Styles" image="tag" size="large" onAction="RibbonControl.LaunchMacros" />
