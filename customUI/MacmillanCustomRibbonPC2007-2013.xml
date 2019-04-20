@@ -27,6 +27,10 @@
 					<button id="Reports.BookmakerReqs" label="Bookmaker Check" image="checkfile" size="normal" onAction="RibbonControl.LaunchMacros" />
 					<button id="LOCtagsMacro.LibraryOfCongressTags" label="CIP Application" image="index" size="normal" onAction="RibbonControl.LaunchMacros" />
 				</group>
+        <group label="PC Styles" id="Styles4" getVisible="AllStylesMod.GetVisible" tag="PCStylesGroup">
+          <button id="nexel2" label="Find Next Element" screentip="Finds the next non-Tx element" size="normal" onAction="NextElement.NextElementRoutine" />
+          <comboBox idMso="StyleGalleryClassic"/>
+        </group>
 				<group id="CustGrp4" label="Help" >
 					<button id="VersionCheck.CheckMacmillanGT" label="Macmillan Tools Version" image="info" size="normal" onAction="RibbonControl.LaunchMacros" />
 					<button id="VersionCheck.CheckMacmillan" label="Macmillan Styles Version" image="info" size="normal" onAction="RibbonControl.LaunchMacros" />
